@@ -9,9 +9,9 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 
 ## 0. Foundation (prerequisites — nothing else starts until these are done)
 - [ ] 0.1 Confirm platform/SaaS name + verify domain and trademark availability (non-blocking for engineering — can run in parallel/background)
-- [ ] 0.2 Provision GitHub repo + Supabase project + Netlify site — separate from the My Earth Market stack
-- [ ] 0.3 Design multi-tenant schema: `accounts`, `users`, `properties` tables + row-level security scoping every table to `account_id`
-- [ ] 0.4 Write CLAUDE.md build rules for this repo (session management, inspect-first methodology — adapted from the My Earth Market pattern)
+- [x] 0.2 Provision GitHub repo + Supabase project + Netlify site — separate from the My Earth Market stack
+- [x] 0.3 Design multi-tenant schema: `accounts`, `users`, `properties` tables + row-level security scoping every table to `account_id`
+- [x] 0.4 Write CLAUDE.md build rules for this repo (session management, inspect-first methodology — adapted from the My Earth Market pattern)
 
 ## 1. Phase 1 — Core Foundation (single-threaded build; schema not stable enough yet for parallel terminals)
 - [ ] 1.1 Auth + account scaffolding — ZMR Real Estate created as the first account
