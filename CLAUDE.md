@@ -18,6 +18,8 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 ## Data safety
 - Every table and query touching user/tenant data must enforce `account_id` row-level security scoping. No exceptions.
 - No destructive actions without a safeguard: commit to git before any risky change. No dropping tables, force-pushing, or hard-deleting data without an explicit, approved step. Prefer soft-delete/archive over hard delete.
+- Any credential — password, token, or key — must be entered through direct/masked terminal input (e.g. the ! method), never typed or pasted into the Claude Code chat interface itself.
+- Every external service this project connects to (GitHub, Supabase, Netlify, etc.) must use a project-scoped credential stored locally to this project — never a shared or global login. This lets ZMR and other dashboard projects run at the same time without one knocking the other's session loose.
 
 ## Parallel terminal safety
 - Each terminal owns a distinct file/section (per the code organization rule above). Do not touch a file another terminal is currently assigned to.
