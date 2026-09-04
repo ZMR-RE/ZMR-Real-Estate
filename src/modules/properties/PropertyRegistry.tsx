@@ -5,6 +5,7 @@ import { PropertyForm } from './PropertyForm'
 export function PropertyRegistry() {
   const {
     properties,
+    llcOptions,
     loading,
     error,
     isFormOpen,
@@ -29,6 +30,7 @@ export function PropertyRegistry() {
         <PropertyForm
           key={formKey}
           initialValues={formInitialValues}
+          llcOptions={llcOptions}
           saving={saving}
           onSave={save}
           onCancel={cancelForm}

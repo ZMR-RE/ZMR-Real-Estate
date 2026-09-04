@@ -1,14 +1,17 @@
 import { useState, type FormEvent } from 'react'
+import type { SearchableSelectOption } from '../../shared/SearchableSelect'
+import { SearchableSelect } from '../../shared/SearchableSelect'
 import type { PropertyInput } from './propertiesQueries'
 
 interface PropertyFormProps {
   initialValues: PropertyInput
+  llcOptions: SearchableSelectOption[]
   saving: boolean
   onSave: (input: PropertyInput) => void
   onCancel: () => void
 }
 
-export function PropertyForm({ initialValues, saving, onSave, onCancel }: PropertyFormProps) {
+export function PropertyForm({ initialValues, llcOptions, saving, onSave, onCancel }: PropertyFormProps) {
   const [values, setValues] = useState<PropertyInput>(initialValues)
 
   const field = (key: keyof PropertyInput) => ({
@@ -32,8 +35,13 @@ export function PropertyForm({ initialValues, saving, onSave, onCancel }: Proper
         onChange={(e) => setValues((prev) => ({ ...prev, name: e.target.value }))}
       />
 
-      <label htmlFor="llc_name">LLC name</label>
-      <input id="llc_name" {...field('llc_name')} />
+      <label htmlFor="llc_id">LLC</label>
+      <SearchableSelect
+        options={llcOptions}
+        value={values.llc_id}
+        onChange={(id) => setValues((prev) => ({ ...prev, llc_id: id }))}
+        placeholder="Select an LLC"
+      />
 
       <label htmlFor="address">Address</label>
       <input id="address" {...field('address')} />

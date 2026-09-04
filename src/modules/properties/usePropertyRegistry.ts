@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
+import { listLlcs } from '../llcs/llcsQueries'
 import {
   createProperty,
   listProperties,
@@ -10,7 +11,7 @@ import {
 
 const BLANK_PROPERTY: PropertyInput = {
   name: '',
-  llc_name: null,
+  llc_id: null,
   address: null,
   city: null,
   state: null,
@@ -26,11 +27,19 @@ const BLANK_PROPERTY: PropertyInput = {
 export function usePropertyRegistry() {
   const { accountId } = useAuth()
   const [properties, setProperties] = useState<Property[]>([])
+  const [llcOptions, setLlcOptions] = useState<{ id: string; label: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!accountId) return
+    listLlcs(accountId).then(({ data }) => {
+      setLlcOptions((data ?? []).map((llc) => ({ id: llc.id, label: llc.name })))
+    })
+  }, [accountId])
 
   const refresh = useCallback(async () => {
     if (!accountId) return
@@ -88,6 +97,7 @@ export function usePropertyRegistry() {
 
   return {
     properties,
+    llcOptions,
     loading,
     error,
     isFormOpen: isCreating || selectedProperty !== null,

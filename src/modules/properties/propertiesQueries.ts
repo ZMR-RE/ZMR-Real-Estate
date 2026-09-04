@@ -4,7 +4,7 @@ export interface Property {
   id: string
   account_id: string
   name: string
-  llc_name: string | null
+  llc_id: string | null
   address: string | null
   city: string | null
   state: string | null
@@ -23,7 +23,7 @@ export async function listProperties(accountId: string) {
   return supabase
     .from('properties')
     .select(
-      'id, account_id, name, llc_name, address, city, state, zip, unit_config, insurance_provider, insurance_policy_number, contact_email, market_value, status',
+      'id, account_id, name, llc_id, address, city, state, zip, unit_config, insurance_provider, insurance_policy_number, contact_email, market_value, status',
     )
     .eq('account_id', accountId)
     .order('name')
