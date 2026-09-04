@@ -1,5 +1,6 @@
 import { useAuth } from './shared/auth/AuthContext'
 import { LoginForm } from './modules/auth/LoginForm'
+import { PropertyRegistry } from './modules/properties/PropertyRegistry'
 
 function App() {
   const { session, loading, signOut } = useAuth()
@@ -14,10 +15,13 @@ function App() {
 
   return (
     <div>
-      <p>Signed in as {session.user.email}</p>
-      <button type="button" onClick={signOut}>
-        Sign out
-      </button>
+      <header>
+        <span>Signed in as {session.user.email}</span>
+        <button type="button" onClick={signOut}>
+          Sign out
+        </button>
+      </header>
+      <PropertyRegistry />
     </div>
   )
 }
