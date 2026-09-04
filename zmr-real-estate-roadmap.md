@@ -16,7 +16,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 ## 1. Phase 1 — Core Foundation (single-threaded build; schema not stable enough yet for parallel terminals)
 - [x] 1.1 Auth + account scaffolding — ZMR Real Estate created as the first account
 - [x] 1.2 Property Registry — property record, LLC, unit config, lease terms, utilities, insurance (5336 W Foster Ave, 2169 Ash St)
-- [ ] 1.3 Quick Capture Inbox — mobile entry flow: Receipt / Visit / Communication (button selector — fixed set of 3), property (searchable/type-ahead dropdown — scales past 10+ properties), date (defaults today, editable), photo AND PDF attachment. Files stage in Supabase Storage on capture so it always works, even before Drive integration exists.
+- [x] 1.3 Quick Capture Inbox — mobile entry flow: Receipt / Visit / Communication (button selector — fixed set of 3), property (searchable/type-ahead dropdown — scales past 10+ properties), date (defaults today, editable), photo AND PDF attachment. Files stage in Supabase Storage on capture so it always works, even before Drive integration exists.
 - [ ] 1.4 Reconciliation Queue — unreconciled items view, manual triage
 
 ## 2. Phase 2 — Parallelized Build (5 terminals, once Phase 1 schema is locked and stable)
