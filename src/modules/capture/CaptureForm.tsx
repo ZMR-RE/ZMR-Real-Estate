@@ -12,6 +12,7 @@ const ENTRY_TYPES: { value: EntryType; label: string }[] = [
 export function CaptureForm() {
   const {
     propertyOptions,
+    propertiesLoading,
     entryType,
     setEntryType,
     propertyId,
@@ -34,10 +35,10 @@ export function CaptureForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="capture-form" onSubmit={handleSubmit}>
       <h1>Quick Capture</h1>
 
-      <div role="group" aria-label="Type">
+      <div className="type-selector" role="group" aria-label="Type">
         {ENTRY_TYPES.map((type) => (
           <button
             key={type.value}
@@ -51,12 +52,16 @@ export function CaptureForm() {
       </div>
 
       <label htmlFor="property">Property</label>
-      <SearchableSelect
-        options={propertyOptions}
-        value={propertyId}
-        onChange={setPropertyId}
-        placeholder="Search properties…"
-      />
+      {propertiesLoading ? (
+        <p>Loading properties…</p>
+      ) : (
+        <SearchableSelect
+          options={propertyOptions}
+          value={propertyId}
+          onChange={setPropertyId}
+          placeholder="Search properties…"
+        />
+      )}
 
       <label htmlFor="entry_date">Date</label>
       <input
@@ -81,7 +86,7 @@ export function CaptureForm() {
       {file && <p>Selected: {file.name}</p>}
 
       {error && <p role="alert">{error}</p>}
-      {savedAt && <p>Saved.</p>}
+      {savedAt && <p className="success-message">Saved.</p>}
 
       <button type="submit" disabled={submitting}>
         {submitting ? 'Saving…' : 'Capture'}

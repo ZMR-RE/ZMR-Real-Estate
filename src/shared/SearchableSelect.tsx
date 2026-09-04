@@ -20,7 +20,7 @@ export function SearchableSelect({ options, value, onChange, placeholder }: Sear
   const filtered = options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
 
   return (
-    <div>
+    <div className="searchable-select">
       <input
         type="text"
         placeholder={placeholder}
@@ -33,7 +33,8 @@ export function SearchableSelect({ options, value, onChange, placeholder }: Sear
         onBlur={() => setIsOpen(false)}
       />
       {isOpen && (
-        <ul>
+        <ul className="searchable-select-menu">
+          {filtered.length === 0 && <li className="searchable-select-empty">No matches</li>}
           {filtered.map((option) => (
             <li key={option.id}>
               <button

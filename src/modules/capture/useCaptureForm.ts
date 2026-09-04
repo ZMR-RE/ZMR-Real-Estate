@@ -16,6 +16,7 @@ function attachmentTypeFor(file: File): AttachmentType | null {
 export function useCaptureForm() {
   const { accountId, session } = useAuth()
   const [propertyOptions, setPropertyOptions] = useState<{ id: string; label: string }[]>([])
+  const [propertiesLoading, setPropertiesLoading] = useState(true)
   const [entryType, setEntryType] = useState<EntryType | null>(null)
   const [propertyId, setPropertyId] = useState<string | null>(null)
   const [entryDate, setEntryDate] = useState(todayDateString())
@@ -27,8 +28,10 @@ export function useCaptureForm() {
 
   useEffect(() => {
     if (!accountId) return
+    setPropertiesLoading(true)
     listProperties(accountId).then(({ data }) => {
       setPropertyOptions((data ?? []).map((p) => ({ id: p.id, label: p.name })))
+      setPropertiesLoading(false)
     })
   }, [accountId])
 
@@ -88,6 +91,7 @@ export function useCaptureForm() {
 
   return {
     propertyOptions,
+    propertiesLoading,
     entryType,
     setEntryType,
     propertyId,

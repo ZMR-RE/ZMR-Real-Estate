@@ -1,14 +1,19 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './shared/auth/AuthContext'
+import { AppShell } from './shared/AppShell'
 import { LoginForm } from './modules/auth/LoginForm'
 import { PropertyRegistry } from './modules/properties/PropertyRegistry'
 import { CaptureInbox } from './modules/capture/CaptureInbox'
 import { ReconciliationQueue } from './modules/reconciliation/ReconciliationQueue'
+import { RentOps } from './modules/rentOps/RentOps'
+import { TaskEngine } from './modules/tasks/TaskEngine'
+import { Financials } from './modules/financials/Financials'
 
 function App() {
-  const { session, loading, signOut } = useAuth()
+  const { session, loading } = useAuth()
 
   if (loading) {
-    return null
+    return <p className="page-loading">Loading…</p>
   }
 
   if (!session) {
@@ -16,17 +21,20 @@ function App() {
   }
 
   return (
-    <div>
-      <header>
-        <span>Signed in as {session.user.email}</span>
-        <button type="button" onClick={signOut}>
-          Sign out
-        </button>
-      </header>
-      <PropertyRegistry />
-      <CaptureInbox />
-      <ReconciliationQueue />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AppShell />}>
+          <Route path="/" element={<Navigate to="/properties" replace />} />
+          <Route path="/properties" element={<PropertyRegistry />} />
+          <Route path="/capture" element={<CaptureInbox />} />
+          <Route path="/reconciliation" element={<ReconciliationQueue />} />
+          <Route path="/rent-ops" element={<RentOps />} />
+          <Route path="/tasks" element={<TaskEngine />} />
+          <Route path="/financials" element={<Financials />} />
+          <Route path="*" element={<Navigate to="/properties" replace />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
 
