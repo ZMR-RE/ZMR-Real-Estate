@@ -29,6 +29,9 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 ## Parallel terminal safety
 - Each terminal owns a distinct file/section (per the code organization rule above). Do not touch a file another terminal is currently assigned to.
 
+## Design principle
+- Everything on screen must have a clear purpose — no noise, no redundancy. Prefer depth on one entity (e.g. a full property profile) over breadth across many shallow, disconnected screens.
+
 ## Definition of done
 - A section is not marked complete on the roadmap until it runs error-free and follows every rule above.
 

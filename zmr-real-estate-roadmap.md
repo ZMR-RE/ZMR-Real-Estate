@@ -46,3 +46,10 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 ## 6. Phase 6 — Analysis & Growth Tools
 - [ ] 6.1 Research/prospecting tool — analyze properties not yet owned
 - [ ] 6.2 Mortgage payoff scenario calculator — model paying off a specific property's loan faster
+
+## 7. Phase 7 — Entity Depth (Property & Mortgage Profiles)
+- [ ] 7.1 Property Profile page — tabbed detail view per property: Overview, Transactions, Activity Log, Documents
+- [ ] 7.2 Units as a real entity — a property can have multiple units, each with its own record (replaces the current free-text unit field)
+- [ ] 7.3 Leasing/Listing Tracker — per unit: platform posted to, date posted, days live, prospective tenant notes
+- [ ] 7.4 Property Specs/Measurements Log — key-value specs per unit (e.g. door dimensions) with last-updated timestamp
+- [ ] 7.5 Mortgage Profile page — tabbed detail view per mortgage, reusing the same pattern as 7.1
