@@ -6,6 +6,7 @@ export function PropertyRegistry() {
   const {
     properties,
     llcOptions,
+    createLlc,
     loading,
     error,
     isFormOpen,
@@ -31,6 +32,7 @@ export function PropertyRegistry() {
           key={formKey}
           initialValues={formInitialValues}
           llcOptions={llcOptions}
+          onCreateLlc={createLlc}
           saving={saving}
           onSave={save}
           onCancel={cancelForm}

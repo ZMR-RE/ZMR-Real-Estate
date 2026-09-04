@@ -1,18 +1,46 @@
 import { useState, type FormEvent } from 'react'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { SearchableSelect } from '../../shared/SearchableSelect'
+import { LlcForm } from '../llcs/LlcForm'
+import type { LlcInput } from '../llcs/llcsQueries'
 import type { PropertyInput } from './propertiesQueries'
 
 interface PropertyFormProps {
   initialValues: PropertyInput
   llcOptions: SearchableSelectOption[]
+  onCreateLlc: (input: LlcInput) => Promise<{ id: string } | { error: string }>
   saving: boolean
   onSave: (input: PropertyInput) => void
   onCancel: () => void
 }
 
-export function PropertyForm({ initialValues, llcOptions, saving, onSave, onCancel }: PropertyFormProps) {
+export function PropertyForm({
+  initialValues,
+  llcOptions,
+  onCreateLlc,
+  saving,
+  onSave,
+  onCancel,
+}: PropertyFormProps) {
   const [values, setValues] = useState<PropertyInput>(initialValues)
+  const [isAddingLlc, setIsAddingLlc] = useState(false)
+  const [creatingLlc, setCreatingLlc] = useState(false)
+  const [createLlcError, setCreateLlcError] = useState<string | null>(null)
+
+  const handleCreateLlc = async (input: LlcInput) => {
+    setCreatingLlc(true)
+    const result = await onCreateLlc(input)
+    setCreatingLlc(false)
+
+    if ('error' in result) {
+      setCreateLlcError(result.error)
+      return
+    }
+
+    setCreateLlcError(null)
+    setValues((prev) => ({ ...prev, llc_id: result.id }))
+    setIsAddingLlc(false)
+  }
 
   const field = (key: keyof PropertyInput) => ({
     value: values[key] ?? '',
@@ -36,12 +64,26 @@ export function PropertyForm({ initialValues, llcOptions, saving, onSave, onCanc
       />
 
       <label htmlFor="llc_id">LLC</label>
-      <SearchableSelect
-        options={llcOptions}
-        value={values.llc_id}
-        onChange={(id) => setValues((prev) => ({ ...prev, llc_id: id }))}
-        placeholder="Select an LLC"
-      />
+      {isAddingLlc ? (
+        <LlcForm
+          saving={creatingLlc}
+          error={createLlcError}
+          onSave={handleCreateLlc}
+          onCancel={() => {
+            setIsAddingLlc(false)
+            setCreateLlcError(null)
+          }}
+        />
+      ) : (
+        <SearchableSelect
+          options={llcOptions}
+          value={values.llc_id}
+          onChange={(id) => setValues((prev) => ({ ...prev, llc_id: id }))}
+          placeholder="Select an LLC"
+          onAddNew={() => setIsAddingLlc(true)}
+          addNewLabel="+ Add new LLC"
+        />
+      )}
 
       <label htmlFor="address">Address</label>
       <input id="address" {...field('address')} />

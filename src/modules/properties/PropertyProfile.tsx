@@ -14,8 +14,19 @@ const TABS: { key: ProfileTab; label: string }[] = [
 
 export function PropertyProfile() {
   const { id } = useParams<{ id: string }>()
-  const { property, llcOptions, transactions, activity, loading, error, tab, setTab, saving, saveProperty } =
-    usePropertyProfile(id!)
+  const {
+    property,
+    llcOptions,
+    createLlc,
+    transactions,
+    activity,
+    loading,
+    error,
+    tab,
+    setTab,
+    saving,
+    saveProperty,
+  } = usePropertyProfile(id!)
 
   if (loading) {
     return <p>Loading…</p>
@@ -55,6 +66,7 @@ export function PropertyProfile() {
         <PropertyProfileOverviewTab
           property={property}
           llcOptions={llcOptions}
+          onCreateLlc={createLlc}
           saving={saving}
           onSave={saveProperty}
         />

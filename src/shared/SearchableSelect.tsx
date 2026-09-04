@@ -10,9 +10,18 @@ interface SearchableSelectProps {
   value: string | null
   onChange: (id: string) => void
   placeholder?: string
+  onAddNew?: () => void
+  addNewLabel?: string
 }
 
-export function SearchableSelect({ options, value, onChange, placeholder }: SearchableSelectProps) {
+export function SearchableSelect({
+  options,
+  value,
+  onChange,
+  placeholder,
+  onAddNew,
+  addNewLabel = '+ Add new',
+}: SearchableSelectProps) {
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
 
@@ -49,6 +58,20 @@ export function SearchableSelect({ options, value, onChange, placeholder }: Sear
               </button>
             </li>
           ))}
+          {onAddNew && (
+            <li className="searchable-select-add-new">
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  onAddNew()
+                  setIsOpen(false)
+                }}
+              >
+                {addNewLabel}
+              </button>
+            </li>
+          )}
         </ul>
       )}
     </div>
