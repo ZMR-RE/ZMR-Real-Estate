@@ -10,6 +10,11 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 - Each dashboard module gets its own folder under `/modules`, split by concern inside it: UI components, data-query files (all Supabase calls for that module), and business logic stay in separate files within the folder. Never combine multiple modules into one file, and never let UI, queries, and logic pile into a single file within a module.
 - Shared code (reused buttons/inputs, the Supabase client, auth helpers) lives in `/shared`, not duplicated per module.
 - This is how a non-coder owner can isolate and find broken code without reading the whole codebase, and how the codebase stays navigable once it's sold and other developers touch it.
+- Standard module shape, established by `src/modules/properties/` — follow it for new modules rather than rediscovering a structure:
+  - `<module>Queries.ts` — every Supabase call for the module, nothing else.
+  - `use<Module>.ts` — business logic hook (state, selection, save/cancel); calls the queries file, never Supabase directly.
+  - `<Entity>List.tsx` / `<Entity>Form.tsx` — presentational UI, no Supabase imports.
+  - `<Module>.tsx` — top-level screen component wiring the hook to the UI components.
 
 ## Fix philosophy
 - Root-cause fixes only. No bandage fixes, no patches that mask the underlying bug.
