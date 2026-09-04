@@ -2,6 +2,7 @@ import { useAuth } from './shared/auth/AuthContext'
 import { LoginForm } from './modules/auth/LoginForm'
 import { PropertyRegistry } from './modules/properties/PropertyRegistry'
 import { CaptureInbox } from './modules/capture/CaptureInbox'
+import { ReconciliationQueue } from './modules/reconciliation/ReconciliationQueue'
 
 function App() {
   const { session, loading, signOut } = useAuth()
@@ -24,6 +25,7 @@ function App() {
       </header>
       <PropertyRegistry />
       <CaptureInbox />
+      <ReconciliationQueue />
     </div>
   )
 }
