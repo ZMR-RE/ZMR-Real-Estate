@@ -9,6 +9,7 @@ import { ReconciliationQueue } from './modules/reconciliation/ReconciliationQueu
 import { RentOps } from './modules/rentOps/RentOps'
 import { TaskEngine } from './modules/tasks/TaskEngine'
 import { Financials } from './modules/financials/Financials'
+import { MortgagePayoffCalculator } from './modules/mortgagePayoff/MortgagePayoffCalculator'
 
 function App() {
   const { session, loading } = useAuth()
@@ -33,6 +34,7 @@ function App() {
           <Route path="/rent-ops" element={<RentOps />} />
           <Route path="/tasks" element={<TaskEngine />} />
           <Route path="/financials" element={<Financials />} />
+          <Route path="/mortgage-payoff" element={<MortgagePayoffCalculator />} />
           <Route path="*" element={<Navigate to="/properties" replace />} />
         </Route>
       </Routes>

@@ -59,6 +59,9 @@ export function PropertyForm({ initialValues, saving, onSave, onCancel }: Proper
       <label htmlFor="contact_email">Contact email</label>
       <input id="contact_email" type="email" {...field('contact_email')} />
 
+      <label htmlFor="market_value">Market value ($)</label>
+      <input id="market_value" type="number" min="0" step="0.01" inputMode="decimal" {...field('market_value')} />
+
       <label htmlFor="status">Status</label>
       <select
         id="status"
