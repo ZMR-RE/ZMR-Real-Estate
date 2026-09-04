@@ -1,6 +1,7 @@
 import { useAuth } from './shared/auth/AuthContext'
 import { LoginForm } from './modules/auth/LoginForm'
 import { PropertyRegistry } from './modules/properties/PropertyRegistry'
+import { CaptureInbox } from './modules/capture/CaptureInbox'
 
 function App() {
   const { session, loading, signOut } = useAuth()
@@ -22,6 +23,7 @@ function App() {
         </button>
       </header>
       <PropertyRegistry />
+      <CaptureInbox />
     </div>
   )
 }
