@@ -20,7 +20,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 1.4 Reconciliation Queue — unreconciled items view, manual triage
 
 ## 2. Phase 2 — Parallelized Build (5 terminals, once Phase 1 schema is locked and stable)
-- [ ] 2.1 Rent Ops — invoicing, receipts, on-time payment tracking
+- [x] 2.1 Rent Ops — invoicing, receipts, on-time payment tracking
 - [ ] 2.2 Task Engine — per-property to-do lists, recurring items, "coming up" view across the portfolio
 - [ ] 2.3 Financials & Tax Readiness — income/expense by property and category, tax-ready export
 - [ ] 2.4 Historical Data Backfill — import past bookkeeping/purchase dates for both properties
