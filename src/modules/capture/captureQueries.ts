@@ -36,3 +36,25 @@ export async function createCaptureEntry(input: CaptureEntryInput) {
     .select()
     .single()
 }
+
+export interface ActivityLogEntry {
+  id: string
+  entry_type: EntryType
+  entry_date: string
+  notes: string | null
+  attachment_path: string
+  attachment_type: AttachmentType
+}
+
+// Property Profile's Activity Log tab (roadmap 7.1) — visit/communication
+// entries only; receipts belong to Transactions, not here.
+export async function listActivityLog(accountId: string, propertyId: string) {
+  return supabase
+    .from('capture_log')
+    .select('id, entry_type, entry_date, notes, attachment_path, attachment_type')
+    .eq('account_id', accountId)
+    .eq('property_id', propertyId)
+    .in('entry_type', ['visit', 'communication'])
+    .order('entry_date', { ascending: false })
+    .returns<ActivityLogEntry[]>()
+}

@@ -1,12 +1,12 @@
+import { Link } from 'react-router-dom'
 import type { Property } from './propertiesQueries'
 
 interface PropertyListProps {
   properties: Property[]
-  onSelect: (id: string) => void
   onAddNew: () => void
 }
 
-export function PropertyList({ properties, onSelect, onAddNew }: PropertyListProps) {
+export function PropertyList({ properties, onAddNew }: PropertyListProps) {
   return (
     <div>
       <button type="button" onClick={onAddNew}>
@@ -15,12 +15,12 @@ export function PropertyList({ properties, onSelect, onAddNew }: PropertyListPro
       <ul>
         {properties.map((property) => (
           <li key={property.id}>
-            <button type="button" onClick={() => onSelect(property.id)}>
+            <Link to={`/properties/${property.id}`}>
               {property.name}
               {property.address ? ` — ${property.address}` : ''}
               {property.city ? `, ${property.city}` : ''}
               {property.status === 'inactive' ? ' (inactive)' : ''}
-            </button>
+            </Link>
           </li>
         ))}
       </ul>

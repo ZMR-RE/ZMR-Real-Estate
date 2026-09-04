@@ -12,7 +12,6 @@ export function PropertyRegistry() {
     formInitialValues,
     saving,
     startCreating,
-    selectProperty,
     cancelForm,
     save,
   } = usePropertyRegistry()
@@ -35,7 +34,7 @@ export function PropertyRegistry() {
           onCancel={cancelForm}
         />
       ) : (
-        <PropertyList properties={properties} onSelect={selectProperty} onAddNew={startCreating} />
+        <PropertyList properties={properties} onAddNew={startCreating} />
       )}
     </div>
   )

@@ -285,6 +285,38 @@ button[type='submit'] {
 }
 
 /* ============================================================
+   Tabs (Property Profile, etc.)
+   ============================================================ */
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin: 20px 0 24px;
+}
+
+.tab-bar button {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  padding: 8px 4px;
+  margin-right: 20px;
+  min-height: auto;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.tab-bar button:hover:not(:disabled) {
+  color: var(--text-h);
+}
+
+.tab-bar button[aria-selected='true'] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ============================================================
    SearchableSelect
    ============================================================ */
 .searchable-select {
