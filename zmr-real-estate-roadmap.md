@@ -25,11 +25,13 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 2.3 Financials & Tax Readiness — income/expense by property and category, tax-ready export
 - [ ] 2.4 Historical Data Backfill — import past bookkeeping/purchase dates for both properties
 - [ ] 2.5 Document Storage Architecture — Drive folder structure per property, linked from dashboard records
-- [ ] 2.6 Reconcile-to-Drive move action — on reconciliation, move the staged file from Supabase Storage into the correct property's Drive folder (tied to that property's email), then clear it from Supabase. Depends on 2.5 and the per-property email mapping from Phase 3.
+- [ ] 2.6 Reconcile-to-Drive move action — on reconciliation, move the staged file from Supabase Storage into the correct property's Drive folder (tied to that property's email), then clear it from Supabase. Depends on 2.5 and the per-property email mapping from Phase 3. Superseded in practice by 3.4's general routing rules once that lands — this becomes "apply the account's routing rule" rather than hardcoded logic.
 
 ## 3. Phase 3 — Reuse & Integrations
 - [ ] 3.1 Port Communication Hub from My Earth Market dashboard — adapt existing Gmail management code for per-property email accounts
 - [ ] 3.2 Connect each property's dedicated email account into the hub
+- [ ] 3.3 Command Center — property-scoped email management: add multiple email accounts, tag each to a property, foundation for an AI agent to eventually handle that property's tenant invoicing, receipts, and notifications through its own email
+- [ ] 3.4 Configurable Document Routing Rules — account-level settings: define "this document type → this Drive folder → this naming pattern" (naming pattern supports placeholders like property/date/vendor/doc type). User-configurable per account, not hardcoded, so it works identically for future resale customers as it does for ZMR
 
 ## 4. Phase 4 — Intelligence Layer
 - [ ] 4.1 AI reconciliation agent — auto-match captured items to the right property/expense/task
@@ -40,3 +42,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 5.2 Billing/subscription integration
 - [ ] 5.3 "Blank template" account creation flow for new customers
 - [ ] 5.4 Finalize platform branding + marketing site
+
+## 6. Phase 6 — Analysis & Growth Tools
+- [ ] 6.1 Research/prospecting tool — analyze properties not yet owned
+- [ ] 6.2 Mortgage payoff scenario calculator — model paying off a specific property's loan faster
