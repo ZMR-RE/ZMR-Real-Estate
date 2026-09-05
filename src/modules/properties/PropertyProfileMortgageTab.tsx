@@ -3,6 +3,8 @@ import { MortgageDetailsForm } from '../mortgagePayoff/MortgageDetailsForm'
 import { MortgagePropertySummary } from '../mortgagePayoff/MortgagePropertySummary'
 import { MortgagePayoffScenarioForm } from '../mortgagePayoff/MortgagePayoffScenarioForm'
 import { MortgagePayoffResults } from '../mortgagePayoff/MortgagePayoffResults'
+import { MortgagePaymentForm } from '../mortgagePayoff/MortgagePaymentForm'
+import { MortgagePaymentList } from '../mortgagePayoff/MortgagePaymentList'
 import type { Property } from './propertiesQueries'
 
 interface PropertyProfileMortgageTabProps {
@@ -25,6 +27,11 @@ export function PropertyProfileMortgageTab({ property }: PropertyProfileMortgage
     cancelEditing,
     save,
     equity,
+    payments,
+    loggingPayment,
+    paymentError,
+    paymentFormInitialValues,
+    logPayment,
     extraAmount,
     setExtraAmount,
     extraMode,
@@ -78,6 +85,15 @@ export function PropertyProfileMortgageTab({ property }: PropertyProfileMortgage
       />
 
       {scenarioResult && <MortgagePayoffResults result={scenarioResult} />}
+
+      <h2>Payment history</h2>
+      <MortgagePaymentList payments={payments} />
+      <MortgagePaymentForm
+        initialValues={paymentFormInitialValues}
+        saving={loggingPayment}
+        error={paymentError}
+        onSave={logPayment}
+      />
     </>
   )
 }

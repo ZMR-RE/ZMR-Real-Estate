@@ -2,10 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import {
   createMortgageDetails,
+  createMortgagePayment,
   getMortgageDetails,
+  listMortgagePayments,
   updateMortgageDetails,
   type MortgageDetails,
   type MortgageDetailsInput,
+  type MortgagePayment,
+  type MortgagePaymentInput,
 } from './mortgagePayoffQueries'
 import {
   computeEquity,
@@ -25,6 +29,17 @@ const BLANK_MORTGAGE: MortgageDetailsInput = {
   term_years: 30,
 }
 
+function todayDateString() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+const BLANK_PAYMENT: MortgagePaymentInput = {
+  payment_date: todayDateString(),
+  amount: '',
+  principal_amount: '',
+  interest_amount: '',
+}
+
 // Same mortgage_details CRUD + scenario logic the standalone Mortgage Payoff
 // screen used, minus its property-picker — the Property Profile tab already
 // knows which property it's on (roadmap 7.5).
@@ -37,6 +52,10 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [payments, setPayments] = useState<MortgagePayment[]>([])
+  const [loggingPayment, setLoggingPayment] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+
   const [extraAmount, setExtraAmount] = useState('')
   const [extraMode, setExtraMode] = useState<ExtraPaymentMode>('recurring')
   const [scenarioResult, setScenarioResult] = useState<PayoffScenarioResult | null>(null)
@@ -44,17 +63,21 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
 
   const refresh = useCallback(async () => {
     setLoading(true)
-    const { data, error: fetchError } = await getMortgageDetails(propertyId)
+    const [{ data, error: fetchError }, { data: paymentRows, error: paymentsFetchError }] = await Promise.all([
+      getMortgageDetails(propertyId),
+      listMortgagePayments(propertyId),
+    ])
     setLoading(false)
 
-    if (fetchError) {
-      setError(fetchError.message)
+    if (fetchError || paymentsFetchError) {
+      setError((fetchError ?? paymentsFetchError)!.message)
       return
     }
 
     setError(null)
     setMortgageDetails(data ?? null)
     setIsEditing(!data)
+    setPayments(paymentRows ?? [])
   }, [propertyId])
 
   useEffect(() => {
@@ -90,6 +113,28 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     setMortgageDetails(data)
     setIsEditing(false)
     setScenarioResult(null)
+  }
+
+  // The trigger on mortgage_payments already reduced current_balance in the
+  // database by the time this resolves — refresh() re-reads it rather than
+  // computing the new balance client-side, so the UI can't drift from what
+  // the trigger actually did.
+  const logPayment = async (input: MortgagePaymentInput): Promise<boolean> => {
+    if (!accountId) return false
+
+    setLoggingPayment(true)
+    const { error: paymentSaveError } = await createMortgagePayment(accountId, propertyId, input)
+    setLoggingPayment(false)
+
+    if (paymentSaveError) {
+      setPaymentError(paymentSaveError.message)
+      return false
+    }
+
+    setPaymentError(null)
+    setScenarioResult(null)
+    await refresh()
+    return true
   }
 
   const calculateScenario = () => {
@@ -140,6 +185,12 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     save,
 
     equity,
+
+    payments,
+    loggingPayment,
+    paymentError,
+    paymentFormInitialValues: BLANK_PAYMENT,
+    logPayment,
 
     extraAmount,
     setExtraAmount,
