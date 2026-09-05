@@ -45,7 +45,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 
 ## 6. Phase 6 — Analysis & Growth Tools
 - [ ] 6.1 Research/prospecting tool — analyze properties not yet owned
-- [ ] 6.2 Mortgage payoff scenario calculator — model paying off a specific property's loan faster
+- [x] 6.2 Mortgage payoff scenario calculator — model paying off a specific property's loan faster
 
 ## 7. Phase 7 — Entity Depth (Property & Mortgage Profiles)
 - [ ] 7.1 Property Profile page — tabbed detail view per property: Overview, Transactions, Activity Log, Documents
