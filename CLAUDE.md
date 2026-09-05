@@ -26,6 +26,10 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 - Any credential — password, token, or key — must be entered through direct/masked terminal input (e.g. the ! method), never typed or pasted into the Claude Code chat interface itself.
 - Every external service this project connects to (GitHub, Supabase, Netlify, etc.) must use a project-scoped credential stored locally to this project — never a shared or global login. This lets ZMR and other dashboard projects run at the same time without one knocking the other's session loose.
 
+## Data integrity
+- Never seed, infer, or guess a field's value from a naming pattern or assumption (e.g. deriving an LLC name from a property's address). Leave the field blank and prompt the user for the real value instead. Only user-entered data is treated as truth.
+- Entity detail screens (Property, Mortgage, LLC, and future entities) default to a read-only view. Editing requires an explicit "Edit" action — never inline-editable by default.
+
 ## Parallel terminal safety
 - Each terminal owns a distinct file/section (per the code organization rule above). Do not touch a file another terminal is currently assigned to.
 - Before considering any wiring/integration commit complete, verify every file it imports or references is actually tracked in git (`git ls-files`), not just present on disk — a file left untracked by another terminal will build locally but fail on Netlify's fresh clone.
