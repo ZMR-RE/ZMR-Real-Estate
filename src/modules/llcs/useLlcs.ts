@@ -6,16 +6,24 @@ export interface LlcOption {
   label: string
 }
 
+// Sentinel id for "this property has no LLC" as an explicit, chosen option
+// in the picker — distinct from a blank/unset field. Never collides with a
+// real llcs.id, which is always a uuid. Callers map this back to a null
+// llc_id when saving.
+export const NO_LLC_ID = 'no-llc'
+
+const NO_LLC_OPTION: LlcOption = { id: NO_LLC_ID, label: 'Individually owned / No LLC' }
+
 // Shared by any module that needs an LLC picker (Property Registry, the
 // Property Profile Overview tab) so the fetch-options-plus-create-new
 // logic lives in one place instead of being copied per caller.
 export function useLlcs(accountId: string | null) {
-  const [llcOptions, setLlcOptions] = useState<LlcOption[]>([])
+  const [realLlcOptions, setRealLlcOptions] = useState<LlcOption[]>([])
 
   const refresh = useCallback(async () => {
     if (!accountId) return
     const { data } = await listLlcs(accountId)
-    setLlcOptions((data ?? []).map((llc) => ({ id: llc.id, label: llc.name })))
+    setRealLlcOptions((data ?? []).map((llc) => ({ id: llc.id, label: llc.name })))
   }, [accountId])
 
   useEffect(() => {
@@ -28,11 +36,11 @@ export function useLlcs(accountId: string | null) {
     if (error || !data) {
       return { error: error?.message ?? 'Could not create LLC' }
     }
-    setLlcOptions((prev) =>
+    setRealLlcOptions((prev) =>
       [...prev, { id: data.id, label: data.name }].sort((a, b) => a.label.localeCompare(b.label)),
     )
     return { id: data.id }
   }
 
-  return { llcOptions, addLlc }
+  return { llcOptions: [NO_LLC_OPTION, ...realLlcOptions], addLlc }
 }

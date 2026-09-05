@@ -3,6 +3,7 @@ import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { SearchableSelect } from '../../shared/SearchableSelect'
 import { LlcForm } from '../llcs/LlcForm'
 import type { LlcInput } from '../llcs/llcsQueries'
+import { NO_LLC_ID } from '../llcs/useLlcs'
 import type { PropertyInput } from './propertiesQueries'
 
 interface PropertyFormProps {
@@ -77,8 +78,8 @@ export function PropertyForm({
       ) : (
         <SearchableSelect
           options={llcOptions}
-          value={values.llc_id}
-          onChange={(id) => setValues((prev) => ({ ...prev, llc_id: id }))}
+          value={values.llc_id ?? NO_LLC_ID}
+          onChange={(id) => setValues((prev) => ({ ...prev, llc_id: id === NO_LLC_ID ? null : id }))}
           placeholder="Select an LLC"
           onAddNew={() => setIsAddingLlc(true)}
           addNewLabel="+ Add new LLC"
