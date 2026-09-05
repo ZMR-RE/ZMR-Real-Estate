@@ -28,12 +28,15 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 
 ## Parallel terminal safety
 - Each terminal owns a distinct file/section (per the code organization rule above). Do not touch a file another terminal is currently assigned to.
+- Before considering any wiring/integration commit complete, verify every file it imports or references is actually tracked in git (`git ls-files`), not just present on disk — a file left untracked by another terminal will build locally but fail on Netlify's fresh clone.
+- When stopping a local dev server, kill only the specific port your own terminal started (e.g. `lsof -ti:5173 | xargs kill`), never a broad process-name kill (`pkill -f vite`, `pkill node`, etc.) that could terminate another terminal's running server.
 
 ## Design principle
 - Everything on screen must have a clear purpose — no noise, no redundancy. Prefer depth on one entity (e.g. a full property profile) over breadth across many shallow, disconnected screens.
 
 ## Definition of done
 - A section is not marked complete on the roadmap until it runs error-free and follows every rule above.
+- Any commit that integrates multiple terminals' work must be verified with a clean clone build (git clone to a fresh directory, npm install, npm run build) before pushing — not just a local build in the shared working directory, which can pass even when the real deploy would fail.
 
 ## Session close-out
 - Before ending a session, write a short plain-language summary of what changed and why — for a non-coder to review without reading the code directly.
