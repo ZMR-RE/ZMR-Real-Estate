@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { to: '/rent-ops', label: 'Rent Ops' },
   { to: '/tasks', label: 'Tasks' },
   { to: '/financials', label: 'Financials' },
-  { to: '/mortgage-payoff', label: 'Mortgage Payoff' },
+  { to: '/mortgage-portfolio', label: 'Mortgage Portfolio' },
 ]
 
 export function AppShell() {

@@ -39,3 +39,17 @@ export async function createMortgageDetails(
 export async function updateMortgageDetails(id: string, input: MortgageDetailsInput) {
   return supabase.from('mortgage_details').update(input).eq('id', id).select().single()
 }
+
+export interface PortfolioMortgageRow {
+  property_id: string
+  current_balance: string
+  property: { name: string; market_value: string | null } | null
+}
+
+export async function listPortfolioMortgages(accountId: string) {
+  return supabase
+    .from('mortgage_details')
+    .select('property_id, current_balance, property:properties(name, market_value)')
+    .eq('account_id', accountId)
+    .returns<PortfolioMortgageRow[]>()
+}

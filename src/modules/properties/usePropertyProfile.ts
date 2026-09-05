@@ -5,7 +5,7 @@ import { listProperties, updateProperty, type Property, type PropertyInput } fro
 import { listTransactions, type Transaction } from '../financials/financialsQueries'
 import { listActivityLog, type ActivityLogEntry } from '../capture/captureQueries'
 
-export type ProfileTab = 'overview' | 'transactions' | 'activity' | 'documents'
+export type ProfileTab = 'overview' | 'transactions' | 'activity' | 'mortgage' | 'documents'
 
 export function usePropertyProfile(propertyId: string) {
   const { accountId } = useAuth()

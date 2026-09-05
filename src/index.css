@@ -285,6 +285,42 @@ button[type='submit'] {
 }
 
 /* ============================================================
+   Definition lists (mortgage summaries, portfolio totals)
+   ============================================================ */
+dl {
+  margin: 12px 0;
+}
+
+dt {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  margin-top: 12px;
+}
+
+dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+  color: var(--text-h);
+}
+
+.portfolio-totals {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.portfolio-totals dt {
+  margin-top: 0;
+}
+
+.portfolio-totals dd {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* ============================================================
    Tabs (Property Profile, etc.)
    ============================================================ */
 .tab-bar {

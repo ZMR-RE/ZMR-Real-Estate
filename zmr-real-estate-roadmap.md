@@ -52,4 +52,5 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 7.2 Units as a real entity — a property can have multiple units, each with its own record (replaces the current free-text unit field)
 - [ ] 7.3 Leasing/Listing Tracker — per unit: platform posted to, date posted, days live, prospective tenant notes
 - [ ] 7.4 Property Specs/Measurements Log — key-value specs per unit (e.g. door dimensions) with last-updated timestamp
-- [ ] 7.5 Mortgage Profile page — tabbed detail view per mortgage, reusing the same pattern as 7.1
+- [ ] 7.5 Move the existing per-property mortgage details, payment logging, and scenario calculator out of the standalone Mortgage Payoff screen and into a new "Mortgage" tab on the Property Profile (alongside Overview, Transactions, Activity Log, Documents) — reuse the existing mortgage_details/mortgage_payments logic and components rather than rebuilding them, same as how the Transactions tab reused Financials' query
+- [ ] 7.6 Repurpose the now-former standalone Mortgage Payoff nav item into a portfolio-wide view: total mortgage balance, total equity, and overall loan-to-value across all properties combined — a rollup, not a per-property editor

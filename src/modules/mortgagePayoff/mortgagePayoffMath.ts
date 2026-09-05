@@ -119,3 +119,50 @@ export function computeEquity(marketValue: number, currentBalance: number): Equi
     ltv: currentBalance / marketValue,
   }
 }
+
+export interface PortfolioMortgageEntry {
+  propertyId: string
+  propertyName: string
+  marketValue: number | null
+  currentBalance: number
+}
+
+export interface PortfolioTotals {
+  totalBalance: number
+  totalMarketValue: number
+  totalEquity: number
+  overallLtv: number | null
+  missingMarketValueCount: number
+}
+
+/**
+ * totalBalance covers every mortgaged property, since a balance doesn't need
+ * a market value to be real. Equity and LTV, by contrast, are only computed
+ * over the subset that has both figures — mixing a valued property's equity
+ * with an unvalued property's un-countable "equity" would misstate the
+ * portfolio number rather than just leave a gap in it.
+ */
+export function computePortfolioTotals(entries: PortfolioMortgageEntry[]): PortfolioTotals {
+  let totalBalance = 0
+  let valuedBalance = 0
+  let totalMarketValue = 0
+  let missingMarketValueCount = 0
+
+  for (const entry of entries) {
+    totalBalance += entry.currentBalance
+    if (entry.marketValue !== null) {
+      valuedBalance += entry.currentBalance
+      totalMarketValue += entry.marketValue
+    } else {
+      missingMarketValueCount += 1
+    }
+  }
+
+  return {
+    totalBalance,
+    totalMarketValue,
+    totalEquity: totalMarketValue - valuedBalance,
+    overallLtv: totalMarketValue > 0 ? valuedBalance / totalMarketValue : null,
+    missingMarketValueCount,
+  }
+}
