@@ -56,3 +56,11 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 7.6 Repurpose the now-former standalone Mortgage Payoff nav item into a portfolio-wide view: total mortgage balance, total equity, and overall loan-to-value across all properties combined — a rollup, not a per-property editor
 - [ ] 7.7 Convert Property Profile's Overview tab (and the Mortgage tab's terms section) from always-editable to view-by-default with an explicit Edit action, per the new Data integrity rule
 - [ ] 7.8 Basic audit trail — track who changed a field and when, on Property, LLC, and Mortgage records. Directly useful once other people (or your future customers) are editing shared data, not just you
+
+## 8. Phase 8 — Pick-Lists & Linked Records
+- [ ] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
+- [ ] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field)
+- [ ] 8.3 Vendor as a real linked-record table, linked to Transactions and Tasks
+- [ ] 8.4 Tenant as a real linked-record table, linked to Lease/Unit
+- [ ] 8.5 Lease as a real linked-record entity, linked to Unit + Tenant (term dates, rent amount)
+- [ ] 8.6 Property address as the canonical identifier across the app (search, dropdowns, headers) — supersedes any name-based identification; 7.2's Unit display convention follows this ({address} — {unit label})
