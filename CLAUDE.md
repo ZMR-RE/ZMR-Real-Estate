@@ -29,9 +29,23 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 ## Data integrity
 - Never seed, infer, or guess a field's value from a naming pattern or assumption (e.g. deriving an LLC name from a property's address). Leave the field blank and prompt the user for the real value instead. Only user-entered data is treated as truth.
 - Entity detail screens (Property, Mortgage, LLC, and future entities) default to a read-only view. Editing requires an explicit "Edit" action — never inline-editable by default.
+- All data entry, edits, and feature verification must go through the live dashboard UI as the end user would use it. Backend/database scripts may be used to inspect data for debugging, but never as a substitute for entering or editing real records — the dashboard is the only sanctioned path for data in or out.
 
 ## Identifiers
 - Property records are identified by address, not a free-text name field. Units display as {property address} — {unit label}. LLC, Vendor, and Tenant retain their own name as their identifier.
+
+## Bookkeeping
+- The Chart of Accounts is always user-visible and user-editable — every transaction category's mapping to an accounting bucket (Asset/Liability/Income/Expense) must be inspectable and adjustable by the account owner, never hidden system logic. It ships preloaded with a standard rental real-estate chart of accounts; the user may edit or extend it from there.
+- Split Rules (e.g. a saved 50/50 reimbursement with a vendor) are never auto-applied under any condition. The system must require an explicit user action every time a Split Rule is used — no setting may change this behavior.
+- Security deposits held on a tenant's behalf must post to a Liability account, never to Income, at time of receipt. Applying a deposit to damages or returning it must be an explicit transaction that clears the liability — never a silent balance adjustment.
+- A financial period that has been closed/locked (see roadmap 9.15) may not be edited without an explicit "reopen" action, which must be captured in the transaction audit trail (7.8/9.14).
+
+## Multi-tenant discipline
+- Before marking any feature complete, verify it works correctly for a brand-new account with zero properties and zero data — not just for the existing ZMR account. No feature may assume ZMR's specific properties, LLCs, or data exist.
+- Every account must have a functioning data export path for its own data at all times (standard SaaS trust requirement — a customer can leave with their data on request, no lock-in).
+
+## Notifications
+- All system notifications and reminders must route through the Action Queue. No standalone notification surface may be built outside it.
 
 ## Parallel terminal safety
 - Each terminal owns a distinct file/section (per the code organization rule above). Do not touch a file another terminal is currently assigned to.
