@@ -19,6 +19,8 @@ export function Financials() {
   const {
     transactions,
     propertyOptions,
+    vendorOptions,
+    createVendor,
     propertyFilter,
     setPropertyFilter,
     year,
@@ -87,6 +89,8 @@ export function Financials() {
           key={formKey}
           initialValues={formInitialValues}
           propertyOptions={propertyOptions}
+          vendorOptions={vendorOptions}
+          onCreateVendor={createVendor}
           saving={saving}
           onSave={save}
           onCancel={cancelForm}

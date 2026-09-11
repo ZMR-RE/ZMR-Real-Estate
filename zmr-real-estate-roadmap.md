@@ -56,8 +56,8 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 
 ## 7. Phase 7 — Entity Depth (Property & Mortgage Profiles)
 - [x] 7.1 Property Profile page — tabbed detail view per property: Overview, Transactions, Activity Log, Documents
-- [ ] 7.2 Units as a real entity — a property can have multiple units, each with its own record (replaces the current free-text unit field)
-- [ ] 7.3 Leasing/Listing Tracker — per unit: platform posted to, date posted, days live, prospective tenant notes
+- [x] 7.2 Units as a real entity — a property can have multiple units, each with its own record (replaces the current free-text unit field)
+- [x] 7.3 Leasing/Listing Tracker — per unit: platform posted to, date posted, days live, prospective tenant notes
 - [x] 7.4 Property Specs/Measurements Log — key-value specs per unit (e.g. door dimensions) with last-updated timestamp — property-level scope built and verified live (per task scope, since 7.2 units don't exist yet); schema has a ready-but-unused unit_id column for per-unit scoping once 7.2 lands
 - [x] 7.5 Move the existing per-property mortgage details, payment logging, and scenario calculator out of the standalone Mortgage Payoff screen and into a new "Mortgage" tab on the Property Profile (alongside Overview, Transactions, Activity Log, Documents) — reuse the existing mortgage_details/mortgage_payments logic and components rather than rebuilding them, same as how the Transactions tab reused Financials' query
 - [x] 7.6 Repurpose the now-former standalone Mortgage Payoff nav item into a portfolio-wide view: total mortgage balance, total equity, and overall loan-to-value across all properties combined — a rollup, not a per-property editor
@@ -74,7 +74,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
 - [x] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field) — the llcs table, properties.llc_id, and the real-list-plus-"+ Add new LLC" picker already existed (Phase 1); this pass added the missing formation_date field
-- [ ] 8.3 Vendor as a real linked-record table, linked to Transactions and Tasks
+- [x] 8.3 Vendor as a real linked-record table, linked to Transactions and Tasks
 - [ ] 8.4 Tenant as a real linked-record table, linked to Lease/Unit
 - [ ] 8.5 Lease as a real linked-record entity, linked to Unit + Tenant (term dates, rent amount)
 - [ ] 8.6 Property address as the canonical identifier across the app (search, dropdowns, headers) — supersedes any name-based identification; 7.2's Unit display convention follows this ({address} — {unit label})

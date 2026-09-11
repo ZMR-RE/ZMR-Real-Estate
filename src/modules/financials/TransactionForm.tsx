@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { SearchableSelect, type SearchableSelectOption } from '../../shared/SearchableSelect'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
+import { VendorForm } from '../vendors/VendorForm'
+import type { VendorInput } from '../vendors/vendorsQueries'
 import {
   CATEGORY_LABELS,
   EXPENSE_CATEGORIES,
@@ -13,6 +15,8 @@ import {
 interface TransactionFormProps {
   initialValues: TransactionInput
   propertyOptions: SearchableSelectOption[]
+  vendorOptions: SearchableSelectOption[]
+  onCreateVendor: (input: VendorInput) => Promise<{ id: string } | { error: string }>
   saving: boolean
   onSave: (input: TransactionInput) => void
   onCancel: () => void
@@ -21,11 +25,31 @@ interface TransactionFormProps {
 export function TransactionForm({
   initialValues,
   propertyOptions,
+  vendorOptions,
+  onCreateVendor,
   saving,
   onSave,
   onCancel,
 }: TransactionFormProps) {
   const [values, setValues] = useState<TransactionInput>(initialValues)
+  const [isAddingVendor, setIsAddingVendor] = useState(false)
+  const [creatingVendor, setCreatingVendor] = useState(false)
+  const [createVendorError, setCreateVendorError] = useState<string | null>(null)
+
+  const handleCreateVendor = async (input: VendorInput) => {
+    setCreatingVendor(true)
+    const result = await onCreateVendor(input)
+    setCreatingVendor(false)
+
+    if ('error' in result) {
+      setCreateVendorError(result.error)
+      return
+    }
+
+    setCreateVendorError(null)
+    setValues((prev) => ({ ...prev, vendorId: result.id }))
+    setIsAddingVendor(false)
+  }
 
   const categoryOptions = values.entryType === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
 
@@ -96,13 +120,27 @@ export function TransactionForm({
         onChange={(value) => setValues((prev) => ({ ...prev, subcategory: value || null }))}
       />
 
-      <label htmlFor="vendor_source">Vendor / source</label>
-      <input
-        id="vendor_source"
-        required
-        value={values.vendorSource}
-        onChange={(e) => setValues((prev) => ({ ...prev, vendorSource: e.target.value }))}
-      />
+      <label htmlFor="vendor_id">Vendor</label>
+      {isAddingVendor ? (
+        <VendorForm
+          saving={creatingVendor}
+          error={createVendorError}
+          onSave={handleCreateVendor}
+          onCancel={() => {
+            setIsAddingVendor(false)
+            setCreateVendorError(null)
+          }}
+        />
+      ) : (
+        <SearchableSelect
+          options={vendorOptions}
+          value={values.vendorId || null}
+          onChange={(id) => setValues((prev) => ({ ...prev, vendorId: id }))}
+          placeholder="Select vendor"
+          onAddNew={() => setIsAddingVendor(true)}
+          addNewLabel="+ Add new vendor"
+        />
+      )}
 
       <label htmlFor="payment_method">Payment method</label>
       <PickListSelect
@@ -173,7 +211,7 @@ export function TransactionForm({
 
       <button
         type="submit"
-        disabled={saving || !values.propertyId || !values.vendorSource || !values.paymentMethod}
+        disabled={saving || !values.propertyId || !values.vendorId || !values.paymentMethod}
       >
         {saving ? 'Saving…' : 'Save'}
       </button>

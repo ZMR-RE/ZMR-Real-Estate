@@ -72,7 +72,7 @@ export interface Transaction {
   entry_type: EntryType
   category: Category
   subcategory: string | null
-  vendor_source: string
+  vendor: { id: string; name: string } | null
   unit: string | null
   payment_method: string
   repair_or_improvement: RepairOrImprovement | null
@@ -89,7 +89,7 @@ export interface TransactionInput {
   entryType: EntryType
   category: Category
   subcategory: string | null
-  vendorSource: string
+  vendorId: string
   unit: string | null
   paymentMethod: string
   repairOrImprovement: RepairOrImprovement | null
@@ -108,7 +108,7 @@ export async function listTransactions(accountId: string, filters: TransactionFi
   let query = supabase
     .from('financial_transactions')
     .select(
-      'id, entry_type, category, subcategory, vendor_source, unit, payment_method, repair_or_improvement, amount, transaction_date, description, voided, statement_reconciled, property:properties(id, name)',
+      'id, entry_type, category, subcategory, vendor:vendors(id, name), unit, payment_method, repair_or_improvement, amount, transaction_date, description, voided, statement_reconciled, property:properties(id, name)',
     )
     .eq('account_id', accountId)
     .eq('voided', false)
@@ -134,7 +134,7 @@ export async function createTransaction(accountId: string, recordedBy: string, i
       entry_type: input.entryType,
       category: input.category,
       subcategory: input.subcategory,
-      vendor_source: input.vendorSource,
+      vendor_id: input.vendorId,
       unit: input.unit,
       payment_method: input.paymentMethod,
       repair_or_improvement: input.repairOrImprovement,
@@ -156,7 +156,7 @@ export async function updateTransaction(id: string, input: TransactionInput) {
       entry_type: input.entryType,
       category: input.category,
       subcategory: input.subcategory,
-      vendor_source: input.vendorSource,
+      vendor_id: input.vendorId,
       unit: input.unit,
       payment_method: input.paymentMethod,
       repair_or_improvement: input.repairOrImprovement,

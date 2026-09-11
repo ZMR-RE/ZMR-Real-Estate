@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { listProperties } from '../properties/propertiesQueries'
+import { useVendors } from '../vendors/useVendors'
 import {
   createTransaction,
   listTransactions,
@@ -20,7 +21,7 @@ const BLANK_TRANSACTION: TransactionInput = {
   entryType: 'expense',
   category: 'repairs',
   subcategory: null,
-  vendorSource: '',
+  vendorId: '',
   unit: null,
   paymentMethod: '',
   repairOrImprovement: null,
@@ -36,7 +37,7 @@ function toInput(transaction: Transaction): TransactionInput {
     entryType: transaction.entry_type,
     category: transaction.category,
     subcategory: transaction.subcategory,
-    vendorSource: transaction.vendor_source,
+    vendorId: transaction.vendor?.id ?? '',
     unit: transaction.unit,
     paymentMethod: transaction.payment_method,
     repairOrImprovement: transaction.repair_or_improvement,
@@ -51,6 +52,7 @@ export function useFinancials() {
   const { accountId, session } = useAuth()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [propertyOptions, setPropertyOptions] = useState<{ id: string; label: string }[]>([])
+  const { vendorOptions, addVendor } = useVendors(accountId)
   const [propertyFilter, setPropertyFilter] = useState<string | null>(null)
   const [year, setYear] = useState(new Date().getFullYear())
   const [loading, setLoading] = useState(true)
@@ -142,6 +144,8 @@ export function useFinancials() {
   return {
     transactions,
     propertyOptions,
+    vendorOptions,
+    createVendor: addVendor,
     propertyFilter,
     setPropertyFilter,
     year,
