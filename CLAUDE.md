@@ -58,6 +58,7 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 ## Definition of done
 - A section is not marked complete on the roadmap until it runs error-free and follows every rule above.
 - Any commit that integrates multiple terminals' work must be verified with a clean clone build (git clone to a fresh directory, npm install, npm run build) before pushing — not just a local build in the shared working directory, which can pass even when the real deploy would fail.
+- Checking off a roadmap item's checkbox is not optional and not a separate documentation task. It is a required, non-negotiable step of completing that item's work, and must happen in the same commit that completes it. An item's checkbox must never be left unchecked once its work meets the Definition of Done criteria above, and must never be checked before those criteria are met. A terminal must verify checkbox accuracy for every roadmap item it touches before ending its work on that item.
 
 ## Session close-out
 - Before ending a session, write a short plain-language summary of what changed and why — for a non-coder to review without reading the code directly.

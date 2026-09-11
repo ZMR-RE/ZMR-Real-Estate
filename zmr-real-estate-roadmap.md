@@ -15,7 +15,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 
 ## 1. Phase 1 — Core Foundation (single-threaded build; schema not stable enough yet for parallel terminals)
 - [x] 1.1 Auth + account scaffolding — ZMR Real Estate created as the first account
-- [x] 1.2 Property Registry — property record, LLC, unit config, lease terms, utilities, insurance (5336 W Foster Ave, 2169 Ash St)
+- [ ] 1.2 Property Registry — property record, LLC, unit config, lease terms, utilities, insurance (5336 W Foster Ave, 2169 Ash St) — PARTIAL: property record/LLC/unit config/insurance are live and editable (verified); lease_terms and utilities exist only as unused jsonb columns with no UI anywhere, not started
 - [x] 1.3 Quick Capture Inbox — mobile entry flow: Receipt / Visit / Communication (button selector — fixed set of 3), property (searchable/type-ahead dropdown — scales past 10+ properties), date (defaults today, editable), photo AND PDF attachment. Files stage in Supabase Storage on capture so it always works, even before Drive integration exists.
 - [x] 1.4 Reconciliation Queue — unreconciled items view, manual triage
 
@@ -23,7 +23,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 2.1 Rent Ops — invoicing, receipts, on-time payment tracking
 - [x] 2.2 Task Engine — per-property to-do lists, recurring items, "coming up" view across the portfolio
 - [x] 2.3 Financials & Tax Readiness — income/expense by property and category, tax-ready export
-- [ ] 2.4 Historical Data Backfill — import past bookkeeping/purchase dates for both properties
+- [ ] 2.4 Historical Data Backfill — import past bookkeeping/purchase dates for both properties — PARTIAL: purchase_date column added and backfilled via migration only, no UI ever displays or edits it; bookkeeping backfill not started
 - [x] 2.5 Document Storage Architecture — native Supabase Storage: a `documents` table plus a private `documents` bucket, path convention `{account_id}/{property_id}/{category}/{filename}`, linked from each property's Documents tab
 - [x] 2.6 Reconcile-to-Documents move action — on reconciliation, move the staged file from Quick Capture's staging bucket into its permanent Documents path above, and create its documents table record at that point — not before
 
