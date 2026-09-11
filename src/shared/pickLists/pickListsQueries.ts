@@ -4,7 +4,15 @@ import { supabase } from '../supabaseClient'
 // financial_transactions category (the fixed Schedule-E-aligned enum) is
 // deliberately not one of these — see 20260910220000_pick_list_options.sql
 // for why. unit_status was added by 20260911130000_units.sql (roadmap 7.2).
-export type PickListName = 'subcategory' | 'payment_method' | 'document_type' | 'task_type' | 'unit_status'
+// listing_platform was added by 20260911150000_leasing_listings.sql
+// (roadmap 7.3), left with zero seeded options — see that migration.
+export type PickListName =
+  | 'subcategory'
+  | 'payment_method'
+  | 'document_type'
+  | 'task_type'
+  | 'unit_status'
+  | 'listing_platform'
 
 export interface PickListOption {
   id: string
