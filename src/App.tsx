@@ -12,6 +12,7 @@ import { Financials } from './modules/financials/Financials'
 import { MortgagePortfolio } from './modules/mortgagePayoff/MortgagePortfolio'
 import { CommandCenter } from './modules/commandCenter/CommandCenter'
 import { Automations } from './modules/automations/Automations'
+import { Settings } from './modules/settings/Settings'
 
 function App() {
   const { session, loading } = useAuth()
@@ -39,6 +40,7 @@ function App() {
           <Route path="/command-center" element={<CommandCenter />} />
           <Route path="/automations" element={<Automations />} />
           <Route path="/mortgage-portfolio" element={<MortgagePortfolio />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/properties" replace />} />
         </Route>
       </Routes>

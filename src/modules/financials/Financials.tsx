@@ -1,8 +1,8 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { SearchableSelect } from '../../shared/SearchableSelect'
 import { MileageRollup } from '../mileage/MileageRollup'
 import { BankReconciliation } from '../bankReconciliation/BankReconciliation'
-import { ChartOfAccounts } from '../chartOfAccounts/ChartOfAccounts'
 import { FinancialPeriodLockControl } from '../financialPeriods/FinancialPeriodLockControl'
 import { useFinancials } from './useFinancials'
 import { TransactionForm } from './TransactionForm'
@@ -15,7 +15,6 @@ const YEAR_OPTIONS = Array.from({ length: 6 }, (_, i) => new Date().getFullYear(
 // Not wired into App.tsx yet — pending sign-off per the roadmap item.
 export function Financials() {
   const [isReconciling, setIsReconciling] = useState(false)
-  const [isManagingChartOfAccounts, setIsManagingChartOfAccounts] = useState(false)
   const {
     transactions,
     propertyOptions,
@@ -74,15 +73,14 @@ export function Financials() {
         Export tax-ready CSV
       </button>
 
+      <p>
+        <Link to="/settings">Manage Chart of Accounts</Link> (moved to Settings)
+      </p>
+
       <button type="button" onClick={() => setIsReconciling((v) => !v)}>
         {isReconciling ? 'Hide bank reconciliation' : 'Reconcile with bank statement'}
       </button>
       {isReconciling && <BankReconciliation />}
-
-      <button type="button" onClick={() => setIsManagingChartOfAccounts((v) => !v)}>
-        {isManagingChartOfAccounts ? 'Hide Chart of Accounts' : 'Manage Chart of Accounts'}
-      </button>
-      {isManagingChartOfAccounts && <ChartOfAccounts />}
 
       {isFormOpen ? (
         <TransactionForm

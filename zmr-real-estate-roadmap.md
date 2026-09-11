@@ -115,7 +115,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 11.1 Automations nav section: agent-roster pattern adapted from My Earth Market's Operations Hub (named agent profiles, health-state, training/active/paused status, dependency on which module, audit log) — adapted for ZMR's multi-tenant/RLS model, not a direct copy-paste
 
 ## 12. Phase 12 — Settings & Account Administration
-- [ ] 12.1 Settings area (account-level, separate from main nav flow): houses Chart of Accounts management, pick-list management (8.1), security (2FA, password reset), and future billing/tier management
+- [x] 12.1 Settings area (account-level, separate from main nav flow): houses Chart of Accounts management, pick-list management (8.1), security (2FA, password reset), and future billing/tier management — FOUNDATIONAL PASS per scope: `/settings` page built, linked from the account/profile menu, housing Chart of Accounts (moved out of Financials & Tax) and centralized pick-list management (8.1), verified live. Security (2FA, password reset) still lives in T4's separate "Account & Security" profile-menu panel (12.2) built before this page existed — T4 may want to move that panel's content into Settings now that it has a real home; billing/tier management still future work (Phase 5)
 - [x] 12.2 Two-factor authentication + password reset flow
 - [ ] 12.3 Optional Drive-backed document storage: account-level Settings toggle (default: platform storage) letting a customer choose to store a given property's documents in their own connected Google Drive instead — only available once that property's email/Drive is OAuth-connected via Command Center (3.2)
 
