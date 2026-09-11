@@ -93,6 +93,18 @@ export function MortgageDetailsForm({
         required
       />
 
+      <label htmlFor="escrow_balance">Escrow balance ($)</label>
+      <input
+        id="escrow_balance"
+        type="number"
+        min="0"
+        step="0.01"
+        inputMode="decimal"
+        placeholder="Leave blank if no escrow account"
+        value={values.escrow_balance ?? ''}
+        onChange={(e) => setValues((prev) => ({ ...prev, escrow_balance: e.target.value || null }))}
+      />
+
       <label htmlFor="term_years">Term (years)</label>
       <input
         id="term_years"

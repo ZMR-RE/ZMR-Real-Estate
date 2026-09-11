@@ -10,6 +10,10 @@ export interface MortgageDetails {
   monthly_payment: string
   loan_start_date: string
   term_years: number
+  // Escrow (roadmap 9.14) — held by the servicer for property tax and
+  // insurance, tracked separately from principal/interest above so it
+  // never gets folded into current_balance.
+  escrow_balance: string | null
 }
 
 export type MortgageDetailsInput = Omit<MortgageDetails, 'id' | 'property_id'>
@@ -18,7 +22,7 @@ export async function getMortgageDetails(propertyId: string) {
   return supabase
     .from('mortgage_details')
     .select(
-      'id, property_id, lender_name, original_loan_amount, current_balance, interest_rate, monthly_payment, loan_start_date, term_years',
+      'id, property_id, lender_name, original_loan_amount, current_balance, interest_rate, monthly_payment, loan_start_date, term_years, escrow_balance',
     )
     .eq('property_id', propertyId)
     .maybeSingle()
@@ -69,6 +73,42 @@ export async function createMortgagePayment(
 ) {
   return supabase
     .from('mortgage_payments')
+    .insert({ ...input, account_id: accountId, property_id: propertyId })
+    .select()
+    .single()
+}
+
+export type EscrowTransactionType = 'deposit' | 'disbursement'
+
+export interface MortgageEscrowTransaction {
+  id: string
+  property_id: string
+  transaction_date: string
+  transaction_type: EscrowTransactionType
+  amount: string
+  description: string | null
+}
+
+export type MortgageEscrowTransactionInput = Omit<MortgageEscrowTransaction, 'id' | 'property_id'>
+
+export async function listMortgageEscrowTransactions(propertyId: string) {
+  return supabase
+    .from('mortgage_escrow_transactions')
+    .select('id, property_id, transaction_date, transaction_type, amount, description')
+    .eq('property_id', propertyId)
+    .order('transaction_date', { ascending: false })
+    .returns<MortgageEscrowTransaction[]>()
+}
+
+// escrow_balance is updated by the apply_mortgage_escrow_transaction_to_balance
+// trigger, not here — callers must re-fetch mortgage_details after this resolves.
+export async function createMortgageEscrowTransaction(
+  accountId: string,
+  propertyId: string,
+  input: MortgageEscrowTransactionInput,
+) {
+  return supabase
+    .from('mortgage_escrow_transactions')
     .insert({ ...input, account_id: accountId, property_id: propertyId })
     .select()
     .single()

@@ -2,12 +2,16 @@ import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import {
   createMortgageDetails,
+  createMortgageEscrowTransaction,
   createMortgagePayment,
   getMortgageDetails,
+  listMortgageEscrowTransactions,
   listMortgagePayments,
   updateMortgageDetails,
   type MortgageDetails,
   type MortgageDetailsInput,
+  type MortgageEscrowTransaction,
+  type MortgageEscrowTransactionInput,
   type MortgagePayment,
   type MortgagePaymentInput,
 } from './mortgagePayoffQueries'
@@ -27,6 +31,7 @@ const BLANK_MORTGAGE: MortgageDetailsInput = {
   monthly_payment: '',
   loan_start_date: '',
   term_years: 30,
+  escrow_balance: null,
 }
 
 function todayDateString() {
@@ -38,6 +43,13 @@ const BLANK_PAYMENT: MortgagePaymentInput = {
   amount: '',
   principal_amount: '',
   interest_amount: '',
+}
+
+const BLANK_ESCROW_TRANSACTION: MortgageEscrowTransactionInput = {
+  transaction_date: todayDateString(),
+  transaction_type: 'deposit',
+  amount: '',
+  description: null,
 }
 
 // Same mortgage_details CRUD + scenario logic the standalone Mortgage Payoff
@@ -56,6 +68,10 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
   const [loggingPayment, setLoggingPayment] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
 
+  const [escrowTransactions, setEscrowTransactions] = useState<MortgageEscrowTransaction[]>([])
+  const [loggingEscrowTransaction, setLoggingEscrowTransaction] = useState(false)
+  const [escrowTransactionError, setEscrowTransactionError] = useState<string | null>(null)
+
   const [extraAmount, setExtraAmount] = useState('')
   const [extraMode, setExtraMode] = useState<ExtraPaymentMode>('recurring')
   const [scenarioResult, setScenarioResult] = useState<PayoffScenarioResult | null>(null)
@@ -63,14 +79,19 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
 
   const refresh = useCallback(async () => {
     setLoading(true)
-    const [{ data, error: fetchError }, { data: paymentRows, error: paymentsFetchError }] = await Promise.all([
+    const [
+      { data, error: fetchError },
+      { data: paymentRows, error: paymentsFetchError },
+      { data: escrowRows, error: escrowFetchError },
+    ] = await Promise.all([
       getMortgageDetails(propertyId),
       listMortgagePayments(propertyId),
+      listMortgageEscrowTransactions(propertyId),
     ])
     setLoading(false)
 
-    if (fetchError || paymentsFetchError) {
-      setError((fetchError ?? paymentsFetchError)!.message)
+    if (fetchError || paymentsFetchError || escrowFetchError) {
+      setError((fetchError ?? paymentsFetchError ?? escrowFetchError)!.message)
       return
     }
 
@@ -78,6 +99,7 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     setMortgageDetails(data ?? null)
     setIsEditing(!data)
     setPayments(paymentRows ?? [])
+    setEscrowTransactions(escrowRows ?? [])
   }, [propertyId])
 
   useEffect(() => {
@@ -137,6 +159,27 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     return true
   }
 
+  // The trigger on mortgage_escrow_transactions already applied the
+  // deposit/disbursement to escrow_balance by the time this resolves —
+  // refresh() re-reads it rather than computing the new balance
+  // client-side, same reasoning as logPayment above.
+  const logEscrowTransaction = async (input: MortgageEscrowTransactionInput): Promise<boolean> => {
+    if (!accountId) return false
+
+    setLoggingEscrowTransaction(true)
+    const { error: escrowSaveError } = await createMortgageEscrowTransaction(accountId, propertyId, input)
+    setLoggingEscrowTransaction(false)
+
+    if (escrowSaveError) {
+      setEscrowTransactionError(escrowSaveError.message)
+      return false
+    }
+
+    setEscrowTransactionError(null)
+    await refresh()
+    return true
+  }
+
   const calculateScenario = () => {
     if (!mortgageDetails) return
 
@@ -191,6 +234,12 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     paymentError,
     paymentFormInitialValues: BLANK_PAYMENT,
     logPayment,
+
+    escrowTransactions,
+    loggingEscrowTransaction,
+    escrowTransactionError,
+    escrowTransactionFormInitialValues: BLANK_ESCROW_TRANSACTION,
+    logEscrowTransaction,
 
     extraAmount,
     setExtraAmount,

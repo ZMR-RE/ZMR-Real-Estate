@@ -5,6 +5,8 @@ import { MortgagePayoffScenarioForm } from '../mortgagePayoff/MortgagePayoffScen
 import { MortgagePayoffResults } from '../mortgagePayoff/MortgagePayoffResults'
 import { MortgagePaymentForm } from '../mortgagePayoff/MortgagePaymentForm'
 import { MortgagePaymentList } from '../mortgagePayoff/MortgagePaymentList'
+import { EscrowTransactionForm } from '../mortgagePayoff/EscrowTransactionForm'
+import { EscrowTransactionList } from '../mortgagePayoff/EscrowTransactionList'
 import type { Property } from './propertiesQueries'
 
 interface PropertyProfileMortgageTabProps {
@@ -32,6 +34,11 @@ export function PropertyProfileMortgageTab({ property }: PropertyProfileMortgage
     paymentError,
     paymentFormInitialValues,
     logPayment,
+    escrowTransactions,
+    loggingEscrowTransaction,
+    escrowTransactionError,
+    escrowTransactionFormInitialValues,
+    logEscrowTransaction,
     extraAmount,
     setExtraAmount,
     extraMode,
@@ -93,6 +100,15 @@ export function PropertyProfileMortgageTab({ property }: PropertyProfileMortgage
         saving={loggingPayment}
         error={paymentError}
         onSave={logPayment}
+      />
+
+      <h2>Escrow</h2>
+      <EscrowTransactionList transactions={escrowTransactions} />
+      <EscrowTransactionForm
+        initialValues={escrowTransactionFormInitialValues}
+        saving={loggingEscrowTransaction}
+        error={escrowTransactionError}
+        onSave={logEscrowTransaction}
       />
     </>
   )

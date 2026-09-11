@@ -33,8 +33,14 @@ export function MortgagePropertySummary({
         <dd>{mortgageDetails.lender_name ?? '—'}</dd>
         <dt>Original loan amount</dt>
         <dd>{currencyFormatter.format(Number(mortgageDetails.original_loan_amount))}</dd>
-        <dt>Current balance</dt>
+        <dt>Current balance (principal)</dt>
         <dd>{currencyFormatter.format(Number(mortgageDetails.current_balance))}</dd>
+        <dt>Escrow balance</dt>
+        <dd>
+          {mortgageDetails.escrow_balance !== null
+            ? currencyFormatter.format(Number(mortgageDetails.escrow_balance))
+            : '— no escrow account on file'}
+        </dd>
         <dt>Interest rate</dt>
         <dd>{Number(mortgageDetails.interest_rate)}%</dd>
         <dt>Monthly payment (P&I)</dt>
