@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
+import { usePickListOptions } from '../../shared/pickLists/usePickListOptions'
 import { listProperties } from '../properties/propertiesQueries'
 import { moveToDocuments, type DocumentCategory } from '../documents/documentsQueries'
 import { getAttachmentSignedUrl, listUnreconciled, markReconciled, type QueueEntry } from './reconciliationQueries'
 
 export function useReconciliationQueue() {
   const { session, accountId } = useAuth()
+  const documentTypeOptions = usePickListOptions('document_type')
   const [entries, setEntries] = useState<QueueEntry[]>([])
   const [propertyOptions, setPropertyOptions] = useState<{ id: string; label: string }[]>([])
   const [propertyFilter, setPropertyFilter] = useState<string | null>(null)
@@ -101,6 +103,7 @@ export function useReconciliationQueue() {
     loading,
     error,
     processingId,
+    documentTypeOptions,
     categoryByEntry,
     setCategory,
     reconcile,

@@ -399,6 +399,102 @@ dd {
 }
 
 /* ============================================================
+   Pick-list dropdowns + Manage Options (roadmap 8.1)
+   ============================================================ */
+.pick-list-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.manage-options {
+  position: relative;
+}
+
+.manage-options-toggle {
+  min-height: auto;
+  padding: 4px 10px;
+  font-size: 12px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.manage-options-toggle:hover:not(:disabled) {
+  color: var(--text-h);
+  border-color: var(--text);
+}
+
+.manage-options-panel {
+  position: absolute;
+  z-index: 20;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  padding: 12px;
+  width: 280px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.manage-options-add-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.manage-options-add-row input {
+  flex: 1;
+}
+
+.manage-options-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.manage-options-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.manage-options-list li:last-child {
+  border-bottom: none;
+}
+
+.manage-options-list button {
+  min-height: auto;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.manage-options-archived span {
+  color: var(--text);
+  text-decoration: line-through;
+}
+
+.manage-options-empty {
+  font-size: 13px;
+  color: var(--text);
+}
+
+/* ============================================================
    Tables
    ============================================================ */
 table {

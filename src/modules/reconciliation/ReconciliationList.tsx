@@ -1,9 +1,11 @@
-import { DOCUMENT_CATEGORIES, type DocumentCategory } from '../documents/documentsQueries'
+import type { DocumentCategory } from '../documents/documentsQueries'
+import type { PickListOption } from '../../shared/pickLists/pickListsQueries'
 import type { QueueEntry } from './reconciliationQueries'
 
 interface ReconciliationListProps {
   entries: QueueEntry[]
   processingId: string | null
+  categoryOptions: PickListOption[]
   categoryByEntry: Record<string, DocumentCategory | ''>
   onCategoryChange: (id: string, category: DocumentCategory | '') => void
   onViewAttachment: (path: string) => void
@@ -13,6 +15,7 @@ interface ReconciliationListProps {
 export function ReconciliationList({
   entries,
   processingId,
+  categoryOptions,
   categoryByEntry,
   onCategoryChange,
   onViewAttachment,
@@ -51,9 +54,9 @@ export function ReconciliationList({
                 onChange={(e) => onCategoryChange(entry.id, e.target.value as DocumentCategory | '')}
               >
                 <option value="">Select category…</option>
-                {DOCUMENT_CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
+                {categoryOptions.map((category) => (
+                  <option key={category.id} value={category.value}>
+                    {category.value}
                   </option>
                 ))}
               </select>

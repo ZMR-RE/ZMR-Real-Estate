@@ -19,6 +19,7 @@ export function TaskList({ tasks, processingId, onSelect, onComplete }: TaskList
           <th>Due</th>
           <th>Title</th>
           <th>Property</th>
+          <th>Type</th>
           <th>Recurrence</th>
           <th>Status</th>
           <th></th>
@@ -34,6 +35,7 @@ export function TaskList({ tasks, processingId, onSelect, onComplete }: TaskList
               </button>
             </td>
             <td>{task.property?.name ?? '—'}</td>
+            <td>{task.task_type ?? '—'}</td>
             <td>{task.recurrence === 'none' ? '—' : task.recurrence}</td>
             <td>{task.completed ? 'Done' : 'Open'}</td>
             <td>

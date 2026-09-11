@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { SearchableSelect, type SearchableSelectOption } from '../../shared/SearchableSelect'
+import { PickListSelect } from '../../shared/pickLists/PickListSelect'
 import {
   CATEGORY_LABELS,
   EXPENSE_CATEGORIES,
@@ -87,10 +88,12 @@ export function TransactionForm({
       </select>
 
       <label htmlFor="subcategory">Subcategory</label>
-      <input
+      <PickListSelect
         id="subcategory"
+        listName="subcategory"
+        title="Subcategories"
         value={values.subcategory ?? ''}
-        onChange={(e) => setValues((prev) => ({ ...prev, subcategory: e.target.value || null }))}
+        onChange={(value) => setValues((prev) => ({ ...prev, subcategory: value || null }))}
       />
 
       <label htmlFor="vendor_source">Vendor / source</label>
@@ -102,12 +105,13 @@ export function TransactionForm({
       />
 
       <label htmlFor="payment_method">Payment method</label>
-      <input
+      <PickListSelect
         id="payment_method"
-        required
-        placeholder="e.g. Checking, Visa 1234"
+        listName="payment_method"
+        title="Payment methods"
         value={values.paymentMethod}
-        onChange={(e) => setValues((prev) => ({ ...prev, paymentMethod: e.target.value }))}
+        onChange={(value) => setValues((prev) => ({ ...prev, paymentMethod: value }))}
+        required
       />
 
       {values.entryType === 'expense' && (

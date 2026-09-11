@@ -72,7 +72,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 7.15 Action Queue priority color system: red = overdue OR property status = Sold; yellow = due soon; default = normal. When a property's status changes to Sold, all of its open Action Queue items automatically turn red rather than requiring per-transaction-type logic.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
-- [ ] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
+- [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
 - [ ] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field)
 - [ ] 8.3 Vendor as a real linked-record table, linked to Transactions and Tasks
 - [ ] 8.4 Tenant as a real linked-record table, linked to Lease/Unit

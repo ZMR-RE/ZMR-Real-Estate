@@ -1,4 +1,5 @@
 import { SearchableSelect } from '../../shared/SearchableSelect'
+import { ManageOptionsPanel } from '../../shared/pickLists/ManageOptionsPanel'
 import { useReconciliationQueue } from './useReconciliationQueue'
 import { ReconciliationList } from './ReconciliationList'
 
@@ -11,6 +12,7 @@ export function ReconciliationQueue() {
     loading,
     error,
     processingId,
+    documentTypeOptions,
     categoryByEntry,
     setCategory,
     reconcile,
@@ -19,7 +21,19 @@ export function ReconciliationQueue() {
 
   return (
     <div>
-      <h1>Reconciliation Queue</h1>
+      <div className="page-header-row">
+        <h1>Reconciliation Queue</h1>
+        <ManageOptionsPanel
+          title="Document types"
+          options={documentTypeOptions.options}
+          loading={documentTypeOptions.loading}
+          error={documentTypeOptions.error}
+          saving={documentTypeOptions.saving}
+          onAdd={documentTypeOptions.add}
+          onArchive={documentTypeOptions.archive}
+          onRestore={documentTypeOptions.restore}
+        />
+      </div>
 
       <label htmlFor="property_filter">Filter by property</label>
       <SearchableSelect
@@ -42,6 +56,7 @@ export function ReconciliationQueue() {
         <ReconciliationList
           entries={entries}
           processingId={processingId}
+          categoryOptions={documentTypeOptions.activeOptions}
           categoryByEntry={categoryByEntry}
           onCategoryChange={setCategory}
           onViewAttachment={viewAttachment}

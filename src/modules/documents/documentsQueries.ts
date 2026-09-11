@@ -1,23 +1,9 @@
 import { supabase } from '../../shared/supabaseClient'
 
-export type DocumentCategory =
-  | 'Leases'
-  | 'Insurance'
-  | 'Tax Documents'
-  | 'Receipts'
-  | 'Mortgage Documents'
-  | 'Photos'
-  | 'Other'
-
-export const DOCUMENT_CATEGORIES: DocumentCategory[] = [
-  'Leases',
-  'Insurance',
-  'Tax Documents',
-  'Receipts',
-  'Mortgage Documents',
-  'Photos',
-  'Other',
-]
+// Document type (roadmap 8.1) — an account-scoped pick list
+// (list_name 'document_type') rather than a fixed set. See
+// shared/pickLists for the add/archive UI.
+export type DocumentCategory = string
 
 export interface DocumentRecord {
   id: string

@@ -20,6 +20,7 @@ const BLANK_TASK: TaskInput = {
   notes: null,
   due_date: new Date().toISOString().slice(0, 10),
   recurrence: 'none',
+  task_type: null,
 }
 
 function computeNextDueDate(dueDate: string, recurrence: RecurrenceInterval): string {
@@ -95,6 +96,7 @@ export function useTaskEngine() {
         notes: selectedTask.notes,
         due_date: selectedTask.due_date,
         recurrence: selectedTask.recurrence,
+        task_type: selectedTask.task_type,
       }
     : { ...BLANK_TASK, property_id: propertyFilter ?? '' }
 
@@ -150,6 +152,7 @@ export function useTaskEngine() {
         notes: task.notes,
         due_date: computeNextDueDate(task.due_date, task.recurrence),
         recurrence: task.recurrence,
+        task_type: task.task_type,
       })
       if (rolloverError) {
         setProcessingId(null)

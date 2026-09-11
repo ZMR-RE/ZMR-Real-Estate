@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { SearchableSelect } from '../../shared/SearchableSelect'
+import { PickListSelect } from '../../shared/pickLists/PickListSelect'
 import type { RecurrenceInterval, TaskInput } from './tasksQueries'
 
 interface TaskFormProps {
@@ -50,6 +51,15 @@ export function TaskForm({ initialValues, propertyOptions, saving, onSave, onCan
         id="notes"
         value={values.notes ?? ''}
         onChange={(e) => setValues((prev) => ({ ...prev, notes: e.target.value || null }))}
+      />
+
+      <label htmlFor="task_type">Task type</label>
+      <PickListSelect
+        id="task_type"
+        listName="task_type"
+        title="Task types"
+        value={values.task_type ?? ''}
+        onChange={(value) => setValues((prev) => ({ ...prev, task_type: value || null }))}
       />
 
       <label htmlFor="due_date">Due date</label>
