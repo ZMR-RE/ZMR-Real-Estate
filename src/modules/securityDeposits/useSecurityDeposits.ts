@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
-import { listProperties } from '../properties/propertiesQueries'
 import {
   createDepositTransaction,
   createSecurityDeposit,
@@ -12,7 +11,6 @@ import {
 } from './securityDepositsQueries'
 
 export interface NewDepositInput {
-  propertyId: string
   unit: string | null
   tenantName: string
   notes: string | null
@@ -55,27 +53,19 @@ function todayDateString() {
   return new Date().toISOString().slice(0, 10)
 }
 
-export function useSecurityDeposits() {
+export function useSecurityDeposits(propertyId: string) {
   const { accountId, session } = useAuth()
   const [deposits, setDeposits] = useState<SecurityDeposit[]>([])
-  const [propertyOptions, setPropertyOptions] = useState<{ id: string; label: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [isCreatingDeposit, setIsCreatingDeposit] = useState(false)
   const [transactionTargetId, setTransactionTargetId] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!accountId) return
-    listProperties(accountId).then(({ data }) => {
-      setPropertyOptions((data ?? []).map((p) => ({ id: p.id, label: p.name })))
-    })
-  }, [accountId])
-
   const refresh = useCallback(async () => {
     if (!accountId) return
     setLoading(true)
-    const { data, error: fetchError } = await listSecurityDeposits(accountId)
+    const { data, error: fetchError } = await listSecurityDeposits(accountId, propertyId)
     setLoading(false)
     if (fetchError) {
       setError(fetchError.message)
@@ -83,7 +73,7 @@ export function useSecurityDeposits() {
     }
     setError(null)
     setDeposits(data ?? [])
-  }, [accountId])
+  }, [accountId, propertyId])
 
   useEffect(() => {
     refresh()
@@ -110,8 +100,7 @@ export function useSecurityDeposits() {
       return
     }
 
-    const { data: deposit, error: depositError } = await createSecurityDeposit(accountId, {
-      propertyId: input.propertyId,
+    const { data: deposit, error: depositError } = await createSecurityDeposit(accountId, propertyId, {
       unit: input.unit,
       tenantName: input.tenantName,
       notes: input.notes,
@@ -190,7 +179,6 @@ export function useSecurityDeposits() {
 
   return {
     deposits,
-    propertyOptions,
     loading,
     error,
     saving,

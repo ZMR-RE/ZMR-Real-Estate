@@ -10,8 +10,6 @@ import { RentOps } from './modules/rentOps/RentOps'
 import { TaskEngine } from './modules/tasks/TaskEngine'
 import { Financials } from './modules/financials/Financials'
 import { MortgagePortfolio } from './modules/mortgagePayoff/MortgagePortfolio'
-import { ChartOfAccounts } from './modules/chartOfAccounts/ChartOfAccounts'
-import { SecurityDeposits } from './modules/securityDeposits/SecurityDeposits'
 import { CommandCenter } from './modules/commandCenter/CommandCenter'
 import { Automations } from './modules/automations/Automations'
 
@@ -41,8 +39,6 @@ function App() {
           <Route path="/command-center" element={<CommandCenter />} />
           <Route path="/automations" element={<Automations />} />
           <Route path="/mortgage-portfolio" element={<MortgagePortfolio />} />
-          <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
-          <Route path="/security-deposits" element={<SecurityDeposits />} />
           <Route path="*" element={<Navigate to="/properties" replace />} />
         </Route>
       </Routes>

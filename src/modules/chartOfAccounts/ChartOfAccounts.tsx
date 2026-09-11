@@ -35,7 +35,7 @@ export function ChartOfAccounts() {
 
   return (
     <div>
-      <h1>Chart of Accounts</h1>
+      <h2>Chart of Accounts</h2>
       {error && <p role="alert">{error}</p>}
 
       <h2>Accounts</h2>

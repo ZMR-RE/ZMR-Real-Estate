@@ -3,10 +3,17 @@ import { DepositList } from './DepositList'
 import { DepositForm } from './DepositForm'
 import { DepositTransactionForm } from './DepositTransactionForm'
 
-export function SecurityDeposits() {
+interface SecurityDepositsSectionProps {
+  propertyId: string
+}
+
+// Roadmap 9.13 — security deposit tracking. Embedded on the Property
+// Profile's Overview tab, scoped to this property only (a deposit belongs
+// to a specific tenant/unit at a specific property, never a portfolio-wide
+// list) — per the Navigation discipline rule in CLAUDE.md.
+export function SecurityDepositsSection({ propertyId }: SecurityDepositsSectionProps) {
   const {
     deposits,
-    propertyOptions,
     loading,
     error,
     saving,
@@ -20,18 +27,17 @@ export function SecurityDeposits() {
     saveReturnOrDamages,
     voidTransaction,
     todayDateString,
-  } = useSecurityDeposits()
+  } = useSecurityDeposits(propertyId)
 
   const transactionTargetDeposit = deposits.find((d) => d.id === transactionTargetId) ?? null
 
   return (
-    <div>
-      <h1>Security Deposits</h1>
+    <section>
+      <h2>Security deposits</h2>
       {error && <p role="alert">{error}</p>}
 
       {isCreatingDeposit ? (
         <DepositForm
-          propertyOptions={propertyOptions}
           saving={saving}
           todayDateString={todayDateString}
           onSave={saveNewDeposit}
@@ -59,6 +65,6 @@ export function SecurityDeposits() {
       ) : (
         <DepositList deposits={deposits} onLogTransaction={startLoggingTransaction} onVoidTransaction={voidTransaction} />
       )}
-    </div>
+    </section>
   )
 }

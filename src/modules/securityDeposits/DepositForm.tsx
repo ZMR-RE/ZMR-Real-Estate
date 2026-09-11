@@ -1,17 +1,14 @@
 import { useState, type FormEvent } from 'react'
-import { SearchableSelect } from '../../shared/SearchableSelect'
 import type { NewDepositInput } from './useSecurityDeposits'
 
 interface DepositFormProps {
-  propertyOptions: { id: string; label: string }[]
   saving: boolean
   todayDateString: () => string
   onSave: (input: NewDepositInput) => void
   onCancel: () => void
 }
 
-export function DepositForm({ propertyOptions, saving, todayDateString, onSave, onCancel }: DepositFormProps) {
-  const [propertyId, setPropertyId] = useState<string | null>(null)
+export function DepositForm({ saving, todayDateString, onSave, onCancel }: DepositFormProps) {
   const [unit, setUnit] = useState('')
   const [tenantName, setTenantName] = useState('')
   const [amount, setAmount] = useState('')
@@ -21,12 +18,10 @@ export function DepositForm({ propertyOptions, saving, todayDateString, onSave, 
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
-    if (!propertyId) return
     const parsedAmount = Number(amount)
     if (!(parsedAmount > 0)) return
 
     onSave({
-      propertyId,
       unit: unit.trim() || null,
       tenantName: tenantName.trim(),
       notes: notes.trim() || null,
@@ -38,16 +33,8 @@ export function DepositForm({ propertyOptions, saving, todayDateString, onSave, 
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>Log a security deposit received</h2>
+      <h3>Log a security deposit received</h3>
       <p>Posts to the "Security Deposits Held" liability account — never Income.</p>
-
-      <label htmlFor="deposit_property">Property</label>
-      <SearchableSelect
-        options={propertyOptions}
-        value={propertyId}
-        onChange={setPropertyId}
-        placeholder="Search properties…"
-      />
 
       <label htmlFor="deposit_unit">Unit</label>
       <input id="deposit_unit" value={unit} onChange={(e) => setUnit(e.target.value)} />
@@ -86,7 +73,7 @@ export function DepositForm({ propertyOptions, saving, todayDateString, onSave, 
       <label htmlFor="deposit_notes">Notes</label>
       <textarea id="deposit_notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
 
-      <button type="submit" disabled={saving || !propertyId || !tenantName.trim()}>
+      <button type="submit" disabled={saving || !tenantName.trim()}>
         {saving ? 'Saving…' : 'Record deposit received'}
       </button>
       <button type="button" onClick={onCancel} disabled={saving}>

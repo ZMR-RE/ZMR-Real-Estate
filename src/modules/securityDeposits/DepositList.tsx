@@ -23,8 +23,8 @@ export function DepositList({ deposits, onLogTransaction, onVoidTransaction }: D
         return (
           <section key={deposit.id}>
             <h3>
-              {deposit.property?.name ?? '—'}
-              {deposit.unit ? ` — ${deposit.unit}` : ''} · {deposit.tenant_name}
+              {deposit.unit ? `${deposit.unit} — ` : ''}
+              {deposit.tenant_name}
             </h3>
             <p>
               Received: ${balance.received.toFixed(2)} · Returned: ${balance.returned.toFixed(2)} · Applied to

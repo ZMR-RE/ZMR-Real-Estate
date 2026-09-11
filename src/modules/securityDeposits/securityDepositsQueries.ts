@@ -29,12 +29,10 @@ export interface SecurityDeposit {
   unit: string | null
   tenant_name: string
   notes: string | null
-  property: { id: string; name: string } | null
   transactions: DepositTransaction[]
 }
 
 export interface SecurityDepositInput {
-  propertyId: string
   unit: string | null
   tenantName: string
   notes: string | null
@@ -61,23 +59,24 @@ export async function getSecurityDepositsHeldAccount(accountId: string) {
     .returns<ChartAccountRef>()
 }
 
-export async function listSecurityDeposits(accountId: string) {
+export async function listSecurityDeposits(accountId: string, propertyId: string) {
   return supabase
     .from('security_deposits')
     .select(
-      'id, unit, tenant_name, notes, property:properties(id, name), transactions:security_deposit_transactions(id, transaction_type, amount, transaction_date, description, voided, chart_account:chart_of_accounts(id, name, type))',
+      'id, unit, tenant_name, notes, transactions:security_deposit_transactions(id, transaction_type, amount, transaction_date, description, voided, chart_account:chart_of_accounts(id, name, type))',
     )
     .eq('account_id', accountId)
+    .eq('property_id', propertyId)
     .order('created_at', { ascending: false })
     .returns<SecurityDeposit[]>()
 }
 
-export async function createSecurityDeposit(accountId: string, input: SecurityDepositInput) {
+export async function createSecurityDeposit(accountId: string, propertyId: string, input: SecurityDepositInput) {
   return supabase
     .from('security_deposits')
     .insert({
       account_id: accountId,
-      property_id: input.propertyId,
+      property_id: propertyId,
       unit: input.unit,
       tenant_name: input.tenantName,
       notes: input.notes,

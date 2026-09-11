@@ -3,6 +3,7 @@ import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import type { LlcInput } from '../llcs/llcsQueries'
 import { PropertyTaxLedger } from '../propertyTax/PropertyTaxLedger'
 import { PropertySpecsSection } from '../propertySpecs/PropertySpecsSection'
+import { SecurityDepositsSection } from '../securityDeposits/SecurityDepositsSection'
 import { PropertyForm } from './PropertyForm'
 import type { Property, PropertyInput } from './propertiesQueries'
 
@@ -40,6 +41,8 @@ export function PropertyProfileOverviewTab({
       <PropertyTaxLedger propertyId={property.id} />
 
       <PropertySpecsSection propertyId={property.id} />
+
+      <SecurityDepositsSection propertyId={property.id} />
     </>
   )
 }
