@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { SearchableSelect } from '../../shared/SearchableSelect'
+import { MileageRollup } from '../mileage/MileageRollup'
+import { BankReconciliation } from '../bankReconciliation/BankReconciliation'
 import { useFinancials } from './useFinancials'
 import { TransactionForm } from './TransactionForm'
 import { TransactionList } from './TransactionList'
@@ -9,6 +12,7 @@ const YEAR_OPTIONS = Array.from({ length: 6 }, (_, i) => new Date().getFullYear(
 // Self-contained screen for roadmap item 2.3 (Financials & Tax Readiness).
 // Not wired into App.tsx yet — pending sign-off per the roadmap item.
 export function Financials() {
+  const [isReconciling, setIsReconciling] = useState(false)
   const {
     transactions,
     propertyOptions,
@@ -63,6 +67,11 @@ export function Financials() {
         Export tax-ready CSV
       </button>
 
+      <button type="button" onClick={() => setIsReconciling((v) => !v)}>
+        {isReconciling ? 'Hide bank reconciliation' : 'Reconcile with bank statement'}
+      </button>
+      {isReconciling && <BankReconciliation />}
+
       {isFormOpen ? (
         <TransactionForm
           key={formKey}
@@ -83,6 +92,7 @@ export function Financials() {
       ) : (
         <>
           <FinancialsSummary byPropertyAndCategory={summaryByPropertyAndCategory} byProperty={summaryByProperty} />
+          <MileageRollup year={year} />
           <TransactionList transactions={transactions} onSelect={selectTransaction} onVoid={voidEntry} />
         </>
       )}
