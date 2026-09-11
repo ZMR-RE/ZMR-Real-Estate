@@ -4,6 +4,7 @@ import { useLlcs } from '../llcs/useLlcs'
 import { listProperties, updateProperty, type Property, type PropertyInput } from './propertiesQueries'
 import { listTransactions, type Transaction } from '../financials/financialsQueries'
 import { listActivityLog, type ActivityLogEntry } from '../capture/captureQueries'
+import { getDocumentSignedUrl, listDocuments, type DocumentRecord } from '../documents/documentsQueries'
 
 export type ProfileTab = 'overview' | 'transactions' | 'activity' | 'mortgage' | 'documents'
 
@@ -13,6 +14,7 @@ export function usePropertyProfile(propertyId: string) {
   const { llcOptions, addLlc } = useLlcs(accountId)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [activity, setActivity] = useState<ActivityLogEntry[]>([])
+  const [documents, setDocuments] = useState<DocumentRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<ProfileTab>('overview')
@@ -21,15 +23,19 @@ export function usePropertyProfile(propertyId: string) {
   const refresh = useCallback(async () => {
     if (!accountId) return
     setLoading(true)
-    const [propertiesRes, transactionsRes, activityRes] = await Promise.all([
+    const [propertiesRes, transactionsRes, activityRes, documentsRes] = await Promise.all([
       listProperties(accountId),
       listTransactions(accountId, { propertyId }),
       listActivityLog(accountId, propertyId),
+      listDocuments(accountId, propertyId),
     ])
     setLoading(false)
 
     const fetchError =
-      propertiesRes.error?.message ?? transactionsRes.error?.message ?? activityRes.error?.message
+      propertiesRes.error?.message ??
+      transactionsRes.error?.message ??
+      activityRes.error?.message ??
+      documentsRes.error?.message
     if (fetchError) {
       setError(fetchError)
       return
@@ -39,7 +45,17 @@ export function usePropertyProfile(propertyId: string) {
     setProperty((propertiesRes.data ?? []).find((p) => p.id === propertyId) ?? null)
     setTransactions(transactionsRes.data ?? [])
     setActivity(activityRes.data ?? [])
+    setDocuments(documentsRes.data ?? [])
   }, [accountId, propertyId])
+
+  const viewDocument = async (path: string) => {
+    const { data, error: urlError } = await getDocumentSignedUrl(path)
+    if (urlError || !data) {
+      setError(urlError?.message ?? 'Could not load document')
+      return
+    }
+    window.open(data.signedUrl, '_blank')
+  }
 
   useEffect(() => {
     refresh()
@@ -63,6 +79,8 @@ export function usePropertyProfile(propertyId: string) {
     createLlc: addLlc,
     transactions,
     activity,
+    documents,
+    viewDocument,
     loading,
     error,
     tab,

@@ -24,8 +24,8 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 2.2 Task Engine — per-property to-do lists, recurring items, "coming up" view across the portfolio
 - [x] 2.3 Financials & Tax Readiness — income/expense by property and category, tax-ready export
 - [ ] 2.4 Historical Data Backfill — import past bookkeeping/purchase dates for both properties
-- [ ] 2.5 Document Storage Architecture — Drive folder structure per property, linked from dashboard records
-- [ ] 2.6 Reconcile-to-Drive move action — on reconciliation, move the staged file from Supabase Storage into the correct property's Drive folder (tied to that property's email), then clear it from Supabase. Depends on 2.5 and the per-property email mapping from Phase 3. Superseded in practice by 3.4's general routing rules once that lands — this becomes "apply the account's routing rule" rather than hardcoded logic.
+- [x] 2.5 Document Storage Architecture — Drive folder structure per property, linked from dashboard records
+- [x] 2.6 Reconcile-to-Drive move action — on reconciliation, move the staged file from Supabase Storage into the correct property's Drive folder (tied to that property's email), then clear it from Supabase. Depends on 2.5 and the per-property email mapping from Phase 3. Superseded in practice by 3.4's general routing rules once that lands — this becomes "apply the account's routing rule" rather than hardcoded logic.
 
 ## 3. Phase 3 — Reuse & Integrations
 - [ ] 3.1 Port Communication Hub from My Earth Market dashboard — adapt existing Gmail management code for per-property email accounts
@@ -64,7 +64,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 7.7 Convert Property Profile's Overview tab (and the Mortgage tab's terms section) from always-editable to view-by-default with an explicit Edit action, per the new Data integrity rule
 - [ ] 7.8 Basic audit trail — track who changed a field and when, on Property, LLC, and Mortgage records. Directly useful once other people (or your future customers) are editing shared data, not just you
 - [ ] 7.9 Revise Property Profile tabs to: Overview, Financials, Mortgage, KPI, Activity & Documents (merged)
-- [ ] 7.10 Overview tab: core fields always visible (address, LLC, status, market value, property facts, insurance w/ coverage dates + Drive link, contact email with "+ Add email" for multiple), plus collapsible boxes below: Tenants, Units (near bottom, reference-only). SEQUENCING NOTE: build the Units box first — it only depends on existing 7.2. Do NOT build the Tenants box until 8.4 (Tenant as a real linked entity) exists; building it against a placeholder first means rebuilding it once 8.4 lands. Interleave Phase 7 and Phase 8 execution accordingly even though item numbering stays as written.
+- [ ] 7.10 Overview tab: core fields always visible (address, LLC, status, market value, property facts, insurance section with coverage dates + attached document, contact email with "+ Add email" for multiple), plus collapsible boxes below: Tenants, Units (near bottom, reference-only). SEQUENCING NOTE: build the Units box first — it only depends on existing 7.2. Do NOT build the Tenants box until 8.4 (Tenant as a real linked entity) exists; building it against a placeholder first means rebuilding it once 8.4 lands. Interleave Phase 7 and Phase 8 execution accordingly even though item numbering stays as written.
 - [ ] 7.11 Units: building-level exterior specs (year built, roof, foundation, construction, # units) shown once; per-unit specs (floor, rooms, bed/bath, appliances) and per-unit status (rented/vacant-ready/renovating/listed); unit field labeled "Unit #"
 - [ ] 7.12 Utility records: linked to Property (building-level) or Unit (unit-level), each with type + responsibility (Owner/Tenant/Split) + notes
 - [ ] 7.13 KPI tab: collapsible cards — Market & Financial Snapshot (Redfin/Zillow value + date, current loan balance, net equity, LTV, annual rent, YTD net cash flow, cash-on-cash ROI), Occupancy Snapshot, Follow-ups (pulls from Action Queue)
@@ -88,8 +88,8 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 9.2 Balance Sheet report (property value + cash − mortgage balance = equity), portfolio-wide or per-property
 - [ ] 9.3 Profit & Loss report (Schedule E format), portfolio-wide or per-property
 - [ ] 9.4 Cash Flow report
-- [ ] 9.5 Property Tax Installment ledger (year, 1st/2nd installment + date paid, Drive link per bill) — feeds KPI tax-trend card
-- [ ] 9.6 Per-transaction document attachment field (Drive link)
+- [ ] 9.5 Property Tax Installment ledger (year, 1st/2nd installment + date paid, attached document per bill) — feeds KPI tax-trend card
+- [ ] 9.6 Per-transaction document attachment field — upload, stored via the 2.5 document architecture
 - [ ] 9.7 Monthly reconciliation checklist (recurring template in Action Queue): bank/CC statement reconciliation, rent received vs. invoiced, invoices sent, mortgage payment posted, security deposits reconciled, lease renewals approaching, insurance renewal approaching, tax installment due, year-end 1099 prep
 - [ ] 9.8 Manual bank/credit card statement import (CSV upload + parsing + categorization) as the near-term alternative to live bank-feed sync
 - [ ] 9.9 Receipt-to-transaction attachment: a Log It capture can be linked to an existing transaction (imported or manual) in Reconciliation

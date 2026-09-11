@@ -11,6 +11,8 @@ export function ReconciliationQueue() {
     loading,
     error,
     processingId,
+    categoryByEntry,
+    setCategory,
     reconcile,
     viewAttachment,
   } = useReconciliationQueue()
@@ -40,6 +42,8 @@ export function ReconciliationQueue() {
         <ReconciliationList
           entries={entries}
           processingId={processingId}
+          categoryByEntry={categoryByEntry}
+          onCategoryChange={setCategory}
           onViewAttachment={viewAttachment}
           onReconcile={reconcile}
         />

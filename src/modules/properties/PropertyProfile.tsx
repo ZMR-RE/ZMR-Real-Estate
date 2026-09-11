@@ -22,6 +22,8 @@ export function PropertyProfile() {
     createLlc,
     transactions,
     activity,
+    documents,
+    viewDocument,
     loading,
     error,
     tab,
@@ -76,7 +78,7 @@ export function PropertyProfile() {
       {tab === 'transactions' && <PropertyProfileTransactionsTab transactions={transactions} />}
       {tab === 'activity' && <PropertyProfileActivityTab entries={activity} />}
       {tab === 'mortgage' && <PropertyProfileMortgageTab property={property} />}
-      {tab === 'documents' && <PropertyProfileDocumentsTab />}
+      {tab === 'documents' && <PropertyProfileDocumentsTab documents={documents} onView={viewDocument} />}
     </div>
   )
 }

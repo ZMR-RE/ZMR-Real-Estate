@@ -7,7 +7,7 @@ export interface QueueEntry {
   entry_date: string
   attachment_path: string
   attachment_type: AttachmentType
-  property: { id: string; name: string } | null
+  property: { id: string; name: string }
 }
 
 export async function listUnreconciled(accountId: string, propertyId: string | null) {

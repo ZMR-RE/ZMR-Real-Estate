@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { listProperties } from '../properties/propertiesQueries'
+import { moveToDocuments, type DocumentCategory } from '../documents/documentsQueries'
 import { getAttachmentSignedUrl, listUnreconciled, markReconciled, type QueueEntry } from './reconciliationQueries'
 
 export function useReconciliationQueue() {
-  const { accountId } = useAuth()
+  const { session, accountId } = useAuth()
   const [entries, setEntries] = useState<QueueEntry[]>([])
   const [propertyOptions, setPropertyOptions] = useState<{ id: string; label: string }[]>([])
   const [propertyFilter, setPropertyFilter] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [processingId, setProcessingId] = useState<string | null>(null)
+  const [categoryByEntry, setCategoryByEntry] = useState<Record<string, DocumentCategory | ''>>({})
 
   useEffect(() => {
     if (!accountId) return
@@ -36,9 +38,42 @@ export function useReconciliationQueue() {
     refresh()
   }, [refresh])
 
-  const reconcile = async (id: string) => {
-    setProcessingId(id)
-    const { error: reconcileError } = await markReconciled(id)
+  const setCategory = (id: string, category: DocumentCategory | '') => {
+    setCategoryByEntry((prev) => ({ ...prev, [id]: category }))
+  }
+
+  // Moves the staged attachment into its permanent Documents path and
+  // records it in the documents table (roadmap 2.6), then marks the
+  // capture_log entry reconciled — in that order, so an entry never gets
+  // marked reconciled without its file actually having landed in Documents.
+  const reconcile = async (entry: QueueEntry) => {
+    const category = categoryByEntry[entry.id]
+    if (!category) {
+      setError('Choose a document category before reconciling.')
+      return
+    }
+    if (!accountId || !session) return
+
+    setProcessingId(entry.id)
+
+    const fileName = entry.attachment_path.split('/').pop() ?? entry.attachment_path
+    const { error: moveError } = await moveToDocuments({
+      accountId,
+      propertyId: entry.property.id,
+      category,
+      uploadedBy: session.user.id,
+      sourceBucket: 'capture-attachments',
+      sourcePath: entry.attachment_path,
+      fileName,
+    })
+
+    if (moveError) {
+      setProcessingId(null)
+      setError(moveError.message ?? 'Could not move file to Documents')
+      return
+    }
+
+    const { error: reconcileError } = await markReconciled(entry.id)
     setProcessingId(null)
 
     if (reconcileError) {
@@ -46,7 +81,7 @@ export function useReconciliationQueue() {
       return
     }
 
-    setEntries((prev) => prev.filter((entry) => entry.id !== id))
+    setEntries((prev) => prev.filter((e) => e.id !== entry.id))
   }
 
   const viewAttachment = async (path: string) => {
@@ -66,6 +101,8 @@ export function useReconciliationQueue() {
     loading,
     error,
     processingId,
+    categoryByEntry,
+    setCategory,
     reconcile,
     viewAttachment,
   }
