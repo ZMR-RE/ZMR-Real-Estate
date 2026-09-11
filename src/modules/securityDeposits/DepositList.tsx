@@ -1,0 +1,79 @@
+import { depositBalance } from './useSecurityDeposits'
+import { DEPOSIT_TRANSACTION_TYPE_LABELS, type SecurityDeposit } from './securityDepositsQueries'
+
+interface DepositListProps {
+  deposits: SecurityDeposit[]
+  onLogTransaction: (depositId: string) => void
+  onVoidTransaction: (transactionId: string) => void
+}
+
+export function DepositList({ deposits, onLogTransaction, onVoidTransaction }: DepositListProps) {
+  if (deposits.length === 0) {
+    return <p>No security deposits logged yet.</p>
+  }
+
+  return (
+    <>
+      {deposits.map((deposit) => {
+        const balance = depositBalance(deposit)
+        const sortedTransactions = [...deposit.transactions].sort((a, b) =>
+          a.transaction_date < b.transaction_date ? 1 : -1,
+        )
+
+        return (
+          <section key={deposit.id}>
+            <h3>
+              {deposit.property?.name ?? '—'}
+              {deposit.unit ? ` — ${deposit.unit}` : ''} · {deposit.tenant_name}
+            </h3>
+            <p>
+              Received: ${balance.received.toFixed(2)} · Returned: ${balance.returned.toFixed(2)} · Applied to
+              damages: ${balance.appliedToDamages.toFixed(2)} · <strong>Remaining balance: ${balance.remaining.toFixed(2)}</strong>
+            </p>
+            {deposit.notes && <p>Notes: {deposit.notes}</p>}
+
+            <button type="button" onClick={() => onLogTransaction(deposit.id)} disabled={balance.remaining <= 0}>
+              Log return / damages
+            </button>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Posted to</th>
+                  <th>Description</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedTransactions.map((tx) => (
+                  <tr key={tx.id} style={tx.voided ? { opacity: 0.5 } : undefined}>
+                    <td>{tx.transaction_date}</td>
+                    <td>
+                      {DEPOSIT_TRANSACTION_TYPE_LABELS[tx.transaction_type]}
+                      {tx.voided ? ' (voided)' : ''}
+                    </td>
+                    <td>${tx.amount.toFixed(2)}</td>
+                    <td>
+                      {tx.chart_account ? `${tx.chart_account.name} (${tx.chart_account.type})` : '—'}
+                    </td>
+                    <td>{tx.description ?? ''}</td>
+                    <td>
+                      {!tx.voided && (
+                        <button type="button" onClick={() => onVoidTransaction(tx.id)}>
+                          Void
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )
+      })}
+    </>
+  )
+}

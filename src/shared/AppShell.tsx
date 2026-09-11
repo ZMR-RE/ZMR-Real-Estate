@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { to: '/automations', label: 'Automations' },
   { to: '/mortgage-portfolio', label: 'Portfolio KPIs' },
   { to: '/chart-of-accounts', label: 'Chart of Accounts' },
+  { to: '/security-deposits', label: 'Security Deposits' },
 ]
 
 export function AppShell() {

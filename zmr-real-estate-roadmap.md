@@ -96,7 +96,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 9.10 Mileage log: quick-entry in Log It, tied to a specific property; rollup summary surfaced in Financials for tax purposes
 - [ ] 9.11 Export function (PDF/CSV) for any report, for sending to an accountant
 - [ ] 9.12 QuickBooks/Xero-compatible export format, in addition to Schedule E native reporting (9.3)
-- [ ] 9.13 Security deposit tracking: dedicated Liability account (not Income); explicit transactions for deposit received, deposit returned, and deposit applied to damages, each clearing the liability correctly
+- [x] 9.13 Security deposit tracking: dedicated Liability account (not Income); explicit transactions for deposit received, deposit returned, and deposit applied to damages, each clearing the liability correctly
 - [ ] 9.14 Mortgage escrow tracking: where a mortgage escrows property tax/insurance, track that escrow balance separately from principal/interest so it isn't double-counted or missing from the property tax ledger (9.5) or loan-balance KPI
 - [ ] 9.15 Depreciation / cost basis tracking: track each property's cost basis (purchase price + capital improvements, distinct from repairs per the existing repair-vs-improvement field) and calculate annual depreciation (standard 27.5-year straight-line for residential) for Schedule E accuracy
 - [ ] 9.16 Real bank reconciliation tool: match a starting balance + transactions to an ending statement balance and surface discrepancies — not just a checklist reminder (9.7), an actual matching mechanism
