@@ -10,6 +10,7 @@ import { RentOps } from './modules/rentOps/RentOps'
 import { TaskEngine } from './modules/tasks/TaskEngine'
 import { Financials } from './modules/financials/Financials'
 import { MortgagePortfolio } from './modules/mortgagePayoff/MortgagePortfolio'
+import { ChartOfAccounts } from './modules/chartOfAccounts/ChartOfAccounts'
 
 function App() {
   const { session, loading } = useAuth()
@@ -35,6 +36,7 @@ function App() {
           <Route path="/tasks" element={<TaskEngine />} />
           <Route path="/financials" element={<Financials />} />
           <Route path="/mortgage-portfolio" element={<MortgagePortfolio />} />
+          <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
           <Route path="*" element={<Navigate to="/properties" replace />} />
         </Route>
       </Routes>

@@ -84,7 +84,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 8.10 Account `tier` field + per-feature tier-requirement flag reserved now on all accounts/modules; tier enforcement and tier definitions built in Phase 5
 
 ## 9. Phase 9 — Bookkeeping Depth
-- [ ] 9.1 Chart of Accounts screen: preloaded with a standard rental real-estate chart of accounts, user-editable (add/remap accounts)
+- [x] 9.1 Chart of Accounts screen: preloaded with a standard rental real-estate chart of accounts, user-editable (add/remap accounts)
 - [ ] 9.2 Balance Sheet report (property value + cash − mortgage balance = equity), portfolio-wide or per-property
 - [ ] 9.3 Profit & Loss report (Schedule E format), portfolio-wide or per-property
 - [ ] 9.4 Cash Flow report
