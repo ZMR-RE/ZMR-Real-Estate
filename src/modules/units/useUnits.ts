@@ -1,16 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
-import {
-  createPropertySpec,
-  listPropertySpecs,
-  updatePropertySpec,
-  type PropertySpec,
-  type PropertySpecInput,
-} from './propertySpecsQueries'
+import { createUnit, listUnits, updateUnit, type Unit, type UnitInput } from './unitsQueries'
 
-export function usePropertySpecs(propertyId: string, unitId: string | null = null) {
+export function useUnits(propertyId: string) {
   const { accountId } = useAuth()
-  const [specs, setSpecs] = useState<PropertySpec[]>([])
+  const [units, setUnits] = useState<Unit[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isAdding, setIsAdding] = useState(false)
@@ -20,7 +14,7 @@ export function usePropertySpecs(propertyId: string, unitId: string | null = nul
   const refresh = useCallback(async () => {
     if (!accountId) return
     setLoading(true)
-    const { data, error: fetchError } = await listPropertySpecs(accountId, propertyId, unitId)
+    const { data, error: fetchError } = await listUnits(accountId, propertyId)
     setLoading(false)
 
     if (fetchError) {
@@ -28,8 +22,8 @@ export function usePropertySpecs(propertyId: string, unitId: string | null = nul
       return
     }
     setError(null)
-    setSpecs(data ?? [])
-  }, [accountId, propertyId, unitId])
+    setUnits(data ?? [])
+  }, [accountId, propertyId])
 
   useEffect(() => {
     refresh()
@@ -50,10 +44,10 @@ export function usePropertySpecs(propertyId: string, unitId: string | null = nul
     setEditingId(null)
   }
 
-  const add = async (input: PropertySpecInput) => {
+  const add = async (input: UnitInput) => {
     if (!accountId) return
     setSaving(true)
-    const { error: saveError } = await createPropertySpec(accountId, propertyId, unitId, input)
+    const { error: saveError } = await createUnit(accountId, propertyId, input)
     setSaving(false)
 
     if (saveError) {
@@ -65,9 +59,9 @@ export function usePropertySpecs(propertyId: string, unitId: string | null = nul
     await refresh()
   }
 
-  const save = async (id: string, input: PropertySpecInput) => {
+  const save = async (id: string, input: UnitInput) => {
     setSaving(true)
-    const { error: saveError } = await updatePropertySpec(id, input)
+    const { error: saveError } = await updateUnit(id, input)
     setSaving(false)
 
     if (saveError) {
@@ -80,7 +74,7 @@ export function usePropertySpecs(propertyId: string, unitId: string | null = nul
   }
 
   return {
-    specs,
+    units,
     loading,
     error,
     isAdding,

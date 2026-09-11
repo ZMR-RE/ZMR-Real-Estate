@@ -98,9 +98,6 @@ export function PropertyForm({
       <label htmlFor="zip">Zip</label>
       <input id="zip" {...field('zip')} />
 
-      <label htmlFor="unit_config">Unit config</label>
-      <input id="unit_config" {...field('unit_config')} />
-
       <label htmlFor="insurance_provider">Insurance provider</label>
       <input id="insurance_provider" {...field('insurance_provider')} />
 

@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import type { LlcInput } from '../llcs/llcsQueries'
 import { PropertyTaxLedger } from '../propertyTax/PropertyTaxLedger'
+import { UnitsSection } from '../units/UnitsSection'
 import { PropertySpecsSection } from '../propertySpecs/PropertySpecsSection'
 import { SecurityDepositsSection } from '../securityDeposits/SecurityDepositsSection'
 import { PropertyForm } from './PropertyForm'
@@ -39,6 +40,8 @@ export function PropertyProfileOverviewTab({
       />
 
       <PropertyTaxLedger propertyId={property.id} />
+
+      <UnitsSection propertyId={property.id} />
 
       <PropertySpecsSection propertyId={property.id} />
 

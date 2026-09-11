@@ -9,7 +9,6 @@ export interface Property {
   city: string | null
   state: string | null
   zip: string | null
-  unit_config: string | null
   insurance_provider: string | null
   insurance_policy_number: string | null
   contact_email: string | null
@@ -23,7 +22,7 @@ export async function listProperties(accountId: string) {
   return supabase
     .from('properties')
     .select(
-      'id, account_id, name, llc_id, address, city, state, zip, unit_config, insurance_provider, insurance_policy_number, contact_email, market_value, status',
+      'id, account_id, name, llc_id, address, city, state, zip, insurance_provider, insurance_policy_number, contact_email, market_value, status',
     )
     .eq('account_id', accountId)
     .order('name')

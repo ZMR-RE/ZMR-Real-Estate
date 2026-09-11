@@ -13,7 +13,6 @@ const FIELD_LABELS: Record<string, string> = {
   city: 'City',
   state: 'State',
   zip: 'Zip',
-  unit_config: 'Unit config',
   insurance_provider: 'Insurance provider',
   insurance_policy_number: 'Insurance policy number',
   contact_email: 'Contact email',

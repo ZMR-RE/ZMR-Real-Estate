@@ -16,7 +16,6 @@ const BLANK_PROPERTY: PropertyInput = {
   city: null,
   state: null,
   zip: null,
-  unit_config: null,
   insurance_provider: null,
   insurance_policy_number: null,
   contact_email: null,
