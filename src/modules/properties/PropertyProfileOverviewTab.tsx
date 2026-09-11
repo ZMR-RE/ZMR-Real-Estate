@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import type { LlcInput } from '../llcs/llcsQueries'
+import { PropertyTaxLedger } from '../propertyTax/PropertyTaxLedger'
 import { PropertyForm } from './PropertyForm'
 import type { Property, PropertyInput } from './propertiesQueries'
 
@@ -24,14 +25,18 @@ export function PropertyProfileOverviewTab({
   const navigate = useNavigate()
 
   return (
-    <PropertyForm
-      key={property.id}
-      initialValues={property}
-      llcOptions={llcOptions}
-      onCreateLlc={onCreateLlc}
-      saving={saving}
-      onSave={onSave}
-      onCancel={() => navigate('/properties')}
-    />
+    <>
+      <PropertyForm
+        key={property.id}
+        initialValues={property}
+        llcOptions={llcOptions}
+        onCreateLlc={onCreateLlc}
+        saving={saving}
+        onSave={onSave}
+        onCancel={() => navigate('/properties')}
+      />
+
+      <PropertyTaxLedger propertyId={property.id} />
+    </>
   )
 }
