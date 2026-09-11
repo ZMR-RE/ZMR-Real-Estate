@@ -4,6 +4,7 @@ import { SearchableSelect } from '../../shared/SearchableSelect'
 import { MileageRollup } from '../mileage/MileageRollup'
 import { BankReconciliation } from '../bankReconciliation/BankReconciliation'
 import { FinancialPeriodLockControl } from '../financialPeriods/FinancialPeriodLockControl'
+import { VendorSplitRules } from '../vendors/VendorSplitRules'
 import { useFinancials } from './useFinancials'
 import { TransactionForm } from './TransactionForm'
 import { TransactionList } from './TransactionList'
@@ -15,6 +16,7 @@ const YEAR_OPTIONS = Array.from({ length: 6 }, (_, i) => new Date().getFullYear(
 // Not wired into App.tsx yet — pending sign-off per the roadmap item.
 export function Financials() {
   const [isReconciling, setIsReconciling] = useState(false)
+  const [isManagingSplitRules, setIsManagingSplitRules] = useState(false)
   const {
     transactions,
     propertyOptions,
@@ -35,6 +37,8 @@ export function Financials() {
     cancelForm,
     save,
     voidEntry,
+    applySplit,
+    reimbursedSourceIds,
     summaryByPropertyAndCategory,
     summaryByProperty,
     exportTaxCsv,
@@ -82,6 +86,11 @@ export function Financials() {
       </button>
       {isReconciling && <BankReconciliation />}
 
+      <button type="button" onClick={() => setIsManagingSplitRules((v) => !v)}>
+        {isManagingSplitRules ? 'Hide vendor split rules' : 'Manage vendor split rules'}
+      </button>
+      {isManagingSplitRules && <VendorSplitRules />}
+
       {isFormOpen ? (
         <TransactionForm
           key={formKey}
@@ -105,7 +114,14 @@ export function Financials() {
         <>
           <FinancialsSummary byPropertyAndCategory={summaryByPropertyAndCategory} byProperty={summaryByProperty} />
           <MileageRollup year={year} />
-          <TransactionList transactions={transactions} onSelect={selectTransaction} onVoid={voidEntry} />
+          <TransactionList
+            transactions={transactions}
+            onSelect={selectTransaction}
+            onVoid={voidEntry}
+            onApplySplit={applySplit}
+            reimbursedSourceIds={reimbursedSourceIds}
+            applyingSplit={saving}
+          />
         </>
       )}
     </div>

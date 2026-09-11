@@ -6,9 +6,28 @@ interface TransactionListProps {
   transactions: Transaction[]
   onSelect: (id: string) => void
   onVoid: (id: string) => void
+  onApplySplit: (transaction: Transaction) => void
+  reimbursedSourceIds: Set<string>
+  applyingSplit: boolean
 }
 
-export function TransactionList({ transactions, onSelect, onVoid }: TransactionListProps) {
+function canApplySplit(tx: Transaction, reimbursedSourceIds: Set<string>): boolean {
+  return (
+    tx.entry_type === 'expense' &&
+    tx.vendor?.split_percentage != null &&
+    !tx.reimbursement_source_id &&
+    !reimbursedSourceIds.has(tx.id)
+  )
+}
+
+export function TransactionList({
+  transactions,
+  onSelect,
+  onVoid,
+  onApplySplit,
+  reimbursedSourceIds,
+  applyingSplit,
+}: TransactionListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   if (transactions.length === 0) {
@@ -48,6 +67,12 @@ export function TransactionList({ transactions, onSelect, onVoid }: TransactionL
                 {tx.property && (
                   <button type="button" onClick={() => setExpandedId((id) => (id === tx.id ? null : tx.id))}>
                     {expandedId === tx.id ? 'Hide documents' : 'Documents'}
+                  </button>
+                )}
+                {canApplySplit(tx, reimbursedSourceIds) && (
+                  <button type="button" onClick={() => onApplySplit(tx)} disabled={applyingSplit}>
+                    Apply saved split ({tx.vendor?.split_percentage}%
+                    {tx.vendor?.split_description ? ` — ${tx.vendor.split_description}` : ''})
                   </button>
                 )}
               </td>

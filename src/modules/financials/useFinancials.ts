@@ -3,6 +3,7 @@ import { useAuth } from '../../shared/auth/AuthContext'
 import { listProperties } from '../properties/propertiesQueries'
 import { useVendors } from '../vendors/useVendors'
 import {
+  createReimbursementTransaction,
   createTransaction,
   listTransactions,
   updateTransaction,
@@ -130,6 +131,46 @@ export function useFinancials() {
     await refresh()
   }
 
+  // The set of transactions in the currently loaded list is a source of
+  // an already-applied split — used to hide "Apply saved split" once it's
+  // been clicked, so it can't be applied twice to the same transaction.
+  const reimbursedSourceIds = new Set(
+    transactions.filter((t) => t.reimbursement_source_id).map((t) => t.reimbursement_source_id as string),
+  )
+
+  // The explicit, one-click Split Rule action (roadmap 8.8) — never
+  // triggered any other way, per the Bookkeeping rule. Computes the
+  // reimbursement off the vendor's saved percentage and inserts a
+  // separate income transaction linked back to this one; never edits the
+  // original expense.
+  const applySplit = async (transaction: Transaction) => {
+    if (!accountId || !session || !transaction.property || !transaction.vendor?.split_percentage) return
+    const pct = transaction.vendor.split_percentage
+    const amount = Math.round(transaction.amount * (pct / 100) * 100) / 100
+    if (!(amount > 0)) return
+
+    setSaving(true)
+    const { error: saveError } = await createReimbursementTransaction(accountId, session.user.id, {
+      propertyId: transaction.property.id,
+      vendorId: transaction.vendor.id,
+      unit: transaction.unit,
+      paymentMethod: transaction.payment_method,
+      amount,
+      transactionDate: transaction.transaction_date,
+      description: `Reimbursement (${pct}%) for ${transaction.vendor.name}${
+        transaction.description ? ` — ${transaction.description}` : ''
+      }`,
+      reimbursementSourceId: transaction.id,
+    })
+    setSaving(false)
+    if (saveError) {
+      setError(saveError.message)
+      return
+    }
+    setError(null)
+    await refresh()
+  }
+
   const exportTaxCsv = () => {
     const csv = buildTaxExportCsv(transactions, year)
     const blob = new Blob([csv], { type: 'text/csv' })
@@ -161,6 +202,8 @@ export function useFinancials() {
     cancelForm,
     save,
     voidEntry,
+    applySplit,
+    reimbursedSourceIds,
     summaryByPropertyAndCategory: summarizeByPropertyAndCategory(transactions),
     summaryByProperty: summarizeByProperty(transactions),
     exportTaxCsv,

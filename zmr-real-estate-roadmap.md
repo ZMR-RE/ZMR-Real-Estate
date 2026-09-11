@@ -79,7 +79,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 8.5 Lease as a real linked-record entity, linked to Unit + Tenant (term dates, rent amount)
 - [ ] 8.6 Property address as the canonical identifier across the app (search, dropdowns, headers) — supersedes any name-based identification; 7.2's Unit display convention follows this ({address} — {unit label})
 - [ ] 8.7 Holding Company as a real linked entity: Holding Company → owns → LLC → owns → Property (not required data until formed)
-- [ ] 8.8 Vendor-level Split Rule: saved reimbursement percentage per vendor (e.g. pest control, 50/50); user must manually apply it per transaction every time — never auto-applied, no setting to change this
+- [x] 8.8 Vendor-level Split Rule: saved reimbursement percentage per vendor (e.g. pest control, 50/50); user must manually apply it per transaction every time — never auto-applied, no setting to change this
 - [x] 8.9 Multi-user role-based access per account: architecture (users-to-account many-to-many with a role field) reserved now; permission UI and enforcement built later — satisfied by the existing `account_members` table (account_id/user_id/role, from Phase 0's initial schema); no new schema needed, role isn't read by any permission check yet
 - [x] 8.10 Account `tier` field + per-feature tier-requirement flag reserved now on all accounts/modules; tier enforcement and tier definitions built in Phase 5
 

@@ -72,7 +72,7 @@ export interface Transaction {
   entry_type: EntryType
   category: Category
   subcategory: string | null
-  vendor: { id: string; name: string } | null
+  vendor: { id: string; name: string; split_percentage: number | null; split_description: string | null } | null
   unit: string | null
   payment_method: string
   repair_or_improvement: RepairOrImprovement | null
@@ -82,6 +82,7 @@ export interface Transaction {
   voided: boolean
   statement_reconciled: boolean
   property: { id: string; name: string } | null
+  reimbursement_source_id: string | null
 }
 
 export interface TransactionInput {
@@ -108,7 +109,7 @@ export async function listTransactions(accountId: string, filters: TransactionFi
   let query = supabase
     .from('financial_transactions')
     .select(
-      'id, entry_type, category, subcategory, vendor:vendors(id, name), unit, payment_method, repair_or_improvement, amount, transaction_date, description, voided, statement_reconciled, property:properties(id, name)',
+      'id, entry_type, category, subcategory, vendor:vendors(id, name, split_percentage, split_description), unit, payment_method, repair_or_improvement, amount, transaction_date, description, voided, statement_reconciled, property:properties(id, name), reimbursement_source_id',
     )
     .eq('account_id', accountId)
     .eq('voided', false)
@@ -143,6 +144,51 @@ export async function createTransaction(accountId: string, recordedBy: string, i
       description: input.description,
       statement_reconciled: input.statementReconciled,
       recorded_by: recordedBy,
+    })
+    .select()
+    .single()
+}
+
+export interface ReimbursementTransactionInput {
+  propertyId: string
+  vendorId: string
+  unit: string | null
+  paymentMethod: string
+  amount: number
+  transactionDate: string
+  description: string | null
+  reimbursementSourceId: string
+}
+
+// The only thing "Apply saved split" (roadmap 8.8) ever inserts — always
+// income/other_income, always linked back to the original expense via
+// reimbursement_source_id, never touches the original row. Kept separate
+// from createTransaction/TransactionInput so the regular transaction form
+// has no way to set reimbursement_source_id itself; only the explicit
+// one-click apply action (useFinancials.applySplit) calls this.
+export async function createReimbursementTransaction(
+  accountId: string,
+  recordedBy: string,
+  input: ReimbursementTransactionInput,
+) {
+  return supabase
+    .from('financial_transactions')
+    .insert({
+      account_id: accountId,
+      property_id: input.propertyId,
+      entry_type: 'income',
+      category: 'other_income',
+      subcategory: null,
+      vendor_id: input.vendorId,
+      unit: input.unit,
+      payment_method: input.paymentMethod,
+      repair_or_improvement: null,
+      amount: input.amount,
+      transaction_date: input.transactionDate,
+      description: input.description,
+      statement_reconciled: false,
+      recorded_by: recordedBy,
+      reimbursement_source_id: input.reimbursementSourceId,
     })
     .select()
     .single()
