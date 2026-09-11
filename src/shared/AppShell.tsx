@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from './auth/AuthContext'
+import { AccountSecurityMenu } from '../modules/account/AccountSecurityMenu'
 
 const NAV_ITEMS = [
   { to: '/properties', label: 'Properties' },
@@ -31,6 +32,10 @@ export function AppShell() {
         </ul>
         <div className="app-nav-account">
           <span>{session?.user.email}</span>
+          <NavLink to="/settings" className={({ isActive }) => (isActive ? 'active' : '')}>
+            Settings
+          </NavLink>
+          <AccountSecurityMenu />
           <button type="button" onClick={signOut}>
             Sign out
           </button>

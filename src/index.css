@@ -662,3 +662,73 @@ th {
     width: auto;
   }
 }
+
+/* ============================================================
+   Account & Security menu (roadmap 12.2)
+   ============================================================ */
+.account-security-menu {
+  position: relative;
+}
+
+.account-security-panel {
+  position: fixed;
+  left: 16px;
+  bottom: 80px;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 20px;
+  z-index: 30;
+}
+
+.account-security-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.account-security-panel-header h3 {
+  margin: 0;
+}
+
+.account-security-panel section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.account-security-panel section:first-of-type {
+  margin-top: 12px;
+  padding-top: 0;
+  border-top: none;
+}
+
+.account-security-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-security-panel li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.account-security-enroll img {
+  display: block;
+  margin: 8px 0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+}
