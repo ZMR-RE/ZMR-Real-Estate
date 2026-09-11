@@ -13,6 +13,7 @@ const BLANK_LLC: LlcInput = {
   ein: null,
   formation_state: null,
   registered_agent: null,
+  formation_date: null,
   annual_report_due_date: null,
 }
 
@@ -48,6 +49,9 @@ export function LlcForm({ saving, error, onSave, onCancel }: LlcFormProps) {
 
       <label htmlFor="llc_form_registered_agent">Registered agent</label>
       <input id="llc_form_registered_agent" {...field('registered_agent')} />
+
+      <label htmlFor="llc_form_formation_date">Formation date</label>
+      <input id="llc_form_formation_date" type="date" {...field('formation_date')} />
 
       <label htmlFor="llc_form_annual_report_due_date">Annual report due date</label>
       <input id="llc_form_annual_report_due_date" type="date" {...field('annual_report_due_date')} />

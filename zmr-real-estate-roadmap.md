@@ -73,7 +73,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
-- [ ] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field)
+- [x] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field) — the llcs table, properties.llc_id, and the real-list-plus-"+ Add new LLC" picker already existed (Phase 1); this pass added the missing formation_date field
 - [ ] 8.3 Vendor as a real linked-record table, linked to Transactions and Tasks
 - [ ] 8.4 Tenant as a real linked-record table, linked to Lease/Unit
 - [ ] 8.5 Lease as a real linked-record entity, linked to Unit + Tenant (term dates, rent amount)
