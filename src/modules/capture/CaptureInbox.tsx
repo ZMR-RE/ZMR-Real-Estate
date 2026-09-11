@@ -1,5 +1,11 @@
+import { MileageLogForm } from '../mileage/MileageLogForm'
 import { CaptureForm } from './CaptureForm'
 
 export function CaptureInbox() {
-  return <CaptureForm />
+  return (
+    <>
+      <CaptureForm />
+      <MileageLogForm />
+    </>
+  )
 }
