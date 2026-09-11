@@ -118,6 +118,12 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 12.2 Two-factor authentication + password reset flow
 - [ ] 12.3 Optional Drive-backed document storage: account-level Settings toggle (default: platform storage) letting a customer choose to store a given property's documents in their own connected Google Drive instead — only available once that property's email/Drive is OAuth-connected via Command Center (3.2)
 
+## 13. Phase 13 — External AI Connector
+- [ ] 13.1 Build a remote MCP server exposing scoped, read/write ZMR tools (e.g. get action queue, get portfolio KPIs, log a transaction) — each connecting user authenticated via OAuth 2.0, mapped to their own account_id, so they can only ever access their own data
+- [ ] 13.2 Reuse the OAuth infrastructure built for Command Center (3.2) rather than building a separate auth layer — sequence this phase after Command Center is complete
+- [ ] 13.3 Support both Claude (Claude.ai, Cowork, Claude Desktop) and ChatGPT as connecting clients, since both support the open MCP standard; note ChatGPT's write-access support varies by the customer's own ChatGPT plan tier, which is outside our control
+- [ ] 13.4 Submit to Anthropic's MCP Connector Directory once stable, for discoverability (optional — the server works as a custom connector even before/without directory approval)
+
 ## Future Considerations (not yet phased — logged so they aren't lost)
 - Online rent collection (actual ACH/card payment processing) — deferred; meaningful compliance/integration lift, revisit once there's a revenue model to absorb per-connection costs. Current payment methods: cash, check, Zelle.
 - Live automated bank-feed sync (e.g. via Plaid) — deferred to a future paid tier once subscription revenue can absorb per-connection cost; manual CSV import (9.8) is the interim solution
