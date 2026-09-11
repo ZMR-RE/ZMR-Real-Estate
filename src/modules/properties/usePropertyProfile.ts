@@ -6,7 +6,7 @@ import { listTransactions, type Transaction } from '../financials/financialsQuer
 import { listActivityLog, type ActivityLogEntry } from '../capture/captureQueries'
 import { getDocumentSignedUrl, listDocuments, type DocumentRecord } from '../documents/documentsQueries'
 
-export type ProfileTab = 'overview' | 'transactions' | 'activity' | 'mortgage' | 'documents'
+export type ProfileTab = 'overview' | 'transactions' | 'activity' | 'mortgage' | 'documents' | 'history'
 
 export function usePropertyProfile(propertyId: string) {
   const { accountId } = useAuth()

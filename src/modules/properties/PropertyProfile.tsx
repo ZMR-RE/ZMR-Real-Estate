@@ -5,6 +5,7 @@ import { PropertyProfileTransactionsTab } from './PropertyProfileTransactionsTab
 import { PropertyProfileActivityTab } from './PropertyProfileActivityTab'
 import { PropertyProfileMortgageTab } from './PropertyProfileMortgageTab'
 import { PropertyProfileDocumentsTab } from './PropertyProfileDocumentsTab'
+import { PropertyProfileHistoryTab } from './PropertyProfileHistoryTab'
 
 const TABS: { key: ProfileTab; label: string }[] = [
   { key: 'overview', label: 'Overview' },
@@ -12,6 +13,7 @@ const TABS: { key: ProfileTab; label: string }[] = [
   { key: 'activity', label: 'Activity Log' },
   { key: 'mortgage', label: 'Mortgage' },
   { key: 'documents', label: 'Documents' },
+  { key: 'history', label: 'History' },
 ]
 
 export function PropertyProfile() {
@@ -79,6 +81,7 @@ export function PropertyProfile() {
       {tab === 'activity' && <PropertyProfileActivityTab entries={activity} />}
       {tab === 'mortgage' && <PropertyProfileMortgageTab property={property} />}
       {tab === 'documents' && <PropertyProfileDocumentsTab documents={documents} onView={viewDocument} />}
+      {tab === 'history' && <PropertyProfileHistoryTab property={property} llcOptions={llcOptions} />}
     </div>
   )
 }
