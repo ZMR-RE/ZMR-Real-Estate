@@ -3,6 +3,7 @@ import { SearchableSelect } from '../../shared/SearchableSelect'
 import { MileageRollup } from '../mileage/MileageRollup'
 import { BankReconciliation } from '../bankReconciliation/BankReconciliation'
 import { ChartOfAccounts } from '../chartOfAccounts/ChartOfAccounts'
+import { FinancialPeriodLockControl } from '../financialPeriods/FinancialPeriodLockControl'
 import { useFinancials } from './useFinancials'
 import { TransactionForm } from './TransactionForm'
 import { TransactionList } from './TransactionList'
@@ -51,6 +52,8 @@ export function Financials() {
           </option>
         ))}
       </select>
+
+      <FinancialPeriodLockControl year={year} />
 
       <label htmlFor="property_filter">Filter by property</label>
       <SearchableSelect
