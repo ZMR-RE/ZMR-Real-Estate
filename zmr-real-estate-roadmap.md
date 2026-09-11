@@ -116,6 +116,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 ## 12. Phase 12 — Settings & Account Administration
 - [ ] 12.1 Settings area (account-level, separate from main nav flow): houses Chart of Accounts management, pick-list management (8.1), security (2FA, password reset), and future billing/tier management
 - [ ] 12.2 Two-factor authentication + password reset flow
+- [ ] 12.3 Optional Drive-backed document storage: account-level Settings toggle (default: platform storage) letting a customer choose to store a given property's documents in their own connected Google Drive instead — only available once that property's email/Drive is OAuth-connected via Command Center (3.2)
 
 ## Future Considerations (not yet phased — logged so they aren't lost)
 - Online rent collection (actual ACH/card payment processing) — deferred; meaningful compliance/integration lift, revisit once there's a revenue model to absorb per-connection costs. Current payment methods: cash, check, Zelle.
