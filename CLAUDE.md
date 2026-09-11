@@ -26,6 +26,9 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 - Any credential — password, token, or key — must be entered through direct/masked terminal input (e.g. the ! method), never typed or pasted into the Claude Code chat interface itself.
 - Every external service this project connects to (GitHub, Supabase, Netlify, etc.) must use a project-scoped credential stored locally to this project — never a shared or global login. This lets ZMR and other dashboard projects run at the same time without one knocking the other's session loose.
 
+## Test verification cleanup
+- When cleaning up after live verification, only delete records your own session created. Never delete a pre-existing record you only edited during testing — revert the specific field(s) you changed instead. If you cannot distinguish whether a record predates your test, stop and ask before deleting it.
+
 ## Data integrity
 - Never seed, infer, or guess a field's value from a naming pattern or assumption (e.g. deriving an LLC name from a property's address). Leave the field blank and prompt the user for the real value instead. Only user-entered data is treated as truth.
 - Entity detail screens (Property, Mortgage, LLC, and future entities) default to a read-only view. Editing requires an explicit "Edit" action — never inline-editable by default.
