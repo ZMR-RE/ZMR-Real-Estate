@@ -29,6 +29,9 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 ## Test verification cleanup
 - When cleaning up after live verification, only delete records your own session created. Never delete a pre-existing record you only edited during testing — revert the specific field(s) you changed instead. If you cannot distinguish whether a record predates your test, stop and ask before deleting it.
 
+## Credential safety in testing
+- Never test password-reset, login, or credential flows using the real account's actual credentials in a way that changes them without asking first. If verifying a flow requires changing a real credential, stop and ask before proceeding, or use a disposable/test account instead. If a real credential is changed as part of testing, hand control back to the user immediately with the new value — never treat that as routine cleanup.
+
 ## Navigation discipline
 - No new feature may add a standalone top-level nav item without explicit approval. New functionality must be placed within the approved nav structure (Properties, Log It, Action Queue, Financials & Tax, Command Center, Automations, Portfolio KPIs) or on the relevant entity's own profile page (Property, Mortgage, etc.) — never a new sibling nav entry as a default fallback.
 
