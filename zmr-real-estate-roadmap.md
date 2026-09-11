@@ -24,8 +24,8 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 2.2 Task Engine — per-property to-do lists, recurring items, "coming up" view across the portfolio
 - [x] 2.3 Financials & Tax Readiness — income/expense by property and category, tax-ready export
 - [ ] 2.4 Historical Data Backfill — import past bookkeeping/purchase dates for both properties
-- [x] 2.5 Document Storage Architecture — Drive folder structure per property, linked from dashboard records
-- [x] 2.6 Reconcile-to-Drive move action — on reconciliation, move the staged file from Supabase Storage into the correct property's Drive folder (tied to that property's email), then clear it from Supabase. Depends on 2.5 and the per-property email mapping from Phase 3. Superseded in practice by 3.4's general routing rules once that lands — this becomes "apply the account's routing rule" rather than hardcoded logic.
+- [x] 2.5 Document Storage Architecture — native Supabase Storage: a `documents` table plus a private `documents` bucket, path convention `{account_id}/{property_id}/{category}/{filename}`, linked from each property's Documents tab
+- [x] 2.6 Reconcile-to-Documents move action — on reconciliation, move the staged file from Quick Capture's staging bucket into its permanent Documents path above, and create its documents table record at that point — not before
 
 ## 3. Phase 3 — Reuse & Integrations
 - [ ] 3.1 Port Communication Hub from My Earth Market dashboard — adapt existing Gmail management code for per-property email accounts
