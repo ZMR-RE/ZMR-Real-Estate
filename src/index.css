@@ -495,6 +495,30 @@ dd {
 }
 
 /* ============================================================
+   Transaction documents (roadmap 9.6)
+   ============================================================ */
+.transaction-documents {
+  padding: 12px 0;
+}
+
+.transaction-documents-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.transaction-documents-list li {
+  margin-bottom: 6px;
+}
+
+.transaction-documents-upload {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ============================================================
    Tables
    ============================================================ */
 table {

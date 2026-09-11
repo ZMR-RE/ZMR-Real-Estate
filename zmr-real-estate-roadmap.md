@@ -89,7 +89,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 9.3 Profit & Loss report (Schedule E format), portfolio-wide or per-property
 - [ ] 9.4 Cash Flow report
 - [x] 9.5 Property Tax Installment ledger (year, 1st/2nd installment + date paid, attached document per bill) — feeds KPI tax-trend card
-- [ ] 9.6 Per-transaction document attachment field — upload, stored via the 2.5 document architecture
+- [x] 9.6 Per-transaction document attachment field — upload, stored via the 2.5 document architecture
 - [ ] 9.7 Monthly reconciliation checklist (recurring template in Action Queue): bank/CC statement reconciliation, rent received vs. invoiced, invoices sent, mortgage payment posted, security deposits reconciled, lease renewals approaching, insurance renewal approaching, tax installment due, year-end 1099 prep
 - [ ] 9.8 Manual bank/credit card statement import (CSV upload + parsing + categorization) as the near-term alternative to live bank-feed sync
 - [ ] 9.9 Receipt-to-transaction attachment: a Log It capture can be linked to an existing transaction (imported or manual) in Reconciliation

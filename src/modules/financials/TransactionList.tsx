@@ -1,4 +1,6 @@
+import { Fragment, useState } from 'react'
 import { CATEGORY_LABELS, type Transaction } from './financialsQueries'
+import { TransactionDocuments } from './TransactionDocuments'
 
 interface TransactionListProps {
   transactions: Transaction[]
@@ -7,6 +9,8 @@ interface TransactionListProps {
 }
 
 export function TransactionList({ transactions, onSelect, onVoid }: TransactionListProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
   if (transactions.length === 0) {
     return <p>No transactions for this filter.</p>
   }
@@ -26,22 +30,36 @@ export function TransactionList({ transactions, onSelect, onVoid }: TransactionL
       </thead>
       <tbody>
         {transactions.map((tx) => (
-          <tr key={tx.id}>
-            <td>{tx.transaction_date}</td>
-            <td>{tx.property?.name ?? '—'}</td>
-            <td>{tx.entry_type === 'income' ? 'Income' : 'Expense'}</td>
-            <td>{CATEGORY_LABELS[tx.category]}</td>
-            <td>{tx.description ?? ''}</td>
-            <td>${tx.amount.toFixed(2)}</td>
-            <td>
-              <button type="button" onClick={() => onSelect(tx.id)}>
-                Edit
-              </button>
-              <button type="button" onClick={() => onVoid(tx.id)}>
-                Void
-              </button>
-            </td>
-          </tr>
+          <Fragment key={tx.id}>
+            <tr>
+              <td>{tx.transaction_date}</td>
+              <td>{tx.property?.name ?? '—'}</td>
+              <td>{tx.entry_type === 'income' ? 'Income' : 'Expense'}</td>
+              <td>{CATEGORY_LABELS[tx.category]}</td>
+              <td>{tx.description ?? ''}</td>
+              <td>${tx.amount.toFixed(2)}</td>
+              <td>
+                <button type="button" onClick={() => onSelect(tx.id)}>
+                  Edit
+                </button>
+                <button type="button" onClick={() => onVoid(tx.id)}>
+                  Void
+                </button>
+                {tx.property && (
+                  <button type="button" onClick={() => setExpandedId((id) => (id === tx.id ? null : tx.id))}>
+                    {expandedId === tx.id ? 'Hide documents' : 'Documents'}
+                  </button>
+                )}
+              </td>
+            </tr>
+            {expandedId === tx.id && tx.property && (
+              <tr>
+                <td colSpan={7}>
+                  <TransactionDocuments transactionId={tx.id} propertyId={tx.property.id} />
+                </td>
+              </tr>
+            )}
+          </Fragment>
         ))}
       </tbody>
     </table>
