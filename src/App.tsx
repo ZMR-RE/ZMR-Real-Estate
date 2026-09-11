@@ -11,6 +11,8 @@ import { TaskEngine } from './modules/tasks/TaskEngine'
 import { Financials } from './modules/financials/Financials'
 import { MortgagePortfolio } from './modules/mortgagePayoff/MortgagePortfolio'
 import { ChartOfAccounts } from './modules/chartOfAccounts/ChartOfAccounts'
+import { CommandCenter } from './modules/commandCenter/CommandCenter'
+import { Automations } from './modules/automations/Automations'
 
 function App() {
   const { session, loading } = useAuth()
@@ -35,6 +37,8 @@ function App() {
           <Route path="/rent-ops" element={<RentOps />} />
           <Route path="/tasks" element={<TaskEngine />} />
           <Route path="/financials" element={<Financials />} />
+          <Route path="/command-center" element={<CommandCenter />} />
+          <Route path="/automations" element={<Automations />} />
           <Route path="/mortgage-portfolio" element={<MortgagePortfolio />} />
           <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
           <Route path="*" element={<Navigate to="/properties" replace />} />

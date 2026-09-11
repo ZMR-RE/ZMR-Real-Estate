@@ -105,7 +105,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 9.19 Year-end closing/lock: ability to lock a financial period after it's been handed to an accountant; reopening a locked period is an explicit action, logged in the audit trail (9.17)
 
 ## 10. Phase 10 — Navigation & Action Consolidation
-- [ ] 10.1 Rename left nav to: Properties, Log It, Action Queue, Financials & Tax, Command Center, Automations, Portfolio KPIs
+- [x] 10.1 Rename left nav to: Properties, Log It, Action Queue, Financials & Tax, Command Center, Automations, Portfolio KPIs
 - [ ] 10.2 Action Queue: single task/action data model (property/unit/type/assignee/due date/recurring), collapsible boxes by type; same records surface filtered on each property's own Overview — no duplicate entry between portfolio-wide and per-property views
 - [ ] 10.3 Portfolio KPIs (nav item): portfolio-wide rollup — mortgage/equity/LTV (existing 7.6), performance vs. market (existing 4.2) — collapsible cards
 - [ ] 10.4 Command Center: implement existing Phase 3 (3.1–3.4); elevate to a visible nav item as soon as Phase 3 is built, rather than remaining a designed-but-invisible phase

@@ -3,12 +3,14 @@ import { useAuth } from './auth/AuthContext'
 
 const NAV_ITEMS = [
   { to: '/properties', label: 'Properties' },
-  { to: '/capture', label: 'Quick Capture' },
-  { to: '/reconciliation', label: 'Reconciliation' },
+  { to: '/capture', label: 'Log It' },
+  { to: '/reconciliation', label: 'Action Queue' },
   { to: '/rent-ops', label: 'Rent Ops' },
   { to: '/tasks', label: 'Tasks' },
-  { to: '/financials', label: 'Financials' },
-  { to: '/mortgage-portfolio', label: 'Mortgage Portfolio' },
+  { to: '/financials', label: 'Financials & Tax' },
+  { to: '/command-center', label: 'Command Center' },
+  { to: '/automations', label: 'Automations' },
+  { to: '/mortgage-portfolio', label: 'Portfolio KPIs' },
   { to: '/chart-of-accounts', label: 'Chart of Accounts' },
 ]
 
