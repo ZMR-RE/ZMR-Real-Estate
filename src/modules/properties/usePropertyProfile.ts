@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { useLlcs } from '../llcs/useLlcs'
+import { useHoldingCompanies } from '../holdingCompanies/useHoldingCompanies'
 import { listProperties, updateProperty, type Property, type PropertyInput } from './propertiesQueries'
 import { listTransactions, type Transaction } from '../financials/financialsQueries'
 import { listActivityLog, type ActivityLogEntry } from '../capture/captureQueries'
@@ -12,6 +13,7 @@ export function usePropertyProfile(propertyId: string) {
   const { accountId } = useAuth()
   const [property, setProperty] = useState<Property | null>(null)
   const { llcOptions, addLlc } = useLlcs(accountId)
+  const { holdingCompanyOptions, addHoldingCompany } = useHoldingCompanies(accountId)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [activity, setActivity] = useState<ActivityLogEntry[]>([])
   const [documents, setDocuments] = useState<DocumentRecord[]>([])
@@ -61,22 +63,25 @@ export function usePropertyProfile(propertyId: string) {
     refresh()
   }, [refresh])
 
-  const saveProperty = async (input: PropertyInput) => {
+  const saveProperty = async (input: PropertyInput): Promise<boolean> => {
     setSaving(true)
     const { error: saveError } = await updateProperty(propertyId, input)
     setSaving(false)
     if (saveError) {
       setError(saveError.message)
-      return
+      return false
     }
     setError(null)
     await refresh()
+    return true
   }
 
   return {
     property,
     llcOptions,
     createLlc: addLlc,
+    holdingCompanyOptions,
+    createHoldingCompany: addHoldingCompany,
     transactions,
     activity,
     documents,
