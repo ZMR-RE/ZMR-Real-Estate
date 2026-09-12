@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { useLlcs } from '../llcs/useLlcs'
+import { useHoldingCompanies } from '../holdingCompanies/useHoldingCompanies'
 import {
   createProperty,
   listProperties,
@@ -27,6 +28,7 @@ export function usePropertyRegistry() {
   const { accountId } = useAuth()
   const [properties, setProperties] = useState<Property[]>([])
   const { llcOptions, addLlc } = useLlcs(accountId)
+  const { holdingCompanyOptions, addHoldingCompany } = useHoldingCompanies(accountId)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -91,6 +93,8 @@ export function usePropertyRegistry() {
     properties,
     llcOptions,
     createLlc: addLlc,
+    holdingCompanyOptions,
+    createHoldingCompany: addHoldingCompany,
     loading,
     error,
     isFormOpen: isCreating || selectedProperty !== null,

@@ -4,12 +4,15 @@ import { SearchableSelect } from '../../shared/SearchableSelect'
 import { LlcForm } from '../llcs/LlcForm'
 import type { LlcInput } from '../llcs/llcsQueries'
 import { NO_LLC_ID } from '../llcs/useLlcs'
+import type { HoldingCompanyInput } from '../holdingCompanies/holdingCompaniesQueries'
 import type { PropertyInput } from './propertiesQueries'
 
 interface PropertyFormProps {
   initialValues: PropertyInput
   llcOptions: SearchableSelectOption[]
   onCreateLlc: (input: LlcInput) => Promise<{ id: string } | { error: string }>
+  holdingCompanyOptions: SearchableSelectOption[]
+  onCreateHoldingCompany: (input: HoldingCompanyInput) => Promise<{ id: string } | { error: string }>
   saving: boolean
   onSave: (input: PropertyInput) => void
   onCancel: () => void
@@ -19,6 +22,8 @@ export function PropertyForm({
   initialValues,
   llcOptions,
   onCreateLlc,
+  holdingCompanyOptions,
+  onCreateHoldingCompany,
   saving,
   onSave,
   onCancel,
@@ -69,6 +74,8 @@ export function PropertyForm({
         <LlcForm
           saving={creatingLlc}
           error={createLlcError}
+          holdingCompanyOptions={holdingCompanyOptions}
+          onCreateHoldingCompany={onCreateHoldingCompany}
           onSave={handleCreateLlc}
           onCancel={() => {
             setIsAddingLlc(false)

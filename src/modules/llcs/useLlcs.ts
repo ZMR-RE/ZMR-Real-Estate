@@ -14,6 +14,14 @@ export const NO_LLC_ID = 'no-llc'
 
 const NO_LLC_OPTION: LlcOption = { id: NO_LLC_ID, label: 'Individually owned / No LLC' }
 
+// Folds the Holding Company (8.7) straight into the label so every
+// existing llcOptions consumer (PropertySummary, PropertyForm's picker)
+// shows it with no changes of their own — "Acme LLC (Sunrise Holdings)"
+// vs. just "Acme LLC" when there isn't one.
+function llcLabel(name: string, holdingCompanyName: string | null): string {
+  return holdingCompanyName ? `${name} (${holdingCompanyName})` : name
+}
+
 // Shared by any module that needs an LLC picker (Property Registry, the
 // Property Profile Overview tab) so the fetch-options-plus-create-new
 // logic lives in one place instead of being copied per caller.
@@ -23,7 +31,7 @@ export function useLlcs(accountId: string | null) {
   const refresh = useCallback(async () => {
     if (!accountId) return
     const { data } = await listLlcs(accountId)
-    setRealLlcOptions((data ?? []).map((llc) => ({ id: llc.id, label: llc.name })))
+    setRealLlcOptions((data ?? []).map((llc) => ({ id: llc.id, label: llcLabel(llc.name, llc.holding_company?.name ?? null) })))
   }, [accountId])
 
   useEffect(() => {
@@ -37,7 +45,9 @@ export function useLlcs(accountId: string | null) {
       return { error: error?.message ?? 'Could not create LLC' }
     }
     setRealLlcOptions((prev) =>
-      [...prev, { id: data.id, label: data.name }].sort((a, b) => a.label.localeCompare(b.label)),
+      [...prev, { id: data.id, label: llcLabel(data.name, data.holding_company?.name ?? null) }].sort((a, b) =>
+        a.label.localeCompare(b.label),
+      ),
     )
     return { id: data.id }
   }

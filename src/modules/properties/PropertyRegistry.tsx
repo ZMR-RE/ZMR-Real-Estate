@@ -7,6 +7,8 @@ export function PropertyRegistry() {
     properties,
     llcOptions,
     createLlc,
+    holdingCompanyOptions,
+    createHoldingCompany,
     loading,
     error,
     isFormOpen,
@@ -33,6 +35,8 @@ export function PropertyRegistry() {
           initialValues={formInitialValues}
           llcOptions={llcOptions}
           onCreateLlc={createLlc}
+          holdingCompanyOptions={holdingCompanyOptions}
+          onCreateHoldingCompany={createHoldingCompany}
           saving={saving}
           onSave={save}
           onCancel={cancelForm}

@@ -22,6 +22,8 @@ export function PropertyProfile() {
     property,
     llcOptions,
     createLlc,
+    holdingCompanyOptions,
+    createHoldingCompany,
     transactions,
     activity,
     documents,
@@ -73,6 +75,8 @@ export function PropertyProfile() {
           property={property}
           llcOptions={llcOptions}
           onCreateLlc={createLlc}
+          holdingCompanyOptions={holdingCompanyOptions}
+          onCreateHoldingCompany={createHoldingCompany}
           saving={saving}
           onSave={saveProperty}
         />
