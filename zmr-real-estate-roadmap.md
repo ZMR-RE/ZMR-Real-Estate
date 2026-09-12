@@ -75,7 +75,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
 - [x] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field) — the llcs table, properties.llc_id, and the real-list-plus-"+ Add new LLC" picker already existed (Phase 1); this pass added the missing formation_date field
 - [x] 8.3 Vendor as a real linked-record table, linked to Transactions and Tasks
-- [x] 8.4 Tenant as a real linked-record table, linked to Lease/Unit
+- [ ] 8.4 Tenant as a real linked-record table, linked to Lease/Unit
 - [ ] 8.5 Lease as a real linked-record entity, linked to Unit + Tenant (term dates, rent amount)
 - [ ] 8.6 Property address as the canonical identifier across the app (search, dropdowns, headers) — supersedes any name-based identification; 7.2's Unit display convention follows this ({address} — {unit label})
 - [x] 8.7 Holding Company as a real linked entity: Holding Company → owns → LLC → owns → Property (not required data until formed)
@@ -100,7 +100,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 9.14 Mortgage escrow tracking: where a mortgage escrows property tax/insurance, track that escrow balance separately from principal/interest so it isn't double-counted or missing from the property tax ledger (9.5) or loan-balance KPI
 - [ ] 9.15 Depreciation / cost basis tracking: track each property's cost basis (purchase price + capital improvements, distinct from repairs per the existing repair-vs-improvement field) and calculate annual depreciation (standard 27.5-year straight-line for residential) for Schedule E accuracy
 - [x] 9.16 Real bank reconciliation tool: match a starting balance + transactions to an ending statement balance and surface discrepancies — not just a checklist reminder (9.7), an actual matching mechanism
-- [ ] 9.17 Extend the audit trail (7.8) to financial transactions: who edited or voided a booked transaction and when
+- [x] 9.17 Extend the audit trail (7.8) to financial transactions: who edited or voided a booked transaction and when
 - [ ] 9.18 Historical Data Backfill (2.4) must establish real opening balances per Chart of Accounts account as of the backfill date, so the Balance Sheet (9.2) is accurate for periods before backfill
 - [x] 9.19 Year-end closing/lock: ability to lock a financial period after it's been handed to an accountant; reopening a locked period is an explicit action, logged in the audit trail (9.17)
 - [ ] 9.20 Add soft-delete/void support to Mortgage records, matching the existing pattern used for financial transactions and Chart of Accounts entries — currently mortgage records can only be hard-deleted, which conflicts with CLAUDE.md's data-safety rule

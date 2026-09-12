@@ -4,6 +4,7 @@ export const RECORD_LABELS: Record<AuditedTable, string> = {
   properties: 'Property',
   llcs: 'LLC',
   mortgage_details: 'Mortgage',
+  financial_transactions: 'Transaction',
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -30,9 +31,29 @@ const FIELD_LABELS: Record<string, string> = {
   loan_start_date: 'Loan start date',
   term_years: 'Term (years)',
   escrow_balance: 'Escrow balance',
+  category: 'Category',
+  subcategory: 'Subcategory',
+  vendor_id: 'Vendor',
+  unit: 'Unit',
+  payment_method: 'Payment method',
+  repair_or_improvement: 'Repair or improvement',
+  amount: 'Amount',
+  transaction_date: 'Date',
+  description: 'Description',
+  voided: 'Voided',
+  voided_at: 'Voided at',
+  statement_reconciled: 'Matched to bank/credit-card statement',
+  entry_type: 'Type',
 }
 
-const MONEY_FIELDS = new Set(['market_value', 'original_loan_amount', 'current_balance', 'monthly_payment', 'escrow_balance'])
+const MONEY_FIELDS = new Set([
+  'market_value',
+  'original_loan_amount',
+  'current_balance',
+  'monthly_payment',
+  'escrow_balance',
+  'amount',
+])
 
 export function fieldLabel(fieldName: string): string {
   return FIELD_LABELS[fieldName] ?? fieldName

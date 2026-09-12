@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react'
 import { CATEGORY_LABELS, type Transaction } from './financialsQueries'
 import { TransactionDocuments } from './TransactionDocuments'
+import { TransactionAuditHistory } from './TransactionAuditHistory'
 
 interface TransactionListProps {
   transactions: Transaction[]
@@ -29,6 +30,7 @@ export function TransactionList({
   applyingSplit,
 }: TransactionListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null)
 
   if (transactions.length === 0) {
     return <p>No transactions for this filter.</p>
@@ -69,6 +71,12 @@ export function TransactionList({
                     {expandedId === tx.id ? 'Hide documents' : 'Documents'}
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={() => setExpandedHistoryId((id) => (id === tx.id ? null : tx.id))}
+                >
+                  {expandedHistoryId === tx.id ? 'Hide history' : 'History'}
+                </button>
                 {canApplySplit(tx, reimbursedSourceIds) && (
                   <button type="button" onClick={() => onApplySplit(tx)} disabled={applyingSplit}>
                     Apply saved split ({tx.vendor?.split_percentage}%
@@ -81,6 +89,13 @@ export function TransactionList({
               <tr>
                 <td colSpan={7}>
                   <TransactionDocuments transactionId={tx.id} propertyId={tx.property.id} />
+                </td>
+              </tr>
+            )}
+            {expandedHistoryId === tx.id && (
+              <tr>
+                <td colSpan={7}>
+                  <TransactionAuditHistory transactionId={tx.id} />
                 </td>
               </tr>
             )}

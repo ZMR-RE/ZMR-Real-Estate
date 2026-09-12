@@ -1,6 +1,6 @@
 import { supabase } from '../../shared/supabaseClient'
 
-export type AuditedTable = 'properties' | 'llcs' | 'mortgage_details'
+export type AuditedTable = 'properties' | 'llcs' | 'mortgage_details' | 'financial_transactions'
 
 export interface AuditLogEntry {
   id: string
