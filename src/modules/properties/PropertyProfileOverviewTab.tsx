@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import type { LlcInput } from '../llcs/llcsQueries'
-import type { HoldingCompanyInput } from '../holdingCompanies/holdingCompaniesQueries'
 import { PropertyTaxLedger } from '../propertyTax/PropertyTaxLedger'
 import { UnitsSection } from '../units/UnitsSection'
 import { PropertySpecsSection } from '../propertySpecs/PropertySpecsSection'
@@ -14,8 +13,6 @@ interface PropertyProfileOverviewTabProps {
   property: Property
   llcOptions: SearchableSelectOption[]
   onCreateLlc: (input: LlcInput) => Promise<{ id: string } | { error: string }>
-  holdingCompanyOptions: SearchableSelectOption[]
-  onCreateHoldingCompany: (input: HoldingCompanyInput) => Promise<{ id: string } | { error: string }>
   saving: boolean
   onSave: (input: PropertyInput) => Promise<boolean>
 }
@@ -31,8 +28,6 @@ export function PropertyProfileOverviewTab({
   property,
   llcOptions,
   onCreateLlc,
-  holdingCompanyOptions,
-  onCreateHoldingCompany,
   saving,
   onSave,
 }: PropertyProfileOverviewTabProps) {
@@ -53,8 +48,6 @@ export function PropertyProfileOverviewTab({
           initialValues={property}
           llcOptions={llcOptions}
           onCreateLlc={onCreateLlc}
-          holdingCompanyOptions={holdingCompanyOptions}
-          onCreateHoldingCompany={onCreateHoldingCompany}
           saving={saving}
           onSave={handleSave}
           onCancel={() => setIsEditing(false)}
