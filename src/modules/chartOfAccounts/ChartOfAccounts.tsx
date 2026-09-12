@@ -1,5 +1,6 @@
 import { useChartOfAccounts } from './useChartOfAccounts'
 import { AccountList } from './AccountList'
+import { AccountListExport } from './AccountListExport'
 import { AccountForm } from './AccountForm'
 import { CategoryMappingList } from './CategoryMappingList'
 
@@ -39,6 +40,7 @@ export function ChartOfAccounts() {
       {error && <p role="alert">{error}</p>}
 
       <h2>Accounts</h2>
+      <AccountListExport accounts={accounts} />
       <AccountList accounts={accounts} editingAccountId={editingAccountId} onEdit={startEditingAccount} />
 
       {isAccountFormOpen ? (

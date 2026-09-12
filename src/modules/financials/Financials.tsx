@@ -8,6 +8,7 @@ import { VendorSplitRules } from '../vendors/VendorSplitRules'
 import { useFinancials } from './useFinancials'
 import { TransactionForm } from './TransactionForm'
 import { TransactionList } from './TransactionList'
+import { TransactionListExport } from './TransactionListExport'
 import { FinancialsSummary } from './FinancialsSummary'
 
 const YEAR_OPTIONS = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i)
@@ -114,6 +115,7 @@ export function Financials() {
         <>
           <FinancialsSummary byPropertyAndCategory={summaryByPropertyAndCategory} byProperty={summaryByProperty} />
           <MileageRollup year={year} />
+          <TransactionListExport transactions={transactions} year={year} />
           <TransactionList
             transactions={transactions}
             onSelect={selectTransaction}
