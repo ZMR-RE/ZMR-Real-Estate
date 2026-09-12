@@ -21,6 +21,7 @@ const BLANK_PROPERTY: PropertyInput = {
   insurance_policy_number: null,
   contact_email: null,
   market_value: null,
+  purchase_price: null,
   status: 'active',
 }
 

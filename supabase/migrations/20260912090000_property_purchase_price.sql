@@ -1,0 +1,11 @@
+-- Depreciation / cost basis tracking (Roadmap item 9.15)
+--
+-- purchase_price is the only new stored field this feature needs.
+-- Capital improvements are NOT a separate manual field — per the roadmap
+-- item's own wording, they're derived by summing existing
+-- financial_transactions rows already flagged repair_or_improvement =
+-- 'improvement' (that field already exists, from 2.3's financials
+-- schema). Storing a second, manually-entered improvements total would
+-- duplicate that data and let the two drift out of sync, which is
+-- exactly what the Data integrity rule in CLAUDE.md warns against.
+alter table properties add column purchase_price numeric(12, 2);

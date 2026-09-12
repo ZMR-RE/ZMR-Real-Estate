@@ -7,6 +7,7 @@ import { MortgagePaymentForm } from '../mortgagePayoff/MortgagePaymentForm'
 import { MortgagePaymentList } from '../mortgagePayoff/MortgagePaymentList'
 import { EscrowTransactionForm } from '../mortgagePayoff/EscrowTransactionForm'
 import { EscrowTransactionList } from '../mortgagePayoff/EscrowTransactionList'
+import { CostBasisSection } from '../depreciation/CostBasisSection'
 import type { Property } from './propertiesQueries'
 
 interface PropertyProfileMortgageTabProps {
@@ -56,60 +57,67 @@ export function PropertyProfileMortgageTab({ property }: PropertyProfileMortgage
     return <p role="alert">{error}</p>
   }
 
-  if (isEditing) {
-    return (
-      <MortgageDetailsForm
-        key={mortgageDetails?.id ?? 'new'}
-        initialValues={formInitialValues}
-        saving={saving}
-        canCancel={mortgageDetails !== null}
-        onSave={save}
-        onCancel={cancelEditing}
-      />
-    )
-  }
-
-  if (!mortgageDetails) {
-    return null // isEditing is forced true above whenever there's no mortgage yet
-  }
-
   return (
     <>
-      <MortgagePropertySummary
-        mortgageDetails={mortgageDetails}
-        marketValue={property.market_value}
-        equity={equity}
-        onEdit={startEditing}
-      />
+      {isEditing ? (
+        <MortgageDetailsForm
+          key={mortgageDetails?.id ?? 'new'}
+          initialValues={formInitialValues}
+          saving={saving}
+          canCancel={mortgageDetails !== null}
+          onSave={save}
+          onCancel={cancelEditing}
+        />
+      ) : (
+        mortgageDetails && (
+          <>
+            <MortgagePropertySummary
+              mortgageDetails={mortgageDetails}
+              marketValue={property.market_value}
+              equity={equity}
+              onEdit={startEditing}
+            />
 
-      <MortgagePayoffScenarioForm
-        extraAmount={extraAmount}
-        onExtraAmountChange={setExtraAmount}
-        extraMode={extraMode}
-        onExtraModeChange={setExtraMode}
-        error={scenarioError}
-        onCalculate={calculateScenario}
-      />
+            <MortgagePayoffScenarioForm
+              extraAmount={extraAmount}
+              onExtraAmountChange={setExtraAmount}
+              extraMode={extraMode}
+              onExtraModeChange={setExtraMode}
+              error={scenarioError}
+              onCalculate={calculateScenario}
+            />
 
-      {scenarioResult && <MortgagePayoffResults result={scenarioResult} />}
+            {scenarioResult && <MortgagePayoffResults result={scenarioResult} />}
 
-      <h2>Payment history</h2>
-      <MortgagePaymentList payments={payments} />
-      <MortgagePaymentForm
-        initialValues={paymentFormInitialValues}
-        saving={loggingPayment}
-        error={paymentError}
-        onSave={logPayment}
-      />
+            <h2>Payment history</h2>
+            <MortgagePaymentList payments={payments} />
+            <MortgagePaymentForm
+              initialValues={paymentFormInitialValues}
+              saving={loggingPayment}
+              error={paymentError}
+              onSave={logPayment}
+            />
 
-      <h2>Escrow</h2>
-      <EscrowTransactionList transactions={escrowTransactions} />
-      <EscrowTransactionForm
-        initialValues={escrowTransactionFormInitialValues}
-        saving={loggingEscrowTransaction}
-        error={escrowTransactionError}
-        onSave={logEscrowTransaction}
-      />
+            <h2>Escrow</h2>
+            <EscrowTransactionList transactions={escrowTransactions} />
+            <EscrowTransactionForm
+              initialValues={escrowTransactionFormInitialValues}
+              saving={loggingEscrowTransaction}
+              error={escrowTransactionError}
+              onSave={logEscrowTransaction}
+            />
+          </>
+        )
+        // isEditing is forced true above whenever there's no mortgage yet,
+        // so mortgageDetails is only null here mid-way through that forced
+        // edit — nothing to render until it's saved.
+      )}
+
+      {/* Cost basis/depreciation (roadmap 9.15) doesn't depend on a
+          mortgage existing at all, so it always renders here regardless
+          of the mortgage state above — a free-and-clear property still
+          depreciates. */}
+      <CostBasisSection propertyId={property.id} purchasePrice={property.purchase_price} />
     </>
   )
 }

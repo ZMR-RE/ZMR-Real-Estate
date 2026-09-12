@@ -48,6 +48,8 @@ export function PropertySummary({ property, llcOptions, onEdit }: PropertySummar
         <dd>{property.contact_email ?? '—'}</dd>
         <dt>Market value</dt>
         <dd>{property.market_value !== null ? currencyFormatter.format(Number(property.market_value)) : '—'}</dd>
+        <dt>Purchase price</dt>
+        <dd>{property.purchase_price !== null ? currencyFormatter.format(Number(property.purchase_price)) : '—'}</dd>
         <dt>Status</dt>
         <dd>{property.status === 'active' ? 'Active' : 'Inactive'}</dd>
       </dl>
