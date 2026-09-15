@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
+import { propertyLabel } from '../../shared/propertyLabel'
 import { usePropertyProfile, type ProfileTab } from './usePropertyProfile'
 import { PropertyProfileOverviewTab } from './PropertyProfileOverviewTab'
 import { PropertyProfileTransactionsTab } from './PropertyProfileTransactionsTab'
@@ -52,7 +53,7 @@ export function PropertyProfile() {
   return (
     <div>
       <Link to="/properties">&larr; Property Registry</Link>
-      <h1>{property.name}</h1>
+      <h1>{propertyLabel(property)}</h1>
       {error && <p role="alert">{error}</p>}
 
       <div className="tab-bar" role="tablist">

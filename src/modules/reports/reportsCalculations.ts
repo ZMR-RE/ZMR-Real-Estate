@@ -8,6 +8,7 @@ import {
 import type { ChartAccount, CategoryMapping } from '../chartOfAccounts/chartOfAccountsQueries'
 import type { MortgagePaymentPrincipal } from './reportsQueries'
 import type { PortfolioMortgageRow } from '../mortgagePayoff/mortgagePayoffQueries'
+import { propertyLabel } from '../../shared/propertyLabel'
 
 export interface ReportLine {
   category: Category
@@ -129,7 +130,7 @@ export interface BalanceSheet {
 // $0 would silently understate equity for a real, valuable property that
 // just hasn't had its value entered yet).
 export function computeBalanceSheet(
-  properties: { id: string; name: string; market_value: string | null }[],
+  properties: { id: string; name: string; address: string | null; market_value: string | null }[],
   transactionsAllTime: Transaction[],
   mortgagePaymentsAllTime: MortgagePaymentPrincipal[],
   portfolioMortgages: PortfolioMortgageRow[],
@@ -161,7 +162,7 @@ export function computeBalanceSheet(
     const marketValue = property.market_value !== null ? Number(property.market_value) : null
     const equity = marketValue === null ? null : marketValue + cash - mortgageBalance
 
-    return { propertyId: property.id, propertyName: property.name, marketValue, cash, mortgageBalance, equity }
+    return { propertyId: property.id, propertyName: propertyLabel(property), marketValue, cash, mortgageBalance, equity }
   })
 
   return {

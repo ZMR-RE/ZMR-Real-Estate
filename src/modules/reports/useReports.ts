@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
+import { propertyLabel } from '../../shared/propertyLabel'
 import { listProperties, type Property } from '../properties/propertiesQueries'
 import { listTransactions } from '../financials/financialsQueries'
 import { listChartOfAccounts, listCategoryMappings } from '../chartOfAccounts/chartOfAccountsQueries'
@@ -104,7 +105,7 @@ export function useReports() {
     setYear,
     propertyFilter,
     setPropertyFilter,
-    propertyOptions: properties.map((p) => ({ id: p.id, label: p.name })),
+    propertyOptions: properties.map((p) => ({ id: p.id, label: propertyLabel(p) })),
     loading,
     error,
     balanceSheet,
