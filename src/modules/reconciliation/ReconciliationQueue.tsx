@@ -1,8 +1,18 @@
 import { SearchableSelect } from '../../shared/SearchableSelect'
 import { ManageOptionsPanel } from '../../shared/pickLists/ManageOptionsPanel'
+import { ActionQueueBoard } from '../actionQueue/ActionQueueBoard'
 import { useReconciliationQueue } from './useReconciliationQueue'
 import { ReconciliationList } from './ReconciliationList'
 
+// This page is what the "Action Queue" nav item (roadmap 10.1) has
+// pointed to since before roadmap 10.2's unified data model existed —
+// it was, and still is, the Reconciliation Queue (1.4) underneath.
+// ActionQueueBoard is mounted here (rather than a new route) so the nav
+// item's actual destination matches its label without touching
+// App.tsx/AppShell.tsx, both out of scope for this item. The two
+// sections below are genuinely different concerns (action items vs.
+// captured-document triage) kept on one page only because of that
+// routing constraint, not because they're related features.
 export function ReconciliationQueue() {
   const {
     entries,
@@ -21,8 +31,11 @@ export function ReconciliationQueue() {
 
   return (
     <div>
+      <h1>Action Queue</h1>
+      <ActionQueueBoard />
+
       <div className="page-header-row">
-        <h1>Reconciliation Queue</h1>
+        <h2>Reconciliation</h2>
         <ManageOptionsPanel
           title="Document types"
           options={documentTypeOptions.options}

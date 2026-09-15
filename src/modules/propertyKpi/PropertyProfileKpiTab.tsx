@@ -3,6 +3,7 @@ import { useMarketFinancialSnapshot } from './useMarketFinancialSnapshot'
 import { MarketFinancialSnapshotCard } from './MarketFinancialSnapshotCard'
 import { useOccupancySnapshot } from './useOccupancySnapshot'
 import { OccupancySnapshotCard } from './OccupancySnapshotCard'
+import { useActionQueue } from '../actionQueue/useActionQueue'
 import { FollowUpsCard } from './FollowUpsCard'
 import type { Transaction } from '../financials/financialsQueries'
 
@@ -18,6 +19,13 @@ export function PropertyProfileKpiTab({ propertyId, marketValue, transactions }:
     useMarketFinancialSnapshot(propertyId, marketValue, transactions)
   const { snapshot: occupancySnapshot, loading: occupancyLoading, error: occupancyError } =
     useOccupancySnapshot(propertyId)
+  const {
+    groups: followUpGroups,
+    loading: followUpsLoading,
+    error: followUpsError,
+    processingId: followUpsProcessingId,
+    complete: completeFollowUp,
+  } = useActionQueue(propertyId)
 
   return (
     <>
@@ -30,7 +38,13 @@ export function PropertyProfileKpiTab({ propertyId, marketValue, transactions }:
       </CollapsibleSection>
 
       <CollapsibleSection title="Follow-ups" defaultOpen>
-        <FollowUpsCard />
+        <FollowUpsCard
+          loading={followUpsLoading}
+          error={followUpsError}
+          groups={followUpGroups}
+          processingId={followUpsProcessingId}
+          onComplete={completeFollowUp}
+        />
       </CollapsibleSection>
     </>
   )

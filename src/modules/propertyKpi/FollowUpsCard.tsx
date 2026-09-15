@@ -1,9 +1,40 @@
-// Roadmap 7.13's Follow-ups card is meant to pull from Action Queue's
-// unified task/action data model — but that model is roadmap 10.2, which
-// hasn't been built yet (Action Queue today is still just the
-// Reconciliation Queue under a renamed nav label, per 10.1). Nothing to
-// pull from yet, so this is a placeholder per the task's own instruction
-// rather than a guess at what 10.2's shape will be.
-export function FollowUpsCard() {
-  return <p>Follow-ups will surface here once Action Queue's unified data model (roadmap 10.2) exists.</p>
+import { ActionItemList } from '../actionQueue/ActionItemList'
+import type { ActionItem } from '../actionQueue/actionItemsQueries'
+
+interface FollowUpsCardProps {
+  loading: boolean
+  error: string | null
+  groups: [string, ActionItem[]][]
+  processingId: string | null
+  onComplete: (item: ActionItem) => void
+}
+
+// Roadmap 7.13's Follow-ups card, now backed by the unified Action Queue
+// data model (roadmap 10.2) — action_items filtered to this property,
+// grouped by type same as the portfolio-wide board. Read summary + a
+// Complete action, same weight as the other KPI cards; adding a new
+// action item happens on the main Action Queue page, not here.
+export function FollowUpsCard({ loading, error, groups, processingId, onComplete }: FollowUpsCardProps) {
+  if (loading) {
+    return <p>Loading…</p>
+  }
+
+  if (error) {
+    return <p role="alert">{error}</p>
+  }
+
+  if (groups.length === 0) {
+    return <p>No open follow-ups for this property.</p>
+  }
+
+  return (
+    <>
+      {groups.map(([type, items]) => (
+        <div key={type}>
+          <h4>{type}</h4>
+          <ActionItemList items={items} processingId={processingId} onComplete={onComplete} showProperty={false} />
+        </div>
+      ))}
+    </>
+  )
 }
