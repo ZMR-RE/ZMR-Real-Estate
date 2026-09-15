@@ -27,6 +27,8 @@ export function TenantAssignmentForm({
   const [createTenantError, setCreateTenantError] = useState<string | null>(null)
   const [startDate, setStartDate] = useState(todayDateString)
   const [endDate, setEndDate] = useState('')
+  const [rentAmount, setRentAmount] = useState('')
+  const [lateFee, setLateFee] = useState('')
 
   const handleCreateTenant = async (input: TenantInput) => {
     setCreatingTenant(true)
@@ -45,7 +47,13 @@ export function TenantAssignmentForm({
 
   const handleSave = () => {
     if (!tenantId) return
-    onSave({ tenantId, startDate, endDate: endDate || null })
+    onSave({
+      tenantId,
+      startDate,
+      endDate: endDate || null,
+      rentAmount: rentAmount || null,
+      lateFee: lateFee || null,
+    })
   }
 
   return (
@@ -83,6 +91,28 @@ export function TenantAssignmentForm({
 
       <label htmlFor="assignment_end">End date (leave blank if current)</label>
       <input id="assignment_end" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+
+      <label htmlFor="assignment_rent">Rent amount ($)</label>
+      <input
+        id="assignment_rent"
+        type="number"
+        min="0"
+        step="0.01"
+        inputMode="decimal"
+        value={rentAmount}
+        onChange={(e) => setRentAmount(e.target.value)}
+      />
+
+      <label htmlFor="assignment_late_fee">Late fee ($)</label>
+      <input
+        id="assignment_late_fee"
+        type="number"
+        min="0"
+        step="0.01"
+        inputMode="decimal"
+        value={lateFee}
+        onChange={(e) => setLateFee(e.target.value)}
+      />
 
       <button type="button" disabled={saving || !tenantId} onClick={handleSave}>
         {saving ? 'Saving…' : 'Assign tenant'}

@@ -30,11 +30,18 @@ export async function createTenant(accountId: string, input: TenantInput) {
     .single()
 }
 
+// tenant_units is also the Lease record (roadmap 8.5) — one row per
+// tenancy period already is one lease period, so rent_amount/late_fee
+// were added directly onto this table (20260915100000_lease_fields.sql)
+// rather than standing up a second, separate leases table that would
+// just duplicate the tenant+unit+date-range linking 8.4 already built.
 export interface TenantUnitAssignment {
   id: string
   unit_id: string
   start_date: string
   end_date: string | null
+  rent_amount: string | null
+  late_fee: string | null
   tenant: { id: string; name: string } | null
 }
 
@@ -42,7 +49,12 @@ export interface TenantUnitAssignmentInput {
   tenantId: string
   startDate: string
   endDate: string | null
+  rentAmount: string | null
+  lateFee: string | null
 }
+
+const TENANT_UNIT_ASSIGNMENT_COLUMNS =
+  'id, unit_id, start_date, end_date, rent_amount, late_fee, tenant:tenants(id, name)'
 
 // A unit's tenancy history — every row is one assignment period, not just
 // the current one. end_date null means still assigned (roadmap 8.4: a
@@ -50,7 +62,7 @@ export interface TenantUnitAssignmentInput {
 export async function listTenantUnitAssignments(accountId: string, unitId: string) {
   return supabase
     .from('tenant_units')
-    .select('id, unit_id, start_date, end_date, tenant:tenants(id, name)')
+    .select(TENANT_UNIT_ASSIGNMENT_COLUMNS)
     .eq('account_id', accountId)
     .eq('unit_id', unitId)
     .order('start_date', { ascending: false })
@@ -70,7 +82,9 @@ export async function createTenantUnitAssignment(
       tenant_id: input.tenantId,
       start_date: input.startDate,
       end_date: input.endDate,
+      rent_amount: input.rentAmount,
+      late_fee: input.lateFee,
     })
-    .select('id, unit_id, start_date, end_date, tenant:tenants(id, name)')
+    .select(TENANT_UNIT_ASSIGNMENT_COLUMNS)
     .single()
 }
