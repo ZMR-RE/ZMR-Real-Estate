@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { propertyLabel } from '../../shared/propertyLabel'
 import type { Property } from './propertiesQueries'
 
 interface PropertyListProps {
@@ -6,6 +7,10 @@ interface PropertyListProps {
   onAddNew: () => void
 }
 
+// Roadmap 8.6 — address leads (the canonical identifier); the free-text
+// name only shows alongside it when the two actually differ, so a
+// property whose name is just a copy of its address (the common case
+// today) doesn't show the same string twice.
 export function PropertyList({ properties, onAddNew }: PropertyListProps) {
   return (
     <div>
@@ -13,16 +18,19 @@ export function PropertyList({ properties, onAddNew }: PropertyListProps) {
         Add property
       </button>
       <ul>
-        {properties.map((property) => (
-          <li key={property.id}>
-            <Link to={`/properties/${property.id}`}>
-              {property.name}
-              {property.address ? ` — ${property.address}` : ''}
-              {property.city ? `, ${property.city}` : ''}
-              {property.status === 'inactive' ? ' (inactive)' : ''}
-            </Link>
-          </li>
-        ))}
+        {properties.map((property) => {
+          const label = propertyLabel(property)
+          return (
+            <li key={property.id}>
+              <Link to={`/properties/${property.id}`}>
+                {label}
+                {property.name !== label ? ` (${property.name})` : ''}
+                {property.city ? `, ${property.city}` : ''}
+                {property.status === 'inactive' ? ' (inactive)' : ''}
+              </Link>
+            </li>
+          )
+        })}
       </ul>
     </div>
   )

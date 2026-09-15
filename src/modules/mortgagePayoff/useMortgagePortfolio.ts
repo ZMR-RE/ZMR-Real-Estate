@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
+import { propertyLabel } from '../../shared/propertyLabel'
 import { listPortfolioMortgages } from './mortgagePayoffQueries'
 import {
   computePortfolioTotals,
@@ -28,7 +29,7 @@ export function useMortgagePortfolio() {
     setEntries(
       (data ?? []).map((row) => ({
         propertyId: row.property_id,
-        propertyName: row.property?.name ?? 'Unknown property',
+        propertyName: propertyLabel(row.property),
         marketValue: row.property?.market_value ? Number(row.property.market_value) : null,
         currentBalance: Number(row.current_balance),
       })),

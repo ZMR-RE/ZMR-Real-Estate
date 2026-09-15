@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
+import { propertyLabel } from '../../shared/propertyLabel'
 import { listProperties } from '../properties/propertiesQueries'
 import { createMileageEntry } from './mileageQueries'
 
@@ -27,7 +28,7 @@ export function useMileageEntryForm() {
     if (!accountId) return
     setPropertiesLoading(true)
     listProperties(accountId).then(({ data }) => {
-      setPropertyOptions((data ?? []).map((p) => ({ id: p.id, label: p.name })))
+      setPropertyOptions((data ?? []).map((p) => ({ id: p.id, label: propertyLabel(p) })))
       setPropertiesLoading(false)
     })
   }, [accountId])

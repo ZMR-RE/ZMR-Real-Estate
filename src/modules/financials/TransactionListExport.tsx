@@ -1,4 +1,5 @@
 import { exportTableToCsv, exportTableToPdf } from '../../shared/exporting/tableExport'
+import { propertyLabel } from '../../shared/propertyLabel'
 import { CATEGORY_LABELS, type Transaction } from './financialsQueries'
 
 interface TransactionListExportProps {
@@ -11,7 +12,7 @@ const COLUMNS = ['Date', 'Property', 'Type', 'Category', 'Description', 'Amount'
 function toRows(transactions: Transaction[]): string[][] {
   return transactions.map((tx) => [
     tx.transaction_date,
-    tx.property?.name ?? '—',
+    propertyLabel(tx.property),
     tx.entry_type === 'income' ? 'Income' : 'Expense',
     CATEGORY_LABELS[tx.category],
     tx.description ?? '',

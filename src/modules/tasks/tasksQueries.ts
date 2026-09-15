@@ -13,7 +13,7 @@ export interface Task {
   task_type: string | null
   completed: boolean
   completed_at: string | null
-  property: { id: string; name: string } | null
+  property: { id: string; name: string; address: string | null } | null
 }
 
 export type TaskInput = {
@@ -26,7 +26,7 @@ export type TaskInput = {
 }
 
 const TASK_COLUMNS =
-  'id, account_id, property_id, title, notes, due_date, recurrence, task_type, completed, completed_at, property:properties(id, name)'
+  'id, account_id, property_id, title, notes, due_date, recurrence, task_type, completed, completed_at, property:properties(id, name, address)'
 
 export async function listTasks(accountId: string, propertyId: string | null) {
   let query = supabase

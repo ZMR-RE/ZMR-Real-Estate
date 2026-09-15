@@ -1,3 +1,4 @@
+import { propertyLabel } from '../../shared/propertyLabel'
 import type { MileageRollupRow } from './mileageQueries'
 
 export interface MileageByProperty {
@@ -13,7 +14,7 @@ export function summarizeMileageByProperty(rows: MileageRollupRow[]): MileageByP
     if (!row.property) continue
     const existing = totals.get(row.property_id) ?? {
       propertyId: row.property_id,
-      propertyName: row.property.name,
+      propertyName: propertyLabel(row.property),
       totalMiles: 0,
     }
     existing.totalMiles += row.miles

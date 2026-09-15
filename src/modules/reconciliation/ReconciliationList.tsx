@@ -1,5 +1,6 @@
 import type { DocumentCategory } from '../documents/documentsQueries'
 import type { PickListOption } from '../../shared/pickLists/pickListsQueries'
+import { propertyLabel } from '../../shared/propertyLabel'
 import type { QueueEntry } from './reconciliationQueries'
 
 interface ReconciliationListProps {
@@ -42,7 +43,7 @@ export function ReconciliationList({
           <tr key={entry.id}>
             <td>{entry.entry_type}</td>
             <td>{entry.entry_date}</td>
-            <td>{entry.property?.name ?? '—'}</td>
+            <td>{propertyLabel(entry.property)}</td>
             <td>
               <button type="button" onClick={() => onViewAttachment(entry.attachment_path)}>
                 View {entry.attachment_type}

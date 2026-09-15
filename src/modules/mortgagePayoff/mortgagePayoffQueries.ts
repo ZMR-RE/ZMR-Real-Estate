@@ -117,13 +117,13 @@ export async function createMortgageEscrowTransaction(
 export interface PortfolioMortgageRow {
   property_id: string
   current_balance: string
-  property: { name: string; market_value: string | null } | null
+  property: { name: string; address: string | null; market_value: string | null } | null
 }
 
 export async function listPortfolioMortgages(accountId: string) {
   return supabase
     .from('mortgage_details')
-    .select('property_id, current_balance, property:properties(name, market_value)')
+    .select('property_id, current_balance, property:properties(name, address, market_value)')
     .eq('account_id', accountId)
     .returns<PortfolioMortgageRow[]>()
 }

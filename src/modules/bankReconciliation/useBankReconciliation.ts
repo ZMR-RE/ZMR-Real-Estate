@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
+import { propertyLabel } from '../../shared/propertyLabel'
 import { listProperties } from '../properties/propertiesQueries'
 import { listTransactions, type Transaction } from '../financials/financialsQueries'
 import { markTransactionsReconciled } from './bankReconciliationQueries'
@@ -31,7 +32,7 @@ export function useBankReconciliation() {
   useEffect(() => {
     if (!accountId) return
     listProperties(accountId).then(({ data }) => {
-      setPropertyOptions((data ?? []).map((p) => ({ id: p.id, label: p.name })))
+      setPropertyOptions((data ?? []).map((p) => ({ id: p.id, label: propertyLabel(p) })))
     })
   }, [accountId])
 

@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react'
+import { propertyLabel } from '../../shared/propertyLabel'
 import { CATEGORY_LABELS, type Transaction } from './financialsQueries'
 import { TransactionDocuments } from './TransactionDocuments'
 import { TransactionAuditHistory } from './TransactionAuditHistory'
@@ -54,7 +55,7 @@ export function TransactionList({
           <Fragment key={tx.id}>
             <tr>
               <td>{tx.transaction_date}</td>
-              <td>{tx.property?.name ?? '—'}</td>
+              <td>{propertyLabel(tx.property)}</td>
               <td>{tx.entry_type === 'income' ? 'Income' : 'Expense'}</td>
               <td>{CATEGORY_LABELS[tx.category]}</td>
               <td>{tx.description ?? ''}</td>

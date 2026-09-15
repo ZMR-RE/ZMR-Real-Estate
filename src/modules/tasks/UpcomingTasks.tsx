@@ -1,3 +1,4 @@
+import { propertyLabel } from '../../shared/propertyLabel'
 import type { Task } from './tasksQueries'
 
 interface UpcomingTasksProps {
@@ -13,7 +14,7 @@ export function UpcomingTasks({ tasks }: UpcomingTasksProps) {
     <ul>
       {tasks.map((task) => (
         <li key={task.id}>
-          {task.due_date} — {task.title} ({task.property?.name ?? '—'})
+          {task.due_date} — {task.title} ({propertyLabel(task.property)})
         </li>
       ))}
     </ul>

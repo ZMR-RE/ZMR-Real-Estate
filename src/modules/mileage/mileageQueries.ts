@@ -27,7 +27,7 @@ export async function createMileageEntry(input: MileageEntryInput) {
 export interface MileageRollupRow {
   property_id: string
   miles: number
-  property: { name: string } | null
+  property: { name: string; address: string | null } | null
 }
 
 interface MileageRollupFilters {
@@ -40,7 +40,7 @@ interface MileageRollupFilters {
 export async function listMileageForRollup(accountId: string, filters: MileageRollupFilters = {}) {
   let query = supabase
     .from('mileage_log')
-    .select('property_id, miles, property:properties(name)')
+    .select('property_id, miles, property:properties(name, address)')
     .eq('account_id', accountId)
 
   if (filters.year) {

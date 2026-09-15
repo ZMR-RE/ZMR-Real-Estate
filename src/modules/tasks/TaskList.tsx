@@ -1,3 +1,4 @@
+import { propertyLabel } from '../../shared/propertyLabel'
 import type { Task } from './tasksQueries'
 
 interface TaskListProps {
@@ -34,7 +35,7 @@ export function TaskList({ tasks, processingId, onSelect, onComplete }: TaskList
                 {task.title}
               </button>
             </td>
-            <td>{task.property?.name ?? '—'}</td>
+            <td>{propertyLabel(task.property)}</td>
             <td>{task.task_type ?? '—'}</td>
             <td>{task.recurrence === 'none' ? '—' : task.recurrence}</td>
             <td>{task.completed ? 'Done' : 'Open'}</td>

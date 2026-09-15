@@ -7,14 +7,14 @@ export interface QueueEntry {
   entry_date: string
   attachment_path: string
   attachment_type: AttachmentType
-  property: { id: string; name: string }
+  property: { id: string; name: string; address: string | null }
 }
 
 export async function listUnreconciled(accountId: string, propertyId: string | null) {
   let query = supabase
     .from('capture_log')
     .select(
-      'id, entry_type, entry_date, attachment_path, attachment_type, property:properties(id, name)',
+      'id, entry_type, entry_date, attachment_path, attachment_type, property:properties(id, name, address)',
     )
     .eq('account_id', accountId)
     .eq('reconciled', false)

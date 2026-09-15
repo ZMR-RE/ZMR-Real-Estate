@@ -17,7 +17,7 @@ export interface Invoice {
   amount_due: string
   due_date: string
   notes: string | null
-  property: { id: string; name: string } | null
+  property: { id: string; name: string; address: string | null } | null
   payments: Payment[]
 }
 
@@ -43,7 +43,7 @@ export async function listInvoices(accountId: string) {
   return supabase
     .from('invoices')
     .select(
-      'id, property_id, billed_to, period_start, period_end, amount_due, due_date, notes, property:properties(id, name), payments(id, amount, paid_date, method, notes)',
+      'id, property_id, billed_to, period_start, period_end, amount_due, due_date, notes, property:properties(id, name, address), payments(id, amount, paid_date, method, notes)',
     )
     .eq('account_id', accountId)
     .order('due_date', { ascending: false })

@@ -1,3 +1,4 @@
+import { propertyLabel } from '../../shared/propertyLabel'
 import { CATEGORY_LABELS, type Category, type EntryType, type Transaction } from './financialsQueries'
 
 export interface SummaryRow {
@@ -30,7 +31,7 @@ export function summarizeByPropertyAndCategory(transactions: Transaction[]): Sum
     }
     totals.set(key, {
       propertyId: tx.property.id,
-      propertyName: tx.property.name,
+      propertyName: propertyLabel(tx.property),
       entryType: tx.entry_type,
       category: tx.category,
       categoryLabel: CATEGORY_LABELS[tx.category],
@@ -52,7 +53,7 @@ export function summarizeByProperty(transactions: Transaction[]): PropertyTotals
     if (!tx.property) continue
     const existing = totals.get(tx.property.id) ?? {
       propertyId: tx.property.id,
-      propertyName: tx.property.name,
+      propertyName: propertyLabel(tx.property),
       totalIncome: 0,
       totalExpense: 0,
       netIncome: 0,
@@ -85,7 +86,7 @@ function toCsvLines(rows: string[][]): string {
 export function buildTaxExportCsv(transactions: Transaction[], year: number): string {
   const detailHeader = ['Property', 'Type', 'Category', 'Date', 'Amount', 'Description']
   const detailRows = transactions.map((tx) => [
-    tx.property?.name ?? '',
+    propertyLabel(tx.property),
     tx.entry_type === 'income' ? 'Income' : 'Expense',
     CATEGORY_LABELS[tx.category],
     tx.transaction_date,

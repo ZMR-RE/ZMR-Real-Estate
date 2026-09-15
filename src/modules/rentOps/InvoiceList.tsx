@@ -1,4 +1,5 @@
 import { invoiceStatus } from './useRentOps'
+import { propertyLabel } from '../../shared/propertyLabel'
 import type { Invoice } from './rentOpsQueries'
 
 const STATUS_LABELS: Record<ReturnType<typeof invoiceStatus>, string> = {
@@ -38,7 +39,7 @@ export function InvoiceList({ invoices, onRecordPayment }: InvoiceListProps) {
           const totalPaid = invoice.payments.reduce((sum, p) => sum + Number(p.amount), 0)
           return (
             <tr key={invoice.id}>
-              <td>{invoice.property?.name ?? '—'}</td>
+              <td>{propertyLabel(invoice.property)}</td>
               <td>{invoice.billed_to ?? '—'}</td>
               <td>
                 {invoice.period_start} – {invoice.period_end}

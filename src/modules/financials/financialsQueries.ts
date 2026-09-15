@@ -81,7 +81,7 @@ export interface Transaction {
   description: string | null
   voided: boolean
   statement_reconciled: boolean
-  property: { id: string; name: string } | null
+  property: { id: string; name: string; address: string | null } | null
   reimbursement_source_id: string | null
 }
 
@@ -109,7 +109,7 @@ export async function listTransactions(accountId: string, filters: TransactionFi
   let query = supabase
     .from('financial_transactions')
     .select(
-      'id, entry_type, category, subcategory, vendor:vendors(id, name, split_percentage, split_description), unit, payment_method, repair_or_improvement, amount, transaction_date, description, voided, statement_reconciled, property:properties(id, name), reimbursement_source_id',
+      'id, entry_type, category, subcategory, vendor:vendors(id, name, split_percentage, split_description), unit, payment_method, repair_or_improvement, amount, transaction_date, description, voided, statement_reconciled, property:properties(id, name, address), reimbursement_source_id',
     )
     .eq('account_id', accountId)
     .eq('voided', false)
