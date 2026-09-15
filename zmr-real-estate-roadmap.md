@@ -85,9 +85,9 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 
 ## 9. Phase 9 — Bookkeeping Depth
 - [x] 9.1 Chart of Accounts screen: preloaded with a standard rental real-estate chart of accounts, user-editable (add/remap accounts)
-- [ ] 9.2 Balance Sheet report (property value + cash − mortgage balance = equity), portfolio-wide or per-property
-- [ ] 9.3 Profit & Loss report (Schedule E format), portfolio-wide or per-property
-- [ ] 9.4 Cash Flow report
+- [x] 9.2 Balance Sheet report (property value + cash − mortgage balance = equity), portfolio-wide or per-property — cash is a cash-basis running balance since inception (all-time income − expense − mortgage principal paid); no opening-balance data exists yet (see 9.18), so this assumes $0 at time zero, same simplification the rest of today's reporting makes
+- [x] 9.3 Profit & Loss report (Schedule E format), portfolio-wide or per-property — every standard line shown even at $0; line labels come from each category's Chart of Accounts (9.1) mapping
+- [x] 9.4 Cash Flow report — net income adjusted for non-cash depreciation (added back) and mortgage principal paid (a real cash outflow that isn't a P&L expense)
 - [x] 9.5 Property Tax Installment ledger (year, 1st/2nd installment + date paid, attached document per bill) — feeds KPI tax-trend card
 - [x] 9.6 Per-transaction document attachment field — upload, stored via the 2.5 document architecture
 - [ ] 9.7 Monthly reconciliation checklist (recurring template in Action Queue): bank/CC statement reconciliation, rent received vs. invoiced, invoices sent, mortgage payment posted, security deposits reconciled, lease renewals approaching, insurance renewal approaching, tax installment due, year-end 1099 prep

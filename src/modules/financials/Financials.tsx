@@ -82,6 +82,10 @@ export function Financials() {
         <Link to="/settings">Manage Chart of Accounts</Link> (moved to Settings)
       </p>
 
+      <p>
+        <Link to="/reports">Balance Sheet, Profit &amp; Loss, and Cash Flow reports</Link>
+      </p>
+
       <button type="button" onClick={() => setIsReconciling((v) => !v)}>
         {isReconciling ? 'Hide bank reconciliation' : 'Reconcile with bank statement'}
       </button>
