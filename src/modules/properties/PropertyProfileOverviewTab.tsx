@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
+import { CollapsibleSection } from '../../shared/CollapsibleSection'
 import type { LlcInput } from '../llcs/llcsQueries'
 import type { HoldingCompanyInput } from '../holdingCompanies/holdingCompaniesQueries'
 import { PropertyTaxLedger } from '../propertyTax/PropertyTaxLedger'
 import { UnitsSection } from '../units/UnitsSection'
 import { PropertySpecsSection } from '../propertySpecs/PropertySpecsSection'
+import { UtilityRecordsSection } from '../utilities/UtilityRecordsSection'
 import { SecurityDepositsSection } from '../securityDeposits/SecurityDepositsSection'
+import { PropertyTenantsOverview } from '../tenants/PropertyTenantsOverview'
+import type { DocumentRecord } from '../documents/documentsQueries'
 import { PropertyForm } from './PropertyForm'
 import { PropertySummary } from './PropertySummary'
 import type { Property, PropertyInput } from './propertiesQueries'
@@ -16,23 +20,27 @@ interface PropertyProfileOverviewTabProps {
   onCreateLlc: (input: LlcInput) => Promise<{ id: string } | { error: string }>
   holdingCompanyOptions: SearchableSelectOption[]
   onCreateHoldingCompany: (input: HoldingCompanyInput) => Promise<{ id: string } | { error: string }>
+  documents: DocumentRecord[]
+  onViewDocument: (path: string) => void
   saving: boolean
   onSave: (input: PropertyInput) => Promise<boolean>
 }
 
-// Reuses the same PropertyForm the Registry's create/edit flow uses — one
-// place to edit a property's fields, not a second copy of the form.
-// Roadmap 7.7 — view-by-default with an explicit Edit action, same
-// pattern as the Mortgage tab's terms section and the Property Tax
-// ledger. Only this core property-fields block is wrapped; the embedded
-// sections below (Tax ledger, Units, Specs, Security deposits) manage
-// their own view/edit state independently and are untouched here.
+// Roadmap 7.10 — core property fields stay always visible (via
+// PropertySummary/PropertyForm, view-by-default per 7.7); everything
+// else that used to sit flat on this tab now lives in its own
+// collapsible box below, with Units last per the roadmap item's own
+// "near the bottom, reference-only" note — full unit CRUD (plus each
+// unit's nested specs/leasing/tenants/utilities) stays exactly as 7.2
+// built it, just relocated into a box rather than rebuilt.
 export function PropertyProfileOverviewTab({
   property,
   llcOptions,
   onCreateLlc,
   holdingCompanyOptions,
   onCreateHoldingCompany,
+  documents,
+  onViewDocument,
   saving,
   onSave,
 }: PropertyProfileOverviewTabProps) {
@@ -44,6 +52,8 @@ export function PropertyProfileOverviewTab({
       setIsEditing(false)
     }
   }
+
+  const insuranceDocuments = documents.filter((doc) => doc.category === 'Insurance')
 
   return (
     <>
@@ -60,16 +70,38 @@ export function PropertyProfileOverviewTab({
           onCancel={() => setIsEditing(false)}
         />
       ) : (
-        <PropertySummary property={property} llcOptions={llcOptions} onEdit={() => setIsEditing(true)} />
+        <PropertySummary
+          property={property}
+          llcOptions={llcOptions}
+          insuranceDocuments={insuranceDocuments}
+          onViewDocument={onViewDocument}
+          onEdit={() => setIsEditing(true)}
+        />
       )}
 
-      <PropertyTaxLedger propertyId={property.id} />
+      <CollapsibleSection title="Property tax installments">
+        <PropertyTaxLedger propertyId={property.id} />
+      </CollapsibleSection>
 
-      <UnitsSection propertyId={property.id} />
+      <CollapsibleSection title="Specs & measurements">
+        <PropertySpecsSection propertyId={property.id} />
+      </CollapsibleSection>
 
-      <PropertySpecsSection propertyId={property.id} />
+      <CollapsibleSection title="Utility records">
+        <UtilityRecordsSection propertyId={property.id} />
+      </CollapsibleSection>
 
-      <SecurityDepositsSection propertyId={property.id} />
+      <CollapsibleSection title="Security deposits">
+        <SecurityDepositsSection propertyId={property.id} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Tenants">
+        <PropertyTenantsOverview propertyId={property.id} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Units">
+        <UnitsSection propertyId={property.id} />
+      </CollapsibleSection>
     </>
   )
 }

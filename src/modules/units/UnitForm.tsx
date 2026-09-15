@@ -19,7 +19,7 @@ export function UnitForm({ initialValues, saving, onSave, onCancel }: UnitFormPr
 
   return (
     <form onSubmit={handleSubmit}>
-      <label htmlFor="unit_label">Unit label</label>
+      <label htmlFor="unit_label">Unit #</label>
       <input
         id="unit_label"
         required

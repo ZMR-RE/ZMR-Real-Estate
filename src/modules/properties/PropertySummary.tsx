@@ -1,10 +1,13 @@
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { NO_LLC_ID } from '../llcs/useLlcs'
+import type { DocumentRecord } from '../documents/documentsQueries'
 import type { Property } from './propertiesQueries'
 
 interface PropertySummaryProps {
   property: Property
   llcOptions: SearchableSelectOption[]
+  insuranceDocuments: DocumentRecord[]
+  onViewDocument: (path: string) => void
   onEdit: () => void
 }
 
@@ -23,8 +26,13 @@ function llcDisplay(llcId: string | null, llcOptions: SearchableSelectOption[]):
 
 // Roadmap 7.7 — Overview tab's core property-fields section, view-by-
 // default with an explicit Edit action, same pattern as
-// MortgagePropertySummary on the Mortgage tab.
-export function PropertySummary({ property, llcOptions, onEdit }: PropertySummaryProps) {
+// MortgagePropertySummary on the Mortgage tab. Roadmap 7.10 asks for an
+// "insurance section with coverage dates + attached document" — coverage
+// dates aren't a field that exists anywhere in this app yet (flagged,
+// not guessed at), but the attached-document half is real: documents
+// already support an "Insurance" category (2.5), so any doc tagged that
+// way for this property lists here.
+export function PropertySummary({ property, llcOptions, insuranceDocuments, onViewDocument, onEdit }: PropertySummaryProps) {
   return (
     <div className="property-summary">
       <dl>
@@ -44,6 +52,22 @@ export function PropertySummary({ property, llcOptions, onEdit }: PropertySummar
         <dd>{property.insurance_provider ?? '—'}</dd>
         <dt>Insurance policy number</dt>
         <dd>{property.insurance_policy_number ?? '—'}</dd>
+        <dt>Insurance documents</dt>
+        <dd>
+          {insuranceDocuments.length === 0 ? (
+            '—'
+          ) : (
+            <ul>
+              {insuranceDocuments.map((doc) => (
+                <li key={doc.id}>
+                  <button type="button" onClick={() => onViewDocument(doc.storage_path)}>
+                    {new Date(doc.uploaded_at).toLocaleDateString()}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </dd>
         <dt>Contact email</dt>
         <dd>{property.contact_email ?? '—'}</dd>
         <dt>Market value</dt>

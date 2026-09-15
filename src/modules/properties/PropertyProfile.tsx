@@ -2,18 +2,17 @@ import { Link, useParams } from 'react-router-dom'
 import { usePropertyProfile, type ProfileTab } from './usePropertyProfile'
 import { PropertyProfileOverviewTab } from './PropertyProfileOverviewTab'
 import { PropertyProfileTransactionsTab } from './PropertyProfileTransactionsTab'
-import { PropertyProfileActivityTab } from './PropertyProfileActivityTab'
 import { PropertyProfileMortgageTab } from './PropertyProfileMortgageTab'
-import { PropertyProfileDocumentsTab } from './PropertyProfileDocumentsTab'
-import { PropertyProfileHistoryTab } from './PropertyProfileHistoryTab'
+import { PropertyProfileActivityDocumentsTab } from './PropertyProfileActivityDocumentsTab'
+import { PropertyProfileKpiTab } from '../propertyKpi/PropertyProfileKpiTab'
 
+// Roadmap 7.9 — revised tab set.
 const TABS: { key: ProfileTab; label: string }[] = [
   { key: 'overview', label: 'Overview' },
-  { key: 'transactions', label: 'Transactions' },
-  { key: 'activity', label: 'Activity Log' },
+  { key: 'financials', label: 'Financials' },
   { key: 'mortgage', label: 'Mortgage' },
-  { key: 'documents', label: 'Documents' },
-  { key: 'history', label: 'History' },
+  { key: 'kpi', label: 'KPI' },
+  { key: 'activityDocuments', label: 'Activity & Documents' },
 ]
 
 export function PropertyProfile() {
@@ -77,15 +76,26 @@ export function PropertyProfile() {
           onCreateLlc={createLlc}
           holdingCompanyOptions={holdingCompanyOptions}
           onCreateHoldingCompany={createHoldingCompany}
+          documents={documents}
+          onViewDocument={viewDocument}
           saving={saving}
           onSave={saveProperty}
         />
       )}
-      {tab === 'transactions' && <PropertyProfileTransactionsTab transactions={transactions} />}
-      {tab === 'activity' && <PropertyProfileActivityTab entries={activity} />}
+      {tab === 'financials' && <PropertyProfileTransactionsTab transactions={transactions} />}
       {tab === 'mortgage' && <PropertyProfileMortgageTab property={property} />}
-      {tab === 'documents' && <PropertyProfileDocumentsTab documents={documents} onView={viewDocument} />}
-      {tab === 'history' && <PropertyProfileHistoryTab property={property} llcOptions={llcOptions} />}
+      {tab === 'kpi' && (
+        <PropertyProfileKpiTab propertyId={property.id} marketValue={property.market_value} transactions={transactions} />
+      )}
+      {tab === 'activityDocuments' && (
+        <PropertyProfileActivityDocumentsTab
+          property={property}
+          llcOptions={llcOptions}
+          activity={activity}
+          documents={documents}
+          onViewDocument={viewDocument}
+        />
+      )}
     </div>
   )
 }

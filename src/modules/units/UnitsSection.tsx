@@ -3,6 +3,7 @@ import { UnitForm } from './UnitForm'
 import { PropertySpecsSection } from '../propertySpecs/PropertySpecsSection'
 import { LeasingListingSection } from '../leasingListings/LeasingListingSection'
 import { TenantAssignmentsSection } from '../tenants/TenantAssignmentsSection'
+import { UtilityRecordsSection } from '../utilities/UtilityRecordsSection'
 
 interface UnitsSectionProps {
   propertyId: string
@@ -63,6 +64,9 @@ export function UnitsSection({ propertyId }: UnitsSectionProps) {
               />
 
               <TenantAssignmentsSection unitId={unit.id} title={`Tenants — ${unit.unit_label}`} />
+
+              <h4>Utility records — {unit.unit_label}</h4>
+              <UtilityRecordsSection propertyId={propertyId} unitId={unit.id} />
             </div>
           ),
         )

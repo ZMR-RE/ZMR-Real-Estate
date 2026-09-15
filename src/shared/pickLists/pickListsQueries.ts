@@ -6,6 +6,9 @@ import { supabase } from '../supabaseClient'
 // for why. unit_status was added by 20260911130000_units.sql (roadmap 7.2).
 // listing_platform was added by 20260911150000_leasing_listings.sql
 // (roadmap 7.3), left with zero seeded options — see that migration.
+// utility_type was added by 20260915120000_utility_records.sql (roadmap
+// 7.12), also left with zero seeded options — no established taxonomy to
+// carry forward.
 export type PickListName =
   | 'subcategory'
   | 'payment_method'
@@ -13,6 +16,7 @@ export type PickListName =
   | 'task_type'
   | 'unit_status'
   | 'listing_platform'
+  | 'utility_type'
 
 export interface PickListOption {
   id: string

@@ -7,7 +7,12 @@ import { listTransactions, type Transaction } from '../financials/financialsQuer
 import { listActivityLog, type ActivityLogEntry } from '../capture/captureQueries'
 import { getDocumentSignedUrl, listDocuments, type DocumentRecord } from '../documents/documentsQueries'
 
-export type ProfileTab = 'overview' | 'transactions' | 'activity' | 'mortgage' | 'documents' | 'history'
+// Roadmap 7.9 — revised tab set: Overview, Financials, Mortgage, KPI,
+// Activity & Documents (merged). 'financials' reuses the existing
+// per-property transactions view under its new tab label; 'activityDocuments'
+// merges what were three separate tabs (Activity Log, History/7.8,
+// Documents/2.5) into collapsible boxes on one tab (7.14).
+export type ProfileTab = 'overview' | 'financials' | 'mortgage' | 'kpi' | 'activityDocuments'
 
 export function usePropertyProfile(propertyId: string) {
   const { accountId } = useAuth()
