@@ -6,6 +6,8 @@ interface MortgagePropertySummaryProps {
   marketValue: string | null
   equity: EquitySnapshot | null
   onEdit: () => void
+  onVoid: () => void
+  voiding: boolean
 }
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -24,6 +26,8 @@ export function MortgagePropertySummary({
   marketValue,
   equity,
   onEdit,
+  onVoid,
+  voiding,
 }: MortgagePropertySummaryProps) {
   return (
     <div className="mortgage-property-summary">
@@ -67,6 +71,9 @@ export function MortgagePropertySummary({
 
       <button type="button" onClick={onEdit}>
         Edit mortgage details
+      </button>
+      <button type="button" onClick={onVoid} disabled={voiding}>
+        {voiding ? 'Voiding…' : 'Void mortgage'}
       </button>
     </div>
   )

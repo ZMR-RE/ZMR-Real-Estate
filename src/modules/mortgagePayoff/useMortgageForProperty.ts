@@ -8,6 +8,8 @@ import {
   listMortgageEscrowTransactions,
   listMortgagePayments,
   updateMortgageDetails,
+  voidMortgageDetails,
+  voidMortgageEscrowTransaction,
   type MortgageDetails,
   type MortgageDetailsInput,
   type MortgageEscrowTransaction,
@@ -137,6 +139,28 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     setScenarioResult(null)
   }
 
+  // The only "removal" path (roadmap 9.20) — never a hard DELETE. Leaves
+  // mortgage_payments, mortgage_escrow_transactions, and any linked
+  // documents untouched; refresh() re-fetches and getMortgageDetails'
+  // voided filter naturally forces isEditing back on since there's no
+  // active mortgage anymore, same as a brand-new property.
+  const voidMortgage = async (): Promise<boolean> => {
+    if (!mortgageDetails) return false
+    setSaving(true)
+    const { error: voidError } = await voidMortgageDetails(mortgageDetails.id)
+    setSaving(false)
+
+    if (voidError) {
+      setError(voidError.message)
+      return false
+    }
+
+    setError(null)
+    setScenarioResult(null)
+    await refresh()
+    return true
+  }
+
   // The trigger on mortgage_payments already reduced current_balance in the
   // database by the time this resolves — refresh() re-reads it rather than
   // computing the new balance client-side, so the UI can't drift from what
@@ -172,6 +196,25 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
 
     if (escrowSaveError) {
       setEscrowTransactionError(escrowSaveError.message)
+      return false
+    }
+
+    setEscrowTransactionError(null)
+    await refresh()
+    return true
+  }
+
+  // The only "removal" path for an escrow transaction (roadmap 9.20) —
+  // never a hard DELETE. Note this doesn't reverse the deposit/disbursement
+  // already applied to escrow_balance (see voidMortgageEscrowTransaction);
+  // it corrects the record, not the balance.
+  const voidEscrowTransaction = async (id: string): Promise<boolean> => {
+    setLoggingEscrowTransaction(true)
+    const { error: voidError } = await voidMortgageEscrowTransaction(id)
+    setLoggingEscrowTransaction(false)
+
+    if (voidError) {
+      setEscrowTransactionError(voidError.message)
       return false
     }
 
@@ -226,6 +269,7 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     startEditing,
     cancelEditing,
     save,
+    voidMortgage,
 
     equity,
 
@@ -240,6 +284,7 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     escrowTransactionError,
     escrowTransactionFormInitialValues: BLANK_ESCROW_TRANSACTION,
     logEscrowTransaction,
+    voidEscrowTransaction,
 
     extraAmount,
     setExtraAmount,

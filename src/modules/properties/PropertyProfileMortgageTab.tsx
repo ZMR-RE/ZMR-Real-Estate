@@ -29,6 +29,7 @@ export function PropertyProfileMortgageTab({ property }: PropertyProfileMortgage
     startEditing,
     cancelEditing,
     save,
+    voidMortgage,
     equity,
     payments,
     loggingPayment,
@@ -40,6 +41,7 @@ export function PropertyProfileMortgageTab({ property }: PropertyProfileMortgage
     escrowTransactionError,
     escrowTransactionFormInitialValues,
     logEscrowTransaction,
+    voidEscrowTransaction,
     extraAmount,
     setExtraAmount,
     extraMode,
@@ -76,6 +78,8 @@ export function PropertyProfileMortgageTab({ property }: PropertyProfileMortgage
               marketValue={property.market_value}
               equity={equity}
               onEdit={startEditing}
+              onVoid={voidMortgage}
+              voiding={saving}
             />
 
             <MortgagePayoffScenarioForm
@@ -88,29 +92,42 @@ export function PropertyProfileMortgageTab({ property }: PropertyProfileMortgage
             />
 
             {scenarioResult && <MortgagePayoffResults result={scenarioResult} />}
-
-            <h2>Payment history</h2>
-            <MortgagePaymentList payments={payments} />
-            <MortgagePaymentForm
-              initialValues={paymentFormInitialValues}
-              saving={loggingPayment}
-              error={paymentError}
-              onSave={logPayment}
-            />
-
-            <h2>Escrow</h2>
-            <EscrowTransactionList transactions={escrowTransactions} />
-            <EscrowTransactionForm
-              initialValues={escrowTransactionFormInitialValues}
-              saving={loggingEscrowTransaction}
-              error={escrowTransactionError}
-              onSave={logEscrowTransaction}
-            />
           </>
         )
         // isEditing is forced true above whenever there's no mortgage yet,
         // so mortgageDetails is only null here mid-way through that forced
         // edit — nothing to render until it's saved.
+      )}
+
+      {/* Payment/escrow history (roadmap 9.20) stays visible even after
+          the mortgage itself is voided — voiding hides "the" active
+          mortgage, not the record of what was already logged against it.
+          Only the "log a new one" forms require an active mortgage, since
+          the DB triggers behind them do too. */}
+      <h2>Payment history</h2>
+      <MortgagePaymentList payments={payments} />
+      {mortgageDetails && (
+        <MortgagePaymentForm
+          initialValues={paymentFormInitialValues}
+          saving={loggingPayment}
+          error={paymentError}
+          onSave={logPayment}
+        />
+      )}
+
+      <h2>Escrow</h2>
+      <EscrowTransactionList
+        transactions={escrowTransactions}
+        onVoid={voidEscrowTransaction}
+        voiding={loggingEscrowTransaction}
+      />
+      {mortgageDetails && (
+        <EscrowTransactionForm
+          initialValues={escrowTransactionFormInitialValues}
+          saving={loggingEscrowTransaction}
+          error={escrowTransactionError}
+          onSave={logEscrowTransaction}
+        />
       )}
 
       {/* Cost basis/depreciation (roadmap 9.15) doesn't depend on a

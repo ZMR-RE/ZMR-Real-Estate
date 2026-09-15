@@ -18,6 +18,10 @@ export interface MortgageDetails {
 
 export type MortgageDetailsInput = Omit<MortgageDetails, 'id' | 'property_id'>
 
+// voided = false — a voided mortgage is never "the" active mortgage for a
+// property (roadmap 9.20); the property_id unique index was relaxed to a
+// partial one (active rows only) specifically so this can return null and
+// let the caller re-enter a fresh mortgage without hitting a conflict.
 export async function getMortgageDetails(propertyId: string) {
   return supabase
     .from('mortgage_details')
@@ -25,6 +29,7 @@ export async function getMortgageDetails(propertyId: string) {
       'id, property_id, lender_name, original_loan_amount, current_balance, interest_rate, monthly_payment, loan_start_date, term_years, escrow_balance',
     )
     .eq('property_id', propertyId)
+    .eq('voided', false)
     .maybeSingle()
 }
 
@@ -42,6 +47,20 @@ export async function createMortgageDetails(
 
 export async function updateMortgageDetails(id: string, input: MortgageDetailsInput) {
   return supabase.from('mortgage_details').update(input).eq('id', id).select().single()
+}
+
+// The only "removal" path for a mortgage record (roadmap 9.20) — never a
+// hard DELETE. Leaves the row, its mortgage_payments/mortgage_escrow_transactions
+// history, and any documents linked to it (documents.mortgage_id) fully
+// intact; only getMortgageDetails/listPortfolioMortgages stop surfacing it
+// as active.
+export async function voidMortgageDetails(id: string) {
+  return supabase
+    .from('mortgage_details')
+    .update({ voided: true, voided_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
 }
 
 export interface MortgagePayment {
@@ -87,14 +106,18 @@ export interface MortgageEscrowTransaction {
   transaction_type: EscrowTransactionType
   amount: string
   description: string | null
+  voided: boolean
 }
 
-export type MortgageEscrowTransactionInput = Omit<MortgageEscrowTransaction, 'id' | 'property_id'>
+export type MortgageEscrowTransactionInput = Omit<MortgageEscrowTransaction, 'id' | 'property_id' | 'voided'>
 
+// Fetches voided rows too (not just active), same as financial_transactions'
+// TransactionList — the list stays the full history with voided entries
+// visibly marked, rather than making them disappear entirely.
 export async function listMortgageEscrowTransactions(propertyId: string) {
   return supabase
     .from('mortgage_escrow_transactions')
-    .select('id, property_id, transaction_date, transaction_type, amount, description')
+    .select('id, property_id, transaction_date, transaction_type, amount, description, voided')
     .eq('property_id', propertyId)
     .order('transaction_date', { ascending: false })
     .returns<MortgageEscrowTransaction[]>()
@@ -114,6 +137,20 @@ export async function createMortgageEscrowTransaction(
     .single()
 }
 
+// The only "removal" path for an escrow transaction (roadmap 9.20) — never
+// a hard DELETE. Note this does not reverse its earlier effect on
+// mortgage_details.escrow_balance (that trigger only ever runs on INSERT,
+// same as mortgage_payments/current_balance) — voiding corrects the record
+// going forward, it isn't a balance-adjustment tool.
+export async function voidMortgageEscrowTransaction(id: string) {
+  return supabase
+    .from('mortgage_escrow_transactions')
+    .update({ voided: true, voided_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+}
+
 export interface PortfolioMortgageRow {
   property_id: string
   current_balance: string
@@ -125,5 +162,6 @@ export async function listPortfolioMortgages(accountId: string) {
     .from('mortgage_details')
     .select('property_id, current_balance, property:properties(name, address, market_value)')
     .eq('account_id', accountId)
+    .eq('voided', false)
     .returns<PortfolioMortgageRow[]>()
 }
