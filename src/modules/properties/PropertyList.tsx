@@ -27,6 +27,7 @@ export function PropertyList({ properties, onAddNew }: PropertyListProps) {
                 {property.name !== label ? ` (${property.name})` : ''}
                 {property.city ? `, ${property.city}` : ''}
                 {property.status === 'inactive' ? ' (inactive)' : ''}
+                {property.status === 'sold' ? ' (sold)' : ''}
               </Link>
             </li>
           )

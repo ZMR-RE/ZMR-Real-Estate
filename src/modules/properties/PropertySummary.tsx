@@ -17,6 +17,12 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 })
 
+const STATUS_LABELS: Record<Property['status'], string> = {
+  active: 'Active',
+  inactive: 'Inactive',
+  sold: 'Sold',
+}
+
 function llcDisplay(llcId: string | null, llcOptions: SearchableSelectOption[]): string {
   if (llcId === null) {
     return llcOptions.find((o) => o.id === NO_LLC_ID)?.label ?? 'No LLC'
@@ -75,7 +81,7 @@ export function PropertySummary({ property, llcOptions, insuranceDocuments, onVi
         <dt>Purchase price</dt>
         <dd>{property.purchase_price !== null ? currencyFormatter.format(Number(property.purchase_price)) : '—'}</dd>
         <dt>Status</dt>
-        <dd>{property.status === 'active' ? 'Active' : 'Inactive'}</dd>
+        <dd>{STATUS_LABELS[property.status]}</dd>
       </dl>
 
       <button type="button" onClick={onEdit}>

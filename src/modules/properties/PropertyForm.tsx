@@ -131,6 +131,7 @@ export function PropertyForm({
       >
         <option value="active">Active</option>
         <option value="inactive">Inactive</option>
+        <option value="sold">Sold</option>
       </select>
 
       <button type="submit" disabled={saving}>

@@ -14,7 +14,7 @@ export interface Property {
   contact_email: string | null
   market_value: string | null
   purchase_price: string | null
-  status: 'active' | 'inactive'
+  status: 'active' | 'inactive' | 'sold'
 }
 
 export type PropertyInput = Omit<Property, 'id' | 'account_id'>
