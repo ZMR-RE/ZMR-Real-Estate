@@ -10,6 +10,9 @@
   --danger: #dc2626;
   --danger-bg: rgba(220, 38, 38, 0.1);
   --danger-border: rgba(220, 38, 38, 0.4);
+  --warning: #b45309;
+  --warning-bg: rgba(217, 119, 6, 0.12);
+  --warning-border: rgba(217, 119, 6, 0.4);
   --success: #16a34a;
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
@@ -39,6 +42,9 @@
     --danger: #f87171;
     --danger-bg: rgba(248, 113, 113, 0.12);
     --danger-border: rgba(248, 113, 113, 0.4);
+    --warning: #fbbf24;
+    --warning-bg: rgba(251, 191, 36, 0.12);
+    --warning-border: rgba(251, 191, 36, 0.4);
     --success: #4ade80;
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
@@ -575,6 +581,19 @@ th {
   color: var(--success);
   margin-top: 8px;
   font-size: 14px;
+}
+
+/* Roadmap 7.15 — Action Queue priority coloring, applied to a row
+   wherever action items are listed (portfolio board + per-property
+   Follow-ups card). */
+tr.action-item-red {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+tr.action-item-yellow {
+  background: var(--warning-bg);
+  color: var(--warning);
 }
 
 /* ============================================================

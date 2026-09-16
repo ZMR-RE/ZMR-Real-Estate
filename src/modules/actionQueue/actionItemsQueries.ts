@@ -14,7 +14,7 @@ export interface ActionItem {
   recurrence: RecurrenceInterval
   completed: boolean
   completed_at: string | null
-  property: { id: string; name: string; address: string | null; status: 'active' | 'inactive' } | null
+  property: { id: string; name: string; address: string | null; status: 'active' | 'inactive' | 'sold' } | null
   unit: { id: string; unit_label: string } | null
 }
 
