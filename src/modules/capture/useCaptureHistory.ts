@@ -8,22 +8,26 @@ import {
   setManuallyCompleted,
   voidCaptureEntry,
   type CaptureEntry,
+  type EntryType,
 } from './captureQueries'
 
 export type CompleteFilter = 'all' | 'complete' | 'needs_details'
+export type TypeFilter = EntryType | 'all'
 
 const RECENT_LIMIT = 25
 
-// Roadmap 1.10 — Quick Capture's "Recently logged" view. Reads the same
-// listCaptureEntries() the Reconciliation Queue reads (captureQueries.ts),
-// just with no reconciled filter (shows both), so there's one underlying
-// data source behind both screens rather than two.
-export function useRecentCaptures() {
+// Roadmap 1.10/1.15 — Quick Capture's "History" tab (formerly "Recently
+// logged"). Reads the same listCaptureEntries() the Reconciliation Queue
+// reads (captureQueries.ts), just with no reconciled filter (shows
+// both), so there's one underlying data source behind both screens
+// rather than two.
+export function useCaptureHistory() {
   const { accountId } = useAuth()
   const [entries, setEntries] = useState<CaptureEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [completeFilter, setCompleteFilter] = useState<CompleteFilter>('all')
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [detailsError, setDetailsError] = useState<string | null>(null)
@@ -45,11 +49,13 @@ export function useRecentCaptures() {
     refresh()
   }, [refresh])
 
-  const filteredEntries = entries.filter((entry) => {
-    if (completeFilter === 'all') return true
-    const complete = isCaptureEntryComplete(entry)
-    return completeFilter === 'complete' ? complete : !complete
-  })
+  const filteredEntries = entries
+    .filter((entry) => {
+      if (completeFilter === 'all') return true
+      const complete = isCaptureEntryComplete(entry)
+      return completeFilter === 'complete' ? complete : !complete
+    })
+    .filter((entry) => typeFilter === 'all' || entry.entry_type === typeFilter)
 
   const startEditing = (id: string) => {
     setDetailsError(null)
@@ -115,6 +121,8 @@ export function useRecentCaptures() {
     error,
     completeFilter,
     setCompleteFilter,
+    typeFilter,
+    setTypeFilter,
     editingId,
     startEditing,
     cancelEditing,

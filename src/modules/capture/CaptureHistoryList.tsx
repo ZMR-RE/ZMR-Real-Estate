@@ -3,7 +3,7 @@ import { propertyLabel } from '../../shared/propertyLabel'
 import { CaptureEntryDetailsForm, type CaptureEntryDetailsInput } from './CaptureEntryDetailsForm'
 import { isCaptureEntryComplete } from './captureCalculations'
 import type { CaptureEntry, EntryType } from './captureQueries'
-import type { CompleteFilter } from './useRecentCaptures'
+import type { CompleteFilter, TypeFilter } from './useCaptureHistory'
 
 const ENTRY_TYPE_LABELS: Record<EntryType, string> = {
   receipt: 'Receipt',
@@ -12,10 +12,14 @@ const ENTRY_TYPE_LABELS: Record<EntryType, string> = {
   mileage: 'Mileage',
 }
 
-interface RecentCaptureListProps {
+const ENTRY_TYPES: EntryType[] = ['receipt', 'visit', 'communication', 'mileage']
+
+interface CaptureHistoryListProps {
   entries: CaptureEntry[]
   completeFilter: CompleteFilter
   onCompleteFilterChange: (filter: CompleteFilter) => void
+  typeFilter: TypeFilter
+  onTypeFilterChange: (filter: TypeFilter) => void
   editingId: string | null
   onStartEditing: (id: string) => void
   onCancelEditing: () => void
@@ -27,13 +31,16 @@ interface RecentCaptureListProps {
   onViewAttachment: (path: string) => void
 }
 
-// Roadmap 1.10/1.11 — Quick Capture's "Recently logged" list. The "Mark
-// complete" override and remaining-field edit both live here (and in
-// Reconciliation's list), never in the create form above it.
-export function RecentCaptureList({
+// Roadmap 1.10/1.11/1.15 — Quick Capture's "History" tab (formerly
+// "Recently logged"). The "Mark complete" override and remaining-field
+// edit both live here (and in Reconciliation's list), never in the
+// create form.
+export function CaptureHistoryList({
   entries,
   completeFilter,
   onCompleteFilterChange,
+  typeFilter,
+  onTypeFilterChange,
   editingId,
   onStartEditing,
   onCancelEditing,
@@ -43,10 +50,18 @@ export function RecentCaptureList({
   onToggleManuallyCompleted,
   onVoid,
   onViewAttachment,
-}: RecentCaptureListProps) {
+}: CaptureHistoryListProps) {
   return (
     <div>
-      <h2>Recently logged</h2>
+      <label htmlFor="type_filter">Type</label>
+      <select id="type_filter" value={typeFilter} onChange={(e) => onTypeFilterChange(e.target.value as TypeFilter)}>
+        <option value="all">All types</option>
+        {ENTRY_TYPES.map((type) => (
+          <option key={type} value={type}>
+            {ENTRY_TYPE_LABELS[type]}
+          </option>
+        ))}
+      </select>
 
       <label htmlFor="complete_filter">Show</label>
       <select

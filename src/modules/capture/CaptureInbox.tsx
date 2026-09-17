@@ -1,15 +1,26 @@
+import { useState } from 'react'
 import { CaptureForm } from './CaptureForm'
-import { RecentCaptureList } from './RecentCaptureList'
-import { useRecentCaptures } from './useRecentCaptures'
+import { CaptureHistoryList } from './CaptureHistoryList'
+import { useCaptureHistory } from './useCaptureHistory'
 
-// Roadmap 1.5 — "Quick Capture", not the standalone "Mileage log" that
-// used to render alongside it (1.6 consolidated Mileage into a capture
-// type instead of a separate mechanism).
+type InboxTab = 'capture' | 'history'
+
+const TABS: { key: InboxTab; label: string }[] = [
+  { key: 'capture', label: 'Capture' },
+  { key: 'history', label: 'History' },
+]
+
+// Roadmap 1.5/1.14 — "Quick capture", split into Capture/History tabs so
+// the entry form and the logged-entries table each get the full screen
+// instead of a long vertical scroll to reach either one.
 export function CaptureInbox() {
+  const [tab, setTab] = useState<InboxTab>('capture')
   const {
     entries,
     completeFilter,
     setCompleteFilter,
+    typeFilter,
+    setTypeFilter,
     editingId,
     startEditing,
     cancelEditing,
@@ -20,25 +31,40 @@ export function CaptureInbox() {
     voidEntry,
     viewAttachment,
     refresh,
-  } = useRecentCaptures()
+  } = useCaptureHistory()
 
   return (
-    <>
-      <CaptureForm onCaptured={refresh} />
-      <RecentCaptureList
-        entries={entries}
-        completeFilter={completeFilter}
-        onCompleteFilterChange={setCompleteFilter}
-        editingId={editingId}
-        onStartEditing={startEditing}
-        onCancelEditing={cancelEditing}
-        processingId={processingId}
-        detailsError={detailsError}
-        onSaveDetails={saveDetails}
-        onToggleManuallyCompleted={toggleManuallyCompleted}
-        onVoid={voidEntry}
-        onViewAttachment={viewAttachment}
-      />
-    </>
+    <div>
+      <h1>Quick capture</h1>
+
+      <div className="tab-bar" role="tablist">
+        {TABS.map((t) => (
+          <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'capture' && <CaptureForm onCaptured={refresh} />}
+
+      {tab === 'history' && (
+        <CaptureHistoryList
+          entries={entries}
+          completeFilter={completeFilter}
+          onCompleteFilterChange={setCompleteFilter}
+          typeFilter={typeFilter}
+          onTypeFilterChange={setTypeFilter}
+          editingId={editingId}
+          onStartEditing={startEditing}
+          onCancelEditing={cancelEditing}
+          processingId={processingId}
+          detailsError={detailsError}
+          onSaveDetails={saveDetails}
+          onToggleManuallyCompleted={toggleManuallyCompleted}
+          onVoid={voidEntry}
+          onViewAttachment={viewAttachment}
+        />
+      )}
+    </div>
   )
 }

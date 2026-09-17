@@ -49,8 +49,6 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
 
   return (
     <form className="capture-form" onSubmit={handleSubmit}>
-      <h1>Quick capture</h1>
-
       <div className="type-selector" role="group" aria-label="Type">
         {ENTRY_TYPES.map((type) => (
           <button
