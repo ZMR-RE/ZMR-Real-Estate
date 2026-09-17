@@ -24,7 +24,7 @@ export function MortgagePortfolio() {
 
   return (
     <div>
-      <h1>Mortgage Portfolio</h1>
+      <h1>Mortgage portfolio</h1>
       {error && <p role="alert">{error}</p>}
 
       <dl className="portfolio-totals">

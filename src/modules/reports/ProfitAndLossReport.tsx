@@ -18,7 +18,7 @@ export function ProfitAndLossReport({ profitAndLoss, year }: ProfitAndLossReport
 
   return (
     <div>
-      <h2>Profit &amp; Loss — {year}</h2>
+      <h2>Profit &amp; loss — {year}</h2>
       <p>Schedule E format.</p>
 
       <h3>Income</h3>

@@ -82,7 +82,7 @@ export function TransactionDocuments({ transactionId, propertyId }: TransactionD
       {loading ? (
         <p>Loading…</p>
       ) : documents.length === 0 ? (
-        <p>No documents attached yet.</p>
+        <p className="empty-state">No documents attached yet.</p>
       ) : (
         <ul className="transaction-documents-list">
           {documents.map((doc) => (

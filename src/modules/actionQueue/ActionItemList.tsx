@@ -11,7 +11,7 @@ interface ActionItemListProps {
 
 export function ActionItemList({ items, processingId, onComplete, showProperty = true }: ActionItemListProps) {
   if (items.length === 0) {
-    return <p>Nothing here.</p>
+    return <p className="empty-state">Nothing here.</p>
   }
 
   return (

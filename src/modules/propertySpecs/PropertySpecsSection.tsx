@@ -16,10 +16,18 @@ const BLANK_SPEC = { label: '', value: '' }
 // would give this its own collapsible box) hasn't landed yet. Roadmap 7.2
 // wired unit_id through: pass unitId to scope this instance to one unit
 // instead of the property as a whole (used nested inside a Unit card).
+//
+// title/headingLevel are only passed by the per-unit usage inside
+// UnitsSection.tsx, which isn't wrapped in its own CollapsibleSection and
+// so needs its own heading to identify which unit it belongs to. The
+// property-level usage on the Overview tab is already wrapped in a
+// CollapsibleSection titled "Specs & measurements" — rendering a second,
+// identical heading right below it would just repeat the label, so no
+// title means no heading at all.
 export function PropertySpecsSection({
   propertyId,
   unitId = null,
-  title = 'Specs & measurements',
+  title,
   headingLevel = 'h2',
 }: PropertySpecsSectionProps) {
   const { specs, loading, error, isAdding, editingId, saving, startAdding, startEditing, cancelForm, add, save } =
@@ -28,7 +36,7 @@ export function PropertySpecsSection({
 
   return (
     <section>
-      <Heading>{title}</Heading>
+      {title && <Heading>{title}</Heading>}
       {error && <p role="alert">{error}</p>}
 
       {loading ? (

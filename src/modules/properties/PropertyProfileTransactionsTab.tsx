@@ -8,7 +8,7 @@ interface PropertyProfileTransactionsTabProps {
 // not duplicated here.
 export function PropertyProfileTransactionsTab({ transactions }: PropertyProfileTransactionsTabProps) {
   if (transactions.length === 0) {
-    return <p>No transactions for this property yet.</p>
+    return <p className="empty-state">No transactions for this property yet.</p>
   }
 
   return (

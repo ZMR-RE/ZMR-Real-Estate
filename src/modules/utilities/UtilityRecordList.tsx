@@ -19,7 +19,7 @@ export function UtilityRecordList({
   onCancel,
 }: UtilityRecordListProps) {
   if (records.length === 0) {
-    return <p>No utility records logged yet.</p>
+    return <p className="empty-state">No utility records logged yet.</p>
   }
 
   return (

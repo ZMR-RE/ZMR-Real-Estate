@@ -19,7 +19,7 @@ export function PropertySpecList({
   onCancel,
 }: PropertySpecListProps) {
   if (specs.length === 0) {
-    return <p>No specs logged yet.</p>
+    return <p className="empty-state">No specs logged yet.</p>
   }
 
   return (

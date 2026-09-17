@@ -36,7 +36,7 @@ export function CaptureForm() {
 
   return (
     <form className="capture-form" onSubmit={handleSubmit}>
-      <h1>Quick Capture</h1>
+      <h1>Quick capture</h1>
 
       <div className="type-selector" role="group" aria-label="Type">
         {ENTRY_TYPES.map((type) => (

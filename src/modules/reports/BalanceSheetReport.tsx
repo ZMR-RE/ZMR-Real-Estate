@@ -16,12 +16,12 @@ export function BalanceSheetReport({ balanceSheet }: BalanceSheetReportProps) {
     balanceSheet
 
   if (rows.length === 0) {
-    return <p>No properties yet.</p>
+    return <p className="empty-state">No properties yet.</p>
   }
 
   return (
     <div>
-      <h2>Balance Sheet</h2>
+      <h2>Balance sheet</h2>
       <p>As of today. Property value + cash − mortgage balance = equity.</p>
 
       {propertiesMissingMarketValue > 0 && (

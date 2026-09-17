@@ -21,7 +21,7 @@ export function TransactionAuditHistory({ transactionId }: TransactionAuditHisto
   }
 
   if (rows.length === 0) {
-    return <p>No changes logged yet.</p>
+    return <p className="empty-state">No changes logged yet.</p>
   }
 
   return (

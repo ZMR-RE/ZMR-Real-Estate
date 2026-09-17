@@ -23,13 +23,12 @@ export function UnitsSection({ propertyId }: UnitsSectionProps) {
 
   return (
     <section>
-      <h2>Units</h2>
       {error && <p role="alert">{error}</p>}
 
       {loading ? (
         <p>Loading…</p>
       ) : units.length === 0 ? (
-        <p>No units logged yet.</p>
+        <p className="empty-state">No units logged yet.</p>
       ) : (
         units.map((unit) =>
           editingId === unit.id ? (

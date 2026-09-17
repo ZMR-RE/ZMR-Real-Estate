@@ -29,11 +29,11 @@ export function PropertyProfileKpiTab({ propertyId, marketValue, transactions }:
 
   return (
     <>
-      <CollapsibleSection title="Market & Financial Snapshot" defaultOpen>
+      <CollapsibleSection title="Market & financial snapshot" defaultOpen>
         <MarketFinancialSnapshotCard loading={marketLoading} error={marketError} snapshot={marketFinancialSnapshot} />
       </CollapsibleSection>
 
-      <CollapsibleSection title="Occupancy Snapshot" defaultOpen>
+      <CollapsibleSection title="Occupancy snapshot" defaultOpen>
         <OccupancySnapshotCard loading={occupancyLoading} error={occupancyError} snapshot={occupancySnapshot} />
       </CollapsibleSection>
 

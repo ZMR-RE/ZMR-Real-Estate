@@ -27,7 +27,7 @@ export function PropertyProfileActivityDocumentsTab({
 }: PropertyProfileActivityDocumentsTabProps) {
   return (
     <>
-      <CollapsibleSection title="Activity Log" defaultOpen>
+      <CollapsibleSection title="Activity log" defaultOpen>
         <PropertyProfileActivityTab entries={activity} />
       </CollapsibleSection>
 

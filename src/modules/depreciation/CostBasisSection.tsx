@@ -17,7 +17,7 @@ export function CostBasisSection({ propertyId, purchasePrice }: CostBasisSection
 
   return (
     <section>
-      <h2>Cost Basis &amp; Depreciation</h2>
+      <h2>Cost basis &amp; depreciation</h2>
       {error && <p role="alert">{error}</p>}
 
       {purchasePrice === null ? (

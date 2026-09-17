@@ -12,7 +12,7 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 
 export function TenantAssignmentList({ assignments }: TenantAssignmentListProps) {
   if (assignments.length === 0) {
-    return <p>No tenants assigned yet.</p>
+    return <p className="empty-state">No tenants assigned yet.</p>
   }
 
   return (

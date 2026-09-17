@@ -7,7 +7,7 @@ interface UpcomingTasksProps {
 
 export function UpcomingTasks({ tasks }: UpcomingTasksProps) {
   if (tasks.length === 0) {
-    return <p>Nothing coming up.</p>
+    return <p className="empty-state">Nothing coming up.</p>
   }
 
   return (

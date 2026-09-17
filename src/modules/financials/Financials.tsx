@@ -47,7 +47,7 @@ export function Financials() {
 
   return (
     <div>
-      <h1>Financials &amp; Tax Readiness</h1>
+      <h1>Financials &amp; tax readiness</h1>
       {error && <p role="alert">{error}</p>}
 
       <label htmlFor="year_filter">Tax year</label>

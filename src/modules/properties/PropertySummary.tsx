@@ -23,6 +23,12 @@ const STATUS_LABELS: Record<Property['status'], string> = {
   sold: 'Sold',
 }
 
+const STATUS_BADGE_VARIANTS: Record<Property['status'], string> = {
+  active: 'status-badge-success',
+  inactive: 'status-badge-neutral',
+  sold: 'status-badge-accent',
+}
+
 function llcDisplay(llcId: string | null, llcOptions: SearchableSelectOption[]): string {
   if (llcId === null) {
     return llcOptions.find((o) => o.id === NO_LLC_ID)?.label ?? 'No LLC'
@@ -81,7 +87,11 @@ export function PropertySummary({ property, llcOptions, insuranceDocuments, onVi
         <dt>Purchase price</dt>
         <dd>{property.purchase_price !== null ? currencyFormatter.format(Number(property.purchase_price)) : '—'}</dd>
         <dt>Status</dt>
-        <dd>{STATUS_LABELS[property.status]}</dd>
+        <dd>
+          <span className={`status-badge ${STATUS_BADGE_VARIANTS[property.status]}`}>
+            {STATUS_LABELS[property.status]}
+          </span>
+        </dd>
       </dl>
 
       <button type="button" onClick={onEdit}>

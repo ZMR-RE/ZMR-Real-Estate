@@ -9,7 +9,7 @@ interface DepositListProps {
 
 export function DepositList({ deposits, onLogTransaction, onVoidTransaction }: DepositListProps) {
   if (deposits.length === 0) {
-    return <p>No security deposits logged yet.</p>
+    return <p className="empty-state">No security deposits logged yet.</p>
   }
 
   return (
@@ -49,7 +49,7 @@ export function DepositList({ deposits, onLogTransaction, onVoidTransaction }: D
               </thead>
               <tbody>
                 {sortedTransactions.map((tx) => (
-                  <tr key={tx.id} style={tx.voided ? { opacity: 0.5 } : undefined}>
+                  <tr key={tx.id} className={tx.voided ? 'row-voided' : undefined}>
                     <td>{tx.transaction_date}</td>
                     <td>
                       {DEPOSIT_TRANSACTION_TYPE_LABELS[tx.transaction_type]}

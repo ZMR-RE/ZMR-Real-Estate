@@ -17,7 +17,7 @@ interface MortgagePortfolioTableProps {
 
 export function MortgagePortfolioTable({ entries }: MortgagePortfolioTableProps) {
   if (entries.length === 0) {
-    return <p>No mortgages recorded yet.</p>
+    return <p className="empty-state">No mortgages recorded yet.</p>
   }
 
   return (

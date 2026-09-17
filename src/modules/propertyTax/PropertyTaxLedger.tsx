@@ -26,8 +26,6 @@ export function PropertyTaxLedger({ propertyId }: PropertyTaxLedgerProps) {
 
   return (
     <section className="property-tax-ledger-section">
-      <h2>Property tax installments</h2>
-
       {loading ? (
         <p>Loading…</p>
       ) : (

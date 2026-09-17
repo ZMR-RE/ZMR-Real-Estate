@@ -9,7 +9,7 @@ interface PropertyProfileDocumentsTabProps {
 // Documents action (roadmap 2.6); there's no direct upload from this tab.
 export function PropertyProfileDocumentsTab({ documents, onView }: PropertyProfileDocumentsTabProps) {
   if (documents.length === 0) {
-    return <p>No documents yet.</p>
+    return <p className="empty-state">No documents yet.</p>
   }
 
   return (

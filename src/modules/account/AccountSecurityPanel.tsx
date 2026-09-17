@@ -28,7 +28,7 @@ export function AccountSecurityPanel({ onClose }: AccountSecurityPanelProps) {
   return (
     <div className="account-security-panel">
       <div className="account-security-panel-header">
-        <h3>Account &amp; Security</h3>
+        <h3>Account &amp; security</h3>
         <button type="button" onClick={onClose}>
           Close
         </button>

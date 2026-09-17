@@ -4,7 +4,7 @@
 export function CommandCenter() {
   return (
     <div>
-      <h1>Command Center</h1>
+      <h1>Command center</h1>
       <p>Command Center is coming with Phase 3's email/Drive integration.</p>
     </div>
   )

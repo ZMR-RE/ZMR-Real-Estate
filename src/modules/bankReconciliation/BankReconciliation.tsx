@@ -30,7 +30,7 @@ export function BankReconciliation() {
 
   return (
     <section>
-      <h2>Bank Reconciliation</h2>
+      <h2>Bank reconciliation</h2>
       <p>Match a bank/credit-card statement period against Financials transactions and surface any discrepancy.</p>
       {error && <p role="alert">{error}</p>}
 

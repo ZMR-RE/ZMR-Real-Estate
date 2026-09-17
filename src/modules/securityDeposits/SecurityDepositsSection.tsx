@@ -33,7 +33,6 @@ export function SecurityDepositsSection({ propertyId }: SecurityDepositsSectionP
 
   return (
     <section>
-      <h2>Security deposits</h2>
       {error && <p role="alert">{error}</p>}
 
       {isCreatingDeposit ? (

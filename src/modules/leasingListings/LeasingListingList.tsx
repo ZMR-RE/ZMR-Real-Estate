@@ -28,7 +28,7 @@ export function LeasingListingList({
   onCancel,
 }: LeasingListingListProps) {
   if (listings.length === 0) {
-    return <p>No listings logged yet.</p>
+    return <p className="empty-state">No listings logged yet.</p>
   }
 
   return (

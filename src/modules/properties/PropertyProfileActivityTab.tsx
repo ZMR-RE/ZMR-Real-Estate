@@ -7,7 +7,7 @@ interface PropertyProfileActivityTabProps {
 
 export function PropertyProfileActivityTab({ entries }: PropertyProfileActivityTabProps) {
   if (entries.length === 0) {
-    return <p>No visits or communications logged for this property yet.</p>
+    return <p className="empty-state">No visits or communications logged for this property yet.</p>
   }
 
   const viewAttachment = async (path: string) => {

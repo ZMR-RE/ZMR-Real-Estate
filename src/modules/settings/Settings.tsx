@@ -21,7 +21,7 @@ export function Settings() {
       </section>
 
       <section>
-        <h2>Pick Lists</h2>
+        <h2>Pick lists</h2>
         <p>Every account-scoped dropdown option, in one place — add or archive a value without hunting down the form that uses it.</p>
         <div className="settings-pick-lists">
           {pickLists.map((list) => (

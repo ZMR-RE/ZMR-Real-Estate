@@ -4,12 +4,12 @@ import { AccountSecurityMenu } from '../modules/account/AccountSecurityMenu'
 
 const NAV_ITEMS = [
   { to: '/properties', label: 'Properties' },
-  { to: '/capture', label: 'Log It' },
-  { to: '/reconciliation', label: 'Action Queue' },
-  { to: '/rent-ops', label: 'Rent Ops' },
+  { to: '/capture', label: 'Log it' },
+  { to: '/reconciliation', label: 'Action queue' },
+  { to: '/rent-ops', label: 'Rent ops' },
   { to: '/tasks', label: 'Tasks' },
-  { to: '/financials', label: 'Financials & Tax' },
-  { to: '/command-center', label: 'Command Center' },
+  { to: '/financials', label: 'Financials & tax' },
+  { to: '/command-center', label: 'Command center' },
   { to: '/automations', label: 'Automations' },
   { to: '/mortgage-portfolio', label: 'Portfolio KPIs' },
 ]

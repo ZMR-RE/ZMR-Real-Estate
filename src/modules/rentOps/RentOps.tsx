@@ -22,7 +22,7 @@ export function RentOps() {
 
   return (
     <div>
-      <h1>Rent Ops</h1>
+      <h1>Rent ops</h1>
       {error && <p role="alert">{error}</p>}
 
       {isCreatingInvoice ? (

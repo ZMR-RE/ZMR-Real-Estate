@@ -18,7 +18,7 @@ export function CashFlowReport({ cashFlow, year }: CashFlowReportProps) {
 
   return (
     <div>
-      <h2>Cash Flow — {year}</h2>
+      <h2>Cash flow — {year}</h2>
 
       <table>
         <tbody>

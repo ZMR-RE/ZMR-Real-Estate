@@ -60,7 +60,7 @@ export function VendorSplitRules() {
 
   return (
     <section>
-      <h2>Vendor Split Rules</h2>
+      <h2>Vendor split rules</h2>
       <p>
         A saved reimbursement percentage per vendor (roadmap 8.8). Saving a rule here never applies it to any
         transaction automatically — logging a transaction against this vendor will offer a one-click "Apply saved
@@ -71,7 +71,7 @@ export function VendorSplitRules() {
       {loading ? (
         <p>Loading…</p>
       ) : vendors.length === 0 ? (
-        <p>No vendors yet.</p>
+        <p className="empty-state">No vendors yet.</p>
       ) : (
         <table>
           <thead>

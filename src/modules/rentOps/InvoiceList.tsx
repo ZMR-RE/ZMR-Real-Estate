@@ -17,7 +17,7 @@ interface InvoiceListProps {
 
 export function InvoiceList({ invoices, onRecordPayment }: InvoiceListProps) {
   if (invoices.length === 0) {
-    return <p>No invoices yet.</p>
+    return <p className="empty-state">No invoices yet.</p>
   }
 
   return (

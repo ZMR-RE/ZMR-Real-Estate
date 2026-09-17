@@ -23,7 +23,7 @@ export function ReconciliationList({
   onReconcile,
 }: ReconciliationListProps) {
   if (entries.length === 0) {
-    return <p>Nothing to reconcile.</p>
+    return <p className="empty-state">Nothing to reconcile.</p>
   }
 
   return (

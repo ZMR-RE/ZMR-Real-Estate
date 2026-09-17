@@ -14,7 +14,7 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 
 export function MortgagePaymentList({ payments, onVoid, voiding }: MortgagePaymentListProps) {
   if (payments.length === 0) {
-    return <p>No payments logged yet.</p>
+    return <p className="empty-state">No payments logged yet.</p>
   }
 
   return (
@@ -30,7 +30,7 @@ export function MortgagePaymentList({ payments, onVoid, voiding }: MortgagePayme
       </thead>
       <tbody>
         {payments.map((payment) => (
-          <tr key={payment.id} style={payment.voided ? { opacity: 0.5 } : undefined}>
+          <tr key={payment.id} className={payment.voided ? 'row-voided' : undefined}>
             <td>
               {payment.payment_date}
               {payment.voided ? ' (voided)' : ''}

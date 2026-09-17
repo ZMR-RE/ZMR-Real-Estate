@@ -26,7 +26,7 @@ export function PropertyRegistry() {
 
   return (
     <div>
-      <h1>Property Registry</h1>
+      <h1>Property registry</h1>
       {error && <p role="alert">{error}</p>}
 
       {isFormOpen ? (

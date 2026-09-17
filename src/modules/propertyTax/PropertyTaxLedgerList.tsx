@@ -41,7 +41,7 @@ function InstallmentCell({
 
 export function PropertyTaxLedgerList({ installments, onEdit, onViewDocument }: PropertyTaxLedgerListProps) {
   if (installments.length === 0) {
-    return <p>No tax years recorded yet.</p>
+    return <p className="empty-state">No tax years recorded yet.</p>
   }
 
   return (

@@ -24,7 +24,7 @@ function displayValue(row: AuditLogRow, raw: string | null, formatted: string, l
 // '5336 W Foster LLC' on Sep 10, 2026".
 export function AuditLogList({ rows, llcOptions }: AuditLogListProps) {
   if (rows.length === 0) {
-    return <p>No changes logged yet.</p>
+    return <p className="empty-state">No changes logged yet.</p>
   }
 
   return (

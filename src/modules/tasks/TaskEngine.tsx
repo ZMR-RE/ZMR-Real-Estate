@@ -27,7 +27,7 @@ export function TaskEngine() {
 
   return (
     <div>
-      <h1>Task Engine</h1>
+      <h1>Task engine</h1>
 
       <section>
         <h2>Coming up</h2>

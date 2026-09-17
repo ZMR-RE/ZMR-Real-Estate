@@ -31,7 +31,7 @@ export function ReconciliationQueue() {
 
   return (
     <div>
-      <h1>Action Queue</h1>
+      <h1>Action queue</h1>
       <ActionQueueBoard />
 
       <div className="page-header-row">

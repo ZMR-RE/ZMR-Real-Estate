@@ -14,7 +14,7 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 
 export function EscrowTransactionList({ transactions, onVoid, voiding }: EscrowTransactionListProps) {
   if (transactions.length === 0) {
-    return <p>No escrow transactions logged yet.</p>
+    return <p className="empty-state">No escrow transactions logged yet.</p>
   }
 
   return (
@@ -30,7 +30,7 @@ export function EscrowTransactionList({ transactions, onVoid, voiding }: EscrowT
       </thead>
       <tbody>
         {transactions.map((transaction) => (
-          <tr key={transaction.id} style={transaction.voided ? { opacity: 0.5 } : undefined}>
+          <tr key={transaction.id} className={transaction.voided ? 'row-voided' : undefined}>
             <td>{transaction.transaction_date}</td>
             <td>
               {transaction.transaction_type === 'deposit' ? 'Deposit' : 'Disbursement'}
