@@ -91,8 +91,15 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Roadmap 1.12 — dark tokens apply either when the OS prefers dark and
+   there's no explicit override (:not([data-theme="light"]) guards
+   against an explicit light choice winning), or when data-theme="dark"
+   is set directly regardless of OS preference. Same declarations in both
+   places is unfortunately necessary — CSS custom properties can't be
+   shared across a selector list split between a plain rule and one
+   nested in @media. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #0f1720;
     --surface: #182430;
     --surface-sunken: #1c2934;
@@ -131,6 +138,44 @@
     --tint-3: #241c17;
     --tint-4: #1a2228;
   }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0f1720;
+  --surface: #182430;
+  --surface-sunken: #1c2934;
+  --text: #93a1b1;
+  --text-h: #f0f4f8;
+  --border: #2b3846;
+  --code-bg: #1c2934;
+
+  --accent: #6fa8dc;
+  --accent-h: #8fbde6;
+  --accent-bg: rgba(111, 168, 220, 0.14);
+  --accent-border: rgba(111, 168, 220, 0.4);
+
+  --danger: #e08571;
+  --danger-bg: rgba(224, 133, 113, 0.14);
+  --danger-border: rgba(224, 133, 113, 0.4);
+
+  --warning: #e0ac5f;
+  --warning-bg: rgba(224, 172, 95, 0.14);
+  --warning-border: rgba(224, 172, 95, 0.4);
+
+  --success: #83c18a;
+  --success-bg: rgba(131, 193, 138, 0.14);
+  --success-border: rgba(131, 193, 138, 0.4);
+
+  --neutral-bg: rgba(147, 161, 177, 0.12);
+  --neutral-border: rgba(147, 161, 177, 0.3);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 10px 26px -6px rgba(0, 0, 0, 0.45), 0 3px 8px -3px rgba(0, 0, 0, 0.3);
+
+  --tint-1: #17222f;
+  --tint-2: #1e1c27;
+  --tint-3: #241c17;
+  --tint-4: #1a2228;
 }
 
 * {
@@ -265,6 +310,22 @@ code {
   border-top: 1px solid var(--nav-border);
   padding: var(--space-4) var(--space-3) 0;
   word-break: break-all;
+}
+
+/* Found live while verifying roadmap 1.12: the generic `a { color:
+   var(--accent) }` rule made the Settings link invisible here in light
+   mode specifically — --accent is a dark navy in light mode, same as
+   this sidebar's fixed --nav-bg, so navy text sat on navy background.
+   Never surfaced before because there was previously no way to see
+   light mode without changing the OS setting. Same fix pattern as
+   .app-nav-links a: the sidebar is fixed brand chrome, not themed page
+   content, so its links use the --nav-* palette instead. */
+.app-nav-account a {
+  color: var(--nav-text);
+}
+
+.app-nav-account a:hover {
+  color: var(--nav-text-h);
 }
 
 .app-main {
@@ -945,6 +1006,31 @@ tr.capture-entry-complete td {
   flex: 1 1 0;
   min-height: 48px;
   font-size: var(--text-md);
+}
+
+/* Roadmap 1.13 — the shared [role='group'] button[aria-pressed='true']
+   rule switches to a pill (fully circular corners on a fixed-width
+   button), which reads as a shape change rather than a selection state.
+   Overridden here for the type selector specifically (higher
+   specificity: class + attribute vs. plain attribute) rather than
+   changing the shared rule, since the other two [role='group']
+   button-groups (MortgagePayoffScenarioForm, DocumentLinkForm) aren't
+   part of this fix and a pill may be intended there. */
+.type-selector button[aria-pressed='true'] {
+  border-radius: var(--radius-sm);
+}
+
+/* Generic version of the same fixed-shape segmented button group, for
+   toggles outside Quick Capture (e.g. Settings' Appearance toggle) that
+   want the same selection style without borrowing a Quick-Capture-named
+   class. */
+.segmented-control button {
+  flex: 1 1 0;
+  min-height: 40px;
+}
+
+.segmented-control button[aria-pressed='true'] {
+  border-radius: var(--radius-sm);
 }
 
 .capture-attachment-list {
