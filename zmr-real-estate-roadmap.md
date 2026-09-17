@@ -160,17 +160,22 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
 - [x] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field) — the llcs table, properties.llc_id, and the real-list-plus-"+ Add new LLC" picker already existed (Phase 1); this pass added the missing formation_date field
-- [ ] 8.2a Rename "LLC" field to "Ownership entity"; rename
+- [x] 8.2a Rename "LLC" field to "Ownership entity"; rename
       "Individually owned / No LLC" to "Individual ownership"; rename
       "+ Add new LLC" to "+ Add ownership entity"; add edit and
       archive/delete actions for existing ownership-entity records
-      (currently add-only)
-- [ ] 8.2b Rename "LLC" field to "Organization type" (supersedes 8.2a's
+      (currently add-only) — the "Ownership entity" naming itself was
+      superseded before ever shipping (8.2b landed the same session with
+      the final "Organization type" name instead); the edit/archive/
+      Individual-ownership-rename substance is built and live-verified
+      (archive is soft, no hard delete — matches this app's archive
+      pattern elsewhere; nothing else here hard-deletes either)
+- [x] 8.2b Rename "LLC" field to "Organization type" (supersedes 8.2a's
       earlier naming — use this final name); "Individually owned / No
       LLC" becomes "Individual ownership"; add a "Holding company" view
       showing which LLCs a given Holding Company owns (data model
       already exists per 8.7, this adds the missing display)
-- [ ] 8.2c Organization type management view: from an Organization type
+- [x] 8.2c Organization type management view: from an Organization type
       (LLC) record, see all properties currently assigned to it, and
       reassign a property to a different Organization type directly from
       that view (not only via each property's own edit form). Multiple
