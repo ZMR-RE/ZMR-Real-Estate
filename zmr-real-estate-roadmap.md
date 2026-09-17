@@ -97,10 +97,27 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 7.13 KPI tab: collapsible cards — Market & Financial Snapshot (Redfin/Zillow value + date, current loan balance, net equity, LTV, annual rent, YTD net cash flow, cash-on-cash ROI), Occupancy Snapshot, Follow-ups (pulls from Action Queue) — cash-on-cash ROI and market-value-as-of-date not shown (no field tracks total cash invested or a value-as-of date; card states "Not enough data yet" rather than guessing). Follow-ups is an explicit placeholder pending 10.2 (Action Queue unified data model), per this item's own "pulls from Action Queue" dependency.
 - [x] 7.14 Activity & Documents tab: merged, collapsible boxes per category
 - [x] 7.15 Action Queue priority color system: red = overdue OR property status = Sold; yellow = due soon; default = normal. When a property's status changes to Sold, all of its open Action Queue items automatically turn red rather than requiring per-transaction-type logic. — built now that 10.2 (Action Queue unified data model) and 89e32bf ('sold' as a valid properties.status) are both live. Pure `actionItemPriority()` helper reads `item.property.status` straight off the item's live-joined property on every render — a real-time check, not a snapshot — so flipping a property to Sold turns all its open items red immediately, no per-item write or special-case trigger. "Due soon" = within 7 days (inclusive), a threshold chosen for this item since none was specified. Coloring applied once in the shared `ActionItemList` component, so both surfaces that render it (portfolio-wide Action Queue board and each property's KPI → Follow-ups card) pick it up automatically. Verified live: overdue item red, 10+ day-out item default, property flipped to Sold turned its open item red on both surfaces with no additional edit. This closes out Phase 7 (7.1–7.15), all complete.
+- [ ] 7.16 Move "Edit" action to the upper-right of the screen header,
+      standard placement (was bottom of form)
+- [ ] 7.17 Documents/links section on Property Overview: freeform
+      ability to upload a document or paste a reference link (e.g. a
+      Google Drive URL) not tied to any specific transaction or tax
+      installment
+- [ ] 7.18 Financial accounts reference: bank account(s)/credit card(s)
+      associated with a property — nickname + last 4 digits only, NEVER
+      a full account/card number (hard rule, no exceptions)
+- [ ] 7.20 Property Facts fields (structured): property type, purchase
+      date, purchase method, property tax ID/PIN, county/township,
+      square footage, lot size, zoning/use code
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
 - [x] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field) — the llcs table, properties.llc_id, and the real-list-plus-"+ Add new LLC" picker already existed (Phase 1); this pass added the missing formation_date field
+- [ ] 8.2a Rename "LLC" field to "Ownership entity"; rename
+      "Individually owned / No LLC" to "Individual ownership"; rename
+      "+ Add new LLC" to "+ Add ownership entity"; add edit and
+      archive/delete actions for existing ownership-entity records
+      (currently add-only)
 - [x] 8.3 Vendor as a real linked-record table, linked to Transactions and Tasks
 - [x] 8.4 Tenant as a real linked-record table, linked to Lease/Unit — built and live-verified by commit 2cf5aea (tenants/tenant_units tables, TenantAssignmentsSection, PropertyTenantsOverview); checkbox was left unchecked in that commit itself, caught by the 2026-09-16 structural audit
 - [x] 8.5 Lease as a real linked-record entity, linked to Unit + Tenant (term dates, rent amount) — extended 8.4's tenant_units table (rent_amount, late_fee columns) rather than building a second table: 8.4's own migration comment already called out that tenant_units (one row per tenancy period, start/end dates) was built specifically to become the Lease record once rent/term fields were added, so a separate leases table would only have duplicated that linking
