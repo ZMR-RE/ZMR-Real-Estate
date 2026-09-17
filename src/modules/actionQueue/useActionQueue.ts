@@ -27,9 +27,9 @@ const BLANK_ACTION_ITEM: ActionItemInput = {
   recurrence: 'none',
 }
 
-// Same rollover math as Tasks (useTaskEngine.ts) — kept in sync
-// deliberately since this table is meant to absorb Tasks eventually
-// (roadmap 10.2's consolidation note).
+// Same recurrence rollover math Tasks (2.2) used before its rows were
+// migrated in and the module retired — kept for the same reason it
+// existed there: computing the next occurrence's due date on completion.
 function computeNextDueDate(dueDate: string, recurrence: RecurrenceInterval): string {
   const next = new Date(`${dueDate}T00:00:00`)
   switch (recurrence) {
