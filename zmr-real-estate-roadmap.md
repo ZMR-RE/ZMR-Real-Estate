@@ -133,6 +133,11 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       LLC" becomes "Individual ownership"; add a "Holding company" view
       showing which LLCs a given Holding Company owns (data model
       already exists per 8.7, this adds the missing display)
+- [ ] 8.2c Organization type management view: from an Organization type
+      (LLC) record, see all properties currently assigned to it, and
+      reassign a property to a different Organization type directly from
+      that view (not only via each property's own edit form). Multiple
+      properties may share one Organization type.
 - [x] 8.3 Vendor as a real linked-record table, linked to Transactions and Tasks
 - [x] 8.4 Tenant as a real linked-record table, linked to Lease/Unit — built and live-verified by commit 2cf5aea (tenants/tenant_units tables, TenantAssignmentsSection, PropertyTenantsOverview); checkbox was left unchecked in that commit itself, caught by the 2026-09-16 structural audit
 - [x] 8.5 Lease as a real linked-record entity, linked to Unit + Tenant (term dates, rent amount) — extended 8.4's tenant_units table (rent_amount, late_fee columns) rather than building a second table: 8.4's own migration comment already called out that tenant_units (one row per tenancy period, start/end dates) was built specifically to become the Lease record once rent/term fields were added, so a separate leases table would only have duplicated that linking
