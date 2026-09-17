@@ -18,6 +18,27 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 1.2 Property Registry — property record, LLC, unit config, lease terms, utilities, insurance (5336 W Foster Ave, 2169 Ash St) — PARTIAL: property record/LLC/unit config/insurance are live and editable (verified); lease_terms and utilities exist only as unused jsonb columns with no UI anywhere, not started
 - [x] 1.3 Quick Capture Inbox — mobile entry flow: Receipt / Visit / Communication (button selector — fixed set of 3), property (searchable/type-ahead dropdown — scales past 10+ properties), date (defaults today, editable), photo AND PDF attachment. Files stage in Supabase Storage on capture so it always works, even before Drive integration exists.
 - [x] 1.4 Reconciliation Queue — unreconciled items view, manual triage
+- [ ] 1.5 Revert nav label and screen heading from "Log it" back to
+      "Quick capture" (sentence case)
+- [ ] 1.6 Make capture-type selection mandatory before other fields
+      appear; add Mileage as a 4th type alongside Receipt/Visit/
+      Communication, each showing only its relevant fields
+- [ ] 1.7 All type-relevant fields available and fillable at capture
+      time. Attachment is optional. Only type, property, and date are
+      required to save.
+- [ ] 1.8 Support up to 25 attachments per capture entry
+- [ ] 1.9 Add delete/void action for a staged (not-yet-reconciled)
+      capture entry
+- [ ] 1.10 Quick Capture's "Recently logged" view and Reconciliation
+      (Action Queue) read from one shared underlying data source — no
+      duplicate storage, per the new Single source of truth rule
+- [ ] 1.11 Two independent status indicators per entry: Complete/Needs
+      details (green highlight when complete, filterable) and
+      Reconciled/Not reconciled — displayed separately. "Mark complete"
+      manual override and any remaining-field completion happens in
+      Recently logged/Reconciliation, never in Quick Capture itself.
+      An item cannot be marked Reconciled while still Needs details,
+      except via the explicit manual-complete override.
 
 ## 2. Phase 2 — Parallelized Build (5 terminals, once Phase 1 schema is locked and stable)
 - [x] 2.1 Rent Ops — invoicing, receipts, on-time payment tracking
@@ -82,6 +103,15 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 8.8 Vendor-level Split Rule: saved reimbursement percentage per vendor (e.g. pest control, 50/50); user must manually apply it per transaction every time — never auto-applied, no setting to change this
 - [x] 8.9 Multi-user role-based access per account: architecture (users-to-account many-to-many with a role field) reserved now; permission UI and enforcement built later — satisfied by the existing `account_members` table (account_id/user_id/role, from Phase 0's initial schema); no new schema needed, role isn't read by any permission check yet
 - [x] 8.10 Account `tier` field + per-feature tier-requirement flag reserved now on all accounts/modules; tier enforcement and tier definitions built in Phase 5
+- [ ] 8.11 Contacts (extends Vendor, 8.3): notes and a reliability
+      score/rating per vendor. Also brainstormed, to be finalized in
+      full when this is actually built: (a) a comparison/estimate-
+      tracking workflow — log multiple quotes for one job (e.g. 3 roof
+      estimates), which one was chosen and why, tracked by date/job; (b)
+      a future paid vendor-verification tier (e.g. a one-time $20-25 fee
+      for a vendor to be listed as verified/trusted on the platform,
+      for resale customers to draw from) — noted as a speculative future
+      revenue idea, not yet scoped for build
 
 ## 9. Phase 9 — Bookkeeping Depth
 - [x] 9.1 Chart of Accounts screen: preloaded with a standard rental real-estate chart of accounts, user-editable (add/remap accounts)

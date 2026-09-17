@@ -69,5 +69,19 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 - Any commit that integrates multiple terminals' work must be verified with a clean clone build (git clone to a fresh directory, npm install, npm run build) before pushing — not just a local build in the shared working directory, which can pass even when the real deploy would fail.
 - Checking off a roadmap item's checkbox is not optional and not a separate documentation task. It is a required, non-negotiable step of completing that item's work, and must happen in the same commit that completes it. An item's checkbox must never be left unchecked once its work meets the Definition of Done criteria above, and must never be checked before those criteria are met. A terminal must verify checkbox accuracy for every roadmap item it touches before ending its work on that item.
 
+## Mobile responsiveness
+- The application must be fully usable on a mobile phone, since Quick
+  Capture in particular is expected to be used on-site at a property via
+  phone. Layouts, touch targets, and forms must work correctly at mobile
+  widths — this is a standing requirement for every screen, not a
+  one-time pass.
+
+## Single source of truth
+- When the same information needs to appear in more than one place in
+  the UI, build one underlying data model with multiple filtered views —
+  never duplicate storage across features. Editing a record in one view
+  must be reflected everywhere it appears, because there is only one
+  record.
+
 ## Session close-out
 - Before ending a session, write a short plain-language summary of what changed and why — for a non-coder to review without reading the code directly.
