@@ -87,8 +87,8 @@ export function TransactionDocuments({ transactionId, propertyId }: TransactionD
         <ul className="transaction-documents-list">
           {documents.map((doc) => (
             <li key={doc.id}>
-              <button type="button" onClick={() => handleView(doc.storage_path)}>
-                {doc.category} ({(doc.file_size / 1024).toFixed(1)} KB)
+              <button type="button" onClick={() => handleView(doc.storage_path!)}>
+                {doc.category} ({(doc.file_size! / 1024).toFixed(1)} KB)
               </button>
             </li>
           ))}

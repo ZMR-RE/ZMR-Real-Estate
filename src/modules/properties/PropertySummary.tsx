@@ -71,9 +71,15 @@ export function PropertySummary({ property, llcOptions, insuranceDocuments, onVi
             <ul>
               {insuranceDocuments.map((doc) => (
                 <li key={doc.id}>
-                  <button type="button" onClick={() => onViewDocument(doc.storage_path)}>
-                    {new Date(doc.uploaded_at).toLocaleDateString()}
-                  </button>
+                  {doc.link_url ? (
+                    <a href={doc.link_url} target="_blank" rel="noopener noreferrer">
+                      {new Date(doc.uploaded_at).toLocaleDateString()}
+                    </a>
+                  ) : (
+                    <button type="button" onClick={() => onViewDocument(doc.storage_path!)}>
+                      {new Date(doc.uploaded_at).toLocaleDateString()}
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -81,8 +87,6 @@ export function PropertySummary({ property, llcOptions, insuranceDocuments, onVi
         </dd>
         <dt>Contact email</dt>
         <dd>{property.contact_email ?? '—'}</dd>
-        <dt>Market value</dt>
-        <dd>{property.market_value !== null ? currencyFormatter.format(Number(property.market_value)) : '—'}</dd>
         <dt>Purchase price</dt>
         <dd>{property.purchase_price !== null ? currencyFormatter.format(Number(property.purchase_price)) : '—'}</dd>
         <dt>Status</dt>

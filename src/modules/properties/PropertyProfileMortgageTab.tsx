@@ -12,13 +12,16 @@ import type { Property } from './propertiesQueries'
 
 interface PropertyProfileMortgageTabProps {
   property: Property
+  marketValue: string | null
 }
 
 // Roadmap 7.5 — reuses the mortgage_details CRUD + scenario calculator
 // wholesale from the former standalone Mortgage Payoff screen; only the
 // property-picker was dropped, since this tab is already scoped to one
-// property.
-export function PropertyProfileMortgageTab({ property }: PropertyProfileMortgageTabProps) {
+// property. marketValue comes from the property_value_logs history
+// (roadmap 7.19) rather than a static properties column now — see
+// usePropertyProfile's latestMarketValue.
+export function PropertyProfileMortgageTab({ property, marketValue }: PropertyProfileMortgageTabProps) {
   const {
     mortgageDetails,
     loading,
@@ -50,7 +53,7 @@ export function PropertyProfileMortgageTab({ property }: PropertyProfileMortgage
     scenarioResult,
     scenarioError,
     calculateScenario,
-  } = useMortgageForProperty(property.id, property.market_value)
+  } = useMortgageForProperty(property.id, marketValue)
 
   if (loading) {
     return <p>Loading mortgage details…</p>
@@ -76,7 +79,7 @@ export function PropertyProfileMortgageTab({ property }: PropertyProfileMortgage
           <>
             <MortgagePropertySummary
               mortgageDetails={mortgageDetails}
-              marketValue={property.market_value}
+              marketValue={marketValue}
               equity={equity}
               onEdit={startEditing}
               onVoid={voidMortgage}

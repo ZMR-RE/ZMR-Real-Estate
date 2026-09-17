@@ -10,15 +10,19 @@ export interface DocumentRecord {
   property_id: string | null
   transaction_id: string | null
   category: DocumentCategory
-  storage_path: string
-  file_size: number
+  label: string | null
+  link_url: string | null
+  storage_path: string | null
+  file_size: number | null
   uploaded_at: string
 }
+
+const DOCUMENT_COLUMNS = 'id, property_id, transaction_id, category, label, link_url, storage_path, file_size, uploaded_at'
 
 export async function listDocuments(accountId: string, propertyId: string) {
   return supabase
     .from('documents')
-    .select('id, property_id, transaction_id, category, storage_path, file_size, uploaded_at')
+    .select(DOCUMENT_COLUMNS)
     .eq('account_id', accountId)
     .eq('property_id', propertyId)
     .order('uploaded_at', { ascending: false })
@@ -30,7 +34,7 @@ export async function listDocuments(accountId: string, propertyId: string) {
 export async function listDocumentsForTransaction(accountId: string, transactionId: string) {
   return supabase
     .from('documents')
-    .select('id, property_id, transaction_id, category, storage_path, file_size, uploaded_at')
+    .select(DOCUMENT_COLUMNS)
     .eq('account_id', accountId)
     .eq('transaction_id', transactionId)
     .order('uploaded_at', { ascending: false })
@@ -73,7 +77,73 @@ export async function uploadTransactionDocument(input: UploadTransactionDocument
       storage_path: destinationPath,
       file_size: file.size,
     })
-    .select('id, property_id, transaction_id, category, storage_path, file_size, uploaded_at')
+    .select(DOCUMENT_COLUMNS)
+    .single<DocumentRecord>()
+}
+
+interface UploadPropertyDocumentInput {
+  accountId: string
+  propertyId: string
+  category: DocumentCategory
+  label: string | null
+  uploadedBy: string
+  file: File
+}
+
+// Roadmap 7.17 — Property Overview's freeform Documents/links section,
+// upload half. Same permanent-path convention as everything else in this
+// table; unlike uploadTransactionDocument, there's no transaction_id —
+// this entry isn't tied to any transaction or tax installment.
+export async function uploadPropertyDocument(input: UploadPropertyDocumentInput) {
+  const { accountId, propertyId, category, label, uploadedBy, file } = input
+
+  const destinationPath = `${accountId}/${propertyId}/${category}/${crypto.randomUUID()}-${file.name}`
+  const { error: uploadError } = await supabase.storage.from('documents').upload(destinationPath, file)
+  if (uploadError) {
+    return { error: uploadError }
+  }
+
+  return supabase
+    .from('documents')
+    .insert({
+      account_id: accountId,
+      property_id: propertyId,
+      category,
+      label,
+      uploaded_by: uploadedBy,
+      storage_path: destinationPath,
+      file_size: file.size,
+    })
+    .select(DOCUMENT_COLUMNS)
+    .single<DocumentRecord>()
+}
+
+interface CreatePropertyLinkInput {
+  accountId: string
+  propertyId: string
+  category: DocumentCategory
+  label: string | null
+  uploadedBy: string
+  linkUrl: string
+}
+
+// Roadmap 7.17 — the paste-a-reference-link half. No file at all: no
+// storage_path/file_size, just the URL (documents_file_or_link_check
+// enforces exactly one of the two shapes at the DB level).
+export async function createPropertyLink(input: CreatePropertyLinkInput) {
+  const { accountId, propertyId, category, label, uploadedBy, linkUrl } = input
+
+  return supabase
+    .from('documents')
+    .insert({
+      account_id: accountId,
+      property_id: propertyId,
+      category,
+      label,
+      uploaded_by: uploadedBy,
+      link_url: linkUrl,
+    })
+    .select(DOCUMENT_COLUMNS)
     .single<DocumentRecord>()
 }
 

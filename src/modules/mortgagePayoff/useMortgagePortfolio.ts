@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { listPortfolioMortgages } from './mortgagePayoffQueries'
+import { listLatestValuesForAccount } from '../propertyValueHistory/propertyValueHistoryQueries'
 import {
   computePortfolioTotals,
   type PortfolioMortgageEntry,
@@ -17,20 +18,26 @@ export function useMortgagePortfolio() {
   const refresh = useCallback(async () => {
     if (!accountId) return
     setLoading(true)
-    const { data, error: fetchError } = await listPortfolioMortgages(accountId)
+    const [{ data, error: fetchError }, { data: latestValues, error: valuesError }] = await Promise.all([
+      listPortfolioMortgages(accountId),
+      listLatestValuesForAccount(accountId, 'market_value'),
+    ])
     setLoading(false)
 
-    if (fetchError) {
-      setError(fetchError.message)
+    const combinedError = fetchError?.message ?? valuesError?.message
+    if (combinedError) {
+      setError(combinedError)
       return
     }
+
+    const marketValueByProperty = new Map((latestValues ?? []).map((v) => [v.property_id, Number(v.value)]))
 
     setError(null)
     setEntries(
       (data ?? []).map((row) => ({
         propertyId: row.property_id,
         propertyName: propertyLabel(row.property),
-        marketValue: row.property?.market_value ? Number(row.property.market_value) : null,
+        marketValue: marketValueByProperty.get(row.property_id) ?? null,
         currentBalance: Number(row.current_balance),
       })),
     )

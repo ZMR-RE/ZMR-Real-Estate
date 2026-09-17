@@ -5,6 +5,7 @@ import { listProperties, type Property } from '../properties/propertiesQueries'
 import { listTransactions } from '../financials/financialsQueries'
 import { listChartOfAccounts, listCategoryMappings } from '../chartOfAccounts/chartOfAccountsQueries'
 import { listPortfolioMortgages } from '../mortgagePayoff/mortgagePayoffQueries'
+import { listLatestValuesForAccount } from '../propertyValueHistory/propertyValueHistoryQueries'
 import { listMortgagePaymentsForAccount } from './reportsQueries'
 import {
   computeBalanceSheet,
@@ -50,6 +51,7 @@ export function useReports() {
       { data: yearPrincipalPayments, error: yearPrincipalError },
       { data: allTimeTransactions, error: allTimeTxError },
       { data: allTimePrincipalPayments, error: allTimePrincipalError },
+      { data: latestMarketValueRows, error: marketValuesError },
     ] = await Promise.all([
       listChartOfAccounts(accountId),
       listCategoryMappings(accountId),
@@ -58,6 +60,7 @@ export function useReports() {
       listMortgagePaymentsForAccount(accountId, { year }),
       listTransactions(accountId, { propertyId: propertyFilter }),
       listMortgagePaymentsForAccount(accountId),
+      listLatestValuesForAccount(accountId, 'market_value'),
     ])
     setLoading(false)
 
@@ -68,12 +71,15 @@ export function useReports() {
       yearTxError?.message ??
       yearPrincipalError?.message ??
       allTimeTxError?.message ??
-      allTimePrincipalError?.message
+      allTimePrincipalError?.message ??
+      marketValuesError?.message
     if (fetchError) {
       setError(fetchError)
       return
     }
     setError(null)
+
+    const latestMarketValues = new Map((latestMarketValueRows ?? []).map((row) => [row.property_id, Number(row.value)]))
 
     const pnl = computeProfitAndLoss(yearTransactions ?? [], chartOfAccounts ?? [], categoryMappings ?? [])
     setProfitAndLoss(pnl)
@@ -90,6 +96,7 @@ export function useReports() {
         allTimeTransactions ?? [],
         allTimePrincipalPayments ?? [],
         portfolioMortgages ?? [],
+        latestMarketValues,
       ),
     )
   }, [accountId, propertyFilter, year, properties])

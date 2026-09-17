@@ -129,11 +129,16 @@ export interface BalanceSheet {
 // file shows a blank equity rather than a guessed one (treating it as
 // $0 would silently understate equity for a real, valuable property that
 // just hasn't had its value entered yet).
+//
+// latestMarketValues comes from the property_value_logs history (roadmap
+// 7.19) — each property's most recent market_value entry — rather than a
+// static properties.market_value column, keyed by property id.
 export function computeBalanceSheet(
-  properties: { id: string; name: string; address: string | null; market_value: string | null }[],
+  properties: { id: string; name: string; address: string | null }[],
   transactionsAllTime: Transaction[],
   mortgagePaymentsAllTime: MortgagePaymentPrincipal[],
   portfolioMortgages: PortfolioMortgageRow[],
+  latestMarketValues: Map<string, number>,
 ): BalanceSheet {
   const netCashByProperty = new Map<string, number>()
   for (const tx of transactionsAllTime) {
@@ -159,7 +164,7 @@ export function computeBalanceSheet(
     const principalPaid = principalPaidByProperty.get(property.id) ?? 0
     const cash = netIncome - principalPaid
     const mortgageBalance = mortgageBalanceByProperty.get(property.id) ?? 0
-    const marketValue = property.market_value !== null ? Number(property.market_value) : null
+    const marketValue = latestMarketValues.get(property.id) ?? null
     const equity = marketValue === null ? null : marketValue + cash - mortgageBalance
 
     return { propertyId: property.id, propertyName: propertyLabel(property), marketValue, cash, mortgageBalance, equity }

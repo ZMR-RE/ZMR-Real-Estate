@@ -12,7 +12,6 @@ export interface Property {
   insurance_provider: string | null
   insurance_policy_number: string | null
   contact_email: string | null
-  market_value: string | null
   purchase_price: string | null
   status: 'active' | 'inactive' | 'sold'
 }
@@ -23,7 +22,7 @@ export async function listProperties(accountId: string) {
   return supabase
     .from('properties')
     .select(
-      'id, account_id, name, llc_id, address, city, state, zip, insurance_provider, insurance_policy_number, contact_email, market_value, purchase_price, status',
+      'id, account_id, name, llc_id, address, city, state, zip, insurance_provider, insurance_policy_number, contact_email, purchase_price, status',
     )
     .eq('account_id', accountId)
     .order('address')

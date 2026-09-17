@@ -173,13 +173,18 @@ export async function voidMortgageEscrowTransaction(id: string) {
 export interface PortfolioMortgageRow {
   property_id: string
   current_balance: string
-  property: { name: string; address: string | null; market_value: string | null } | null
+  property: { name: string; address: string | null } | null
 }
 
+// market_value no longer lives on properties (roadmap 7.19 moved it to
+// the property_value_logs history) — callers needing each property's
+// latest market value fetch it separately via
+// propertyValueHistoryQueries.listLatestValuesForAccount and merge by
+// property_id, rather than this query embedding it.
 export async function listPortfolioMortgages(accountId: string) {
   return supabase
     .from('mortgage_details')
-    .select('property_id, current_balance, property:properties(name, address, market_value)')
+    .select('property_id, current_balance, property:properties(name, address)')
     .eq('account_id', accountId)
     .eq('voided', false)
     .returns<PortfolioMortgageRow[]>()

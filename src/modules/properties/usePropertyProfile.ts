@@ -6,6 +6,7 @@ import { listProperties, updateProperty, type Property, type PropertyInput } fro
 import { listTransactions, type Transaction } from '../financials/financialsQueries'
 import { listActivityLog, type ActivityLogEntry } from '../capture/captureQueries'
 import { getDocumentSignedUrl, listDocuments, type DocumentRecord } from '../documents/documentsQueries'
+import { getLatestValue, type LatestPropertyValue } from '../propertyValueHistory/propertyValueHistoryQueries'
 
 // Roadmap 7.9 — revised tab set: Overview, Financials, Mortgage, KPI,
 // Activity & Documents (merged). 'financials' reuses the existing
@@ -22,6 +23,7 @@ export function usePropertyProfile(propertyId: string) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [activity, setActivity] = useState<ActivityLogEntry[]>([])
   const [documents, setDocuments] = useState<DocumentRecord[]>([])
+  const [latestMarketValue, setLatestMarketValue] = useState<LatestPropertyValue | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTabState] = useState<ProfileTab>('overview')
@@ -42,11 +44,12 @@ export function usePropertyProfile(propertyId: string) {
   const refresh = useCallback(async () => {
     if (!accountId) return
     setLoading(true)
-    const [propertiesRes, transactionsRes, activityRes, documentsRes] = await Promise.all([
+    const [propertiesRes, transactionsRes, activityRes, documentsRes, latestMarketValueRes] = await Promise.all([
       listProperties(accountId),
       listTransactions(accountId, { propertyId }),
       listActivityLog(accountId, propertyId),
       listDocuments(accountId, propertyId),
+      getLatestValue(accountId, propertyId, 'market_value'),
     ])
     setLoading(false)
 
@@ -54,7 +57,8 @@ export function usePropertyProfile(propertyId: string) {
       propertiesRes.error?.message ??
       transactionsRes.error?.message ??
       activityRes.error?.message ??
-      documentsRes.error?.message
+      documentsRes.error?.message ??
+      latestMarketValueRes.error?.message
     if (fetchError) {
       setError(fetchError)
       return
@@ -65,6 +69,7 @@ export function usePropertyProfile(propertyId: string) {
     setTransactions(transactionsRes.data ?? [])
     setActivity(activityRes.data ?? [])
     setDocuments(documentsRes.data ?? [])
+    setLatestMarketValue(latestMarketValueRes.data ?? null)
   }, [accountId, propertyId])
 
   const viewDocument = async (path: string) => {
@@ -103,6 +108,7 @@ export function usePropertyProfile(propertyId: string) {
     transactions,
     activity,
     documents,
+    latestMarketValue,
     viewDocument,
     loading,
     error,
@@ -112,5 +118,6 @@ export function usePropertyProfile(propertyId: string) {
     saveProperty,
     editingProperty,
     setEditingProperty,
+    refresh,
   }
 }

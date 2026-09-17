@@ -36,6 +36,8 @@ export function PropertyProfile() {
     saveProperty,
     editingProperty,
     setEditingProperty,
+    refresh,
+    latestMarketValue,
   } = usePropertyProfile(id!)
 
   if (loading) {
@@ -90,15 +92,17 @@ export function PropertyProfile() {
           onCreateHoldingCompany={createHoldingCompany}
           documents={documents}
           onViewDocument={viewDocument}
+          onDocumentsChanged={refresh}
+          onValueHistoryChanged={refresh}
           saving={saving}
           onSave={saveProperty}
         />
       )}
       {tab === 'financials' && <PropertyProfileTransactionsTab transactions={transactions} />}
-      {tab === 'mortgage' && <PropertyProfileMortgageTab property={property} />}
-      {tab === 'kpi' && (
-        <PropertyProfileKpiTab propertyId={property.id} marketValue={property.market_value} transactions={transactions} />
+      {tab === 'mortgage' && (
+        <PropertyProfileMortgageTab property={property} marketValue={latestMarketValue?.value ?? null} />
       )}
+      {tab === 'kpi' && <PropertyProfileKpiTab propertyId={property.id} transactions={transactions} />}
       {tab === 'activityDocuments' && (
         <PropertyProfileActivityDocumentsTab
           property={property}

@@ -9,14 +9,13 @@ import type { Transaction } from '../financials/financialsQueries'
 
 interface PropertyProfileKpiTabProps {
   propertyId: string
-  marketValue: string | null
   transactions: Transaction[]
 }
 
 // Roadmap 7.13 — KPI tab, three collapsible cards.
-export function PropertyProfileKpiTab({ propertyId, marketValue, transactions }: PropertyProfileKpiTabProps) {
+export function PropertyProfileKpiTab({ propertyId, transactions }: PropertyProfileKpiTabProps) {
   const { snapshot: marketFinancialSnapshot, loading: marketLoading, error: marketError } =
-    useMarketFinancialSnapshot(propertyId, marketValue, transactions)
+    useMarketFinancialSnapshot(propertyId, transactions)
   const { snapshot: occupancySnapshot, loading: occupancyLoading, error: occupancyError } =
     useOccupancySnapshot(propertyId)
   const {

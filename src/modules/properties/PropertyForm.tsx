@@ -114,9 +114,6 @@ export function PropertyForm({
       <label htmlFor="contact_email">Contact email</label>
       <input id="contact_email" type="email" {...field('contact_email')} />
 
-      <label htmlFor="market_value">Market value ($)</label>
-      <input id="market_value" type="number" min="0" step="0.01" inputMode="decimal" {...field('market_value')} />
-
       <label htmlFor="purchase_price">Purchase price ($)</label>
       <input id="purchase_price" type="number" min="0" step="0.01" inputMode="decimal" {...field('purchase_price')} />
       <p>Used for cost basis / depreciation on the Mortgage tab — capital improvements are pulled from transactions automatically.</p>

@@ -111,13 +111,20 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 7.15 Action Queue priority color system: red = overdue OR property status = Sold; yellow = due soon; default = normal. When a property's status changes to Sold, all of its open Action Queue items automatically turn red rather than requiring per-transaction-type logic. — built now that 10.2 (Action Queue unified data model) and 89e32bf ('sold' as a valid properties.status) are both live. Pure `actionItemPriority()` helper reads `item.property.status` straight off the item's live-joined property on every render — a real-time check, not a snapshot — so flipping a property to Sold turns all its open items red immediately, no per-item write or special-case trigger. "Due soon" = within 7 days (inclusive), a threshold chosen for this item since none was specified. Coloring applied once in the shared `ActionItemList` component, so both surfaces that render it (portfolio-wide Action Queue board and each property's KPI → Follow-ups card) pick it up automatically. Verified live: overdue item red, 10+ day-out item default, property flipped to Sold turned its open item red on both surfaces with no additional edit. This closes out Phase 7 (7.1–7.15), all complete.
 - [x] 7.16 Move "Edit" action to the upper-right of the screen header,
       standard placement (was bottom of form)
-- [ ] 7.17 Documents/links section on Property Overview: freeform
+- [x] 7.17 Documents/links section on Property Overview: freeform
       ability to upload a document or paste a reference link (e.g. a
       Google Drive URL) not tied to any specific transaction or tax
-      installment
-- [ ] 7.18 Financial accounts reference: bank account(s)/credit card(s)
+      installment — extends the existing documents table (nullable
+      storage_path/file_size, new link_url/label columns, one-or-other
+      check constraint) rather than a second table, so an entry here
+      also shows in the Activity & Documents tab's list for free; the
+      Overview section itself filters out Insurance/Receipts to avoid
+      duplicating those two dedicated views
+- [x] 7.18 Financial accounts reference: bank account(s)/credit card(s)
       associated with a property — nickname + last 4 digits only, NEVER
-      a full account/card number (hard rule, no exceptions)
+      a full account/card number (hard rule, no exceptions) — enforced
+      both in the form and by a DB check constraint on last_four; no
+      column exists anywhere capable of holding a full number
 - [ ] 7.19 Property value & rent value history: dated log entries per
       property (source, value, date) for market value — sources like
       Zillow/Redfin/other — replacing the single static market_value

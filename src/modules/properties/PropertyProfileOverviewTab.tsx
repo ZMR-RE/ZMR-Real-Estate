@@ -3,12 +3,15 @@ import { CollapsibleSection } from '../../shared/CollapsibleSection'
 import type { LlcInput } from '../llcs/llcsQueries'
 import type { HoldingCompanyInput } from '../holdingCompanies/holdingCompaniesQueries'
 import { PropertyTaxLedger } from '../propertyTax/PropertyTaxLedger'
+import { PropertyValueHistorySection } from '../propertyValueHistory/PropertyValueHistorySection'
 import { UnitsSection } from '../units/UnitsSection'
 import { PropertySpecsSection } from '../propertySpecs/PropertySpecsSection'
 import { UtilityRecordsSection } from '../utilities/UtilityRecordsSection'
 import { SecurityDepositsSection } from '../securityDeposits/SecurityDepositsSection'
 import { PropertyTenantsOverview } from '../tenants/PropertyTenantsOverview'
+import { DocumentLinksSection } from '../documents/DocumentLinksSection'
 import type { DocumentRecord } from '../documents/documentsQueries'
+import { FinancialAccountsSection } from '../financialAccounts/FinancialAccountsSection'
 import { PropertyForm } from './PropertyForm'
 import { PropertySummary } from './PropertySummary'
 import type { Property, PropertyInput } from './propertiesQueries'
@@ -23,6 +26,8 @@ interface PropertyProfileOverviewTabProps {
   onCreateHoldingCompany: (input: HoldingCompanyInput) => Promise<{ id: string } | { error: string }>
   documents: DocumentRecord[]
   onViewDocument: (path: string) => void
+  onDocumentsChanged: () => Promise<void>
+  onValueHistoryChanged: () => Promise<void>
   saving: boolean
   onSave: (input: PropertyInput) => Promise<boolean>
 }
@@ -44,6 +49,8 @@ export function PropertyProfileOverviewTab({
   onCreateHoldingCompany,
   documents,
   onViewDocument,
+  onDocumentsChanged,
+  onValueHistoryChanged,
   saving,
   onSave,
 }: PropertyProfileOverviewTabProps) {
@@ -72,8 +79,25 @@ export function PropertyProfileOverviewTab({
         />
       )}
 
+      <CollapsibleSection title="Documents & links">
+        <DocumentLinksSection
+          propertyId={property.id}
+          documents={documents}
+          onViewDocument={onViewDocument}
+          onDocumentsChanged={onDocumentsChanged}
+        />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Financial accounts">
+        <FinancialAccountsSection propertyId={property.id} />
+      </CollapsibleSection>
+
       <CollapsibleSection title="Property tax installments">
         <PropertyTaxLedger propertyId={property.id} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Market & rent value history">
+        <PropertyValueHistorySection propertyId={property.id} onChanged={onValueHistoryChanged} />
       </CollapsibleSection>
 
       <CollapsibleSection title="Specs & measurements">
