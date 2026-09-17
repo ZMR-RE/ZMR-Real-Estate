@@ -106,6 +106,12 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 7.18 Financial accounts reference: bank account(s)/credit card(s)
       associated with a property — nickname + last 4 digits only, NEVER
       a full account/card number (hard rule, no exceptions)
+- [ ] 7.19 Property value & rent value history: dated log entries per
+      property (source, value, date) for market value — sources like
+      Zillow/Redfin/other — replacing the single static market_value
+      field. Same pattern for rent value, tracked over time even while
+      occupied. Manual entry only in this phase. Feeds a value-over-time
+      trend on the KPI tab (7.13).
 - [ ] 7.20 Property Facts fields (structured): property type, purchase
       date, purchase method, property tax ID/PIN, county/township,
       square footage, lot size, zoning/use code
@@ -184,3 +190,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - Online rent collection (actual ACH/card payment processing) — deferred; meaningful compliance/integration lift, revisit once there's a revenue model to absorb per-connection costs. Current payment methods: cash, check, Zelle.
 - Live automated bank-feed sync (e.g. via Plaid) — deferred to a future paid tier once subscription revenue can absorb per-connection cost; manual CSV import (9.8) is the interim solution
 - Tenant self-service portal (view lease, pay rent, submit maintenance requests) — real resale differentiator once Tenant/Lease entities (8.4/8.5) exist, but new UI surface, not a small add
+- AI agent to automatically pull property market value and rent value from external sources (Zillow, Redfin, etc.) instead of manual entry — depends on 7.19 (the value history log) existing first
+
+## Ongoing — Q&A / SOP Log
+- [ ] A living reference section (in-app or a maintained doc) answering recurring "how do I do X" questions as they come up during real use (e.g. "how do I add past mortgage information"). Updated whenever a new section is built out or a real question arises — not a one-time deliverable, an evolving document.
