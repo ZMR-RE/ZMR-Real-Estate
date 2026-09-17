@@ -45,6 +45,18 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       Recently logged/Reconciliation, never in Quick Capture itself.
       An item cannot be marked Reconciled while still Needs details,
       except via the explicit manual-complete override.
+- [ ] 1.12 Add an in-app light/dark mode toggle (in Settings) so the
+      user isn't dependent on OS-level preference to preview both modes
+- [ ] 1.13 Fix type-selector button shape inconsistency: selected state
+      must change color/fill only, never change from rounded-square to
+      circular
+- [ ] 1.14 Convert Quick Capture into two tabs at the top of the screen:
+      "Capture" (the entry form) and "History" (the current "Recently
+      logged" section) — remove the long vertical scroll-to-reach pattern
+- [ ] 1.15 Rebuild "History" (formerly Recently logged) as a real table:
+      columns for type, property, date, and both status indicators
+      (Complete/Needs details, Reconciled/Not reconciled), filterable by
+      type — not the current unstructured list
 
 ## 2. Phase 2 — Parallelized Build (5 terminals, once Phase 1 schema is locked and stable)
 - [x] 2.1 Rent Ops — invoicing, receipts, on-time payment tracking
