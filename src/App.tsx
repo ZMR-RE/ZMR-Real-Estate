@@ -5,9 +5,8 @@ import { LoginForm } from './modules/auth/LoginForm'
 import { PropertyRegistry } from './modules/properties/PropertyRegistry'
 import { PropertyProfile } from './modules/properties/PropertyProfile'
 import { CaptureInbox } from './modules/capture/CaptureInbox'
-import { ReconciliationQueue } from './modules/reconciliation/ReconciliationQueue'
+import { ReconciliationQueue } from './modules/captureTriage/ReconciliationQueue'
 import { RentOps } from './modules/rentOps/RentOps'
-import { TaskEngine } from './modules/tasks/TaskEngine'
 import { Financials } from './modules/financials/Financials'
 import { MortgagePortfolio } from './modules/mortgagePayoff/MortgagePortfolio'
 import { CommandCenter } from './modules/commandCenter/CommandCenter'
@@ -36,7 +35,6 @@ function App() {
           <Route path="/capture" element={<CaptureInbox />} />
           <Route path="/reconciliation" element={<ReconciliationQueue />} />
           <Route path="/rent-ops" element={<RentOps />} />
-          <Route path="/tasks" element={<TaskEngine />} />
           <Route path="/financials" element={<Financials />} />
           <Route path="/command-center" element={<CommandCenter />} />
           <Route path="/automations" element={<Automations />} />
