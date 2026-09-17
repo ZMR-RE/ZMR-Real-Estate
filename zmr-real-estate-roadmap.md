@@ -115,6 +115,10 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 7.20 Property Facts fields (structured): property type, purchase
       date, purchase method, property tax ID/PIN, county/township,
       square footage, lot size, zoning/use code
+- [ ] 7.21 Structured fields for bedroom count, bathroom count, basement
+      (yes/no or description), garage/parking spaces — building-level
+      totals; per-unit bed/bath already covered by 7.11, this is the
+      whole-building figure only
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
@@ -124,6 +128,11 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       "+ Add new LLC" to "+ Add ownership entity"; add edit and
       archive/delete actions for existing ownership-entity records
       (currently add-only)
+- [ ] 8.2b Rename "LLC" field to "Organization type" (supersedes 8.2a's
+      earlier naming — use this final name); "Individually owned / No
+      LLC" becomes "Individual ownership"; add a "Holding company" view
+      showing which LLCs a given Holding Company owns (data model
+      already exists per 8.7, this adds the missing display)
 - [x] 8.3 Vendor as a real linked-record table, linked to Transactions and Tasks
 - [x] 8.4 Tenant as a real linked-record table, linked to Lease/Unit — built and live-verified by commit 2cf5aea (tenants/tenant_units tables, TenantAssignmentsSection, PropertyTenantsOverview); checkbox was left unchecked in that commit itself, caught by the 2026-09-16 structural audit
 - [x] 8.5 Lease as a real linked-record entity, linked to Unit + Tenant (term dates, rent amount) — extended 8.4's tenant_units table (rent_amount, late_fee columns) rather than building a second table: 8.4's own migration comment already called out that tenant_units (one row per tenancy period, start/end dates) was built specifically to become the Lease record once rent/term fields were added, so a separate leases table would only have duplicated that linking
