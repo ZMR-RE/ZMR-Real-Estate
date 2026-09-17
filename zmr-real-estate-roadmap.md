@@ -125,12 +125,24 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       a full account/card number (hard rule, no exceptions) — enforced
       both in the form and by a DB check constraint on last_four; no
       column exists anywhere capable of holding a full number
-- [ ] 7.19 Property value & rent value history: dated log entries per
+- [x] 7.19 Property value & rent value history: dated log entries per
       property (source, value, date) for market value — sources like
       Zillow/Redfin/other — replacing the single static market_value
-      field. Same pattern for rent value, tracked over time even while
-      occupied. Manual entry only in this phase. Feeds a value-over-time
-      trend on the KPI tab (7.13).
+      field. Same pattern for rent value (a market/asking-rent estimate,
+      distinct from tenant_units.rent_amount's actual lease rent),
+      tracked over time even while occupied. Manual entry only in this
+      phase. New property_value_logs table (metric discriminator column
+      rather than two near-identical tables) + property_latest_values
+      view (latest non-voided entry per property/metric) feeding every
+      former consumer of the dropped market_value column: Mortgage tab
+      equity/LTV, Portfolio KPI rollup, Balance Sheet report. Surfaced on
+      the Overview tab as an add-entry ledger (void, not edit/delete) and
+      on the KPI tab's Market & Financial Snapshot card, which now also
+      shows an as-of-date + source and a trend table — resolving 7.13's
+      original "no value-as-of-date field" gap. Verified live: logged 2
+      dated market-value entries, confirmed correct order/display on
+      both the Overview ledger and KPI trend table, then voided both
+      (test data, not real).
 - [ ] 7.20 Property Facts fields (structured): property type, purchase
       date, purchase method, property tax ID/PIN, county/township,
       square footage, lot size, zoning/use code
