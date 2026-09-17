@@ -1,25 +1,63 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --danger: #dc2626;
-  --danger-bg: rgba(220, 38, 38, 0.1);
-  --danger-border: rgba(220, 38, 38, 0.4);
-  --warning: #b45309;
-  --warning-bg: rgba(217, 119, 6, 0.12);
-  --warning-border: rgba(217, 119, 6, 0.4);
-  --success: #16a34a;
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Color — warm neutrals + a muted clay accent, not stark black/purple */
+  --bg: #fbf9f6;
+  --surface: #ffffff;
+  --surface-sunken: #f4efe8;
+  --text: #74695f;
+  --text-h: #2c2620;
+  --border: #e7e0d6;
+  --code-bg: #f3ede2;
+
+  --accent: #b5583c;
+  --accent-h: #9c4a31;
+  --accent-bg: rgba(181, 88, 60, 0.09);
+  --accent-border: rgba(181, 88, 60, 0.4);
+
+  --danger: #b5442f;
+  --danger-bg: rgba(181, 68, 47, 0.09);
+  --danger-border: rgba(181, 68, 47, 0.35);
+
+  --warning: #9a6420;
+  --warning-bg: rgba(154, 100, 32, 0.1);
+  --warning-border: rgba(154, 100, 32, 0.35);
+
+  --success: #3f7a45;
+  --success-bg: rgba(63, 122, 69, 0.1);
+  --success-border: rgba(63, 122, 69, 0.35);
+
+  --neutral-bg: rgba(116, 105, 95, 0.1);
+  --neutral-border: rgba(116, 105, 95, 0.3);
+
+  --shadow-sm: 0 1px 2px rgba(44, 38, 32, 0.06);
+  --shadow-md: 0 6px 20px -4px rgba(44, 38, 32, 0.12), 0 2px 6px -2px rgba(44, 38, 32, 0.08);
+
+  /* Spacing scale — generous by default */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Radius scale */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  /* Type scale */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
 
-  font: 16px/145% var(--sans);
+  font: var(--text-base) / 150% var(--sans);
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
@@ -31,23 +69,36 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --danger: #f87171;
-    --danger-bg: rgba(248, 113, 113, 0.12);
-    --danger-border: rgba(248, 113, 113, 0.4);
-    --warning: #fbbf24;
-    --warning-bg: rgba(251, 191, 36, 0.12);
-    --warning-border: rgba(251, 191, 36, 0.4);
-    --success: #4ade80;
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+    --bg: #201b17;
+    --surface: #2a241f;
+    --surface-sunken: #251f1a;
+    --text: #b7ab9e;
+    --text-h: #f6efe6;
+    --border: #3c342c;
+    --code-bg: #2a241f;
+
+    --accent: #e0966f;
+    --accent-h: #eaad8c;
+    --accent-bg: rgba(224, 150, 111, 0.14);
+    --accent-border: rgba(224, 150, 111, 0.4);
+
+    --danger: #e08571;
+    --danger-bg: rgba(224, 133, 113, 0.14);
+    --danger-border: rgba(224, 133, 113, 0.4);
+
+    --warning: #e0ac5f;
+    --warning-bg: rgba(224, 172, 95, 0.14);
+    --warning-border: rgba(224, 172, 95, 0.4);
+
+    --success: #83c18a;
+    --success-bg: rgba(131, 193, 138, 0.14);
+    --success-border: rgba(131, 193, 138, 0.4);
+
+    --neutral-bg: rgba(183, 171, 158, 0.12);
+    --neutral-border: rgba(183, 171, 158, 0.3);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 10px 26px -6px rgba(0, 0, 0, 0.45), 0 3px 8px -3px rgba(0, 0, 0, 0.3);
   }
 }
 
@@ -65,40 +116,52 @@ body {
 
 h1,
 h2,
-h3 {
+h3,
+h4 {
   font-family: var(--sans);
   font-weight: 600;
   color: var(--text-h);
+  letter-spacing: -0.01em;
 }
 
 h1 {
-  font-size: 26px;
-  margin: 0 0 20px;
+  font-size: var(--text-2xl);
+  margin: 0 0 var(--space-5);
 }
 
 h2 {
-  font-size: 18px;
-  margin: 28px 0 12px;
+  font-size: var(--text-xl);
+  margin: var(--space-7) 0 var(--space-4);
 }
 
 h3 {
-  font-size: 15px;
-  margin: 16px 0 8px;
+  font-size: var(--text-lg);
+  margin: var(--space-5) 0 var(--space-3);
+}
+
+h4 {
+  font-size: var(--text-md);
+  margin: var(--space-4) 0 var(--space-2);
+  color: var(--text);
 }
 
 p {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2);
 }
 
 a {
   color: var(--accent);
 }
 
+a:hover {
+  color: var(--accent-h);
+}
+
 code {
   font-family: ui-monospace, Consolas, monospace;
-  font-size: 14px;
+  font-size: var(--text-sm);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--code-bg);
 }
 
@@ -111,19 +174,22 @@ code {
 }
 
 .app-nav {
-  width: 220px;
+  width: 232px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 24px 16px;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-3);
+  background: var(--surface);
   border-right: 1px solid var(--border);
 }
 
 .app-nav-brand {
   font-weight: 700;
-  font-size: 16px;
+  font-size: var(--text-lg);
   color: var(--text-h);
+  padding: 0 var(--space-3);
+  letter-spacing: -0.01em;
 }
 
 .app-nav-links {
@@ -138,15 +204,18 @@ code {
 
 .app-nav-links a {
   display: block;
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: var(--space-3) var(--space-3);
+  border-radius: var(--radius-sm);
   color: var(--text);
   text-decoration: none;
-  font-size: 14px;
+  font-size: var(--text-md);
+  font-weight: 500;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
 
 .app-nav-links a:hover {
-  background: var(--accent-bg);
+  background: var(--surface-sunken);
+  color: var(--text-h);
 }
 
 .app-nav-links a.active {
@@ -158,22 +227,24 @@ code {
 .app-nav-account {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 13px;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
   border-top: 1px solid var(--border);
-  padding-top: 16px;
+  padding: var(--space-4) var(--space-3) 0;
   word-break: break-all;
 }
 
 .app-main {
   flex: 1;
   min-width: 0;
-  padding: 32px 40px;
+  padding: var(--space-6) var(--space-7);
+  max-width: 1180px;
 }
 
 .page-loading {
-  padding: 60px 20px;
+  padding: var(--space-8) var(--space-5);
   text-align: center;
+  color: var(--text);
 }
 
 .auth-page {
@@ -181,11 +252,120 @@ code {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: var(--space-5);
+  background: var(--bg);
 }
 
 .auth-page form {
   width: 100%;
+}
+
+/* ============================================================
+   Cards & surfaces — the spacious, card-based layout language
+   used across every list/section in the app
+   ============================================================ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.card + .card {
+  margin-top: var(--space-4);
+}
+
+/* A vertical list of cards (Property Registry, etc.) — the spacious
+   alternative to a dense <ul> of plain links. */
+.card-list {
+  list-style: none;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.card-list .card {
+  padding: 0;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.card-list .card:hover {
+  border-color: var(--accent-border);
+  box-shadow: var(--shadow-md);
+}
+
+.card-list-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  color: var(--text-h);
+  text-decoration: none;
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+/* ============================================================
+   Empty states
+   ============================================================ */
+.empty-state {
+  padding: var(--space-6) var(--space-5);
+  text-align: center;
+  color: var(--text);
+  background: var(--surface-sunken);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  margin: var(--space-3) 0;
+}
+
+/* ============================================================
+   Status badges
+   ============================================================ */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px var(--space-2);
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.status-badge-neutral {
+  background: var(--neutral-bg);
+  color: var(--text);
+}
+
+.status-badge-accent {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.status-badge-success {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.status-badge-warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.status-badge-danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* A row (payment, escrow transaction, etc.) whose record has been voided
+   — kept in the list as an audit trail but visually de-emphasized. */
+.row-voided {
+  opacity: 0.55;
 }
 
 /* ============================================================
@@ -198,23 +378,24 @@ form {
 }
 
 label {
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--text-h);
-  margin-top: 14px;
-  margin-bottom: 4px;
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-1);
 }
 
 input,
 select,
 textarea {
   font: inherit;
-  padding: 10px 12px;
+  padding: 10px var(--space-3);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
   color: var(--text-h);
   width: 100%;
+  transition: border-color 0.12s ease;
 }
 
 textarea {
@@ -235,7 +416,7 @@ button:focus-visible {
 label:has(input[type='checkbox']) {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   font-weight: 400;
 }
 
@@ -245,19 +426,22 @@ label:has(input[type='checkbox']) input {
 
 button {
   font: inherit;
-  padding: 10px 16px;
-  border-radius: 8px;
+  font-size: var(--text-md);
+  padding: 10px var(--space-4);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--surface);
   color: var(--text-h);
   cursor: pointer;
   min-height: 40px;
-  margin-top: 16px;
-  margin-right: 8px;
+  margin-top: var(--space-4);
+  margin-right: var(--space-2);
+  transition: border-color 0.12s ease, background-color 0.12s ease, color 0.12s ease;
 }
 
 button:hover:not(:disabled) {
   border-color: var(--accent-border);
+  background: var(--surface-sunken);
 }
 
 button:disabled {
@@ -272,10 +456,15 @@ button[type='submit'] {
   font-weight: 600;
 }
 
+button[type='submit']:hover:not(:disabled) {
+  background: var(--accent-h);
+  border-color: var(--accent-h);
+}
+
 /* Fixed button groups (type selector, filters) */
 [role='group'] {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
   margin-top: 6px;
 }
@@ -291,29 +480,39 @@ button[type='submit'] {
 }
 
 /* ============================================================
-   Definition lists (mortgage summaries, portfolio totals)
+   Definition lists (property/mortgage/portfolio summaries) — a
+   spacious label/value stack rather than a dense one. (A dt/dd-per-
+   column grid was considered, but the flat dt,dd,dt,dd... DOM these
+   components render can't be auto-placed into paired columns by CSS
+   grid without wrapping each pair in its own element — out of scope
+   for a visual-only pass, so this stays a single column with more
+   air and a clearer label/value size contrast instead.)
    ============================================================ */
 dl {
-  margin: 12px 0;
+  margin: var(--space-3) 0;
 }
 
 dt {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--text);
-  margin-top: 12px;
+  margin-top: var(--space-4);
+}
+
+dt:first-child {
+  margin-top: 0;
 }
 
 dd {
   margin: 2px 0 0;
-  font-size: 15px;
+  font-size: var(--text-base);
   color: var(--text-h);
 }
 
 .portfolio-totals {
   display: flex;
-  gap: 40px;
+  gap: var(--space-7);
   flex-wrap: wrap;
 }
 
@@ -322,7 +521,7 @@ dd {
 }
 
 .portfolio-totals dd {
-  font-size: 24px;
+  font-size: var(--text-2xl);
   font-weight: 600;
 }
 
@@ -333,7 +532,7 @@ dd {
   display: flex;
   gap: 4px;
   border-bottom: 1px solid var(--border);
-  margin: 20px 0 24px;
+  margin: var(--space-5) 0 var(--space-6);
 }
 
 .tab-bar button {
@@ -342,8 +541,8 @@ dd {
   border-radius: 0;
   border-bottom: 2px solid transparent;
   background: none;
-  padding: 8px 4px;
-  margin-right: 20px;
+  padding: var(--space-2) 2px;
+  margin-right: var(--space-5);
   min-height: auto;
   color: var(--text);
   font-weight: 600;
@@ -351,11 +550,69 @@ dd {
 
 .tab-bar button:hover:not(:disabled) {
   color: var(--text-h);
+  background: none;
+  border-color: var(--border);
 }
 
 .tab-bar button[aria-selected='true'] {
   color: var(--accent);
   border-bottom-color: var(--accent);
+}
+
+/* ============================================================
+   Collapsible sections (roadmap 7.10/7.13/7.14) — a labeled card
+   that expands, used for every grouped block on the Property
+   Profile and KPI tabs
+   ============================================================ */
+.collapsible-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-3);
+  overflow: hidden;
+}
+
+.collapsible-section > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-h);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.collapsible-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.collapsible-section > summary::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--text);
+  border-bottom: 2px solid var(--text);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.collapsible-section[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+.collapsible-section > summary:hover {
+  background: var(--surface-sunken);
+}
+
+.collapsible-section-body {
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+.collapsible-section-body > :first-child {
+  margin-top: 0;
 }
 
 /* ============================================================
@@ -371,15 +628,15 @@ dd {
   top: 100%;
   left: 0;
   right: 0;
-  margin: 4px 0 0;
-  padding: 4px;
+  margin: var(--space-1) 0 0;
+  padding: var(--space-1);
   list-style: none;
-  background: var(--bg);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   max-height: 240px;
   overflow-y: auto;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-md);
 }
 
 .searchable-select-menu li button {
@@ -401,7 +658,7 @@ dd {
 .searchable-select-empty {
   padding: 10px;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 /* ============================================================
@@ -410,14 +667,14 @@ dd {
 .pick-list-select {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .page-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .manage-options {
@@ -427,7 +684,7 @@ dd {
 .manage-options-toggle {
   min-height: auto;
   padding: 4px 10px;
-  font-size: 12px;
+  font-size: var(--text-xs);
   background: none;
   border: 1px solid var(--border);
   color: var(--text);
@@ -443,19 +700,19 @@ dd {
   z-index: 20;
   top: 100%;
   right: 0;
-  margin-top: 4px;
-  padding: 12px;
+  margin-top: var(--space-1);
+  padding: var(--space-3);
   width: 280px;
-  background: var(--bg);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: var(--shadow);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
 }
 
 .manage-options-add-row {
   display: flex;
   gap: 6px;
-  margin-bottom: 10px;
+  margin-bottom: var(--space-3);
 }
 
 .manage-options-add-row input {
@@ -474,10 +731,10 @@ dd {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-2);
   padding: 6px 0;
   border-bottom: 1px solid var(--border);
-  font-size: 14px;
+  font-size: var(--text-md);
 }
 
 .manage-options-list li:last-child {
@@ -486,8 +743,8 @@ dd {
 
 .manage-options-list button {
   min-height: auto;
-  padding: 4px 8px;
-  font-size: 12px;
+  padding: 4px var(--space-2);
+  font-size: var(--text-xs);
 }
 
 .manage-options-archived span {
@@ -496,7 +753,7 @@ dd {
 }
 
 .manage-options-empty {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--text);
 }
 
@@ -509,19 +766,19 @@ dd {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 /* ============================================================
    Transaction documents (roadmap 9.6)
    ============================================================ */
 .transaction-documents {
-  padding: 12px 0;
+  padding: var(--space-3) 0;
 }
 
 .transaction-documents-list {
   list-style: none;
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
   padding: 0;
 }
 
@@ -532,35 +789,50 @@ dd {
 .transaction-documents-upload {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
 /* ============================================================
-   Tables
+   Tables — presented as a rounded card with spacious rows
    ============================================================ */
 table {
   width: 100%;
   max-width: 100%;
   border-collapse: collapse;
-  margin-top: 16px;
+  margin-top: var(--space-4);
   display: block;
   overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
 
 th,
 td {
   text-align: left;
-  padding: 10px 12px;
+  padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--border);
-  font-size: 14px;
+  font-size: var(--text-md);
   white-space: nowrap;
 }
 
+thead th {
+  padding-top: var(--space-4);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover td {
+  background: var(--surface-sunken);
+}
+
 th {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--text);
 }
 
@@ -571,27 +843,27 @@ th {
   background: var(--danger-bg);
   border: 1px solid var(--danger-border);
   color: var(--danger);
-  padding: 10px 14px;
-  border-radius: 8px;
-  margin-top: 12px;
-  font-size: 14px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-3);
+  font-size: var(--text-md);
 }
 
 .success-message {
   color: var(--success);
-  margin-top: 8px;
-  font-size: 14px;
+  margin-top: var(--space-2);
+  font-size: var(--text-md);
 }
 
 /* Roadmap 7.15 — Action Queue priority coloring, applied to a row
    wherever action items are listed (portfolio board + per-property
    Follow-ups card). */
-tr.action-item-red {
+tr.action-item-red td {
   background: var(--danger-bg);
   color: var(--danger);
 }
 
-tr.action-item-yellow {
+tr.action-item-yellow td {
   background: var(--warning-bg);
   color: var(--warning);
 }
@@ -606,7 +878,7 @@ tr.action-item-yellow {
 .type-selector button {
   flex: 1 1 0;
   min-height: 48px;
-  font-size: 14px;
+  font-size: var(--text-md);
 }
 
 /* ============================================================
@@ -622,8 +894,8 @@ tr.action-item-yellow {
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: center;
-    gap: 16px;
-    padding: 12px 16px;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4);
     border-right: none;
     border-bottom: 1px solid var(--border);
   }
@@ -631,7 +903,8 @@ tr.action-item-yellow {
   .app-nav-brand {
     flex-shrink: 0;
     white-space: nowrap;
-    font-size: 14px;
+    font-size: var(--text-md);
+    padding: 0;
   }
 
   .app-nav-links {
@@ -642,7 +915,7 @@ tr.action-item-yellow {
   }
 
   .app-nav-links a {
-    padding: 8px 10px;
+    padding: var(--space-2) var(--space-3);
     white-space: nowrap;
   }
 
@@ -651,7 +924,7 @@ tr.action-item-yellow {
     flex-shrink: 0;
     align-items: center;
     border-top: none;
-    padding-top: 0;
+    padding: 0;
     margin-left: auto;
     white-space: nowrap;
   }
@@ -661,7 +934,7 @@ tr.action-item-yellow {
   }
 
   .app-main {
-    padding: 20px;
+    padding: var(--space-4);
   }
 }
 
@@ -675,7 +948,7 @@ tr.action-item-yellow {
   select,
   textarea,
   button {
-    font-size: 16px;
+    font-size: var(--text-base);
   }
 
   button {
@@ -703,17 +976,17 @@ tr.action-item-yellow {
 
 .account-security-panel {
   position: fixed;
-  left: 16px;
+  left: var(--space-4);
   bottom: 80px;
   width: 320px;
   max-width: calc(100vw - 32px);
   max-height: 70vh;
   overflow-y: auto;
-  background: var(--bg);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  padding: 20px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-5);
   z-index: 30;
 }
 
@@ -721,7 +994,7 @@ tr.action-item-yellow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .account-security-panel-header h3 {
@@ -729,13 +1002,13 @@ tr.action-item-yellow {
 }
 
 .account-security-panel section {
-  margin-top: 16px;
-  padding-top: 16px;
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
   border-top: 1px solid var(--border);
 }
 
 .account-security-panel section:first-of-type {
-  margin-top: 12px;
+  margin-top: var(--space-3);
   padding-top: 0;
   border-top: none;
 }
@@ -746,20 +1019,20 @@ tr.action-item-yellow {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .account-security-panel li {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .account-security-enroll img {
   display: block;
-  margin: 8px 0;
-  border-radius: 8px;
+  margin: var(--space-2) 0;
+  border-radius: var(--radius-sm);
   background: #fff;
-  padding: 8px;
+  padding: var(--space-2);
 }
