@@ -2,6 +2,8 @@ import type { MortgagePayment } from './mortgagePayoffQueries'
 
 interface MortgagePaymentListProps {
   payments: MortgagePayment[]
+  onVoid: (id: string) => void
+  voiding: boolean
 }
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -10,7 +12,7 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 })
 
-export function MortgagePaymentList({ payments }: MortgagePaymentListProps) {
+export function MortgagePaymentList({ payments, onVoid, voiding }: MortgagePaymentListProps) {
   if (payments.length === 0) {
     return <p>No payments logged yet.</p>
   }
@@ -23,15 +25,26 @@ export function MortgagePaymentList({ payments }: MortgagePaymentListProps) {
           <th>Amount</th>
           <th>Principal</th>
           <th>Interest</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
         {payments.map((payment) => (
-          <tr key={payment.id}>
-            <td>{payment.payment_date}</td>
+          <tr key={payment.id} style={payment.voided ? { opacity: 0.5 } : undefined}>
+            <td>
+              {payment.payment_date}
+              {payment.voided ? ' (voided)' : ''}
+            </td>
             <td>{currencyFormatter.format(Number(payment.amount))}</td>
             <td>{currencyFormatter.format(Number(payment.principal_amount))}</td>
             <td>{currencyFormatter.format(Number(payment.interest_amount))}</td>
+            <td>
+              {!payment.voided && (
+                <button type="button" onClick={() => onVoid(payment.id)} disabled={voiding}>
+                  Void
+                </button>
+              )}
+            </td>
           </tr>
         ))}
       </tbody>

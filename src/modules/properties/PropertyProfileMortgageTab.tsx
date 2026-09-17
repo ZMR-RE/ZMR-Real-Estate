@@ -36,6 +36,7 @@ export function PropertyProfileMortgageTab({ property }: PropertyProfileMortgage
     paymentError,
     paymentFormInitialValues,
     logPayment,
+    voidPayment,
     escrowTransactions,
     loggingEscrowTransaction,
     escrowTransactionError,
@@ -105,7 +106,7 @@ export function PropertyProfileMortgageTab({ property }: PropertyProfileMortgage
           Only the "log a new one" forms require an active mortgage, since
           the DB triggers behind them do too. */}
       <h2>Payment history</h2>
-      <MortgagePaymentList payments={payments} />
+      <MortgagePaymentList payments={payments} onVoid={voidPayment} voiding={loggingPayment} />
       {mortgageDetails && (
         <MortgagePaymentForm
           initialValues={paymentFormInitialValues}

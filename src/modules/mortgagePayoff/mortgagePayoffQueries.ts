@@ -70,14 +70,19 @@ export interface MortgagePayment {
   amount: string
   principal_amount: string
   interest_amount: string
+  voided: boolean
 }
 
-export type MortgagePaymentInput = Omit<MortgagePayment, 'id' | 'property_id'>
+export type MortgagePaymentInput = Omit<MortgagePayment, 'id' | 'property_id' | 'voided'>
 
+// Fetches voided rows too (not just active), same as
+// listMortgageEscrowTransactions — the list stays the full history with
+// voided entries visibly marked, rather than making them disappear
+// entirely.
 export async function listMortgagePayments(propertyId: string) {
   return supabase
     .from('mortgage_payments')
-    .select('id, property_id, payment_date, amount, principal_amount, interest_amount')
+    .select('id, property_id, payment_date, amount, principal_amount, interest_amount, voided')
     .eq('property_id', propertyId)
     .order('payment_date', { ascending: false })
     .returns<MortgagePayment[]>()
@@ -93,6 +98,20 @@ export async function createMortgagePayment(
   return supabase
     .from('mortgage_payments')
     .insert({ ...input, account_id: accountId, property_id: propertyId })
+    .select()
+    .single()
+}
+
+// The only "removal" path for a payment (matches mortgage_details/
+// mortgage_escrow_transactions, roadmap 9.20) — never a hard DELETE. Does
+// not reverse the payment's earlier effect on mortgage_details.current_balance
+// (that trigger only ever runs on INSERT) — voiding corrects the record
+// going forward, it isn't a balance-adjustment tool.
+export async function voidMortgagePayment(id: string) {
+  return supabase
+    .from('mortgage_payments')
+    .update({ voided: true, voided_at: new Date().toISOString() })
+    .eq('id', id)
     .select()
     .single()
 }

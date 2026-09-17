@@ -10,6 +10,7 @@ import {
   updateMortgageDetails,
   voidMortgageDetails,
   voidMortgageEscrowTransaction,
+  voidMortgagePayment,
   type MortgageDetails,
   type MortgageDetailsInput,
   type MortgageEscrowTransaction,
@@ -183,6 +184,25 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     return true
   }
 
+  // The only "removal" path for a payment (roadmap 9.20, same as escrow
+  // below) — never a hard DELETE. Doesn't reverse the payment's earlier
+  // effect on mortgage_details.current_balance; it corrects the record,
+  // not the balance.
+  const voidPayment = async (id: string): Promise<boolean> => {
+    setLoggingPayment(true)
+    const { error: voidError } = await voidMortgagePayment(id)
+    setLoggingPayment(false)
+
+    if (voidError) {
+      setPaymentError(voidError.message)
+      return false
+    }
+
+    setPaymentError(null)
+    await refresh()
+    return true
+  }
+
   // The trigger on mortgage_escrow_transactions already applied the
   // deposit/disbursement to escrow_balance by the time this resolves —
   // refresh() re-reads it rather than computing the new balance
@@ -278,6 +298,7 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     paymentError,
     paymentFormInitialValues: BLANK_PAYMENT,
     logPayment,
+    voidPayment,
 
     escrowTransactions,
     loggingEscrowTransaction,
