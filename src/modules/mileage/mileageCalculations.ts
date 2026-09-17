@@ -17,7 +17,7 @@ export function summarizeMileageByProperty(rows: MileageRollupRow[]): MileageByP
       propertyName: propertyLabel(row.property),
       totalMiles: 0,
     }
-    existing.totalMiles += row.miles
+    existing.totalMiles += row.miles_driven !== null ? Number(row.miles_driven) : 0
     totals.set(row.property_id, existing)
   }
 

@@ -26,6 +26,13 @@ export function ReconciliationQueue() {
     categoryByEntry,
     setCategory,
     reconcile,
+    editingId,
+    startEditing,
+    cancelEditing,
+    detailsError,
+    saveDetails,
+    toggleManuallyCompleted,
+    voidEntry,
     viewAttachment,
   } = useReconciliationQueue()
 
@@ -74,6 +81,13 @@ export function ReconciliationQueue() {
           onCategoryChange={setCategory}
           onViewAttachment={viewAttachment}
           onReconcile={reconcile}
+          editingId={editingId}
+          onStartEditing={startEditing}
+          onCancelEditing={cancelEditing}
+          detailsError={detailsError}
+          onSaveDetails={saveDetails}
+          onToggleManuallyCompleted={toggleManuallyCompleted}
+          onVoid={voidEntry}
         />
       )}
     </div>

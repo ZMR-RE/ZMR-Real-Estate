@@ -4,7 +4,7 @@ import { AccountSecurityMenu } from '../modules/account/AccountSecurityMenu'
 
 const NAV_ITEMS = [
   { to: '/properties', label: 'Properties' },
-  { to: '/capture', label: 'Log it' },
+  { to: '/capture', label: 'Quick capture' },
   { to: '/reconciliation', label: 'Action queue' },
   { to: '/rent-ops', label: 'Rent ops' },
   { to: '/tasks', label: 'Tasks' },

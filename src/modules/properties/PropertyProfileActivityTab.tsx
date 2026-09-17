@@ -1,5 +1,4 @@
-import { getAttachmentSignedUrl } from '../reconciliation/reconciliationQueries'
-import type { ActivityLogEntry } from '../capture/captureQueries'
+import { getAttachmentSignedUrl, type ActivityLogEntry } from '../capture/captureQueries'
 
 interface PropertyProfileActivityTabProps {
   entries: ActivityLogEntry[]
@@ -23,7 +22,7 @@ export function PropertyProfileActivityTab({ entries }: PropertyProfileActivityT
           <th>Date</th>
           <th>Type</th>
           <th>Notes</th>
-          <th>Attachment</th>
+          <th>Attachments</th>
         </tr>
       </thead>
       <tbody>
@@ -33,9 +32,13 @@ export function PropertyProfileActivityTab({ entries }: PropertyProfileActivityT
             <td>{entry.entry_type === 'visit' ? 'Visit' : 'Communication'}</td>
             <td>{entry.notes ?? ''}</td>
             <td>
-              <button type="button" onClick={() => viewAttachment(entry.attachment_path)}>
-                View {entry.attachment_type}
-              </button>
+              {entry.attachments.length === 0
+                ? '—'
+                : entry.attachments.map((a) => (
+                    <button key={a.id} type="button" onClick={() => viewAttachment(a.storage_path)}>
+                      View {a.attachment_type}
+                    </button>
+                  ))}
             </td>
           </tr>
         ))}

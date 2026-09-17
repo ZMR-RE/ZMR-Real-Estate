@@ -33,7 +33,7 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 - Never test password-reset, login, or credential flows using the real account's actual credentials in a way that changes them without asking first. If verifying a flow requires changing a real credential, stop and ask before proceeding, or use a disposable/test account instead. If a real credential is changed as part of testing, hand control back to the user immediately with the new value — never treat that as routine cleanup.
 
 ## Navigation discipline
-- No new feature may add a standalone top-level nav item without explicit approval. New functionality must be placed within the approved nav structure (Properties, Log It, Action Queue, Financials & Tax, Command Center, Automations, Portfolio KPIs) or on the relevant entity's own profile page (Property, Mortgage, etc.) — never a new sibling nav entry as a default fallback.
+- No new feature may add a standalone top-level nav item without explicit approval. New functionality must be placed within the approved nav structure (Properties, Quick Capture, Action Queue, Financials & Tax, Command Center, Automations, Portfolio KPIs) or on the relevant entity's own profile page (Property, Mortgage, etc.) — never a new sibling nav entry as a default fallback.
 
 ## Data integrity
 - Never seed, infer, or guess a field's value from a naming pattern or assumption (e.g. deriving an LLC name from a property's address). Leave the field blank and prompt the user for the real value instead. Only user-entered data is treated as truth.
