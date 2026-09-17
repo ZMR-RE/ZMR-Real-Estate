@@ -1,318 +1,110 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useAuth } from '../../shared/auth/AuthContext'
-import {
-  createMortgageDetails,
-  createMortgageEscrowTransaction,
-  createMortgagePayment,
-  getMortgageDetails,
-  listMortgageEscrowTransactions,
-  listMortgagePayments,
-  updateMortgageDetails,
-  voidMortgageDetails,
-  voidMortgageEscrowTransaction,
-  voidMortgagePayment,
-  type MortgageDetails,
-  type MortgageDetailsInput,
-  type MortgageEscrowTransaction,
-  type MortgageEscrowTransactionInput,
-  type MortgagePayment,
-  type MortgagePaymentInput,
-} from './mortgagePayoffQueries'
-import {
-  computeEquity,
-  computePayoffScenario,
-  type EquitySnapshot,
-  type ExtraPaymentMode,
-  type PayoffScenarioResult,
-} from './mortgagePayoffMath'
-
-const BLANK_MORTGAGE: MortgageDetailsInput = {
-  lender_name: null,
-  original_loan_amount: '',
-  current_balance: '',
-  interest_rate: '',
-  monthly_payment: '',
-  loan_start_date: '',
-  term_years: 30,
-  escrow_balance: null,
-}
-
-function todayDateString() {
-  return new Date().toISOString().slice(0, 10)
-}
-
-const BLANK_PAYMENT: MortgagePaymentInput = {
-  payment_date: todayDateString(),
-  amount: '',
-  principal_amount: '',
-  interest_amount: '',
-}
-
-const BLANK_ESCROW_TRANSACTION: MortgageEscrowTransactionInput = {
-  transaction_date: todayDateString(),
-  transaction_type: 'deposit',
-  amount: '',
-  description: null,
-}
+import { useMortgageDetails } from './useMortgageDetails'
+import { useMortgagePayments } from './useMortgagePayments'
+import { useMortgageEscrow } from './useMortgageEscrow'
+import { useMortgagePayoffScenario } from './useMortgagePayoffScenario'
+import type { MortgageDetailsInput, MortgageEscrowTransactionInput, MortgagePaymentInput } from './mortgagePayoffQueries'
 
 // Same mortgage_details CRUD + scenario logic the standalone Mortgage Payoff
 // screen used, minus its property-picker — the Property Profile tab already
 // knows which property it's on (roadmap 7.5).
+//
+// Composes the four mortgagePayoff concerns (audit: file size discipline
+// split) — useMortgageDetails, useMortgagePayments, useMortgageEscrow,
+// useMortgagePayoffScenario — each of which owns its own data and refresh.
+// This hook's only job is wiring the one real cross-hook dependency
+// (logging/voiding a payment or escrow transaction moves
+// mortgage_details.current_balance/escrow_balance via a DB trigger, so
+// every mutation here re-fetches all three, exactly like the original
+// single-refresh implementation did) and merging their return values into
+// the same flat shape PropertyProfileMortgageTab.tsx already consumes.
 export function useMortgageForProperty(propertyId: string, marketValue: string | null) {
-  const { accountId } = useAuth()
+  const details = useMortgageDetails(propertyId, marketValue)
+  const payments = useMortgagePayments(propertyId)
+  const escrow = useMortgageEscrow(propertyId)
+  const scenario = useMortgagePayoffScenario(details.mortgageDetails)
 
-  const [mortgageDetails, setMortgageDetails] = useState<MortgageDetails | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [isEditing, setIsEditing] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const loading = details.loading || payments.loading || escrow.loading
+  const error = details.error ?? payments.error ?? escrow.error
 
-  const [payments, setPayments] = useState<MortgagePayment[]>([])
-  const [loggingPayment, setLoggingPayment] = useState(false)
-  const [paymentError, setPaymentError] = useState<string | null>(null)
-
-  const [escrowTransactions, setEscrowTransactions] = useState<MortgageEscrowTransaction[]>([])
-  const [loggingEscrowTransaction, setLoggingEscrowTransaction] = useState(false)
-  const [escrowTransactionError, setEscrowTransactionError] = useState<string | null>(null)
-
-  const [extraAmount, setExtraAmount] = useState('')
-  const [extraMode, setExtraMode] = useState<ExtraPaymentMode>('recurring')
-  const [scenarioResult, setScenarioResult] = useState<PayoffScenarioResult | null>(null)
-  const [scenarioError, setScenarioError] = useState<string | null>(null)
-
-  const refresh = useCallback(async () => {
-    setLoading(true)
-    const [
-      { data, error: fetchError },
-      { data: paymentRows, error: paymentsFetchError },
-      { data: escrowRows, error: escrowFetchError },
-    ] = await Promise.all([
-      getMortgageDetails(propertyId),
-      listMortgagePayments(propertyId),
-      listMortgageEscrowTransactions(propertyId),
-    ])
-    setLoading(false)
-
-    if (fetchError || paymentsFetchError || escrowFetchError) {
-      setError((fetchError ?? paymentsFetchError ?? escrowFetchError)!.message)
-      return
-    }
-
-    setError(null)
-    setMortgageDetails(data ?? null)
-    setIsEditing(!data)
-    setPayments(paymentRows ?? [])
-    setEscrowTransactions(escrowRows ?? [])
-  }, [propertyId])
-
-  useEffect(() => {
-    refresh()
-  }, [refresh])
-
-  const startEditing = () => {
-    setError(null)
-    setIsEditing(true)
-  }
-
-  const cancelEditing = () => {
-    if (!mortgageDetails) return // nothing to fall back to yet
-    setError(null)
-    setIsEditing(false)
+  const refreshAll = async () => {
+    await Promise.all([details.refresh(), payments.refresh(), escrow.refresh()])
   }
 
   const save = async (input: MortgageDetailsInput) => {
-    if (!accountId) return
-
-    setSaving(true)
-    const { data, error: saveError } = mortgageDetails
-      ? await updateMortgageDetails(mortgageDetails.id, input)
-      : await createMortgageDetails(accountId, propertyId, input)
-    setSaving(false)
-
-    if (saveError) {
-      setError(saveError.message)
-      return
-    }
-
-    setError(null)
-    setMortgageDetails(data)
-    setIsEditing(false)
-    setScenarioResult(null)
+    const ok = await details.save(input)
+    if (ok) scenario.clearResult()
   }
 
-  // The only "removal" path (roadmap 9.20) — never a hard DELETE. Leaves
-  // mortgage_payments, mortgage_escrow_transactions, and any linked
-  // documents untouched; refresh() re-fetches and getMortgageDetails'
-  // voided filter naturally forces isEditing back on since there's no
-  // active mortgage anymore, same as a brand-new property.
   const voidMortgage = async (): Promise<boolean> => {
-    if (!mortgageDetails) return false
-    setSaving(true)
-    const { error: voidError } = await voidMortgageDetails(mortgageDetails.id)
-    setSaving(false)
-
-    if (voidError) {
-      setError(voidError.message)
-      return false
+    const ok = await details.voidMortgage()
+    if (ok) {
+      scenario.clearResult()
+      await refreshAll()
     }
-
-    setError(null)
-    setScenarioResult(null)
-    await refresh()
-    return true
+    return ok
   }
 
-  // The trigger on mortgage_payments already reduced current_balance in the
-  // database by the time this resolves — refresh() re-reads it rather than
-  // computing the new balance client-side, so the UI can't drift from what
-  // the trigger actually did.
   const logPayment = async (input: MortgagePaymentInput): Promise<boolean> => {
-    if (!accountId) return false
-
-    setLoggingPayment(true)
-    const { error: paymentSaveError } = await createMortgagePayment(accountId, propertyId, input)
-    setLoggingPayment(false)
-
-    if (paymentSaveError) {
-      setPaymentError(paymentSaveError.message)
-      return false
+    const ok = await payments.logPayment(input)
+    if (ok) {
+      scenario.clearResult()
+      await refreshAll()
     }
-
-    setPaymentError(null)
-    setScenarioResult(null)
-    await refresh()
-    return true
+    return ok
   }
 
-  // The only "removal" path for a payment (roadmap 9.20, same as escrow
-  // below) — never a hard DELETE. Doesn't reverse the payment's earlier
-  // effect on mortgage_details.current_balance; it corrects the record,
-  // not the balance.
   const voidPayment = async (id: string): Promise<boolean> => {
-    setLoggingPayment(true)
-    const { error: voidError } = await voidMortgagePayment(id)
-    setLoggingPayment(false)
-
-    if (voidError) {
-      setPaymentError(voidError.message)
-      return false
-    }
-
-    setPaymentError(null)
-    await refresh()
-    return true
+    const ok = await payments.voidPayment(id)
+    if (ok) await refreshAll()
+    return ok
   }
 
-  // The trigger on mortgage_escrow_transactions already applied the
-  // deposit/disbursement to escrow_balance by the time this resolves —
-  // refresh() re-reads it rather than computing the new balance
-  // client-side, same reasoning as logPayment above.
   const logEscrowTransaction = async (input: MortgageEscrowTransactionInput): Promise<boolean> => {
-    if (!accountId) return false
-
-    setLoggingEscrowTransaction(true)
-    const { error: escrowSaveError } = await createMortgageEscrowTransaction(accountId, propertyId, input)
-    setLoggingEscrowTransaction(false)
-
-    if (escrowSaveError) {
-      setEscrowTransactionError(escrowSaveError.message)
-      return false
-    }
-
-    setEscrowTransactionError(null)
-    await refresh()
-    return true
+    const ok = await escrow.logEscrowTransaction(input)
+    if (ok) await refreshAll()
+    return ok
   }
 
-  // The only "removal" path for an escrow transaction (roadmap 9.20) —
-  // never a hard DELETE. Note this doesn't reverse the deposit/disbursement
-  // already applied to escrow_balance (see voidMortgageEscrowTransaction);
-  // it corrects the record, not the balance.
   const voidEscrowTransaction = async (id: string): Promise<boolean> => {
-    setLoggingEscrowTransaction(true)
-    const { error: voidError } = await voidMortgageEscrowTransaction(id)
-    setLoggingEscrowTransaction(false)
-
-    if (voidError) {
-      setEscrowTransactionError(voidError.message)
-      return false
-    }
-
-    setEscrowTransactionError(null)
-    await refresh()
-    return true
+    const ok = await escrow.voidEscrowTransaction(id)
+    if (ok) await refreshAll()
+    return ok
   }
-
-  const calculateScenario = () => {
-    if (!mortgageDetails) return
-
-    const parsedExtra = Number(extraAmount)
-
-    if (!extraAmount || Number.isNaN(parsedExtra) || parsedExtra <= 0) {
-      setScenarioError('Enter a positive extra payment amount.')
-      setScenarioResult(null)
-      return
-    }
-
-    const scenario = computePayoffScenario({
-      balance: Number(mortgageDetails.current_balance),
-      annualRatePercent: Number(mortgageDetails.interest_rate),
-      monthlyPayment: Number(mortgageDetails.monthly_payment),
-      extraAmount: parsedExtra,
-      extraMode,
-    })
-
-    if (!scenario) {
-      setScenarioError(
-        'At this rate, the current payment never pays off this balance. Check the stored mortgage details.',
-      )
-      setScenarioResult(null)
-      return
-    }
-
-    setScenarioError(null)
-    setScenarioResult(scenario)
-  }
-
-  const equity: EquitySnapshot | null =
-    mortgageDetails && marketValue
-      ? computeEquity(Number(marketValue), Number(mortgageDetails.current_balance))
-      : null
 
   return {
-    mortgageDetails,
+    mortgageDetails: details.mortgageDetails,
     loading,
-    isEditing,
-    saving,
+    isEditing: details.isEditing,
+    saving: details.saving,
     error,
-    formInitialValues: mortgageDetails ?? BLANK_MORTGAGE,
-    startEditing,
-    cancelEditing,
+    formInitialValues: details.formInitialValues,
+    startEditing: details.startEditing,
+    cancelEditing: details.cancelEditing,
     save,
     voidMortgage,
 
-    equity,
+    equity: details.equity,
 
-    payments,
-    loggingPayment,
-    paymentError,
-    paymentFormInitialValues: BLANK_PAYMENT,
+    payments: payments.payments,
+    loggingPayment: payments.loggingPayment,
+    paymentError: payments.paymentError,
+    paymentFormInitialValues: payments.paymentFormInitialValues,
     logPayment,
     voidPayment,
 
-    escrowTransactions,
-    loggingEscrowTransaction,
-    escrowTransactionError,
-    escrowTransactionFormInitialValues: BLANK_ESCROW_TRANSACTION,
+    escrowTransactions: escrow.escrowTransactions,
+    loggingEscrowTransaction: escrow.loggingEscrowTransaction,
+    escrowTransactionError: escrow.escrowTransactionError,
+    escrowTransactionFormInitialValues: escrow.escrowTransactionFormInitialValues,
     logEscrowTransaction,
     voidEscrowTransaction,
 
-    extraAmount,
-    setExtraAmount,
-    extraMode,
-    setExtraMode,
-    scenarioResult,
-    scenarioError,
-    calculateScenario,
+    extraAmount: scenario.extraAmount,
+    setExtraAmount: scenario.setExtraAmount,
+    extraMode: scenario.extraMode,
+    setExtraMode: scenario.setExtraMode,
+    scenarioResult: scenario.scenarioResult,
+    scenarioError: scenario.scenarioError,
+    calculateScenario: scenario.calculateScenario,
   }
 }
