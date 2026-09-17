@@ -16,6 +16,11 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   - `<Entity>List.tsx` / `<Entity>Form.tsx` — presentational UI, no Supabase imports.
   - `<Module>.tsx` — top-level screen component wiring the hook to the UI components.
 
+## File size discipline
+- If any file exceeds roughly 300 lines, treat that as a signal to split
+  it further by concern, per the existing Code organization rule. Flag
+  it rather than letting it grow indefinitely.
+
 ## Fix philosophy
 - Root-cause fixes only. No bandage fixes, no patches that mask the underlying bug.
 - If the root-cause fix is bigger than expected, stop and flag it rather than patching around it to move faster.
