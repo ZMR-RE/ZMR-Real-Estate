@@ -1,6 +1,7 @@
 import { ChartOfAccounts } from '../chartOfAccounts/ChartOfAccounts'
 import { ManageOptionsPanel } from '../../shared/pickLists/ManageOptionsPanel'
 import { useSettingsPickLists } from './useSettingsPickLists'
+import { InstallAppSection } from './InstallAppSection'
 
 // Roadmap 12.1 — foundational Settings shell. Houses admin-level features
 // that don't belong on any single entity's page: Chart of Accounts
@@ -39,6 +40,8 @@ export function Settings() {
           ))}
         </div>
       </section>
+
+      <InstallAppSection />
     </div>
   )
 }
