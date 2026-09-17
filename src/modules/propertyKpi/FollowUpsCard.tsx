@@ -24,7 +24,7 @@ export function FollowUpsCard({ loading, error, groups, processingId, onComplete
   }
 
   if (groups.length === 0) {
-    return <p>No open follow-ups for this property.</p>
+    return <p className="empty-state">No open follow-ups for this property.</p>
   }
 
   return (

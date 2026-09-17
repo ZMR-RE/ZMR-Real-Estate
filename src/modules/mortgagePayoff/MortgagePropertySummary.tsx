@@ -66,7 +66,7 @@ export function MortgagePropertySummary({
           <dd>{percentFormatter.format(equity.ltv)}</dd>
         </dl>
       ) : (
-        <p>Set a market value for this property in the Property Registry to see equity and LTV.</p>
+        <p>Set a market value for this property in the property registry to see equity and LTV.</p>
       )}
 
       <button type="button" onClick={onEdit}>

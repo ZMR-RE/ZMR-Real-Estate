@@ -41,7 +41,7 @@ export function PropertyTenantsOverview({ propertyId }: PropertyTenantsOverviewP
   }
 
   if (tenants.length === 0) {
-    return <p>No current tenants across any unit.</p>
+    return <p className="empty-state">No current tenants across any unit.</p>
   }
 
   return (

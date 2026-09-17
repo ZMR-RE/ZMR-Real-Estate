@@ -15,7 +15,7 @@ export function MileageRollup({ year }: MileageRollupProps) {
       {loading ? (
         <p>Loading…</p>
       ) : summary.length === 0 ? (
-        <p>No mileage logged for this year.</p>
+        <p className="empty-state">No mileage logged for this year.</p>
       ) : (
         <table>
           <thead>

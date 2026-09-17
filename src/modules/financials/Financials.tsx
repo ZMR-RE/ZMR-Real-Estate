@@ -79,11 +79,11 @@ export function Financials() {
       </button>
 
       <p>
-        <Link to="/settings">Manage Chart of Accounts</Link> (moved to Settings)
+        <Link to="/settings">Manage chart of accounts</Link> (moved to Settings)
       </p>
 
       <p>
-        <Link to="/reports">Balance Sheet, Profit &amp; Loss, and Cash Flow reports</Link>
+        <Link to="/reports">Balance sheet, profit &amp; loss, and cash flow reports</Link>
       </p>
 
       <button type="button" onClick={() => setIsReconciling((v) => !v)}>

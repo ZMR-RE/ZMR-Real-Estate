@@ -45,14 +45,14 @@ export function PropertyProfile() {
       <div>
         {error && <p role="alert">{error}</p>}
         <p>Property not found.</p>
-        <Link to="/properties">Back to Property Registry</Link>
+        <Link to="/properties">Back to property registry</Link>
       </div>
     )
   }
 
   return (
     <div>
-      <Link to="/properties">&larr; Property Registry</Link>
+      <Link to="/properties">&larr; Property registry</Link>
       <h1>{propertyLabel(property)}</h1>
       {error && <p role="alert">{error}</p>}
 

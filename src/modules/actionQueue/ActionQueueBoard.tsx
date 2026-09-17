@@ -64,7 +64,7 @@ export function ActionQueueBoard() {
       {loading ? (
         <p>Loading…</p>
       ) : groups.length === 0 ? (
-        <p>No open action items.</p>
+        <p className="empty-state">No open action items.</p>
       ) : (
         groups.map(([type, items]) => (
           <CollapsibleSection key={type} title={`${type} (${items.length})`} defaultOpen>

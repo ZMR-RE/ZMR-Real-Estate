@@ -18,7 +18,7 @@ export function OccupancySnapshotCard({ loading, error, snapshot }: OccupancySna
   }
 
   if (snapshot.totalUnits === 0) {
-    return <p>No units logged yet — add units in the Overview tab to see occupancy.</p>
+    return <p className="empty-state">No units logged yet — add units in the Overview tab to see occupancy.</p>
   }
 
   return (

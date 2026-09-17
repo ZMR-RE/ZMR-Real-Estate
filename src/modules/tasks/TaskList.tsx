@@ -10,7 +10,7 @@ interface TaskListProps {
 
 export function TaskList({ tasks, processingId, onSelect, onComplete }: TaskListProps) {
   if (tasks.length === 0) {
-    return <p>No tasks.</p>
+    return <p className="empty-state">No tasks.</p>
   }
 
   return (

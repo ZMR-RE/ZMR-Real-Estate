@@ -34,7 +34,7 @@ export function TransactionList({
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null)
 
   if (transactions.length === 0) {
-    return <p>No transactions for this filter.</p>
+    return <p className="empty-state">No transactions for this filter.</p>
   }
 
   return (

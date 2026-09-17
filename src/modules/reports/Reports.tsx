@@ -5,9 +5,9 @@ import { ProfitAndLossReport } from './ProfitAndLossReport'
 import { CashFlowReport } from './CashFlowReport'
 
 const TABS: { key: ReportTab; label: string }[] = [
-  { key: 'balance-sheet', label: 'Balance Sheet' },
-  { key: 'profit-loss', label: 'Profit & Loss' },
-  { key: 'cash-flow', label: 'Cash Flow' },
+  { key: 'balance-sheet', label: 'Balance sheet' },
+  { key: 'profit-loss', label: 'Profit & loss' },
+  { key: 'cash-flow', label: 'Cash flow' },
 ]
 
 // Roadmap 9.2/9.3/9.4 — core financial reports, grouped on one screen

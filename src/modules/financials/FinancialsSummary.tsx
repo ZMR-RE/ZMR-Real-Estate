@@ -10,7 +10,7 @@ export function FinancialsSummary({ byPropertyAndCategory, byProperty }: Financi
     <div>
       <h2>Income &amp; expense by property</h2>
       {byProperty.length === 0 ? (
-        <p>No activity for this filter.</p>
+        <p className="empty-state">No activity for this filter.</p>
       ) : (
         <table>
           <thead>
@@ -36,7 +36,7 @@ export function FinancialsSummary({ byPropertyAndCategory, byProperty }: Financi
 
       <h2>By property and category</h2>
       {byPropertyAndCategory.length === 0 ? (
-        <p>No activity for this filter.</p>
+        <p className="empty-state">No activity for this filter.</p>
       ) : (
         <table>
           <thead>

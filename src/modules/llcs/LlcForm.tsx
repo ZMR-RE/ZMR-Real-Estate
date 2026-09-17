@@ -88,7 +88,7 @@ export function LlcForm({
       <label htmlFor="llc_form_annual_report_due_date">Annual report due date</label>
       <input id="llc_form_annual_report_due_date" type="date" {...field('annual_report_due_date')} />
 
-      <label htmlFor="llc_form_holding_company_id">Holding Company</label>
+      <label htmlFor="llc_form_holding_company_id">Holding company</label>
       {isAddingHoldingCompany ? (
         <HoldingCompanyForm
           saving={creatingHoldingCompany}
@@ -106,9 +106,9 @@ export function LlcForm({
           onChange={(id) =>
             setValues((prev) => ({ ...prev, holding_company_id: id === NO_HOLDING_COMPANY_ID ? null : id }))
           }
-          placeholder="Select a Holding Company"
+          placeholder="Select a holding company"
           onAddNew={() => setIsAddingHoldingCompany(true)}
-          addNewLabel="+ Add new Holding Company"
+          addNewLabel="+ Add new holding company"
         />
       )}
 

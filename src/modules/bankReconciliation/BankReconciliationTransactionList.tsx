@@ -12,7 +12,7 @@ export function BankReconciliationTransactionList({
   onToggle,
 }: BankReconciliationTransactionListProps) {
   if (transactions.length === 0) {
-    return <p>No transactions in this period for this property.</p>
+    return <p className="empty-state">No transactions in this period for this property.</p>
   }
 
   return (
