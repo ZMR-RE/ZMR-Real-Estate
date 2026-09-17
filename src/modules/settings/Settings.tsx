@@ -4,6 +4,7 @@ import { useSettingsPickLists } from './useSettingsPickLists'
 import { InstallAppSection } from './InstallAppSection'
 import { AccountSecuritySection } from '../account/AccountSecuritySection'
 import { ThemeToggle } from './ThemeToggle'
+import { OrganizationTypesSection } from '../llcs/OrganizationTypesSection'
 
 // Roadmap 12.1 — foundational Settings shell. Houses admin-level features
 // that don't belong on any single entity's page: Chart of Accounts
@@ -41,6 +42,8 @@ export function Settings() {
           ))}
         </div>
       </section>
+
+      <OrganizationTypesSection />
 
       <AccountSecuritySection />
 

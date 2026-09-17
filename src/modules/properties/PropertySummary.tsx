@@ -30,7 +30,7 @@ const STATUS_BADGE_VARIANTS: Record<Property['status'], string> = {
 
 function llcDisplay(llcId: string | null, llcOptions: SearchableSelectOption[]): string {
   if (llcId === null) {
-    return llcOptions.find((o) => o.id === NO_LLC_ID)?.label ?? 'No LLC'
+    return llcOptions.find((o) => o.id === NO_LLC_ID)?.label ?? 'Individual ownership'
   }
   return llcOptions.find((o) => o.id === llcId)?.label ?? llcId
 }
@@ -49,7 +49,7 @@ export function PropertySummary({ property, llcOptions, insuranceDocuments, onVi
       <dl>
         <dt>Name</dt>
         <dd>{property.name}</dd>
-        <dt>LLC</dt>
+        <dt>Organization type</dt>
         <dd>{llcDisplay(property.llc_id, llcOptions)}</dd>
         <dt>Address</dt>
         <dd>{property.address ?? '—'}</dd>

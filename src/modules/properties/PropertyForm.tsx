@@ -69,7 +69,7 @@ export function PropertyForm({
         onChange={(e) => setValues((prev) => ({ ...prev, name: e.target.value }))}
       />
 
-      <label htmlFor="llc_id">LLC</label>
+      <label htmlFor="llc_id">Organization type</label>
       {isAddingLlc ? (
         <LlcForm
           saving={creatingLlc}
@@ -87,9 +87,9 @@ export function PropertyForm({
           options={llcOptions}
           value={values.llc_id ?? NO_LLC_ID}
           onChange={(id) => setValues((prev) => ({ ...prev, llc_id: id === NO_LLC_ID ? null : id }))}
-          placeholder="Select an LLC"
+          placeholder="Select an organization type"
           onAddNew={() => setIsAddingLlc(true)}
-          addNewLabel="+ Add new LLC"
+          addNewLabel="+ Add organization type"
         />
       )}
 

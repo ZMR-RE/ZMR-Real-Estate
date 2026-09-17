@@ -9,7 +9,7 @@ interface AuditLogListProps {
 
 function resolveLlcDisplay(rawValue: string | null, llcOptions: SearchableSelectOption[]): string {
   if (rawValue === null) {
-    return llcOptions.find((o) => o.id === NO_LLC_ID)?.label ?? 'No LLC'
+    return llcOptions.find((o) => o.id === NO_LLC_ID)?.label ?? 'Individual ownership'
   }
   return llcOptions.find((o) => o.id === rawValue)?.label ?? rawValue
 }

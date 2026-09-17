@@ -12,7 +12,9 @@ export interface LlcOption {
 // llc_id when saving.
 export const NO_LLC_ID = 'no-llc'
 
-const NO_LLC_OPTION: LlcOption = { id: NO_LLC_ID, label: 'Individually owned / No LLC' }
+// Roadmap 8.2b — "Individual ownership" (final name, supersedes 8.2a's
+// "Individually owned / No LLC").
+const NO_LLC_OPTION: LlcOption = { id: NO_LLC_ID, label: 'Individual ownership' }
 
 // Folds the Holding Company (8.7) straight into the label so every
 // existing llcOptions consumer (PropertySummary, PropertyForm's picker)

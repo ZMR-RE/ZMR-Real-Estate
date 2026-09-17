@@ -2,14 +2,14 @@ import type { AuditedTable } from './auditLogQueries'
 
 export const RECORD_LABELS: Record<AuditedTable, string> = {
   properties: 'Property',
-  llcs: 'LLC',
+  llcs: 'Organization type',
   mortgage_details: 'Mortgage',
   financial_transactions: 'Transaction',
 }
 
 const FIELD_LABELS: Record<string, string> = {
   name: 'Name',
-  llc_id: 'LLC',
+  llc_id: 'Organization type',
   address: 'Address',
   city: 'City',
   state: 'State',

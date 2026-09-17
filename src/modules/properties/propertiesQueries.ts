@@ -39,3 +39,28 @@ export async function createProperty(accountId: string, input: PropertyInput) {
 export async function updateProperty(id: string, input: PropertyInput) {
   return supabase.from('properties').update(input).eq('id', id).select().single()
 }
+
+export interface PropertyForOrganizationType {
+  id: string
+  name: string
+  address: string | null
+}
+
+// Roadmap 8.2c — Organization type management view's "properties
+// currently assigned" list.
+export async function listPropertiesByLlc(accountId: string, llcId: string) {
+  return supabase
+    .from('properties')
+    .select('id, name, address')
+    .eq('account_id', accountId)
+    .eq('llc_id', llcId)
+    .order('address')
+    .returns<PropertyForOrganizationType[]>()
+}
+
+// Roadmap 8.2c — reassign a property to a different Organization type
+// (or to Individual ownership, via null) directly from that entity's own
+// management view, without going through the property's own edit form.
+export async function updatePropertyLlc(id: string, llcId: string | null) {
+  return supabase.from('properties').update({ llc_id: llcId }).eq('id', id).select('id, llc_id').single()
+}

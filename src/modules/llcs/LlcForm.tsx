@@ -6,6 +6,7 @@ import { NO_HOLDING_COMPANY_ID } from '../holdingCompanies/useHoldingCompanies'
 import type { LlcInput } from './llcsQueries'
 
 interface LlcFormProps {
+  initialValues?: LlcInput
   saving: boolean
   error: string | null
   holdingCompanyOptions: SearchableSelectOption[]
@@ -26,8 +27,11 @@ const BLANK_LLC: LlcInput = {
 
 // A plain div, not a <form> — this renders inside PropertyForm's own
 // <form>, and HTML forms can't nest without invalid markup and a submit
-// that bubbles into the outer form.
+// that bubbles into the outer form. Also reused standalone (no outer
+// form) by Settings' Organization types management view (roadmap 8.2a),
+// for both add (no initialValues) and edit (initialValues passed).
 export function LlcForm({
+  initialValues,
   saving,
   error,
   holdingCompanyOptions,
@@ -35,7 +39,8 @@ export function LlcForm({
   onSave,
   onCancel,
 }: LlcFormProps) {
-  const [values, setValues] = useState<LlcInput>(BLANK_LLC)
+  const [values, setValues] = useState<LlcInput>(initialValues ?? BLANK_LLC)
+  const isEditing = initialValues !== undefined
   const [isAddingHoldingCompany, setIsAddingHoldingCompany] = useState(false)
   const [creatingHoldingCompany, setCreatingHoldingCompany] = useState(false)
   const [createHoldingCompanyError, setCreateHoldingCompanyError] = useState<string | null>(null)
@@ -65,7 +70,7 @@ export function LlcForm({
     <div className="inline-form">
       {error && <p role="alert">{error}</p>}
 
-      <label htmlFor="llc_form_name">LLC name</label>
+      <label htmlFor="llc_form_name">Organization type name</label>
       <input
         id="llc_form_name"
         required
@@ -113,7 +118,7 @@ export function LlcForm({
       )}
 
       <button type="button" disabled={saving || !values.name.trim()} onClick={() => onSave(values)}>
-        {saving ? 'Adding…' : 'Add LLC'}
+        {saving ? 'Saving…' : isEditing ? 'Save' : 'Add organization type'}
       </button>
       <button type="button" onClick={onCancel} disabled={saving}>
         Cancel
