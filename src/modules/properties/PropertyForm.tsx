@@ -118,6 +118,42 @@ export function PropertyForm({
       <input id="purchase_price" type="number" min="0" step="0.01" inputMode="decimal" {...field('purchase_price')} />
       <p>Used for cost basis / depreciation on the Mortgage tab — capital improvements are pulled from transactions automatically.</p>
 
+      <label htmlFor="property_type">Property type</label>
+      <input id="property_type" {...field('property_type')} placeholder="e.g. Single-family, Duplex" />
+
+      <label htmlFor="purchase_date">Purchase date</label>
+      <input id="purchase_date" type="date" {...field('purchase_date')} />
+
+      <label htmlFor="purchase_method">Purchase method</label>
+      <input id="purchase_method" {...field('purchase_method')} placeholder="e.g. Cash, Conventional loan, 1031 exchange" />
+
+      <label htmlFor="property_tax_id">Property tax ID/PIN</label>
+      <input id="property_tax_id" {...field('property_tax_id')} />
+
+      <label htmlFor="county_township">County/Township</label>
+      <input id="county_township" {...field('county_township')} />
+
+      <label htmlFor="square_footage">Square footage</label>
+      <input id="square_footage" type="number" min="0" step="1" inputMode="numeric" {...field('square_footage')} />
+
+      <label htmlFor="lot_size">Lot size</label>
+      <input id="lot_size" {...field('lot_size')} placeholder="e.g. 0.25 acres, 5,000 sqft" />
+
+      <label htmlFor="zoning_use_code">Zoning/use code</label>
+      <input id="zoning_use_code" {...field('zoning_use_code')} />
+
+      <label htmlFor="bedroom_count">Bedrooms (whole building)</label>
+      <input id="bedroom_count" type="number" min="0" step="1" inputMode="numeric" {...field('bedroom_count')} />
+
+      <label htmlFor="bathroom_count">Bathrooms (whole building)</label>
+      <input id="bathroom_count" type="number" min="0" step="0.5" inputMode="decimal" {...field('bathroom_count')} />
+
+      <label htmlFor="basement">Basement</label>
+      <input id="basement" {...field('basement')} placeholder="e.g. None, Unfinished, Finished walkout" />
+
+      <label htmlFor="garage_parking_spaces">Garage/parking spaces</label>
+      <input id="garage_parking_spaces" type="number" min="0" step="1" inputMode="numeric" {...field('garage_parking_spaces')} />
+
       <label htmlFor="status">Status</label>
       <select
         id="status"

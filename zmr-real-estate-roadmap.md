@@ -149,10 +149,11 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       dated market-value entries, confirmed correct order/display on
       both the Overview ledger and KPI trend table, then voided both
       (test data, not real).
-- [ ] 7.20 Property Facts fields (structured): property type, purchase
+- [x] 7.20 Property Facts fields (structured): property type, purchase
       date, purchase method, property tax ID/PIN, county/township,
-      square footage, lot size, zoning/use code
-- [ ] 7.21 Structured fields for bedroom count, bathroom count, basement
+      square footage, lot size, zoning/use code — also finally gives
+      purchase_date (added back in 2.4, never had a UI) its first field
+- [x] 7.21 Structured fields for bedroom count, bathroom count, basement
       (yes/no or description), garage/parking spaces — building-level
       totals; per-unit bed/bath already covered by 7.11, this is the
       whole-building figure only

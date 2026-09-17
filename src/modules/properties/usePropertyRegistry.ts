@@ -22,6 +22,18 @@ const BLANK_PROPERTY: PropertyInput = {
   contact_email: null,
   purchase_price: null,
   status: 'active',
+  purchase_date: null,
+  property_type: null,
+  purchase_method: null,
+  property_tax_id: null,
+  county_township: null,
+  square_footage: null,
+  lot_size: null,
+  zoning_use_code: null,
+  bedroom_count: null,
+  bathroom_count: null,
+  basement: null,
+  garage_parking_spaces: null,
 }
 
 export function usePropertyRegistry() {

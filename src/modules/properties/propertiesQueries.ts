@@ -14,18 +14,34 @@ export interface Property {
   contact_email: string | null
   purchase_price: string | null
   status: 'active' | 'inactive' | 'sold'
+  // Roadmap 7.20 — Property Facts. purchase_date predates this item
+  // (roadmap 2.4) but never had a UI until now.
+  purchase_date: string | null
+  property_type: string | null
+  purchase_method: string | null
+  property_tax_id: string | null
+  county_township: string | null
+  square_footage: string | null
+  lot_size: string | null
+  zoning_use_code: string | null
+  // Roadmap 7.21 — whole-building totals (distinct from 7.11's per-unit
+  // bed/bath count). Numeric columns come back from Postgres as strings
+  // via PostgREST, same as purchase_price/square_footage above — cast
+  // with Number() at display/comparison time, never stored as `number`
+  // here.
+  bedroom_count: string | null
+  bathroom_count: string | null
+  basement: string | null
+  garage_parking_spaces: string | null
 }
 
 export type PropertyInput = Omit<Property, 'id' | 'account_id'>
 
+const PROPERTY_COLUMNS =
+  'id, account_id, name, llc_id, address, city, state, zip, insurance_provider, insurance_policy_number, contact_email, purchase_price, status, purchase_date, property_type, purchase_method, property_tax_id, county_township, square_footage, lot_size, zoning_use_code, bedroom_count, bathroom_count, basement, garage_parking_spaces'
+
 export async function listProperties(accountId: string) {
-  return supabase
-    .from('properties')
-    .select(
-      'id, account_id, name, llc_id, address, city, state, zip, insurance_provider, insurance_policy_number, contact_email, purchase_price, status',
-    )
-    .eq('account_id', accountId)
-    .order('address')
+  return supabase.from('properties').select(PROPERTY_COLUMNS).eq('account_id', accountId).order('address')
 }
 
 export async function createProperty(accountId: string, input: PropertyInput) {
