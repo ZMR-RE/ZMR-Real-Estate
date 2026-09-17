@@ -990,7 +990,7 @@ tr.capture-entry-complete td {
      overflow pushes the whole page wider than the viewport. Wrapping
      the account controls onto their own row fixes both: line 1 keeps
      brand + primary nav (still scrollable if it's ever tight), line 2 is
-     Settings/Account & Security/Sign out with room to breathe. */
+     Settings/Sign out with room to breathe. */
   .app-nav {
     flex-wrap: wrap;
     row-gap: var(--space-3);
@@ -1062,67 +1062,8 @@ tr.capture-entry-complete td {
 }
 
 /* ============================================================
-   Account & Security menu (roadmap 12.2)
+   Account & Security section (roadmap 12.2, merged into Settings 12.1)
    ============================================================ */
-.account-security-menu {
-  position: relative;
-}
-
-.account-security-panel {
-  position: fixed;
-  left: var(--space-4);
-  bottom: 80px;
-  width: 320px;
-  max-width: calc(100vw - 32px);
-  max-height: 70vh;
-  overflow-y: auto;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  padding: var(--space-5);
-  z-index: 30;
-}
-
-.account-security-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.account-security-panel-header h3 {
-  margin: 0;
-}
-
-.account-security-panel section {
-  margin-top: var(--space-4);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--border);
-}
-
-.account-security-panel section:first-of-type {
-  margin-top: var(--space-3);
-  padding-top: 0;
-  border-top: none;
-}
-
-.account-security-panel ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.account-security-panel li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
 .account-security-enroll img {
   display: block;
   margin: var(--space-2) 0;

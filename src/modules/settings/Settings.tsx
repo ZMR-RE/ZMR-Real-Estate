@@ -2,14 +2,14 @@ import { ChartOfAccounts } from '../chartOfAccounts/ChartOfAccounts'
 import { ManageOptionsPanel } from '../../shared/pickLists/ManageOptionsPanel'
 import { useSettingsPickLists } from './useSettingsPickLists'
 import { InstallAppSection } from './InstallAppSection'
+import { AccountSecuritySection } from '../account/AccountSecuritySection'
 
 // Roadmap 12.1 — foundational Settings shell. Houses admin-level features
 // that don't belong on any single entity's page: Chart of Accounts
 // (moved out of Financials & Tax, where it was only ever nested behind a
-// toggle) and a central home for every pick-list (8.1), instead of each
-// being reachable only from whichever form happens to embed it. More
-// sections (billing/tier, security) land here in later roadmap items —
-// this pass just establishes the page and its first two sections.
+// toggle), a central home for every pick-list (8.1), and Account &
+// Security (12.2, merged in here per this page's original spec). More
+// sections (billing/tier) land here in later roadmap items.
 export function Settings() {
   const pickLists = useSettingsPickLists()
 
@@ -40,6 +40,8 @@ export function Settings() {
           ))}
         </div>
       </section>
+
+      <AccountSecuritySection />
 
       <InstallAppSection />
     </div>

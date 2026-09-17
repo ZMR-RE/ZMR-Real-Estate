@@ -1,10 +1,11 @@
 import { useAccountSecurity } from './useAccountSecurity'
 
-interface AccountSecurityPanelProps {
-  onClose: () => void
-}
-
-export function AccountSecurityPanel({ onClose }: AccountSecurityPanelProps) {
+// Roadmap 12.2, merged into Settings (12.1) — this was previously a
+// closable sidebar popover (AccountSecurityMenu/AccountSecurityPanel,
+// now removed); the content is unchanged, just rendered as a permanent
+// section on the Settings page instead, matching 12.1's original spec
+// which named security as one of Settings' intended sections.
+export function AccountSecuritySection() {
   const {
     factors,
     loadingFactors,
@@ -26,18 +27,13 @@ export function AccountSecurityPanel({ onClose }: AccountSecurityPanelProps) {
   const verifiedFactors = factors.filter((f) => f.status === 'verified')
 
   return (
-    <div className="account-security-panel">
-      <div className="account-security-panel-header">
-        <h3>Account &amp; security</h3>
-        <button type="button" onClick={onClose}>
-          Close
-        </button>
-      </div>
+    <section>
+      <h2>Account &amp; security</h2>
 
       {error && <p role="alert">{error}</p>}
 
       <section>
-        <h4>Password</h4>
+        <h3>Password</h3>
         <p>Send yourself a password reset link by email.</p>
         <button type="button" onClick={sendResetEmail} disabled={resetState === 'sending'}>
           {resetState === 'sending' ? 'Sending…' : 'Send password reset email'}
@@ -46,7 +42,7 @@ export function AccountSecurityPanel({ onClose }: AccountSecurityPanelProps) {
       </section>
 
       <section>
-        <h4>Two-factor authentication</h4>
+        <h3>Two-factor authentication</h3>
 
         {loadingFactors ? (
           <p>Loading…</p>
@@ -98,6 +94,6 @@ export function AccountSecurityPanel({ onClose }: AccountSecurityPanelProps) {
           </div>
         )}
       </section>
-    </div>
+    </section>
   )
 }
