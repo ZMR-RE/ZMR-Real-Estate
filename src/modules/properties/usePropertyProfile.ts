@@ -24,8 +24,20 @@ export function usePropertyProfile(propertyId: string) {
   const [documents, setDocuments] = useState<DocumentRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [tab, setTab] = useState<ProfileTab>('overview')
+  const [tab, setTabState] = useState<ProfileTab>('overview')
   const [saving, setSaving] = useState(false)
+  const [editingProperty, setEditingProperty] = useState(false)
+
+  // Roadmap 7.16 — the Edit action lives in the screen header now, not
+  // at the bottom of the Overview tab's form, so its on/off state has to
+  // live here (the tab only renders Overview conditionally) rather than
+  // inside PropertyProfileOverviewTab. Switching tabs away from Overview
+  // always drops out of edit mode — editing only makes sense while
+  // looking at the fields being edited.
+  const setTab = (next: ProfileTab) => {
+    setEditingProperty(false)
+    setTabState(next)
+  }
 
   const refresh = useCallback(async () => {
     if (!accountId) return
@@ -78,6 +90,7 @@ export function usePropertyProfile(propertyId: string) {
     }
     setError(null)
     await refresh()
+    setEditingProperty(false)
     return true
   }
 
@@ -97,5 +110,7 @@ export function usePropertyProfile(propertyId: string) {
     setTab,
     saving,
     saveProperty,
+    editingProperty,
+    setEditingProperty,
   }
 }

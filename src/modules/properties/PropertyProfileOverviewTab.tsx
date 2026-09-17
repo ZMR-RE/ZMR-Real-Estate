@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
 import type { LlcInput } from '../llcs/llcsQueries'
@@ -16,6 +15,8 @@ import type { Property, PropertyInput } from './propertiesQueries'
 
 interface PropertyProfileOverviewTabProps {
   property: Property
+  isEditing: boolean
+  onCancelEdit: () => void
   llcOptions: SearchableSelectOption[]
   onCreateLlc: (input: LlcInput) => Promise<{ id: string } | { error: string }>
   holdingCompanyOptions: SearchableSelectOption[]
@@ -35,6 +36,8 @@ interface PropertyProfileOverviewTabProps {
 // built it, just relocated into a box rather than rebuilt.
 export function PropertyProfileOverviewTab({
   property,
+  isEditing,
+  onCancelEdit,
   llcOptions,
   onCreateLlc,
   holdingCompanyOptions,
@@ -44,15 +47,6 @@ export function PropertyProfileOverviewTab({
   saving,
   onSave,
 }: PropertyProfileOverviewTabProps) {
-  const [isEditing, setIsEditing] = useState(false)
-
-  const handleSave = async (input: PropertyInput) => {
-    const succeeded = await onSave(input)
-    if (succeeded) {
-      setIsEditing(false)
-    }
-  }
-
   const insuranceDocuments = documents.filter((doc) => doc.category === 'Insurance')
 
   return (
@@ -66,8 +60,8 @@ export function PropertyProfileOverviewTab({
           holdingCompanyOptions={holdingCompanyOptions}
           onCreateHoldingCompany={onCreateHoldingCompany}
           saving={saving}
-          onSave={handleSave}
-          onCancel={() => setIsEditing(false)}
+          onSave={onSave}
+          onCancel={onCancelEdit}
         />
       ) : (
         <PropertySummary
@@ -75,7 +69,6 @@ export function PropertyProfileOverviewTab({
           llcOptions={llcOptions}
           insuranceDocuments={insuranceDocuments}
           onViewDocument={onViewDocument}
-          onEdit={() => setIsEditing(true)}
         />
       )}
 

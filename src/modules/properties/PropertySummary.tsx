@@ -8,7 +8,6 @@ interface PropertySummaryProps {
   llcOptions: SearchableSelectOption[]
   insuranceDocuments: DocumentRecord[]
   onViewDocument: (path: string) => void
-  onEdit: () => void
 }
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -37,14 +36,14 @@ function llcDisplay(llcId: string | null, llcOptions: SearchableSelectOption[]):
 }
 
 // Roadmap 7.7 — Overview tab's core property-fields section, view-by-
-// default with an explicit Edit action, same pattern as
-// MortgagePropertySummary on the Mortgage tab. Roadmap 7.10 asks for an
-// "insurance section with coverage dates + attached document" — coverage
-// dates aren't a field that exists anywhere in this app yet (flagged,
-// not guessed at), but the attached-document half is real: documents
-// already support an "Insurance" category (2.5), so any doc tagged that
-// way for this property lists here.
-export function PropertySummary({ property, llcOptions, insuranceDocuments, onViewDocument, onEdit }: PropertySummaryProps) {
+// default with an explicit Edit action (moved to the screen header by
+// 7.16 — this component no longer renders its own Edit button). Roadmap
+// 7.10 asks for an "insurance section with coverage dates + attached
+// document" — coverage dates aren't a field that exists anywhere in this
+// app yet (flagged, not guessed at), but the attached-document half is
+// real: documents already support an "Insurance" category (2.5), so any
+// doc tagged that way for this property lists here.
+export function PropertySummary({ property, llcOptions, insuranceDocuments, onViewDocument }: PropertySummaryProps) {
   return (
     <div className="property-summary">
       <dl>
@@ -93,10 +92,6 @@ export function PropertySummary({ property, llcOptions, insuranceDocuments, onVi
           </span>
         </dd>
       </dl>
-
-      <button type="button" onClick={onEdit}>
-        Edit property
-      </button>
     </div>
   )
 }
