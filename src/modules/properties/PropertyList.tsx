@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { cardTintClass } from '../../shared/cardTint'
 import { propertyLabel } from '../../shared/propertyLabel'
 import type { Property } from './propertiesQueries'
 
@@ -27,7 +28,7 @@ export function PropertyList({ properties, onAddNew }: PropertyListProps) {
           const label = propertyLabel(property)
           const badge = STATUS_BADGE[property.status]
           return (
-            <li key={property.id} className="card">
+            <li key={property.id} className={`card ${cardTintClass(property.id)}`}>
               <Link to={`/properties/${property.id}`} className="card-list-link">
                 <span>
                   {label}
