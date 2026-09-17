@@ -939,6 +939,46 @@ tr.action-item-yellow td {
 }
 
 @media (max-width: 600px) {
+  /* Below ~500px the 860px breakpoint's single-row nav (brand + links +
+     account controls) no longer fits: .app-nav-account's flex-shrink: 0
+     holds its ~330px of content to full size, which starves the sibling
+     .app-nav-links (flex: 1 1 auto) down to 0 width — the primary nav
+     becomes completely inaccessible, not just cramped, and the leftover
+     overflow pushes the whole page wider than the viewport. Wrapping
+     the account controls onto their own row fixes both: line 1 keeps
+     brand + primary nav (still scrollable if it's ever tight), line 2 is
+     Settings/Account & Security/Sign out with room to breathe. */
+  .app-nav {
+    flex-wrap: wrap;
+    row-gap: var(--space-3);
+  }
+
+  /* Property Profile's 5-tab bar (Overview/Financials/Mortgage/KPI/
+     Activity & Documents) doesn't fit a phone width and has no scroll
+     affordance by default — the last tab or two just render past the
+     edge of the viewport with no way to reach them. Same fix as
+     .app-nav-links: let it scroll horizontally instead of silently
+     overflowing. Also has to re-pin width: auto and flex-shrink: 0
+     explicitly — the general mobile `button { width: 100% }` rule below
+     otherwise applies here too, and every tab trying to be 100% of the
+     scrollable container while refusing to shrink balloons the row to
+     five tab-widths' worth of scroll instead of a tight one. */
+  .tab-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-bar button {
+    width: auto;
+    flex-shrink: 0;
+  }
+
+  .app-nav-account {
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    margin-left: 0;
+  }
+
   form {
     max-width: 100%;
   }
@@ -959,6 +999,17 @@ tr.action-item-yellow td {
 
   [role='group'] {
     width: 100%;
+  }
+
+  /* Same fix as .tab-bar above, generalized: any button-group row
+     (Quick Capture's type selector, the mortgage scenario calculator's
+     recurring/one-time toggle) is a flex row, and the general `button {
+     width: 100% }' rule two rules up would otherwise make every button
+     in the row fight to be the row's full width instead of sitting
+     side by side. */
+  [role='group'] button {
+    width: auto;
+    flex-shrink: 0;
   }
 
   .type-selector button {
