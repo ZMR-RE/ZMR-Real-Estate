@@ -52,8 +52,11 @@ export async function createProperty(accountId: string, input: PropertyInput) {
     .single()
 }
 
+// Returns the updated row directly (not just success/failure) so callers
+// can reflect a save immediately from this response alone, without
+// depending on a separate re-fetch that might touch unrelated data.
 export async function updateProperty(id: string, input: PropertyInput) {
-  return supabase.from('properties').update(input).eq('id', id).select().single()
+  return supabase.from('properties').update(input).eq('id', id).select(PROPERTY_COLUMNS).returns<Property[]>().single()
 }
 
 export interface PropertyForOrganizationType {

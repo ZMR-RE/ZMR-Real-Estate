@@ -41,6 +41,17 @@ export function usePropertyProfile(propertyId: string) {
     setTabState(next)
   }
 
+  // Root-cause fix: this used to gate every piece of state behind ALL
+  // five fetches succeeding — if any one of them errored (transactions,
+  // activity, documents, or market value, none of which have anything to
+  // do with the property's own fields), the whole function returned
+  // early and `setProperty` was never called. Editing a property calls
+  // this via saveProperty() to reflect the save, so a transient failure
+  // in any one of those unrelated queries silently made every property
+  // edit look like it "didn't save" — the update had actually succeeded
+  // in the DB, but the screen kept showing stale pre-edit data with no
+  // clear signal why. Each result is now applied independently so one
+  // query's failure can no longer block the others' state from updating.
   const refresh = useCallback(async () => {
     if (!accountId) return
     setLoading(true)
@@ -59,17 +70,23 @@ export function usePropertyProfile(propertyId: string) {
       activityRes.error?.message ??
       documentsRes.error?.message ??
       latestMarketValueRes.error?.message
-    if (fetchError) {
-      setError(fetchError)
-      return
-    }
+    setError(fetchError ?? null)
 
-    setError(null)
-    setProperty((propertiesRes.data ?? []).find((p) => p.id === propertyId) ?? null)
-    setTransactions(transactionsRes.data ?? [])
-    setActivity(activityRes.data ?? [])
-    setDocuments(documentsRes.data ?? [])
-    setLatestMarketValue(latestMarketValueRes.data ?? null)
+    if (propertiesRes.data) {
+      setProperty(propertiesRes.data.find((p) => p.id === propertyId) ?? null)
+    }
+    if (transactionsRes.data) {
+      setTransactions(transactionsRes.data)
+    }
+    if (activityRes.data) {
+      setActivity(activityRes.data)
+    }
+    if (documentsRes.data) {
+      setDocuments(documentsRes.data)
+    }
+    if (!latestMarketValueRes.error) {
+      setLatestMarketValue(latestMarketValueRes.data ?? null)
+    }
   }, [accountId, propertyId])
 
   const viewDocument = async (path: string) => {
@@ -85,16 +102,20 @@ export function usePropertyProfile(propertyId: string) {
     refresh()
   }, [refresh])
 
+  // Reflects the save from updateProperty's own returned row, not from a
+  // follow-up refresh() — the property's fields are already right there
+  // in the update response, so displaying the save no longer depends on
+  // transactions/activity/documents/market-value queries succeeding too.
   const saveProperty = async (input: PropertyInput): Promise<boolean> => {
     setSaving(true)
-    const { error: saveError } = await updateProperty(propertyId, input)
+    const { data, error: saveError } = await updateProperty(propertyId, input)
     setSaving(false)
-    if (saveError) {
-      setError(saveError.message)
+    if (saveError || !data) {
+      setError(saveError?.message ?? 'Could not save property')
       return false
     }
     setError(null)
-    await refresh()
+    setProperty(data)
     setEditingProperty(false)
     return true
   }
