@@ -736,6 +736,58 @@ dd {
 }
 
 /* ============================================================
+   Property Overview layout — titled boxes in a responsive grid
+   (Property Overview redesign) instead of one long vertical stack.
+   ============================================================ */
+.property-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.property-overview-grid > .collapsible-section {
+  margin-top: 0;
+}
+
+.titled-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+}
+
+.titled-section-title {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-h);
+  margin: 0 0 var(--space-4);
+}
+
+/* Turns a stack of label/value or label/input pairs into a responsive
+   multi-column layout — used by PropertySummary's <dl> and PropertyForm's
+   fields. Each field is its own grid item (a wrapper div around its
+   dt/dd or label/input pair) so columns align field-to-field rather than
+   interleaving labels and values across columns. */
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4) var(--space-6);
+}
+
+.field-grid .field dt,
+.field-grid .field label {
+  margin-top: 0;
+}
+
+@media (max-width: 600px) {
+  .property-overview-grid,
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
    SearchableSelect
    ============================================================ */
 .searchable-select {

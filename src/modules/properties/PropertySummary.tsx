@@ -55,79 +55,131 @@ function llcDisplay(llcId: string | null, llcOptions: SearchableSelectOption[]):
 export function PropertySummary({ property, llcOptions, insuranceDocuments, onViewDocument }: PropertySummaryProps) {
   return (
     <div className="property-summary">
-      <dl>
-        <dt>Name</dt>
-        <dd>{property.name}</dd>
-        <dt>Organization type</dt>
-        <dd>{llcDisplay(property.llc_id, llcOptions)}</dd>
-        <dt>Address</dt>
-        <dd>{property.address ?? '—'}</dd>
-        <dt>City</dt>
-        <dd>{property.city ?? '—'}</dd>
-        <dt>State</dt>
-        <dd>{property.state ?? '—'}</dd>
-        <dt>Zip</dt>
-        <dd>{property.zip ?? '—'}</dd>
-        <dt>Insurance provider</dt>
-        <dd>{property.insurance_provider ?? '—'}</dd>
-        <dt>Insurance policy number</dt>
-        <dd>{property.insurance_policy_number ?? '—'}</dd>
-        <dt>Insurance documents</dt>
-        <dd>
-          {insuranceDocuments.length === 0 ? (
-            '—'
-          ) : (
-            <ul>
-              {insuranceDocuments.map((doc) => (
-                <li key={doc.id}>
-                  {doc.link_url ? (
-                    <a href={doc.link_url} target="_blank" rel="noopener noreferrer">
-                      {new Date(doc.uploaded_at).toLocaleDateString()}
-                    </a>
-                  ) : (
-                    <button type="button" onClick={() => onViewDocument(doc.storage_path!)}>
-                      {new Date(doc.uploaded_at).toLocaleDateString()}
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </dd>
-        <dt>Contact email</dt>
-        <dd>{property.contact_email ?? '—'}</dd>
-        <dt>Purchase price</dt>
-        <dd>{property.purchase_price !== null ? currencyFormatter.format(Number(property.purchase_price)) : '—'}</dd>
-        <dt>Property type</dt>
-        <dd>{property.property_type ?? '—'}</dd>
-        <dt>Purchase date</dt>
-        <dd>{property.purchase_date ? formatDateOnly(property.purchase_date) : '—'}</dd>
-        <dt>Purchase method</dt>
-        <dd>{property.purchase_method ?? '—'}</dd>
-        <dt>Property tax ID/PIN</dt>
-        <dd>{property.property_tax_id ?? '—'}</dd>
-        <dt>County/Township</dt>
-        <dd>{property.county_township ?? '—'}</dd>
-        <dt>Square footage</dt>
-        <dd>{property.square_footage !== null ? `${Number(property.square_footage).toLocaleString()} sqft` : '—'}</dd>
-        <dt>Lot size</dt>
-        <dd>{property.lot_size ?? '—'}</dd>
-        <dt>Zoning/use code</dt>
-        <dd>{property.zoning_use_code ?? '—'}</dd>
-        <dt>Bedrooms (whole building)</dt>
-        <dd>{property.bedroom_count ?? '—'}</dd>
-        <dt>Bathrooms (whole building)</dt>
-        <dd>{property.bathroom_count ?? '—'}</dd>
-        <dt>Basement</dt>
-        <dd>{property.basement ?? '—'}</dd>
-        <dt>Garage/parking spaces</dt>
-        <dd>{property.garage_parking_spaces ?? '—'}</dd>
-        <dt>Status</dt>
-        <dd>
-          <span className={`status-badge ${STATUS_BADGE_VARIANTS[property.status]}`}>
-            {STATUS_LABELS[property.status]}
-          </span>
-        </dd>
+      <dl className="field-grid">
+        <div className="field">
+          <dt>Name</dt>
+          <dd>{property.name}</dd>
+        </div>
+        <div className="field">
+          <dt>Organization type</dt>
+          <dd>{llcDisplay(property.llc_id, llcOptions)}</dd>
+        </div>
+        <div className="field">
+          <dt>Address</dt>
+          <dd>{property.address ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>City</dt>
+          <dd>{property.city ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>State</dt>
+          <dd>{property.state ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>Zip</dt>
+          <dd>{property.zip ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>Insurance provider</dt>
+          <dd>{property.insurance_provider ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>Insurance policy number</dt>
+          <dd>{property.insurance_policy_number ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>Insurance documents</dt>
+          <dd>
+            {insuranceDocuments.length === 0 ? (
+              '—'
+            ) : (
+              <ul>
+                {insuranceDocuments.map((doc) => (
+                  <li key={doc.id}>
+                    {doc.link_url ? (
+                      <a href={doc.link_url} target="_blank" rel="noopener noreferrer">
+                        {new Date(doc.uploaded_at).toLocaleDateString()}
+                      </a>
+                    ) : (
+                      <button type="button" onClick={() => onViewDocument(doc.storage_path!)}>
+                        {new Date(doc.uploaded_at).toLocaleDateString()}
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </dd>
+        </div>
+        <div className="field">
+          <dt>Contact email</dt>
+          <dd>{property.contact_email ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>Purchase price</dt>
+          <dd>
+            {property.purchase_price !== null ? currencyFormatter.format(Number(property.purchase_price)) : '—'}
+          </dd>
+        </div>
+        <div className="field">
+          <dt>Property type</dt>
+          <dd>{property.property_type ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>Purchase date</dt>
+          <dd>{property.purchase_date ? formatDateOnly(property.purchase_date) : '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>Purchase method</dt>
+          <dd>{property.purchase_method ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>Property tax ID/PIN</dt>
+          <dd>{property.property_tax_id ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>County/Township</dt>
+          <dd>{property.county_township ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>Square footage</dt>
+          <dd>
+            {property.square_footage !== null ? `${Number(property.square_footage).toLocaleString()} sqft` : '—'}
+          </dd>
+        </div>
+        <div className="field">
+          <dt>Lot size</dt>
+          <dd>{property.lot_size ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>Zoning/use code</dt>
+          <dd>{property.zoning_use_code ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>Bedrooms (whole building)</dt>
+          <dd>{property.bedroom_count ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>Bathrooms (whole building)</dt>
+          <dd>{property.bathroom_count ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>Basement</dt>
+          <dd>{property.basement ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>Garage/parking spaces</dt>
+          <dd>{property.garage_parking_spaces ?? '—'}</dd>
+        </div>
+        <div className="field">
+          <dt>Status</dt>
+          <dd>
+            <span className={`status-badge ${STATUS_BADGE_VARIANTS[property.status]}`}>
+              {STATUS_LABELS[property.status]}
+            </span>
+          </dd>
+        </div>
       </dl>
     </div>
   )

@@ -1,5 +1,6 @@
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
+import { TitledSection } from '../../shared/TitledSection'
 import type { LlcInput } from '../llcs/llcsQueries'
 import type { HoldingCompanyInput } from '../holdingCompanies/holdingCompaniesQueries'
 import { PropertyTaxLedger } from '../propertyTax/PropertyTaxLedger'
@@ -54,27 +55,29 @@ export function PropertyProfileOverviewTab({
   const insuranceDocuments = documents.filter((doc) => doc.category === 'Insurance')
 
   return (
-    <>
-      {isEditing ? (
-        <PropertyForm
-          key={property.id}
-          initialValues={property}
-          llcOptions={llcOptions}
-          onCreateLlc={onCreateLlc}
-          holdingCompanyOptions={holdingCompanyOptions}
-          onCreateHoldingCompany={onCreateHoldingCompany}
-          saving={saving}
-          onSave={onSave}
-          onCancel={onCancelEdit}
-        />
-      ) : (
-        <PropertySummary
-          property={property}
-          llcOptions={llcOptions}
-          insuranceDocuments={insuranceDocuments}
-          onViewDocument={onViewDocument}
-        />
-      )}
+    <div className="property-overview-grid">
+      <TitledSection title="Property information">
+        {isEditing ? (
+          <PropertyForm
+            key={property.id}
+            initialValues={property}
+            llcOptions={llcOptions}
+            onCreateLlc={onCreateLlc}
+            holdingCompanyOptions={holdingCompanyOptions}
+            onCreateHoldingCompany={onCreateHoldingCompany}
+            saving={saving}
+            onSave={onSave}
+            onCancel={onCancelEdit}
+          />
+        ) : (
+          <PropertySummary
+            property={property}
+            llcOptions={llcOptions}
+            insuranceDocuments={insuranceDocuments}
+            onViewDocument={onViewDocument}
+          />
+        )}
+      </TitledSection>
 
       <CollapsibleSection title="Financial accounts">
         <FinancialAccountsSection propertyId={property.id} />
@@ -107,6 +110,6 @@ export function PropertyProfileOverviewTab({
       <CollapsibleSection title="Units">
         <UnitsSection propertyId={property.id} />
       </CollapsibleSection>
-    </>
+    </div>
   )
 }

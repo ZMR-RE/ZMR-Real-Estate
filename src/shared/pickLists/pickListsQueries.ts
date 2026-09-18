@@ -8,7 +8,15 @@ import { supabase } from '../supabaseClient'
 // (roadmap 7.3), left with zero seeded options — see that migration.
 // utility_type was added by 20260915120000_utility_records.sql (roadmap
 // 7.12), also left with zero seeded options — no established taxonomy to
-// carry forward.
+// carry forward. property_type/purchase_method/zoning_use_code were added
+// by the Property Overview redesign, converting three fields that were
+// previously plain free text on properties — same reasoning as
+// subcategory/payment_method above, zero seeded options since there's no
+// established, enforced taxonomy to carry forward (each property's
+// existing free-text value still displays via PickListSelect's
+// current-value fallback even before an account adds any options).
+// properties.state is NOT one of these — it's a fixed 50-state dropdown
+// (src/shared/usStates.ts), not an account-editable pick list.
 export type PickListName =
   | 'subcategory'
   | 'payment_method'
@@ -17,6 +25,9 @@ export type PickListName =
   | 'unit_status'
   | 'listing_platform'
   | 'utility_type'
+  | 'property_type'
+  | 'purchase_method'
+  | 'zoning_use_code'
 
 export interface PickListOption {
   id: string

@@ -12,6 +12,9 @@ export function useSettingsPickLists() {
   const taskType = usePickListOptions('task_type')
   const unitStatus = usePickListOptions('unit_status')
   const listingPlatform = usePickListOptions('listing_platform')
+  const propertyType = usePickListOptions('property_type')
+  const purchaseMethod = usePickListOptions('purchase_method')
+  const zoningUseCode = usePickListOptions('zoning_use_code')
 
   return [
     { title: 'Subcategories', ...subcategory },
@@ -20,5 +23,8 @@ export function useSettingsPickLists() {
     { title: 'Task types', ...taskType },
     { title: 'Unit statuses', ...unitStatus },
     { title: 'Listing platforms', ...listingPlatform },
+    { title: 'Property types', ...propertyType },
+    { title: 'Purchase methods', ...purchaseMethod },
+    { title: 'Zoning/use codes', ...zoningUseCode },
   ]
 }
