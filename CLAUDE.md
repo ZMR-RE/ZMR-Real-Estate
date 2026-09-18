@@ -75,6 +75,16 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   collisions and deserve extra caution beyond the general parallel-
   terminal-safety rule.
 
+## Live testing reliability
+- When the user is actively testing the live app while terminals are
+  running, and something appears broken, check for any terminal
+  currently mid-edit before treating it as a real defect — a syntax
+  error in one in-progress file can break the shared dev server for
+  every route, not just the one being edited. If a terminal is mid-edit,
+  wait for it to commit (or reach a stable checkpoint) before trusting
+  what the browser shows. Consider running dedicated, isolated dev-server
+  ports per terminal if this keeps recurring.
+
 ## Design principle
 - Everything on screen must have a clear purpose — no noise, no redundancy. Prefer depth on one entity (e.g. a full property profile) over breadth across many shallow, disconnected screens.
 
