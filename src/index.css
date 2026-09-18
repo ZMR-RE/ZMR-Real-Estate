@@ -591,12 +591,15 @@ button[type='submit']:hover:not(:disabled) {
   margin: 0;
 }
 
+/* Selection state changes color/fill only — never shape. A button group's
+   shape comes from the plain `button` rule (and any group-specific
+   override of it); selecting an item must not alter it, or the shape
+   change reads as a layout glitch rather than a selection state. */
 [role='group'] button[aria-pressed='true'] {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
   font-weight: 700;
-  border-radius: var(--radius-pill);
 }
 
 /* ============================================================
@@ -1060,18 +1063,6 @@ tr.capture-entry-complete td {
   font-size: var(--text-md);
 }
 
-/* Roadmap 1.13 — the shared [role='group'] button[aria-pressed='true']
-   rule switches to a pill (fully circular corners on a fixed-width
-   button), which reads as a shape change rather than a selection state.
-   Overridden here for the type selector specifically (higher
-   specificity: class + attribute vs. plain attribute) rather than
-   changing the shared rule, since the other two [role='group']
-   button-groups (MortgagePayoffScenarioForm, DocumentLinkForm) aren't
-   part of this fix and a pill may be intended there. */
-.type-selector button[aria-pressed='true'] {
-  border-radius: var(--radius-sm);
-}
-
 /* Generic version of the same fixed-shape segmented button group, for
    toggles outside Quick Capture (e.g. Settings' Appearance toggle) that
    want the same selection style without borrowing a Quick-Capture-named
@@ -1079,10 +1070,6 @@ tr.capture-entry-complete td {
 .segmented-control button {
   flex: 1 1 0;
   min-height: 40px;
-}
-
-.segmented-control button[aria-pressed='true'] {
-  border-radius: var(--radius-sm);
 }
 
 .capture-attachment-list {

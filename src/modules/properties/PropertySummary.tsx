@@ -1,4 +1,5 @@
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
+import { formatDateOnly } from '../../shared/dateFormat'
 import { NO_LLC_ID } from '../llcs/useLlcs'
 import type { DocumentRecord } from '../documents/documentsQueries'
 import type { Property } from './propertiesQueries'
@@ -26,15 +27,6 @@ const STATUS_BADGE_VARIANTS: Record<Property['status'], string> = {
   active: 'status-badge-success',
   inactive: 'status-badge-neutral',
   sold: 'status-badge-accent',
-}
-
-// A plain date column (no time component) parsed with `new Date()` gets
-// read as UTC midnight, which `toLocaleDateString()` can then roll back
-// a day in any timezone behind UTC — so this reformats the "YYYY-MM-DD"
-// string directly instead, same as capture_log.entry_date does elsewhere.
-function formatDateOnly(value: string): string {
-  const [year, month, day] = value.split('-')
-  return `${Number(month)}/${Number(day)}/${year}`
 }
 
 function llcDisplay(llcId: string | null, llcOptions: SearchableSelectOption[]): string {
