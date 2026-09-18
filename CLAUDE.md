@@ -66,6 +66,15 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 - Before considering any wiring/integration commit complete, verify every file it imports or references is actually tracked in git (`git ls-files`), not just present on disk — a file left untracked by another terminal will build locally but fail on Netlify's fresh clone.
 - When stopping a local dev server, kill only the specific port your own terminal started (e.g. `lsof -ti:5173 | xargs kill`), never a broad process-name kill (`pkill -f vite`, `pkill node`, etc.) that could terminate another terminal's running server.
 
+## Shared-file coordination
+- Before starting work that touches Settings.tsx, PropertyProfile.tsx,
+  propertiesQueries.ts, or App.tsx/AppShell.tsx, check git status and any
+  visibly in-progress terminal work on those files first. If another
+  terminal is actively mid-edit on the same file, sequence rather than
+  edit concurrently — these files have caused repeated lost-update
+  collisions and deserve extra caution beyond the general parallel-
+  terminal-safety rule.
+
 ## Design principle
 - Everything on screen must have a clear purpose — no noise, no redundancy. Prefer depth on one entity (e.g. a full property profile) over breadth across many shallow, disconnected screens.
 
