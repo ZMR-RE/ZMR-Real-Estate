@@ -93,6 +93,13 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 - Any commit that integrates multiple terminals' work must be verified with a clean clone build (git clone to a fresh directory, npm install, npm run build) before pushing — not just a local build in the shared working directory, which can pass even when the real deploy would fail.
 - Checking off a roadmap item's checkbox is not optional and not a separate documentation task. It is a required, non-negotiable step of completing that item's work, and must happen in the same commit that completes it. An item's checkbox must never be left unchecked once its work meets the Definition of Done criteria above, and must never be checked before those criteria are met. A terminal must verify checkbox accuracy for every roadmap item it touches before ending its work on that item.
 
+## Full-scope verification
+- Before checking off a roadmap item, re-read that item's full original
+  text and confirm every explicit requirement in it was actually built
+  — not just something related that works. If only part of an item's
+  scope was completed, leave it unchecked and note specifically what
+  remains, rather than marking it fully complete.
+
 ## Mobile responsiveness
 - The application must be fully usable on a mobile phone, since Quick
   Capture in particular is expected to be used on-site at a property via
