@@ -1,6 +1,5 @@
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
-import { TitledSection } from '../../shared/TitledSection'
 import type { LlcInput } from '../llcs/llcsQueries'
 import type { HoldingCompanyInput } from '../holdingCompanies/holdingCompaniesQueries'
 import { PropertyTaxLedger } from '../propertyTax/PropertyTaxLedger'
@@ -31,13 +30,14 @@ interface PropertyProfileOverviewTabProps {
   onSave: (input: PropertyInput) => Promise<boolean>
 }
 
-// Roadmap 7.10 — core property fields stay always visible (via
-// PropertySummary/PropertyForm, view-by-default per 7.7); everything
-// else that used to sit flat on this tab now lives in its own
-// collapsible box below, with Units last per the roadmap item's own
-// "near the bottom, reference-only" note — full unit CRUD (plus each
-// unit's nested specs/leasing/tenants/utilities) stays exactly as 7.2
-// built it, just relocated into a box rather than rebuilt.
+// Roadmap 7.10 — every section on this tab (including core property
+// fields, view-by-default per 7.7 via defaultOpen) uses the same
+// CollapsibleSection box so the tab reads as one consistent set of
+// sections rather than a mix of collapsible and non-collapsible boxes.
+// Units stays last per the roadmap item's own "near the bottom,
+// reference-only" note — full unit CRUD (plus each unit's nested
+// specs/leasing/tenants/utilities) stays exactly as 7.2 built it, just
+// relocated into a box rather than rebuilt.
 export function PropertyProfileOverviewTab({
   property,
   isEditing,
@@ -56,7 +56,7 @@ export function PropertyProfileOverviewTab({
 
   return (
     <div className="property-overview-grid">
-      <TitledSection title="Property information">
+      <CollapsibleSection title="Property information" defaultOpen>
         {isEditing ? (
           <PropertyForm
             key={property.id}
@@ -77,7 +77,7 @@ export function PropertyProfileOverviewTab({
             onViewDocument={onViewDocument}
           />
         )}
-      </TitledSection>
+      </CollapsibleSection>
 
       <CollapsibleSection title="Financial accounts">
         <FinancialAccountsSection propertyId={property.id} />
