@@ -29,7 +29,7 @@ re-check it) after any large structural change; it will drift otherwise.
 |---|---|---|
 | `/properties` | `properties/PropertyRegistry.tsx` | Properties |
 | `/properties/:id` | `properties/PropertyProfile.tsx` | *(linked from Properties)* |
-| `/capture` | `capture/CaptureInbox.tsx` | Log it |
+| `/capture` | `capture/CaptureInbox.tsx` | Quick capture |
 | `/reconciliation` | `reconciliation/ReconciliationQueue.tsx` | Action queue |
 | `/rent-ops` | `rentOps/RentOps.tsx` | Rent ops |
 | `/tasks` | `tasks/TaskEngine.tsx` | Tasks |
