@@ -173,6 +173,39 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       (yes/no or description), garage/parking spaces — building-level
       totals; per-unit bed/bath already covered by 7.11, this is the
       whole-building figure only
+- [x] 7.22 Property information declutter: identity header (address
+      large/prominent, city/state/zip subline, organization type, status
+      badge) pulled out of the flat field grid; remaining fields grouped
+      into labeled sub-sections (Insurance, Purchase & valuation,
+      Physical facts); within each group, fields without a value collapse
+      into a single "+ Add …" prompt instead of each showing "—",
+      clicking it opens the edit form focused on that group's fields.
+      Two fields the task didn't assign to a group were resolved with
+      the user directly rather than guessed at: the legacy free-text
+      "name" field (superseded by address, per shared/propertyLabel.ts)
+      is dropped from this view entirely — still editable via the edit
+      form, since its DB column is required — and contact email rides
+      in the identity header as a minor secondary line rather than
+      getting its own group. Insurance documents (not a PropertyForm
+      field) stays a special case within the Insurance group: shown only
+      when present, never contributing to that group's "+ Add" prompt.
+      PropertyForm's field order was reshuffled to match the three new
+      groups (pure reordering, no logic change) so a group's "+ Add"
+      prompt lands the user on a contiguous run of that group's inputs,
+      not scattered ones. Verified live: an existing mostly-empty
+      property (5336 W Foster Ave) shows only its populated fields plus
+      one "+ Add …" prompt per group, no wall of dashes; clicking a
+      prompt enters edit mode with that exact field scrolled into view
+      and focused (confirmed via document.activeElement); saving a value
+      moved it out of the prompt into the real display (tested on
+      Insurance policy number, then reverted — pre-existing record, only
+      the one field edited back to blank, nothing deleted); the generic
+      top-right "Edit property" button was confirmed to carry no stale
+      focus target left over from an earlier "+ Add" click. Checked in
+      both light and dark mode and at a simulated ~420px mobile width
+      (iframe-based, since this session's resize_window tool doesn't
+      affect this environment's viewport) — header wraps to a stacked
+      layout, fields go single-column, no horizontal overflow.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type

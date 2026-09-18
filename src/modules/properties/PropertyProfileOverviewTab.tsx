@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
 import type { LlcInput } from '../llcs/llcsQueries'
@@ -18,6 +19,7 @@ import type { Property, PropertyInput } from './propertiesQueries'
 interface PropertyProfileOverviewTabProps {
   property: Property
   isEditing: boolean
+  onStartEditing: () => void
   onCancelEdit: () => void
   llcOptions: SearchableSelectOption[]
   onCreateLlc: (input: LlcInput) => Promise<{ id: string } | { error: string }>
@@ -41,6 +43,7 @@ interface PropertyProfileOverviewTabProps {
 export function PropertyProfileOverviewTab({
   property,
   isEditing,
+  onStartEditing,
   onCancelEdit,
   llcOptions,
   onCreateLlc,
@@ -53,6 +56,27 @@ export function PropertyProfileOverviewTab({
   onSave,
 }: PropertyProfileOverviewTabProps) {
   const insuranceDocuments = documents.filter((doc) => doc.category === 'Insurance')
+
+  // Roadmap 7.22 — a field group's "+ Add …" prompt jumps straight into
+  // edit mode with that group's first missing field scrolled into view
+  // and focused, rather than dropping the user into the top of a long
+  // flat form to hunt for it themselves.
+  const [autoFocusFieldId, setAutoFocusFieldId] = useState<string | null>(null)
+
+  // Resets on any exit from edit mode — Cancel and a successful save
+  // both flip isEditing false, and a successful save does it via the
+  // parent hook directly rather than through a handler this component
+  // owns, so there's no single call site to reset it from instead.
+  // Without this, a later plain "Edit property" click could still carry
+  // a stale focus target left over from an earlier "+ Add …" click.
+  useEffect(() => {
+    if (!isEditing) setAutoFocusFieldId(null)
+  }, [isEditing])
+
+  const handleAddFields = (fieldKeys: string[]) => {
+    setAutoFocusFieldId(fieldKeys[0] ?? null)
+    onStartEditing()
+  }
 
   return (
     <div className="property-overview-grid">
@@ -68,6 +92,7 @@ export function PropertyProfileOverviewTab({
             saving={saving}
             onSave={onSave}
             onCancel={onCancelEdit}
+            autoFocusFieldId={autoFocusFieldId}
           />
         ) : (
           <PropertySummary
@@ -75,6 +100,7 @@ export function PropertyProfileOverviewTab({
             llcOptions={llcOptions}
             insuranceDocuments={insuranceDocuments}
             onViewDocument={onViewDocument}
+            onAddFields={handleAddFields}
           />
         )}
       </CollapsibleSection>

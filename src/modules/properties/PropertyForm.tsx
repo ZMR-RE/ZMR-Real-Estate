@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { SearchableSelect } from '../../shared/SearchableSelect'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
@@ -18,6 +18,10 @@ interface PropertyFormProps {
   saving: boolean
   onSave: (input: PropertyInput) => void
   onCancel: () => void
+  // Roadmap 7.22 — set when edit mode was entered via a field group's
+  // "+ Add …" prompt on the read view, so this form can jump straight to
+  // the specific field the user asked to fill in.
+  autoFocusFieldId?: string | null
 }
 
 export function PropertyForm({
@@ -29,11 +33,24 @@ export function PropertyForm({
   saving,
   onSave,
   onCancel,
+  autoFocusFieldId,
 }: PropertyFormProps) {
   const [values, setValues] = useState<PropertyInput>(initialValues)
   const [isAddingLlc, setIsAddingLlc] = useState(false)
   const [creatingLlc, setCreatingLlc] = useState(false)
   const [createLlcError, setCreateLlcError] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+
+  useEffect(() => {
+    if (!autoFocusFieldId) return
+    const target = formRef.current?.querySelector<HTMLElement>(`#${autoFocusFieldId}`)
+    target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    target?.focus()
+    // Runs once per form mount (PropertyProfileOverviewTab keys this form
+    // by property.id and clears autoFocusFieldId on cancel), not on every
+    // keystroke — deliberately omits autoFocusFieldId/values from deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleCreateLlc = async (input: LlcInput) => {
     setCreatingLlc(true)
@@ -67,7 +84,7 @@ export function PropertyForm({
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} ref={formRef}>
       <div className="field-grid">
         <div className="field">
           <label htmlFor="name">Name</label>
@@ -140,6 +157,25 @@ export function PropertyForm({
         </div>
 
         <div className="field">
+          <label htmlFor="contact_email">Contact email</label>
+          <input id="contact_email" type="email" {...field('contact_email')} />
+        </div>
+
+        <div className="field">
+          <label htmlFor="status">Status</label>
+          <select
+            id="status"
+            value={values.status}
+            onChange={(e) => setValues((prev) => ({ ...prev, status: e.target.value as PropertyInput['status'] }))}
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="sold">Sold</option>
+          </select>
+        </div>
+
+        {/* Roadmap 7.22 — Insurance group, matching the read view's grouping */}
+        <div className="field">
           <label htmlFor="insurance_provider">Insurance provider</label>
           <input id="insurance_provider" {...field('insurance_provider')} />
         </div>
@@ -149,11 +185,7 @@ export function PropertyForm({
           <input id="insurance_policy_number" {...field('insurance_policy_number')} />
         </div>
 
-        <div className="field">
-          <label htmlFor="contact_email">Contact email</label>
-          <input id="contact_email" type="email" {...field('contact_email')} />
-        </div>
-
+        {/* Purchase & valuation group */}
         <div className="field">
           <label htmlFor="purchase_price">Purchase price ($)</label>
           <input
@@ -171,42 +203,11 @@ export function PropertyForm({
         </div>
 
         <div className="field">
-          <label htmlFor="property_type">Property type</label>
-          <PickListSelect
-            id="property_type"
-            listName="property_type"
-            title="Property type"
-            placeholder="Select a property type…"
-            {...pickListField('property_type')}
-          />
-        </div>
-
-        <div className="field">
           <label htmlFor="purchase_date">Purchase date</label>
           <input id="purchase_date" type="date" {...field('purchase_date')} />
         </div>
 
-        <div className="field">
-          <label htmlFor="purchase_method">Purchase method</label>
-          <PickListSelect
-            id="purchase_method"
-            listName="purchase_method"
-            title="Purchase method"
-            placeholder="Select a purchase method…"
-            {...pickListField('purchase_method')}
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="property_tax_id">Property tax ID/PIN</label>
-          <input id="property_tax_id" {...field('property_tax_id')} />
-        </div>
-
-        <div className="field">
-          <label htmlFor="county_township">County/Township</label>
-          <input id="county_township" {...field('county_township')} />
-        </div>
-
+        {/* Physical facts group */}
         <div className="field">
           <label htmlFor="square_footage">Square footage</label>
           <input
@@ -222,17 +223,6 @@ export function PropertyForm({
         <div className="field">
           <label htmlFor="lot_size">Lot size</label>
           <input id="lot_size" {...field('lot_size')} placeholder="e.g. 0.25 acres, 5,000 sqft" />
-        </div>
-
-        <div className="field">
-          <label htmlFor="zoning_use_code">Zoning/use code</label>
-          <PickListSelect
-            id="zoning_use_code"
-            listName="zoning_use_code"
-            title="Zoning/use code"
-            placeholder="Select a zoning/use code…"
-            {...pickListField('zoning_use_code')}
-          />
         </div>
 
         <div className="field">
@@ -270,16 +260,46 @@ export function PropertyForm({
         </div>
 
         <div className="field">
-          <label htmlFor="status">Status</label>
-          <select
-            id="status"
-            value={values.status}
-            onChange={(e) => setValues((prev) => ({ ...prev, status: e.target.value as PropertyInput['status'] }))}
-          >
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="sold">Sold</option>
-          </select>
+          <label htmlFor="property_tax_id">Property tax ID/PIN</label>
+          <input id="property_tax_id" {...field('property_tax_id')} />
+        </div>
+
+        <div className="field">
+          <label htmlFor="zoning_use_code">Zoning/use code</label>
+          <PickListSelect
+            id="zoning_use_code"
+            listName="zoning_use_code"
+            title="Zoning/use code"
+            placeholder="Select a zoning/use code…"
+            {...pickListField('zoning_use_code')}
+          />
+        </div>
+
+        <div className="field">
+          <label htmlFor="county_township">County/Township</label>
+          <input id="county_township" {...field('county_township')} />
+        </div>
+
+        <div className="field">
+          <label htmlFor="purchase_method">Purchase method</label>
+          <PickListSelect
+            id="purchase_method"
+            listName="purchase_method"
+            title="Purchase method"
+            placeholder="Select a purchase method…"
+            {...pickListField('purchase_method')}
+          />
+        </div>
+
+        <div className="field">
+          <label htmlFor="property_type">Property type</label>
+          <PickListSelect
+            id="property_type"
+            listName="property_type"
+            title="Property type"
+            placeholder="Select a property type…"
+            {...pickListField('property_type')}
+          />
         </div>
       </div>
 

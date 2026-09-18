@@ -786,6 +786,84 @@ dd {
 }
 
 /* ============================================================
+   Property identity header (roadmap 7.22) — address, city/state/zip,
+   contact email, organization type and status pulled out of Property
+   information's flat field grid into a dedicated header above its
+   labeled field groups.
+   ============================================================ */
+.property-identity-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-bottom: var(--space-5);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.property-identity-address {
+  margin: 0;
+  font-size: var(--text-2xl);
+  color: var(--text-h);
+}
+
+.property-identity-subline {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-md);
+  color: var(--text);
+}
+
+.property-identity-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.property-identity-meta .field dt {
+  margin-top: 0;
+}
+
+/* ============================================================
+   Property field groups (roadmap 7.22) — labeled sub-sections within
+   Property information: Insurance, Purchase & valuation, Physical
+   facts. A field without a value never shows individually as "—"; all
+   of a group's missing fields collapse into one subtle "+ Add …"
+   prompt instead, so a mostly-empty property doesn't read as a wall of
+   dashes.
+   ============================================================ */
+.property-field-group + .property-field-group {
+  margin-top: var(--space-6);
+}
+
+.property-field-group-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.property-field-group-add-prompt {
+  display: inline-block;
+  margin-top: var(--space-2);
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: var(--text-sm);
+  color: var(--text);
+  cursor: pointer;
+  text-decoration: underline dashed;
+  text-underline-offset: 3px;
+}
+
+.property-field-group-add-prompt:hover {
+  color: var(--accent);
+}
+
+/* ============================================================
    SearchableSelect
    ============================================================ */
 .searchable-select {

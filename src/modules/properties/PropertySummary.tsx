@@ -1,14 +1,18 @@
+import type { ReactNode } from 'react'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { formatDateOnly } from '../../shared/dateFormat'
-import { NO_LLC_ID } from '../llcs/useLlcs'
 import type { DocumentRecord } from '../documents/documentsQueries'
 import type { Property } from './propertiesQueries'
+import { PROPERTY_FIELD_GROUPS, hasFieldValue } from './propertyFieldGroups'
+import { PropertyFieldGroup } from './PropertyFieldGroup'
+import { PropertyIdentityHeader } from './PropertyIdentityHeader'
 
 interface PropertySummaryProps {
   property: Property
   llcOptions: SearchableSelectOption[]
   insuranceDocuments: DocumentRecord[]
   onViewDocument: (path: string) => void
+  onAddFields: (fieldKeys: string[]) => void
 }
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -17,75 +21,52 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 })
 
-const STATUS_LABELS: Record<Property['status'], string> = {
-  active: 'Active',
-  inactive: 'Inactive',
-  sold: 'Sold',
-}
-
-const STATUS_BADGE_VARIANTS: Record<Property['status'], string> = {
-  active: 'status-badge-success',
-  inactive: 'status-badge-neutral',
-  sold: 'status-badge-accent',
-}
-
-function llcDisplay(llcId: string | null, llcOptions: SearchableSelectOption[]): string {
-  if (llcId === null) {
-    return llcOptions.find((o) => o.id === NO_LLC_ID)?.label ?? 'Individual ownership'
+// Field-specific display formatting. Every other field in
+// PROPERTY_FIELD_GROUPS is a plain string column, shown as-is.
+function renderFieldValue(property: Property, key: keyof Property): ReactNode {
+  switch (key) {
+    case 'purchase_price':
+      return currencyFormatter.format(Number(property.purchase_price))
+    case 'purchase_date':
+      return formatDateOnly(property.purchase_date!)
+    case 'square_footage':
+      return `${Number(property.square_footage).toLocaleString()} sqft`
+    default:
+      return property[key] as string
   }
-  return llcOptions.find((o) => o.id === llcId)?.label ?? llcId
 }
 
-// Roadmap 7.7 — Overview tab's core property-fields section, view-by-
-// default with an explicit Edit action (moved to the screen header by
-// 7.16 — this component no longer renders its own Edit button). Roadmap
-// 7.10 asks for an "insurance section with coverage dates + attached
-// document" — coverage dates aren't a field that exists anywhere in this
-// app yet (flagged, not guessed at), but the attached-document half is
-// real: documents already support an "Insurance" category (2.5), so any
-// doc tagged that way for this property lists here.
-export function PropertySummary({ property, llcOptions, insuranceDocuments, onViewDocument }: PropertySummaryProps) {
+// Roadmap 7.22 — Overview tab declutter. Identity fields (address,
+// city/state/zip, contact email, organization type, status) pulled into
+// a dedicated header; every remaining field lives inside one of
+// PROPERTY_FIELD_GROUPS's labeled sub-sections, where fields without a
+// real value collapse into a single "+ Add …" prompt instead of each
+// showing "—". Insurance documents is handled separately here (not a
+// PropertyForm field, so it can't participate in that prompt's "opens
+// the edit form" behavior) and simply omitted when there are none.
+export function PropertySummary({
+  property,
+  llcOptions,
+  insuranceDocuments,
+  onViewDocument,
+  onAddFields,
+}: PropertySummaryProps) {
   return (
     <div className="property-summary">
-      <dl className="field-grid">
-        <div className="field">
-          <dt>Name</dt>
-          <dd>{property.name}</dd>
-        </div>
-        <div className="field">
-          <dt>Organization type</dt>
-          <dd>{llcDisplay(property.llc_id, llcOptions)}</dd>
-        </div>
-        <div className="field">
-          <dt>Address</dt>
-          <dd>{property.address ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>City</dt>
-          <dd>{property.city ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>State</dt>
-          <dd>{property.state ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>Zip</dt>
-          <dd>{property.zip ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>Insurance provider</dt>
-          <dd>{property.insurance_provider ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>Insurance policy number</dt>
-          <dd>{property.insurance_policy_number ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>Insurance documents</dt>
-          <dd>
-            {insuranceDocuments.length === 0 ? (
-              '—'
-            ) : (
+      <PropertyIdentityHeader property={property} llcOptions={llcOptions} />
+
+      {PROPERTY_FIELD_GROUPS.map((group) => {
+        const presentFields = group.fields
+          .filter((field) => hasFieldValue(property, field.key))
+          .map((field) => ({ label: field.label, value: renderFieldValue(property, field.key) }))
+        const missingFields = group.fields
+          .filter((field) => !hasFieldValue(property, field.key))
+          .map((field) => ({ key: field.key, label: field.label }))
+
+        if (group.id === 'insurance' && insuranceDocuments.length > 0) {
+          presentFields.push({
+            label: 'Insurance documents',
+            value: (
               <ul>
                 {insuranceDocuments.map((doc) => (
                   <li key={doc.id}>
@@ -101,78 +82,20 @@ export function PropertySummary({ property, llcOptions, insuranceDocuments, onVi
                   </li>
                 ))}
               </ul>
-            )}
-          </dd>
-        </div>
-        <div className="field">
-          <dt>Contact email</dt>
-          <dd>{property.contact_email ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>Purchase price</dt>
-          <dd>
-            {property.purchase_price !== null ? currencyFormatter.format(Number(property.purchase_price)) : '—'}
-          </dd>
-        </div>
-        <div className="field">
-          <dt>Property type</dt>
-          <dd>{property.property_type ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>Purchase date</dt>
-          <dd>{property.purchase_date ? formatDateOnly(property.purchase_date) : '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>Purchase method</dt>
-          <dd>{property.purchase_method ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>Property tax ID/PIN</dt>
-          <dd>{property.property_tax_id ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>County/Township</dt>
-          <dd>{property.county_township ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>Square footage</dt>
-          <dd>
-            {property.square_footage !== null ? `${Number(property.square_footage).toLocaleString()} sqft` : '—'}
-          </dd>
-        </div>
-        <div className="field">
-          <dt>Lot size</dt>
-          <dd>{property.lot_size ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>Zoning/use code</dt>
-          <dd>{property.zoning_use_code ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>Bedrooms (whole building)</dt>
-          <dd>{property.bedroom_count ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>Bathrooms (whole building)</dt>
-          <dd>{property.bathroom_count ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>Basement</dt>
-          <dd>{property.basement ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>Garage/parking spaces</dt>
-          <dd>{property.garage_parking_spaces ?? '—'}</dd>
-        </div>
-        <div className="field">
-          <dt>Status</dt>
-          <dd>
-            <span className={`status-badge ${STATUS_BADGE_VARIANTS[property.status]}`}>
-              {STATUS_LABELS[property.status]}
-            </span>
-          </dd>
-        </div>
-      </dl>
+            ),
+          })
+        }
+
+        return (
+          <PropertyFieldGroup
+            key={group.id}
+            title={group.title}
+            presentFields={presentFields}
+            missingFields={missingFields}
+            onAddFields={onAddFields}
+          />
+        )
+      })}
     </div>
   )
 }

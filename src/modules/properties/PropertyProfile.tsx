@@ -85,6 +85,7 @@ export function PropertyProfile() {
         <PropertyProfileOverviewTab
           property={property}
           isEditing={editingProperty}
+          onStartEditing={() => setEditingProperty(true)}
           onCancelEdit={() => setEditingProperty(false)}
           llcOptions={llcOptions}
           onCreateLlc={createLlc}
