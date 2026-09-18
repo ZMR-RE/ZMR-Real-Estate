@@ -8,7 +8,7 @@ interface DocumentLinkFormProps {
   onCancel: () => void
 }
 
-type EntryMode = 'file' | 'link'
+type EntryMode = 'file' | 'link' | 'drive'
 
 export function DocumentLinkForm({ saving, onSave, onCancel }: DocumentLinkFormProps) {
   const [mode, setMode] = useState<EntryMode>('file')
@@ -23,7 +23,8 @@ export function DocumentLinkForm({ saving, onSave, onCancel }: DocumentLinkFormP
       category,
       label: label.trim() || null,
       file: mode === 'file' ? file : null,
-      linkUrl: mode === 'link' ? linkUrl.trim() : null,
+      linkUrl: mode !== 'file' ? linkUrl.trim() : null,
+      linkType: mode === 'drive' ? 'drive_folder' : null,
     })
   }
 
@@ -35,6 +36,9 @@ export function DocumentLinkForm({ saving, onSave, onCancel }: DocumentLinkFormP
         </button>
         <button type="button" aria-pressed={mode === 'link'} onClick={() => setMode('link')}>
           Paste a link
+        </button>
+        <button type="button" aria-pressed={mode === 'drive'} onClick={() => setMode('drive')}>
+          Google Drive folder
         </button>
       </div>
 
@@ -68,14 +72,14 @@ export function DocumentLinkForm({ saving, onSave, onCancel }: DocumentLinkFormP
         </>
       ) : (
         <>
-          <label htmlFor="document_link_url">Link URL</label>
+          <label htmlFor="document_link_url">{mode === 'drive' ? 'Google Drive folder URL' : 'Link URL'}</label>
           <input
             id="document_link_url"
             type="url"
             required
             value={linkUrl}
             onChange={(e) => setLinkUrl(e.target.value)}
-            placeholder="https://drive.google.com/…"
+            placeholder={mode === 'drive' ? 'https://drive.google.com/drive/folders/…' : 'https://…'}
           />
         </>
       )}

@@ -13,17 +13,21 @@ interface PropertyProfileActivityDocumentsTabProps {
   activity: ActivityLogEntry[]
   documents: DocumentRecord[]
   onViewDocument: (path: string) => void
+  onDocumentsChanged: () => Promise<void>
 }
 
 // Roadmap 7.14 — merges what were three separate tabs (Activity Log,
 // History/audit trail from 7.8, Documents from 2.5) into one, each its
-// own collapsible box rather than three tabs to click between.
+// own collapsible box rather than three tabs to click between. Roadmap
+// 7.17's upload-or-link entry now lives inside the Documents box below,
+// rather than a duplicate standalone section on Overview.
 export function PropertyProfileActivityDocumentsTab({
   property,
   llcOptions,
   activity,
   documents,
   onViewDocument,
+  onDocumentsChanged,
 }: PropertyProfileActivityDocumentsTabProps) {
   return (
     <>
@@ -36,7 +40,12 @@ export function PropertyProfileActivityDocumentsTab({
       </CollapsibleSection>
 
       <CollapsibleSection title="Documents">
-        <PropertyProfileDocumentsTab documents={documents} onView={onViewDocument} />
+        <PropertyProfileDocumentsTab
+          propertyId={property.id}
+          documents={documents}
+          onView={onViewDocument}
+          onDocumentsChanged={onDocumentsChanged}
+        />
       </CollapsibleSection>
     </>
   )

@@ -9,7 +9,6 @@ import { PropertySpecsSection } from '../propertySpecs/PropertySpecsSection'
 import { UtilityRecordsSection } from '../utilities/UtilityRecordsSection'
 import { SecurityDepositsSection } from '../securityDeposits/SecurityDepositsSection'
 import { PropertyTenantsOverview } from '../tenants/PropertyTenantsOverview'
-import { DocumentLinksSection } from '../documents/DocumentLinksSection'
 import type { DocumentRecord } from '../documents/documentsQueries'
 import { FinancialAccountsSection } from '../financialAccounts/FinancialAccountsSection'
 import { PropertyForm } from './PropertyForm'
@@ -26,7 +25,6 @@ interface PropertyProfileOverviewTabProps {
   onCreateHoldingCompany: (input: HoldingCompanyInput) => Promise<{ id: string } | { error: string }>
   documents: DocumentRecord[]
   onViewDocument: (path: string) => void
-  onDocumentsChanged: () => Promise<void>
   onValueHistoryChanged: () => Promise<void>
   saving: boolean
   onSave: (input: PropertyInput) => Promise<boolean>
@@ -49,7 +47,6 @@ export function PropertyProfileOverviewTab({
   onCreateHoldingCompany,
   documents,
   onViewDocument,
-  onDocumentsChanged,
   onValueHistoryChanged,
   saving,
   onSave,
@@ -78,15 +75,6 @@ export function PropertyProfileOverviewTab({
           onViewDocument={onViewDocument}
         />
       )}
-
-      <CollapsibleSection title="Documents & links">
-        <DocumentLinksSection
-          propertyId={property.id}
-          documents={documents}
-          onViewDocument={onViewDocument}
-          onDocumentsChanged={onDocumentsChanged}
-        />
-      </CollapsibleSection>
 
       <CollapsibleSection title="Financial accounts">
         <FinancialAccountsSection propertyId={property.id} />

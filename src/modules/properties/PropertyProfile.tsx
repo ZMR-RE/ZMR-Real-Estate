@@ -92,7 +92,6 @@ export function PropertyProfile() {
           onCreateHoldingCompany={createHoldingCompany}
           documents={documents}
           onViewDocument={viewDocument}
-          onDocumentsChanged={refresh}
           onValueHistoryChanged={refresh}
           saving={saving}
           onSave={saveProperty}
@@ -110,6 +109,7 @@ export function PropertyProfile() {
           activity={activity}
           documents={documents}
           onViewDocument={viewDocument}
+          onDocumentsChanged={refresh}
         />
       )}
     </div>

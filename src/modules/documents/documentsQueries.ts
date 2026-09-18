@@ -12,12 +12,13 @@ export interface DocumentRecord {
   category: DocumentCategory
   label: string | null
   link_url: string | null
+  link_type: 'drive_folder' | null
   storage_path: string | null
   file_size: number | null
   uploaded_at: string
 }
 
-const DOCUMENT_COLUMNS = 'id, property_id, transaction_id, category, label, link_url, storage_path, file_size, uploaded_at'
+const DOCUMENT_COLUMNS = 'id, property_id, transaction_id, category, label, link_url, link_type, storage_path, file_size, uploaded_at'
 
 export async function listDocuments(accountId: string, propertyId: string) {
   return supabase
@@ -90,7 +91,7 @@ interface UploadPropertyDocumentInput {
   file: File
 }
 
-// Roadmap 7.17 — Property Overview's freeform Documents/links section,
+// Roadmap 7.17 — Activity & Documents' freeform upload-or-link entry,
 // upload half. Same permanent-path convention as everything else in this
 // table; unlike uploadTransactionDocument, there's no transaction_id —
 // this entry isn't tied to any transaction or tax installment.
@@ -125,13 +126,17 @@ interface CreatePropertyLinkInput {
   label: string | null
   uploadedBy: string
   linkUrl: string
+  linkType: 'drive_folder' | null
 }
 
-// Roadmap 7.17 — the paste-a-reference-link half. No file at all: no
-// storage_path/file_size, just the URL (documents_file_or_link_check
-// enforces exactly one of the two shapes at the DB level).
+// Roadmap 7.17 — the paste-a-reference-link half, entered from the
+// Activity & Documents tab. No file at all: no storage_path/file_size,
+// just the URL (documents_file_or_link_check enforces exactly one of
+// the two shapes at the DB level). linkType distinguishes a Google
+// Drive folder link from a plain reference link — same open-in-new-tab
+// mechanic, different presentation.
 export async function createPropertyLink(input: CreatePropertyLinkInput) {
-  const { accountId, propertyId, category, label, uploadedBy, linkUrl } = input
+  const { accountId, propertyId, category, label, uploadedBy, linkUrl, linkType } = input
 
   return supabase
     .from('documents')
@@ -142,6 +147,7 @@ export async function createPropertyLink(input: CreatePropertyLinkInput) {
       label,
       uploaded_by: uploadedBy,
       link_url: linkUrl,
+      link_type: linkType,
     })
     .select(DOCUMENT_COLUMNS)
     .single<DocumentRecord>()

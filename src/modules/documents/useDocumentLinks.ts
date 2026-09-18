@@ -4,7 +4,6 @@ import {
   createPropertyLink,
   uploadPropertyDocument,
   type DocumentCategory,
-  type DocumentRecord,
 } from './documentsQueries'
 
 export interface AddDocumentLinkInput {
@@ -12,12 +11,14 @@ export interface AddDocumentLinkInput {
   label: string | null
   file: File | null
   linkUrl: string | null
+  linkType: 'drive_folder' | null
 }
 
-// Roadmap 7.17 — Property Overview's freeform Documents/links section.
-// Reads off the same `documents` list PropertyProfile already fetches
-// (per CLAUDE.md's Single source of truth rule — no second query, no
-// second copy of this data), and only adds the create half here.
+// Roadmap 7.17 — Activity & Documents' freeform upload-or-link entry
+// (moved here from a separate Property Overview section per the Single
+// source of truth rule: one place to view documents, one place to add
+// them). Reads off the same `documents` list PropertyProfile already
+// fetches — no second query, no second copy of this data.
 export function useDocumentLinks(propertyId: string, onAdded: () => Promise<void>) {
   const { accountId, session } = useAuth()
   const [isAdding, setIsAdding] = useState(false)
@@ -59,6 +60,7 @@ export function useDocumentLinks(propertyId: string, onAdded: () => Promise<void
           label: input.label,
           uploadedBy: session.user.id,
           linkUrl: input.linkUrl!,
+          linkType: input.linkType,
         })
     setSaving(false)
 
@@ -72,13 +74,4 @@ export function useDocumentLinks(propertyId: string, onAdded: () => Promise<void
   }
 
   return { isAdding, saving, error, startAdding, cancelAdding, add }
-}
-
-// Roadmap 7.17 — this section's own list is everything not already
-// surfaced elsewhere on Overview: Insurance already gets its own list
-// (PropertySummary), and Receipts are Financials' concern (tied to a
-// transaction) — excluding both here avoids a right-under-each-other
-// duplicate of the same document.
-export function filterOverviewDocumentLinks(documents: DocumentRecord[]): DocumentRecord[] {
-  return documents.filter((doc) => doc.transaction_id === null && doc.category !== 'Insurance')
 }
