@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react'
 import { SearchableSelect } from '../../shared/SearchableSelect'
+import { PickListSelect } from '../../shared/pickLists/PickListSelect'
 import { useCaptureForm } from './useCaptureForm'
 import { MAX_ATTACHMENTS_PER_ENTRY, type EntryType } from './captureQueries'
 
@@ -19,6 +20,13 @@ const ENTRY_TYPES: { value: EntryType; label: string }[] = [
 // until a type is chosen, and each type only shows what's relevant to
 // it (Mileage gets "Miles driven" and a "Purpose" label on the shared
 // notes field instead of Receipt/Visit/Communication's "Notes").
+//
+// Roadmap 1.7 correction — 1.7 was checked off without actually building
+// each type's own fields (this file previously rendered the same
+// Property/Date/Notes/Attachments set for every type but Mileage). Added
+// here: Receipt gets vendor/amount/category, Visit gets an optional "who
+// was met with", Communication gets contact name/method/subject. All
+// optional, same as every other field beyond type/property/date.
 export function CaptureForm({ onCaptured }: CaptureFormProps) {
   const {
     propertyOptions,
@@ -33,6 +41,20 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     setNotes,
     milesDriven,
     setMilesDriven,
+    vendor,
+    setVendor,
+    amount,
+    setAmount,
+    category,
+    setCategory,
+    metWith,
+    setMetWith,
+    contactName,
+    setContactName,
+    contactMethod,
+    setContactMethod,
+    subject,
+    setSubject,
     files,
     addFiles,
     removeFile,
@@ -97,6 +119,61 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
                 value={milesDriven}
                 onChange={(e) => setMilesDriven(e.target.value)}
               />
+            </>
+          )}
+
+          {entryType === 'receipt' && (
+            <>
+              <label htmlFor="vendor">Vendor (optional)</label>
+              <input id="vendor" value={vendor} onChange={(e) => setVendor(e.target.value)} />
+
+              <label htmlFor="amount">Amount (optional)</label>
+              <input
+                id="amount"
+                type="number"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+
+              <label htmlFor="category">Category (optional)</label>
+              <PickListSelect
+                id="category"
+                listName="subcategory"
+                title="Subcategories"
+                value={category}
+                onChange={setCategory}
+                placeholder="Select category…"
+              />
+            </>
+          )}
+
+          {entryType === 'visit' && (
+            <>
+              <label htmlFor="met_with">Who was met with (optional)</label>
+              <input id="met_with" value={metWith} onChange={(e) => setMetWith(e.target.value)} />
+            </>
+          )}
+
+          {entryType === 'communication' && (
+            <>
+              <label htmlFor="contact_name">Contact name (optional)</label>
+              <input id="contact_name" value={contactName} onChange={(e) => setContactName(e.target.value)} />
+
+              <label htmlFor="contact_method">Method (optional)</label>
+              <PickListSelect
+                id="contact_method"
+                listName="contact_method"
+                title="Contact methods"
+                value={contactMethod}
+                onChange={setContactMethod}
+                placeholder="Select method…"
+              />
+
+              <label htmlFor="subject">Subject (optional)</label>
+              <input id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
             </>
           )}
 

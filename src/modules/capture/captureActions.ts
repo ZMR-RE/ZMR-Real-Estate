@@ -16,6 +16,13 @@ function attachmentTypeFor(file: File): AttachmentType | null {
 export interface SaveCaptureEntryDetailsInput {
   notes: string
   milesDriven: string
+  vendor: string
+  amount: string
+  category: string
+  metWith: string
+  contactName: string
+  contactMethod: string
+  subject: string
   newFiles: File[]
 }
 
@@ -43,6 +50,11 @@ export async function saveCaptureEntryDetails(
     return { error: 'Miles driven must be a positive number.' }
   }
 
+  const parsedAmount = input.amount.trim() ? Number(input.amount) : null
+  if (input.amount.trim() && (Number.isNaN(parsedAmount) || (parsedAmount as number) <= 0)) {
+    return { error: 'Amount must be a positive number.' }
+  }
+
   if (input.newFiles.length > 0) {
     const uploaded: { path: string; type: AttachmentType }[] = []
     for (const file of input.newFiles) {
@@ -61,6 +73,13 @@ export async function saveCaptureEntryDetails(
   const { error: updateError } = await updateCaptureEntryDetails(entry.id, {
     notes: input.notes.trim() || null,
     milesDriven: parsedMiles,
+    vendor: input.vendor.trim() || null,
+    amount: parsedAmount,
+    category: input.category || null,
+    metWith: input.metWith.trim() || null,
+    contactName: input.contactName.trim() || null,
+    contactMethod: input.contactMethod || null,
+    subject: input.subject.trim() || null,
   })
   if (updateError) {
     return { error: updateError.message }

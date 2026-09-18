@@ -34,6 +34,13 @@ export function useCaptureForm(onCaptured?: () => void) {
   const [entryDate, setEntryDate] = useState(todayDateString())
   const [notes, setNotes] = useState('')
   const [milesDriven, setMilesDriven] = useState('')
+  const [vendor, setVendor] = useState('')
+  const [amount, setAmount] = useState('')
+  const [category, setCategory] = useState('')
+  const [metWith, setMetWith] = useState('')
+  const [contactName, setContactName] = useState('')
+  const [contactMethod, setContactMethod] = useState('')
+  const [subject, setSubject] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -54,6 +61,13 @@ export function useCaptureForm(onCaptured?: () => void) {
     setEntryDate(todayDateString())
     setNotes('')
     setMilesDriven('')
+    setVendor('')
+    setAmount('')
+    setCategory('')
+    setMetWith('')
+    setContactName('')
+    setContactMethod('')
+    setSubject('')
     setFiles([])
   }
 
@@ -97,6 +111,12 @@ export function useCaptureForm(onCaptured?: () => void) {
       return
     }
 
+    const parsedAmount = amount.trim() ? Number(amount) : null
+    if (amount.trim() && (Number.isNaN(parsedAmount) || (parsedAmount as number) <= 0)) {
+      setError('Amount must be a positive number.')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
 
@@ -108,6 +128,13 @@ export function useCaptureForm(onCaptured?: () => void) {
       entryDate,
       notes: notes.trim() || null,
       milesDriven: parsedMiles,
+      vendor: vendor.trim() || null,
+      amount: parsedAmount,
+      category: category || null,
+      metWith: metWith.trim() || null,
+      contactName: contactName.trim() || null,
+      contactMethod: contactMethod || null,
+      subject: subject.trim() || null,
     })
 
     if (insertError || !entry) {
@@ -155,6 +182,20 @@ export function useCaptureForm(onCaptured?: () => void) {
     setNotes,
     milesDriven,
     setMilesDriven,
+    vendor,
+    setVendor,
+    amount,
+    setAmount,
+    category,
+    setCategory,
+    metWith,
+    setMetWith,
+    contactName,
+    setContactName,
+    contactMethod,
+    setContactMethod,
+    subject,
+    setSubject,
     files,
     addFiles,
     removeFile,

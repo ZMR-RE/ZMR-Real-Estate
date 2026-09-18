@@ -8,7 +8,11 @@ import { supabase } from '../supabaseClient'
 // (roadmap 7.3), left with zero seeded options — see that migration.
 // utility_type was added by 20260915120000_utility_records.sql (roadmap
 // 7.12), also left with zero seeded options — no established taxonomy to
-// carry forward. property_type/purchase_method/zoning_use_code were added
+// carry forward. contact_method was added by
+// 20260918170000_capture_log_type_fields.sql (roadmap 1.7 correction),
+// seeded with the 4 values that item specified (phone/email/text/
+// in-person) — an explicitly given taxonomy, not a guess.
+// property_type/purchase_method/zoning_use_code were added
 // by the Property Overview redesign, converting three fields that were
 // previously plain free text on properties — same reasoning as
 // subcategory/payment_method above, zero seeded options since there's no
@@ -28,6 +32,7 @@ export type PickListName =
   | 'property_type'
   | 'purchase_method'
   | 'zoning_use_code'
+  | 'contact_method'
 
 export interface PickListOption {
   id: string

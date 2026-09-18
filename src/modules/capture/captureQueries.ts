@@ -17,6 +17,13 @@ export interface CaptureEntry {
   entry_date: string
   notes: string | null
   miles_driven: string | null
+  vendor: string | null
+  amount: string | null
+  category: string | null
+  met_with: string | null
+  contact_name: string | null
+  contact_method: string | null
+  subject: string | null
   reconciled: boolean
   reconciled_at: string | null
   manually_completed: boolean
@@ -25,7 +32,7 @@ export interface CaptureEntry {
 }
 
 const CAPTURE_ENTRY_COLUMNS =
-  'id, entry_type, entry_date, notes, miles_driven, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
+  'id, entry_type, entry_date, notes, miles_driven, vendor, amount, category, met_with, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
 
 export async function uploadAttachment(accountId: string, file: File) {
   const path = `${accountId}/${crypto.randomUUID()}-${file.name}`
@@ -41,12 +48,22 @@ export interface CreateCaptureEntryInput {
   entryDate: string
   notes: string | null
   milesDriven: number | null
+  vendor: string | null
+  amount: number | null
+  category: string | null
+  metWith: string | null
+  contactName: string | null
+  contactMethod: string | null
+  subject: string | null
 }
 
 // Roadmap 1.7 — only type/property/date gate the save itself; every
-// other field (notes, miles driven, attachments) is filled in here if
-// available, but none of it blocks creating the row. Attachments are
-// inserted separately (addCaptureAttachments) once this row's id exists.
+// other field (notes, miles driven, attachments, and each type's own
+// fields added by the 1.7 correction — vendor/amount/category for
+// Receipt, met_with for Visit, contact_name/contact_method/subject for
+// Communication) is filled in here if available, but none of it blocks
+// creating the row. Attachments are inserted separately
+// (addCaptureAttachments) once this row's id exists.
 export async function createCaptureEntry(input: CreateCaptureEntryInput) {
   return supabase
     .from('capture_log')
@@ -58,6 +75,13 @@ export async function createCaptureEntry(input: CreateCaptureEntryInput) {
       entry_date: input.entryDate,
       notes: input.notes,
       miles_driven: input.milesDriven,
+      vendor: input.vendor,
+      amount: input.amount,
+      category: input.category,
+      met_with: input.metWith,
+      contact_name: input.contactName,
+      contact_method: input.contactMethod,
+      subject: input.subject,
     })
     .select(CAPTURE_ENTRY_COLUMNS)
     .single<CaptureEntry>()
@@ -133,6 +157,13 @@ export async function listCaptureEntries(accountId: string, filters: CaptureEntr
 export interface UpdateCaptureEntryDetailsInput {
   notes: string | null
   milesDriven: number | null
+  vendor: string | null
+  amount: number | null
+  category: string | null
+  metWith: string | null
+  contactName: string | null
+  contactMethod: string | null
+  subject: string | null
 }
 
 // Roadmap 1.11 — "any remaining-field completion happens in Recently
@@ -141,7 +172,17 @@ export interface UpdateCaptureEntryDetailsInput {
 export async function updateCaptureEntryDetails(id: string, input: UpdateCaptureEntryDetailsInput) {
   return supabase
     .from('capture_log')
-    .update({ notes: input.notes, miles_driven: input.milesDriven })
+    .update({
+      notes: input.notes,
+      miles_driven: input.milesDriven,
+      vendor: input.vendor,
+      amount: input.amount,
+      category: input.category,
+      met_with: input.metWith,
+      contact_name: input.contactName,
+      contact_method: input.contactMethod,
+      subject: input.subject,
+    })
     .eq('id', id)
     .select(CAPTURE_ENTRY_COLUMNS)
     .single<CaptureEntry>()

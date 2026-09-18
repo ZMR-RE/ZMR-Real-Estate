@@ -28,7 +28,17 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       form retired, Financials' mileage rollup repointed at capture_log
 - [x] 1.7 All type-relevant fields available and fillable at capture
       time. Attachment is optional. Only type, property, and date are
-      required to save.
+      required to save. CORRECTED — originally checked off without the
+      actual per-type fields existing (every type but Mileage rendered
+      the same generic Property/Date/Notes/Attachments set). Now built:
+      Receipt gets vendor (text), amount (currency), category (reuses
+      the existing 'subcategory' pick list from Financials/8.1); Visit
+      gets an optional "who was met with" (text) alongside its existing
+      notes; Communication gets contact name (text), method (new
+      'contact_method' pick list, seeded phone/email/text/in-person),
+      and subject (text). All new fields optional per this item's own
+      rule — live-verified saving with only type/property/date still
+      works and shows "Needs details."
 - [x] 1.8 Support up to 25 attachments per capture entry — cap enforced
       in code (useCaptureForm.ts, captureActions.ts); live-tested with
       1-2 files, not literally 25, so re-verify under real load if issues
