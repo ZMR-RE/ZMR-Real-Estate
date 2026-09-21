@@ -108,6 +108,15 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   the consuming field — not just that each module works correctly in
   isolation.
 
+## Cross-module data freshness
+- Any dropdown/picker that reads data owned by a different module (e.g.
+  Payment method reading Financial accounts, Vendor pickers reading
+  Vendors) must refresh its options when opened, not only when its
+  parent's key identifier (like propertyId) changes. Verify this
+  explicitly: add data in the source location, then confirm a picker
+  that was already open/mounted elsewhere picks it up without a page
+  reload.
+
 ## Pick-list-first fields
 - Any field representing a closed set of categorical choices defaults
   to the account-scoped pick-list system (8.1) — user add/archive/edit —
