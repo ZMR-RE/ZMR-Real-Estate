@@ -100,6 +100,14 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   scope was completed, leave it unchecked and note specifically what
   remains, rather than marking it fully complete.
 
+## Pick-list-first fields
+- Any field representing a closed set of categorical choices defaults
+  to the account-scoped pick-list system (8.1) — user add/archive/edit —
+  unless there's a specific, stated reason it must be fixed. Two current
+  exceptions: State (fixed 50 values, not user-extensible) and the
+  top-level expense Category (governed directly by Chart of Accounts,
+  9.1 — user-editable at the Subcategory level, not Category itself).
+
 ## Mobile responsiveness
 - The application must be fully usable on a mobile phone, since Quick
   Capture in particular is expected to be used on-site at a property via
