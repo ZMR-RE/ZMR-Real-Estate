@@ -3,6 +3,7 @@ import { useAuth } from '../../shared/auth/AuthContext'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { usePickListOptions } from '../../shared/pickLists/usePickListOptions'
 import { listProperties } from '../properties/propertiesQueries'
+import { useVendors } from '../vendors/useVendors'
 import { moveToDocuments, type DocumentCategory } from '../documents/documentsQueries'
 import { isCaptureEntryComplete } from '../capture/captureCalculations'
 import { saveCaptureEntryDetails, type SaveCaptureEntryDetailsInput } from '../capture/captureActions'
@@ -19,6 +20,7 @@ import { listUnreconciled, type QueueEntry } from './reconciliationQueries'
 export function useReconciliationQueue() {
   const { session, accountId } = useAuth()
   const documentTypeOptions = usePickListOptions('document_type')
+  const { vendorOptions, addVendor } = useVendors(accountId)
   const [entries, setEntries] = useState<QueueEntry[]>([])
   const [propertyOptions, setPropertyOptions] = useState<{ id: string; label: string }[]>([])
   const [propertyFilter, setPropertyFilter] = useState<string | null>(null)
@@ -189,6 +191,8 @@ export function useReconciliationQueue() {
     error,
     processingId,
     documentTypeOptions,
+    vendorOptions,
+    onCreateVendor: addVendor,
     categoryByEntry,
     setCategory,
     reconcile,

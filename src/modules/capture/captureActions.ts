@@ -17,7 +17,7 @@ function attachmentTypeFor(file: File): AttachmentType | null {
 export interface SaveCaptureEntryDetailsInput {
   notes: string
   milesDriven: string
-  vendor: string
+  vendorId: string
   amount: string
   category: string
   metWith: string
@@ -78,7 +78,7 @@ export async function saveCaptureEntryDetails(
   const { error: updateError } = await updateCaptureEntryDetails(entry.id, {
     notes: input.notes.trim() || null,
     milesDriven: parsedMiles,
-    vendor: input.vendor.trim() || null,
+    vendorId: input.vendorId || null,
     amount: parsedAmount,
     category: input.category || null,
     metWith: input.metWith.trim() || null,

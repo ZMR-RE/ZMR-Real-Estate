@@ -78,11 +78,38 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       pick-list), Repair vs. Improvement (optional dropdown). Reorder
       Receipt's fields to: Property, Unit, Date, Vendor, Amount,
       Category, Payment method, Repair/Improvement, Notes, Attachments.
-- [ ] 1.17 Vendor field must link to the real Vendors entity (8.3),
+- [x] 1.17 Vendor field must link to the real Vendors entity (8.3),
       not remain free text — dropdown with inline "+ Add vendor",
       matching the same pattern already used for Organization type.
       Add a Vendor management view in Settings (list, add, archive,
-      restore) alongside the existing Organization types view.
+      restore) alongside the existing Organization types view. New
+      capture_log.vendor_id (nullable, on delete set null — Vendor stays
+      optional, unlike financial_transactions.vendor_id's NOT NULL),
+      backfilled from the old free-text vendor column exactly like
+      20260911140000_vendors_entity.sql backfilled
+      financial_transactions.vendor_source, then that column dropped.
+      New vendors.archived column (same pattern as llcs.archived);
+      useVendors.ts's picker now filters archived out, useVendorsManagement.ts
+      is the new admin hook (list all/add/archive/restore, no edit — this
+      item's scope is list/add/archive/restore only, matching Organization
+      type's list view before 8.2a added editing). VendorsSection.tsx
+      added to Settings alongside OrganizationTypesSection. The
+      SearchableSelect + inline VendorForm "+ Add vendor" picker (copied
+      from TransactionForm.tsx's existing vendor field) now backs Vendor
+      in both Quick Capture's create form and its Recently logged/
+      Reconciliation detail-completion form — vendorOptions/onCreateVendor
+      threaded down through CaptureInbox.tsx and
+      ReconciliationQueue.tsx→useReconciliationQueue.ts. Verified live:
+      Settings lists the 5 real existing vendors; archived/restored one
+      round-tripped correctly; captured a Receipt with "Home Depot"
+      selected, confirmed it round-tripped through History → Add details
+      showing "Home Depot" pre-filled, then deleted that test entry;
+      tested the inline "+ Add vendor" flow (created a test vendor,
+      immediately available as selected) and archived that test vendor
+      afterward since vendors have no hard-delete; confirmed Financials'
+      existing vendor picker (same underlying useVendors hook) still
+      shows exactly the 5 active vendors, correctly excluding the
+      archived test one.
 - [x] 1.18 Amount field: format/round to 2 decimal places (currency),
       reject more than 2 decimal digits of input. New shared
       src/shared/currencyInput.ts (sanitizeAmountInput truncates a 3rd

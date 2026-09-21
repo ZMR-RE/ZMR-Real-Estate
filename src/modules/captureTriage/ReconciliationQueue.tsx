@@ -23,6 +23,8 @@ export function ReconciliationQueue() {
     error,
     processingId,
     documentTypeOptions,
+    vendorOptions,
+    onCreateVendor,
     categoryByEntry,
     setCategory,
     reconcile,
@@ -85,6 +87,8 @@ export function ReconciliationQueue() {
           onStartEditing={startEditing}
           onCancelEditing={cancelEditing}
           detailsError={detailsError}
+          vendorOptions={vendorOptions}
+          onCreateVendor={onCreateVendor}
           onSaveDetails={saveDetails}
           onToggleManuallyCompleted={toggleManuallyCompleted}
           onVoid={voidEntry}

@@ -10,9 +10,10 @@ export interface Vendor {
   has_insurance: boolean
   split_percentage: number | null
   split_description: string | null
+  archived: boolean
 }
 
-export type VendorInput = Omit<Vendor, 'id' | 'account_id' | 'split_percentage' | 'split_description'>
+export type VendorInput = Omit<Vendor, 'id' | 'account_id' | 'split_percentage' | 'split_description' | 'archived'>
 
 export interface VendorSplitRuleInput {
   splitPercentage: number | null
@@ -20,7 +21,7 @@ export interface VendorSplitRuleInput {
 }
 
 const VENDOR_COLUMNS =
-  'id, account_id, name, contact_email, contact_phone, has_w9, has_insurance, split_percentage, split_description'
+  'id, account_id, name, contact_email, contact_phone, has_w9, has_insurance, split_percentage, split_description, archived'
 
 export async function listVendors(accountId: string) {
   return supabase.from('vendors').select(VENDOR_COLUMNS).eq('account_id', accountId).order('name').returns<Vendor[]>()
@@ -28,6 +29,14 @@ export async function listVendors(accountId: string) {
 
 export async function createVendor(accountId: string, input: VendorInput) {
   return supabase.from('vendors').insert({ ...input, account_id: accountId }).select(VENDOR_COLUMNS).single()
+}
+
+// Roadmap 1.17 — archive/restore for Vendor's new Settings management
+// view, same soft-delete pattern as Organization type (setLlcArchived):
+// a vendor referenced by historical capture/transaction rows must never
+// be hard-deleted, just stop being offered as a choice going forward.
+export async function setVendorArchived(id: string, archived: boolean) {
+  return supabase.from('vendors').update({ archived }).eq('id', id).select(VENDOR_COLUMNS).single()
 }
 
 // Scoped to just the split-rule fields — there's no general vendor-edit

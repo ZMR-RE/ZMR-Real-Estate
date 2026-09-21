@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
+import { SearchableSelect, type SearchableSelectOption } from '../../shared/SearchableSelect'
 import { formatAmountOnBlur, sanitizeAmountInput } from '../../shared/currencyInput'
+import { VendorForm } from '../vendors/VendorForm'
+import type { VendorInput } from '../vendors/vendorsQueries'
 import { MAX_ATTACHMENTS_PER_ENTRY, type CaptureEntry } from './captureQueries'
 
 export interface CaptureEntryDetailsInput {
   notes: string
   milesDriven: string
-  vendor: string
+  vendorId: string
   amount: string
   category: string
   metWith: string
@@ -21,6 +24,8 @@ interface CaptureEntryDetailsFormProps {
   entry: CaptureEntry
   saving: boolean
   error: string | null
+  vendorOptions: SearchableSelectOption[]
+  onCreateVendor: (input: VendorInput) => Promise<{ id: string } | { error: string }>
   onSave: (input: CaptureEntryDetailsInput) => void
   onCancel: () => void
 }
@@ -31,10 +36,18 @@ interface CaptureEntryDetailsFormProps {
 // per-type fields (roadmap 1.7 correction) so a field skipped at capture
 // time can still be filled in later here, the same way notes/miles
 // driven always could.
-export function CaptureEntryDetailsForm({ entry, saving, error, onSave, onCancel }: CaptureEntryDetailsFormProps) {
+export function CaptureEntryDetailsForm({
+  entry,
+  saving,
+  error,
+  vendorOptions,
+  onCreateVendor,
+  onSave,
+  onCancel,
+}: CaptureEntryDetailsFormProps) {
   const [notes, setNotes] = useState(entry.notes ?? '')
   const [milesDriven, setMilesDriven] = useState(entry.miles_driven ?? '')
-  const [vendor, setVendor] = useState(entry.vendor ?? '')
+  const [vendorId, setVendorId] = useState(entry.vendor_id ?? '')
   const [amount, setAmount] = useState(entry.amount ?? '')
   const [category, setCategory] = useState(entry.category ?? '')
   const [metWith, setMetWith] = useState(entry.met_with ?? '')
@@ -43,7 +56,25 @@ export function CaptureEntryDetailsForm({ entry, saving, error, onSave, onCancel
   const [contactMethod, setContactMethod] = useState(entry.contact_method ?? '')
   const [subject, setSubject] = useState(entry.subject ?? '')
   const [newFiles, setNewFiles] = useState<File[]>([])
+  const [isAddingVendor, setIsAddingVendor] = useState(false)
+  const [creatingVendor, setCreatingVendor] = useState(false)
+  const [createVendorError, setCreateVendorError] = useState<string | null>(null)
   const remainingSlots = MAX_ATTACHMENTS_PER_ENTRY - entry.attachments.length
+
+  const handleCreateVendor = async (input: VendorInput) => {
+    setCreatingVendor(true)
+    const result = await onCreateVendor(input)
+    setCreatingVendor(false)
+
+    if ('error' in result) {
+      setCreateVendorError(result.error)
+      return
+    }
+
+    setCreateVendorError(null)
+    setVendorId(result.id)
+    setIsAddingVendor(false)
+  }
 
   return (
     <div className="capture-entry-details-form">
@@ -65,7 +96,26 @@ export function CaptureEntryDetailsForm({ entry, saving, error, onSave, onCancel
       {entry.entry_type === 'receipt' && (
         <>
           <label htmlFor={`vendor_${entry.id}`}>Vendor</label>
-          <input id={`vendor_${entry.id}`} value={vendor} onChange={(e) => setVendor(e.target.value)} />
+          {isAddingVendor ? (
+            <VendorForm
+              saving={creatingVendor}
+              error={createVendorError}
+              onSave={handleCreateVendor}
+              onCancel={() => {
+                setIsAddingVendor(false)
+                setCreateVendorError(null)
+              }}
+            />
+          ) : (
+            <SearchableSelect
+              options={vendorOptions}
+              value={vendorId || null}
+              onChange={setVendorId}
+              placeholder="Search vendors…"
+              onAddNew={() => setIsAddingVendor(true)}
+              addNewLabel="+ Add vendor"
+            />
+          )}
 
           <label htmlFor={`amount_${entry.id}`}>Amount</label>
           <input
@@ -157,7 +207,7 @@ export function CaptureEntryDetailsForm({ entry, saving, error, onSave, onCancel
           onSave({
             notes,
             milesDriven,
-            vendor,
+            vendorId,
             amount,
             category,
             metWith,

@@ -3,6 +3,7 @@ import { useAuth } from '../../shared/auth/AuthContext'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { hasAtMostTwoDecimalPlaces } from '../../shared/currencyInput'
 import { listProperties } from '../properties/propertiesQueries'
+import { useVendors } from '../vendors/useVendors'
 import {
   addCaptureAttachments,
   createCaptureEntry,
@@ -28,6 +29,7 @@ function attachmentTypeFor(file: File): AttachmentType | null {
 // never defaults entryType away from null.
 export function useCaptureForm(onCaptured?: () => void) {
   const { accountId, session } = useAuth()
+  const { vendorOptions, addVendor } = useVendors(accountId)
   const [propertyOptions, setPropertyOptions] = useState<{ id: string; label: string }[]>([])
   const [propertiesLoading, setPropertiesLoading] = useState(true)
   const [entryType, setEntryType] = useState<EntryType | null>(null)
@@ -35,7 +37,7 @@ export function useCaptureForm(onCaptured?: () => void) {
   const [entryDate, setEntryDate] = useState(todayDateString())
   const [notes, setNotes] = useState('')
   const [milesDriven, setMilesDriven] = useState('')
-  const [vendor, setVendor] = useState('')
+  const [vendorId, setVendorId] = useState<string | null>(null)
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState('')
   const [metWith, setMetWith] = useState('')
@@ -63,7 +65,7 @@ export function useCaptureForm(onCaptured?: () => void) {
     setEntryDate(todayDateString())
     setNotes('')
     setMilesDriven('')
-    setVendor('')
+    setVendorId(null)
     setAmount('')
     setCategory('')
     setMetWith('')
@@ -135,7 +137,7 @@ export function useCaptureForm(onCaptured?: () => void) {
       entryDate,
       notes: notes.trim() || null,
       milesDriven: parsedMiles,
-      vendor: vendor.trim() || null,
+      vendorId,
       amount: parsedAmount,
       category: category || null,
       metWith: metWith.trim() || null,
@@ -190,8 +192,10 @@ export function useCaptureForm(onCaptured?: () => void) {
     setNotes,
     milesDriven,
     setMilesDriven,
-    vendor,
-    setVendor,
+    vendorId,
+    setVendorId,
+    vendorOptions,
+    onCreateVendor: addVendor,
     amount,
     setAmount,
     category,

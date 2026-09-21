@@ -6,6 +6,7 @@ import { AccountSecuritySection } from '../account/AccountSecuritySection'
 import { ThemeToggle } from './ThemeToggle'
 import { OrganizationTypesSection } from '../llcs/OrganizationTypesSection'
 import { HoldingCompaniesSection } from '../holdingCompanies/HoldingCompaniesSection'
+import { VendorsSection } from '../vendors/VendorsSection'
 
 // Roadmap 12.1 — foundational Settings shell. Houses admin-level features
 // that don't belong on any single entity's page: Chart of Accounts
@@ -45,6 +46,8 @@ export function Settings() {
       </section>
 
       <OrganizationTypesSection />
+
+      <VendorsSection />
 
       <HoldingCompaniesSection />
 

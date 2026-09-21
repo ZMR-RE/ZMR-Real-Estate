@@ -15,7 +15,10 @@ export function useVendors(accountId: string | null) {
   const refresh = useCallback(async () => {
     if (!accountId) return
     const { data } = await listVendors(accountId)
-    setVendorOptions((data ?? []).map((v) => ({ id: v.id, label: v.name })))
+    // Roadmap 1.17 — a picker only ever offers active vendors; archived
+    // ones still display correctly on whatever historical record already
+    // references them (that lookup isn't through this options list).
+    setVendorOptions((data ?? []).filter((v) => !v.archived).map((v) => ({ id: v.id, label: v.name })))
   }, [accountId])
 
   useEffect(() => {

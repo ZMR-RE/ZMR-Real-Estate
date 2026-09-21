@@ -1,7 +1,8 @@
-import type { FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { SearchableSelect } from '../../shared/SearchableSelect'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
 import { formatAmountOnBlur, sanitizeAmountInput } from '../../shared/currencyInput'
+import { VendorForm } from '../vendors/VendorForm'
 import { useCaptureForm } from './useCaptureForm'
 import { MAX_ATTACHMENTS_PER_ENTRY, type EntryType } from './captureQueries'
 
@@ -42,8 +43,10 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     setNotes,
     milesDriven,
     setMilesDriven,
-    vendor,
-    setVendor,
+    vendorId,
+    setVendorId,
+    vendorOptions,
+    onCreateVendor,
     amount,
     setAmount,
     category,
@@ -66,6 +69,25 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     savedAt,
     submit,
   } = useCaptureForm(onCaptured)
+
+  const [isAddingVendor, setIsAddingVendor] = useState(false)
+  const [creatingVendor, setCreatingVendor] = useState(false)
+  const [createVendorError, setCreateVendorError] = useState<string | null>(null)
+
+  const handleCreateVendor = async (input: Parameters<typeof onCreateVendor>[0]) => {
+    setCreatingVendor(true)
+    const result = await onCreateVendor(input)
+    setCreatingVendor(false)
+
+    if ('error' in result) {
+      setCreateVendorError(result.error)
+      return
+    }
+
+    setCreateVendorError(null)
+    setVendorId(result.id)
+    setIsAddingVendor(false)
+  }
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
@@ -128,7 +150,26 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
           {entryType === 'receipt' && (
             <>
               <label htmlFor="vendor">Vendor (optional)</label>
-              <input id="vendor" value={vendor} onChange={(e) => setVendor(e.target.value)} />
+              {isAddingVendor ? (
+                <VendorForm
+                  saving={creatingVendor}
+                  error={createVendorError}
+                  onSave={handleCreateVendor}
+                  onCancel={() => {
+                    setIsAddingVendor(false)
+                    setCreateVendorError(null)
+                  }}
+                />
+              ) : (
+                <SearchableSelect
+                  options={vendorOptions}
+                  value={vendorId}
+                  onChange={setVendorId}
+                  placeholder="Search vendors…"
+                  onAddNew={() => setIsAddingVendor(true)}
+                  addNewLabel="+ Add vendor"
+                />
+              )}
 
               <label htmlFor="amount">Amount (optional)</label>
               <input

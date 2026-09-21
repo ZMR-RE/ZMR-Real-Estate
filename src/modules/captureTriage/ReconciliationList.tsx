@@ -1,7 +1,9 @@
 import { Fragment } from 'react'
 import type { DocumentCategory } from '../documents/documentsQueries'
 import type { PickListOption } from '../../shared/pickLists/pickListsQueries'
+import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { propertyLabel } from '../../shared/propertyLabel'
+import type { VendorInput } from '../vendors/vendorsQueries'
 import { CaptureEntryDetailsForm, type CaptureEntryDetailsInput } from '../capture/CaptureEntryDetailsForm'
 import { isCaptureEntryComplete } from '../capture/captureCalculations'
 import type { CaptureEntry, EntryType } from '../capture/captureQueries'
@@ -26,6 +28,8 @@ interface ReconciliationListProps {
   onStartEditing: (id: string) => void
   onCancelEditing: () => void
   detailsError: string | null
+  vendorOptions: SearchableSelectOption[]
+  onCreateVendor: (input: VendorInput) => Promise<{ id: string } | { error: string }>
   onSaveDetails: (entry: CaptureEntry, input: CaptureEntryDetailsInput) => void
   onToggleManuallyCompleted: (entry: CaptureEntry) => void
   onVoid: (id: string) => void
@@ -43,6 +47,8 @@ export function ReconciliationList({
   onStartEditing,
   onCancelEditing,
   detailsError,
+  vendorOptions,
+  onCreateVendor,
   onSaveDetails,
   onToggleManuallyCompleted,
   onVoid,
@@ -138,6 +144,8 @@ export function ReconciliationList({
                       entry={entry}
                       saving={processingId === entry.id}
                       error={detailsError}
+                      vendorOptions={vendorOptions}
+                      onCreateVendor={onCreateVendor}
                       onSave={(input) => onSaveDetails(entry, input)}
                       onCancel={onCancelEditing}
                     />

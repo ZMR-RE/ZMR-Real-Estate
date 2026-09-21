@@ -1,5 +1,7 @@
 import { Fragment } from 'react'
 import { propertyLabel } from '../../shared/propertyLabel'
+import type { SearchableSelectOption } from '../../shared/SearchableSelect'
+import type { VendorInput } from '../vendors/vendorsQueries'
 import { CaptureEntryDetailsForm, type CaptureEntryDetailsInput } from './CaptureEntryDetailsForm'
 import { isCaptureEntryComplete } from './captureCalculations'
 import type { CaptureEntry, EntryType } from './captureQueries'
@@ -25,6 +27,8 @@ interface CaptureHistoryListProps {
   onCancelEditing: () => void
   processingId: string | null
   detailsError: string | null
+  vendorOptions: SearchableSelectOption[]
+  onCreateVendor: (input: VendorInput) => Promise<{ id: string } | { error: string }>
   onSaveDetails: (entry: CaptureEntry, input: CaptureEntryDetailsInput) => void
   onToggleManuallyCompleted: (entry: CaptureEntry) => void
   onVoid: (id: string) => void
@@ -62,6 +66,8 @@ export function CaptureHistoryList({
   onCancelEditing,
   processingId,
   detailsError,
+  vendorOptions,
+  onCreateVendor,
   onSaveDetails,
   onToggleManuallyCompleted,
   onVoid,
@@ -169,6 +175,8 @@ export function CaptureHistoryList({
                           entry={entry}
                           saving={processingId === entry.id}
                           error={detailsError}
+                          vendorOptions={vendorOptions}
+                          onCreateVendor={onCreateVendor}
                           onSave={(input) => onSaveDetails(entry, input)}
                           onCancel={onCancelEditing}
                         />

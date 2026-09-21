@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useAuth } from '../../shared/auth/AuthContext'
+import { useVendors } from '../vendors/useVendors'
 import { CaptureForm } from './CaptureForm'
 import { CaptureHistoryList } from './CaptureHistoryList'
 import { useCaptureHistory } from './useCaptureHistory'
@@ -15,6 +17,8 @@ const TABS: { key: InboxTab; label: string }[] = [
 // instead of a long vertical scroll to reach either one.
 export function CaptureInbox() {
   const [tab, setTab] = useState<InboxTab>('capture')
+  const { accountId } = useAuth()
+  const { vendorOptions, addVendor } = useVendors(accountId)
   const {
     entries,
     completeFilter,
@@ -59,6 +63,8 @@ export function CaptureInbox() {
           onCancelEditing={cancelEditing}
           processingId={processingId}
           detailsError={detailsError}
+          vendorOptions={vendorOptions}
+          onCreateVendor={addVendor}
           onSaveDetails={saveDetails}
           onToggleManuallyCompleted={toggleManuallyCompleted}
           onVoid={voidEntry}
