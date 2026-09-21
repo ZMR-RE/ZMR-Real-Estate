@@ -422,6 +422,57 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       toggles including the new Vendor relationships list, and
       Reconciliation Queue's Document types toggle) still open/close via
       their own button exactly as before — no regression.
+- [x] 1.31 Add "Vendor type" pick-list field to Vendor (Store/Contractor/
+      Service provider/Other). Rename Receipt's "Vendor" field label to
+      "Paid to" and Visit's field label to "Met with" — same underlying
+      Vendors+Tenants+Potential tenants picker, context-appropriate
+      label. REVISED mid-build: Receipt's field label switches based on
+      a new "Entry direction" toggle (Expense/Income) — "Paid to" for
+      Expense, "Received from" for Income, defaulting to Expense.
+      Receipt's field also upgraded from a Vendor-only picker to the
+      exact same 3-way Vendors/Tenants/Potential-tenants picker Visit's
+      "Met with" already uses (1.28), not just a label rename — a
+      receipt can now be paid to (or received from) a tenant or
+      potential tenant too (e.g. reimbursing a tenant, refunding a
+      prospect's deposit). New vendors.vendor_type column + seeded
+      pick-list values (20260921190000_vendor_type.sql), added to
+      Settings' central pick-list manager (useSettingsPickLists.ts) and
+      VendorForm/VendorList alongside the existing Relationship field.
+      New capture_log.paid_to_vendor_id/paid_to_tenant_id/
+      paid_to_prospective_tenant_id (mutually exclusive check
+      constraint, mirroring met_with_*'s pattern exactly) —
+      backfilled from the old vendor_id (1.17) which stays in the DB,
+      unused, never dropped, per CLAUDE.md's no-drop-without-approval
+      rule (20260921200000_capture_log_paid_to_entities.sql).
+
+      Entry direction (new capture_log.entry_direction column,
+      20260921210000_capture_log_entry_direction.sql) is deliberately
+      narrow groundwork for roadmap 1.33, built only far enough to drive
+      this label switch — a fixed 2-value field (not a pick list, same
+      reasoning as repair_or_improvement), no default at the database
+      level, defaulting to 'expense' in the UI only. 1.33 itself
+      (Category dropdown filtering to Income vs. Expense categories
+      based on this field) is NOT built here and remains a separate,
+      open roadmap item — flagged rather than guessed at, since this
+      session's scope was explicitly limited to the label-switch
+      groundwork, not the filtering behavior.
+
+      Verified live: added a real Vendor ("ABC Roofing", Vendor type
+      "Contractor") via Settings, confirmed "Manage vendor types" lists
+      all 4 seeded values (Store/Contractor/Service provider/Other);
+      captured a Receipt on 2169 Ash St with Entry direction left at its
+      "Expense" default, confirmed the field above it read "Paid to",
+      selected "ABC Roofing" (correctly grouped under "Vendors" in the
+      picker alongside the "+ Add new vendor"/"+ Add potential tenant"
+      inline options), saved, then reopened via History → Add details
+      and confirmed both Entry direction and the selected vendor
+      round-tripped correctly. Separately toggled Entry direction to
+      "Income" and confirmed the label switched to "Received from" live.
+      Confirmed Visit's field now reads "Met with" (previously "Who was
+      met with"). Verified in both light and dark mode and at mobile
+      width (380px) with no layout breakage. Cleaned up afterward: the
+      test capture entry was voided (own session's data), the test
+      vendor was archived (vendors have no hard-delete).
 
 ## 2. Phase 2 — Parallelized Build (5 terminals, once Phase 1 schema is locked and stable)
 - [x] 2.1 Rent Ops — invoicing, receipts, on-time payment tracking

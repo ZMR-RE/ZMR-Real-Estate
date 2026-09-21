@@ -41,6 +41,12 @@ import { supabase } from '../supabaseClient'
 // — a persistent tag on the Vendor record itself (Used/Estimate
 // obtained/Recommended/Do not use), seeded with those 4 explicitly
 // given values, same precedent as contact_method/visit_type's seeds.
+// vendor_type was added by 20260921190000_vendor_type.sql (roadmap
+// 1.31), seeded with Store/Contractor/Service provider/Other — same
+// precedent again. capture_log.entry_direction (added alongside it,
+// roadmap 1.31's "Paid to"/"Received from" refinement — groundwork for
+// 1.33) is deliberately NOT one of these: a fixed 2-value
+// income/expense field, same reasoning as repair_or_improvement below.
 export type PickListName =
   | 'subcategory'
   | 'payment_method'
@@ -56,6 +62,7 @@ export type PickListName =
   | 'contact_method'
   | 'visit_type'
   | 'vendor_relationship'
+  | 'vendor_type'
 
 export interface PickListOption {
   id: string

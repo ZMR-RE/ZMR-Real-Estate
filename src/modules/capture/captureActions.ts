@@ -21,12 +21,15 @@ export interface SaveCaptureEntryDetailsInput {
   startDestination: string
   endDestination: string
   unitId: string
-  vendorId: string
   amount: string
   category: string
   financialAccountId: string
   paymentMethod: string
   repairOrImprovement: string
+  entryDirection: string
+  paidToVendorId: string
+  paidToTenantId: string
+  paidToProspectiveTenantId: string
   metWith: string
   metWithVendorId: string
   metWithTenantId: string
@@ -91,12 +94,15 @@ export async function saveCaptureEntryDetails(
     startDestination: input.startDestination.trim() || null,
     endDestination: input.endDestination.trim() || null,
     unitId: input.unitId || null,
-    vendorId: input.vendorId || null,
     amount: parsedAmount,
     category: input.category || null,
     financialAccountId: input.financialAccountId || null,
     paymentMethod: input.paymentMethod || null,
     repairOrImprovement: input.repairOrImprovement || null,
+    entryDirection: input.entryDirection || null,
+    paidToVendorId: input.paidToVendorId || null,
+    paidToTenantId: input.paidToTenantId || null,
+    paidToProspectiveTenantId: input.paidToProspectiveTenantId || null,
     metWith: input.metWith.trim() || null,
     metWithVendorId: input.metWithVendorId || null,
     metWithTenantId: input.metWithTenantId || null,

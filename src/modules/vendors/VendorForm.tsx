@@ -17,6 +17,7 @@ const BLANK_VENDOR: VendorInput = {
   has_w9: false,
   has_insurance: false,
   relationship: null,
+  vendor_type: null,
   notes: null,
 }
 
@@ -43,6 +44,16 @@ export function VendorForm({ initialValues, saving, error, onSave, onCancel }: V
         required
         value={values.name}
         onChange={(e) => setValues((prev) => ({ ...prev, name: e.target.value }))}
+      />
+
+      <label htmlFor="vendor_form_vendor_type">Vendor type</label>
+      <PickListSelect
+        id="vendor_form_vendor_type"
+        listName="vendor_type"
+        title="Vendor types"
+        value={values.vendor_type ?? ''}
+        onChange={(v) => setValues((prev) => ({ ...prev, vendor_type: v || null }))}
+        placeholder="Select vendor type…"
       />
 
       <label htmlFor="vendor_form_contact_email">Contact email</label>

@@ -17,12 +17,15 @@ export interface CaptureEntryDetailsInput {
   startDestination: string
   endDestination: string
   unitId: string
-  vendorId: string
   amount: string
   category: string
   financialAccountId: string
   paymentMethod: string
   repairOrImprovement: string
+  entryDirection: string
+  paidToVendorId: string
+  paidToTenantId: string
+  paidToProspectiveTenantId: string
   metWith: string
   metWithVendorId: string
   metWithTenantId: string
@@ -67,7 +70,6 @@ export function CaptureEntryDetailsForm({
   const [endDestination, setEndDestination] = useState(entry.end_destination ?? '')
   const [unitId, setUnitId] = useState(entry.unit_id ?? '')
   const [unitOptions, setUnitOptions] = useState<SearchableSelectOption[]>([])
-  const [vendorId, setVendorId] = useState(entry.vendor_id ?? '')
   const [amount, setAmount] = useState(entry.amount ?? '')
   const [category, setCategory] = useState(entry.category ?? '')
   const [financialAccountId, setFinancialAccountIdState] = useState(entry.financial_account_id ?? '')
@@ -79,8 +81,22 @@ export function CaptureEntryDetailsForm({
     setPaymentMethod('')
   }
   const [repairOrImprovement, setRepairOrImprovement] = useState(entry.repair_or_improvement ?? '')
+  // Roadmap 1.31 — "Paid to"/"Received from" refinement's groundwork
+  // (scoped narrowly, not full 1.33): defaults to 'expense' for a
+  // pre-existing receipt saved before this field existed, matching
+  // useCaptureForm.ts's create-time default.
+  const [entryDirection, setEntryDirection] = useState(entry.entry_direction ?? 'expense')
   const [tenantOptions, setTenantOptions] = useState<SearchableSelectOption[]>([])
   const [prospectiveTenantOptions, setProspectiveTenantOptions] = useState<SearchableSelectOption[]>([])
+  // Roadmap 1.31 — Receipt's "Vendor" field becomes the same
+  // Vendors/Tenants/Potential-tenants picker Visit's "who was met with"
+  // uses, mirrored exactly (own independent state, since the two are
+  // semantically distinct relationships).
+  const [paidToVendorId, setPaidToVendorId] = useState(entry.paid_to_vendor_id ?? '')
+  const [paidToTenantId, setPaidToTenantId] = useState(entry.paid_to_tenant_id ?? '')
+  const [paidToProspectiveTenantId, setPaidToProspectiveTenantId] = useState(
+    entry.paid_to_prospective_tenant_id ?? '',
+  )
   const [metWithVendorId, setMetWithVendorId] = useState(entry.met_with_vendor_id ?? '')
   const [metWithTenantId, setMetWithTenantId] = useState(entry.met_with_tenant_id ?? '')
   const [metWithProspectiveTenantId, setMetWithProspectiveTenantId] = useState(entry.met_with_prospective_tenant_id ?? '')
@@ -89,9 +105,12 @@ export function CaptureEntryDetailsForm({
   const [contactMethod, setContactMethod] = useState(entry.contact_method ?? '')
   const [subject, setSubject] = useState(entry.subject ?? '')
   const [newFiles, setNewFiles] = useState<File[]>([])
-  const [isAddingVendor, setIsAddingVendor] = useState(false)
-  const [creatingVendor, setCreatingVendor] = useState(false)
-  const [createVendorError, setCreateVendorError] = useState<string | null>(null)
+  const [isAddingPaidToVendor, setIsAddingPaidToVendor] = useState(false)
+  const [creatingPaidToVendor, setCreatingPaidToVendor] = useState(false)
+  const [createPaidToVendorError, setCreatePaidToVendorError] = useState<string | null>(null)
+  const [isAddingPaidToProspectiveTenant, setIsAddingPaidToProspectiveTenant] = useState(false)
+  const [creatingPaidToProspectiveTenant, setCreatingPaidToProspectiveTenant] = useState(false)
+  const [createPaidToProspectiveTenantError, setCreatePaidToProspectiveTenantError] = useState<string | null>(null)
   const remainingSlots = MAX_ATTACHMENTS_PER_ENTRY - entry.attachments.length
 
   // Roadmap 1.16 — Unit, scoped to this entry's own (fixed, non-editable
@@ -123,22 +142,47 @@ export function CaptureEntryDetailsForm({
 
   // Roadmap 1.28 — tenant options for this entry's own (fixed) property,
   // same pattern as Unit/Financial account above; needed for Visit's
-  // "who was met with" picker.
+  // "who was met with" picker. Roadmap 1.31 widened this to Receipt too
+  // (its "Paid to"/"Received from" picker needs the same options).
   useEffect(() => {
-    if (!accountId || entry.entry_type !== 'visit') return
+    if (!accountId || (entry.entry_type !== 'visit' && entry.entry_type !== 'receipt')) return
     listAllTenantsForProperty(accountId, entry.property.id).then(({ data }) => {
       setTenantOptions((data ?? []).map((t) => ({ id: t.id, label: t.name })))
     })
   }, [accountId, entry.entry_type, entry.property.id])
 
   // Roadmap 1.28 revision — potential tenants, same pattern as Tenant
-  // above.
+  // above. Roadmap 1.31 widened this to Receipt too, same reasoning.
   useEffect(() => {
-    if (!accountId || entry.entry_type !== 'visit') return
+    if (!accountId || (entry.entry_type !== 'visit' && entry.entry_type !== 'receipt')) return
     listProspectiveTenantsForProperty(accountId, entry.property.id).then(({ data }) => {
       setProspectiveTenantOptions((data ?? []).map((t) => ({ id: t.id, label: t.name })))
     })
   }, [accountId, entry.entry_type, entry.property.id])
+
+  // Roadmap 1.31 — Receipt's "Paid to"/"Received from" picker, exact
+  // mirror of "who was met with" below.
+  const paidToEntityId = paidToVendorId || paidToTenantId || paidToProspectiveTenantId || null
+  const paidToOptions: SearchableSelectOption[] = [
+    ...vendorOptions.map((v) => ({ ...v, group: 'Vendors' })),
+    ...tenantOptions.map((t) => ({ ...t, group: 'Tenants' })),
+    ...prospectiveTenantOptions.map((t) => ({ ...t, group: 'Potential tenants' })),
+  ]
+  const selectPaidToEntity = (id: string) => {
+    if (vendorOptions.some((v) => v.id === id)) {
+      setPaidToVendorId(id)
+      setPaidToTenantId('')
+      setPaidToProspectiveTenantId('')
+    } else if (tenantOptions.some((t) => t.id === id)) {
+      setPaidToTenantId(id)
+      setPaidToVendorId('')
+      setPaidToProspectiveTenantId('')
+    } else {
+      setPaidToProspectiveTenantId(id)
+      setPaidToVendorId('')
+      setPaidToTenantId('')
+    }
+  }
 
   const metWithEntityId = metWithVendorId || metWithTenantId || metWithProspectiveTenantId || null
   const metWithOptions: SearchableSelectOption[] = [
@@ -162,25 +206,49 @@ export function CaptureEntryDetailsForm({
     }
   }
 
-  const handleCreateVendor = async (input: VendorInput) => {
-    setCreatingVendor(true)
+  const handleCreatePaidToVendor = async (input: VendorInput) => {
+    setCreatingPaidToVendor(true)
     const result = await onCreateVendor(input)
-    setCreatingVendor(false)
+    setCreatingPaidToVendor(false)
 
     if ('error' in result) {
-      setCreateVendorError(result.error)
+      setCreatePaidToVendorError(result.error)
       return
     }
 
-    setCreateVendorError(null)
-    setVendorId(result.id)
-    setIsAddingVendor(false)
+    setCreatePaidToVendorError(null)
+    setPaidToVendorId(result.id)
+    setPaidToTenantId('')
+    setPaidToProspectiveTenantId('')
+    setIsAddingPaidToVendor(false)
+  }
+
+  // Roadmap 1.31 — same picker's "+ Add potential tenant".
+  const handleCreatePaidToProspectiveTenant = async (input: ProspectiveTenantInput) => {
+    if (!accountId) return
+    setCreatingPaidToProspectiveTenant(true)
+    const { data, error: saveError } = await createProspectiveTenant(accountId, entry.property.id, input)
+    setCreatingPaidToProspectiveTenant(false)
+
+    if (saveError || !data) {
+      setCreatePaidToProspectiveTenantError(saveError?.message ?? 'Could not add potential tenant.')
+      return
+    }
+
+    setCreatePaidToProspectiveTenantError(null)
+    setProspectiveTenantOptions((prev) =>
+      [...prev, { id: data.id, label: data.name }].sort((a, b) => a.label.localeCompare(b.label)),
+    )
+    setPaidToProspectiveTenantId(data.id)
+    setPaidToVendorId('')
+    setPaidToTenantId('')
+    setIsAddingPaidToProspectiveTenant(false)
   }
 
   // Roadmap 1.28 revision — Visit's "who was met with" picker gets its
-  // own inline "+ Add new vendor", separate state from Receipt's Vendor
-  // field above since the two land in different fields (vendorId vs
-  // metWithVendorId).
+  // own inline "+ Add new vendor", separate state from Receipt's "Paid
+  // to"/"Received from" field above since the two land in different
+  // fields (paidToVendorId vs metWithVendorId).
   const [isAddingMetWithVendor, setIsAddingMetWithVendor] = useState(false)
   const [creatingMetWithVendor, setCreatingMetWithVendor] = useState(false)
   const [createMetWithVendorError, setCreateMetWithVendorError] = useState<string | null>(null)
@@ -273,25 +341,47 @@ export function CaptureEntryDetailsForm({
             </>
           )}
 
-          <label htmlFor={`vendor_${entry.id}`}>Vendor</label>
-          {isAddingVendor ? (
+          <label htmlFor={`entry_direction_${entry.id}`}>Entry direction</label>
+          <select
+            id={`entry_direction_${entry.id}`}
+            value={entryDirection}
+            onChange={(e) => setEntryDirection(e.target.value)}
+          >
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+          </select>
+
+          <label htmlFor={`paid_to_${entry.id}`}>{entryDirection === 'income' ? 'Received from' : 'Paid to'}</label>
+          {isAddingPaidToVendor ? (
             <VendorForm
-              saving={creatingVendor}
-              error={createVendorError}
-              onSave={handleCreateVendor}
+              saving={creatingPaidToVendor}
+              error={createPaidToVendorError}
+              onSave={handleCreatePaidToVendor}
               onCancel={() => {
-                setIsAddingVendor(false)
-                setCreateVendorError(null)
+                setIsAddingPaidToVendor(false)
+                setCreatePaidToVendorError(null)
+              }}
+            />
+          ) : isAddingPaidToProspectiveTenant ? (
+            <ProspectiveTenantForm
+              saving={creatingPaidToProspectiveTenant}
+              error={createPaidToProspectiveTenantError}
+              onSave={handleCreatePaidToProspectiveTenant}
+              onCancel={() => {
+                setIsAddingPaidToProspectiveTenant(false)
+                setCreatePaidToProspectiveTenantError(null)
               }}
             />
           ) : (
             <SearchableSelect
-              options={vendorOptions}
-              value={vendorId || null}
-              onChange={setVendorId}
-              placeholder="Search vendors…"
-              onAddNew={() => setIsAddingVendor(true)}
-              addNewLabel="+ Add vendor"
+              options={paidToOptions}
+              value={paidToEntityId}
+              onChange={selectPaidToEntity}
+              placeholder="Search vendors, tenants, and potential tenants…"
+              onAddNew={() => setIsAddingPaidToVendor(true)}
+              addNewLabel="+ Add new vendor"
+              onAddNewSecondary={() => setIsAddingPaidToProspectiveTenant(true)}
+              addNewSecondaryLabel="+ Add potential tenant"
             />
           )}
 
@@ -355,7 +445,7 @@ export function CaptureEntryDetailsForm({
 
       {entry.entry_type === 'visit' && (
         <>
-          <label htmlFor={`met_with_${entry.id}`}>Who was met with</label>
+          <label htmlFor={`met_with_${entry.id}`}>Met with</label>
           {isAddingMetWithVendor ? (
             <VendorForm
               saving={creatingMetWithVendor}
@@ -453,12 +543,15 @@ export function CaptureEntryDetailsForm({
             startDestination,
             endDestination,
             unitId,
-            vendorId,
             amount,
             category,
             financialAccountId,
             paymentMethod,
             repairOrImprovement,
+            entryDirection,
+            paidToVendorId,
+            paidToTenantId,
+            paidToProspectiveTenantId,
             metWith: '',
             metWithVendorId,
             metWithTenantId,

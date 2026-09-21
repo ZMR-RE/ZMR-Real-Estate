@@ -52,15 +52,30 @@ export function useCaptureForm(onCaptured?: () => void) {
   const [startDestination, setStartDestination] = useState('')
   const [endDestination, setEndDestination] = useState('')
   const [tripOptions, setTripOptions] = useState<MileageTrip[]>([])
-  const [vendorId, setVendorId] = useState<string | null>(null)
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState('')
   const [financialAccountOptions, setFinancialAccountOptions] = useState<{ id: string; label: string }[]>([])
   const [financialAccountId, setFinancialAccountIdState] = useState<string | null>(null)
   const [paymentMethod, setPaymentMethod] = useState('')
   const [repairOrImprovement, setRepairOrImprovement] = useState('')
+  // Roadmap 1.31 — "Paid to"/"Received from" refinement's groundwork
+  // (scoped narrowly, not full 1.33): a fixed 2-value field, defaulting
+  // to 'expense' since virtually all Receipt usage today is an expense
+  // and the label needs a determinate value to render. Only meaningful
+  // for entryType === 'receipt'.
+  const [entryDirection, setEntryDirection] = useState('expense')
   const [tenantOptions, setTenantOptions] = useState<PropertyTenantOption[]>([])
   const [prospectiveTenantOptions, setProspectiveTenantOptions] = useState<ProspectiveTenant[]>([])
+  // Roadmap 1.31 — Receipt's "Vendor" field becomes the same
+  // Vendors/Tenants/Potential-tenants picker Visit's "who was met with"
+  // (1.28) already uses, so a receipt can be paid to (or received from)
+  // a tenant or potential tenant too. Exact mirror of metWith* below,
+  // just its own independent state since the two are semantically
+  // distinct relationships that could both exist on the schema (even
+  // though only one is ever populated per row, gated by entryType).
+  const [paidToVendorId, setPaidToVendorId] = useState<string | null>(null)
+  const [paidToTenantId, setPaidToTenantId] = useState<string | null>(null)
+  const [paidToProspectiveTenantId, setPaidToProspectiveTenantId] = useState<string | null>(null)
   const [metWithVendorId, setMetWithVendorId] = useState<string | null>(null)
   const [metWithTenantId, setMetWithTenantId] = useState<string | null>(null)
   const [metWithProspectiveTenantId, setMetWithProspectiveTenantId] = useState<string | null>(null)
@@ -162,6 +177,8 @@ export function useCaptureForm(onCaptured?: () => void) {
     setUnitId(null)
     setFinancialAccountIdState(null)
     setPaymentMethod('')
+    setPaidToTenantId(null)
+    setPaidToProspectiveTenantId(null)
     setMetWithTenantId(null)
     setMetWithProspectiveTenantId(null)
   }
@@ -211,6 +228,42 @@ export function useCaptureForm(onCaptured?: () => void) {
     setMetWithTenantId(null)
   }
 
+  // Roadmap 1.31 — Receipt's "Paid to"/"Received from" picker, exact
+  // mirror of "who was met with" above (same three-way entity list, same
+  // mutual-exclusivity rule), just writing to paidTo* instead of
+  // metWith*.
+  const paidToEntityId = paidToVendorId ?? paidToTenantId ?? paidToProspectiveTenantId ?? null
+  const paidToOptions = [
+    ...vendorOptions.map((v) => ({ ...v, group: 'Vendors' })),
+    ...tenantOptions.map((t) => ({ id: t.id, label: t.name, group: 'Tenants' })),
+    ...prospectiveTenantOptions.map((t) => ({ id: t.id, label: t.name, group: 'Potential tenants' })),
+  ]
+  const selectPaidToEntity = (id: string) => {
+    if (vendorOptions.some((v) => v.id === id)) {
+      setPaidToVendorId(id)
+      setPaidToTenantId(null)
+      setPaidToProspectiveTenantId(null)
+    } else if (tenantOptions.some((t) => t.id === id)) {
+      setPaidToTenantId(id)
+      setPaidToVendorId(null)
+      setPaidToProspectiveTenantId(null)
+    } else {
+      setPaidToProspectiveTenantId(id)
+      setPaidToVendorId(null)
+      setPaidToTenantId(null)
+    }
+  }
+  const selectNewPaidToVendor = (id: string) => {
+    setPaidToVendorId(id)
+    setPaidToTenantId(null)
+    setPaidToProspectiveTenantId(null)
+  }
+  const selectNewPaidToProspectiveTenant = (id: string) => {
+    setPaidToProspectiveTenantId(id)
+    setPaidToVendorId(null)
+    setPaidToTenantId(null)
+  }
+
   // Exposed for the picker's own "+ Add potential tenant" inline
   // creation — mirrors useVendors' addVendor shape ({id} | {error}) so
   // CaptureForm.tsx's handler can treat both the same way.
@@ -248,12 +301,15 @@ export function useCaptureForm(onCaptured?: () => void) {
     setMilesDriven('')
     setStartDestination('')
     setEndDestination('')
-    setVendorId(null)
     setAmount('')
     setCategory('')
     setFinancialAccountIdState(null)
     setPaymentMethod('')
     setRepairOrImprovement('')
+    setEntryDirection('expense')
+    setPaidToVendorId(null)
+    setPaidToTenantId(null)
+    setPaidToProspectiveTenantId(null)
     setMetWithVendorId(null)
     setMetWithTenantId(null)
     setMetWithProspectiveTenantId(null)
@@ -328,12 +384,15 @@ export function useCaptureForm(onCaptured?: () => void) {
       startDestination: startDestination.trim() || null,
       endDestination: endDestination.trim() || null,
       unitId,
-      vendorId,
       amount: parsedAmount,
       category: category || null,
       financialAccountId,
       paymentMethod: paymentMethod || null,
       repairOrImprovement: repairOrImprovement || null,
+      entryDirection: entryType === 'receipt' ? entryDirection : null,
+      paidToVendorId,
+      paidToTenantId,
+      paidToProspectiveTenantId,
       metWith: null,
       metWithVendorId,
       metWithTenantId,
@@ -413,8 +472,6 @@ export function useCaptureForm(onCaptured?: () => void) {
     setEndDestination,
     tripOptions,
     selectTrip,
-    vendorId,
-    setVendorId,
     vendorOptions,
     onCreateVendor: addVendor,
     amount,
@@ -429,6 +486,13 @@ export function useCaptureForm(onCaptured?: () => void) {
     setPaymentMethod,
     repairOrImprovement,
     setRepairOrImprovement,
+    entryDirection,
+    setEntryDirection,
+    paidToOptions,
+    paidToEntityId,
+    selectPaidToEntity,
+    selectNewPaidToVendor,
+    selectNewPaidToProspectiveTenant,
     metWithOptions,
     metWithEntityId,
     selectMetWithEntity,

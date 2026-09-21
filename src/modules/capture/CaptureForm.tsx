@@ -53,9 +53,6 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     setEndDestination,
     tripOptions,
     selectTrip,
-    vendorId,
-    setVendorId,
-    vendorOptions,
     onCreateVendor,
     amount,
     setAmount,
@@ -69,6 +66,13 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     setPaymentMethod,
     repairOrImprovement,
     setRepairOrImprovement,
+    entryDirection,
+    setEntryDirection,
+    paidToOptions,
+    paidToEntityId,
+    selectPaidToEntity,
+    selectNewPaidToVendor,
+    selectNewPaidToProspectiveTenant,
     metWithOptions,
     metWithEntityId,
     selectMetWithEntity,
@@ -92,29 +96,54 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     submit,
   } = useCaptureForm(onCaptured)
 
-  const [isAddingVendor, setIsAddingVendor] = useState(false)
-  const [creatingVendor, setCreatingVendor] = useState(false)
-  const [createVendorError, setCreateVendorError] = useState<string | null>(null)
+  // Roadmap 1.31 — Receipt's "Paid to"/"Received from" picker gets its
+  // own inline "+ Add new vendor", separate state from Visit's "who was
+  // met with" below since the two fields' creation flows land in
+  // different places (paidToVendorId vs metWithVendorId).
+  const [isAddingPaidToVendor, setIsAddingPaidToVendor] = useState(false)
+  const [creatingPaidToVendor, setCreatingPaidToVendor] = useState(false)
+  const [createPaidToVendorError, setCreatePaidToVendorError] = useState<string | null>(null)
 
-  const handleCreateVendor = async (input: Parameters<typeof onCreateVendor>[0]) => {
-    setCreatingVendor(true)
+  const handleCreatePaidToVendor = async (input: Parameters<typeof onCreateVendor>[0]) => {
+    setCreatingPaidToVendor(true)
     const result = await onCreateVendor(input)
-    setCreatingVendor(false)
+    setCreatingPaidToVendor(false)
 
     if ('error' in result) {
-      setCreateVendorError(result.error)
+      setCreatePaidToVendorError(result.error)
       return
     }
 
-    setCreateVendorError(null)
-    setVendorId(result.id)
-    setIsAddingVendor(false)
+    setCreatePaidToVendorError(null)
+    selectNewPaidToVendor(result.id)
+    setIsAddingPaidToVendor(false)
+  }
+
+  // Roadmap 1.31 — same picker's "+ Add potential tenant".
+  const [isAddingPaidToProspectiveTenant, setIsAddingPaidToProspectiveTenant] = useState(false)
+  const [creatingPaidToProspectiveTenant, setCreatingPaidToProspectiveTenant] = useState(false)
+  const [createPaidToProspectiveTenantError, setCreatePaidToProspectiveTenantError] = useState<string | null>(null)
+
+  const handleCreatePaidToProspectiveTenant = async (input: Parameters<typeof onCreateProspectiveTenant>[0]) => {
+    setCreatingPaidToProspectiveTenant(true)
+    const result = await onCreateProspectiveTenant(input)
+    setCreatingPaidToProspectiveTenant(false)
+
+    if ('error' in result) {
+      setCreatePaidToProspectiveTenantError(result.error)
+      return
+    }
+
+    setCreatePaidToProspectiveTenantError(null)
+    selectNewPaidToProspectiveTenant(result.id)
+    setIsAddingPaidToProspectiveTenant(false)
   }
 
   // Roadmap 1.28 revision — Visit's "who was met with" picker gets its
-  // own inline "+ Add new vendor" (same pattern as Receipt's Vendor
-  // field above), separate state since the two fields' creation flows
-  // land in different places (vendorId vs metWithVendorId).
+  // own inline "+ Add new vendor" (same pattern as Receipt's "Paid to"/
+  // "Received from" field above), separate state since the two fields'
+  // creation flows land in different places (paidToVendorId vs
+  // metWithVendorId).
   const [isAddingMetWithVendor, setIsAddingMetWithVendor] = useState(false)
   const [creatingMetWithVendor, setCreatingMetWithVendor] = useState(false)
   const [createMetWithVendorError, setCreateMetWithVendorError] = useState<string | null>(null)
@@ -264,25 +293,47 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
 
           {entryType === 'receipt' && (
             <>
-              <label htmlFor="vendor">Vendor</label>
-              {isAddingVendor ? (
+              <label htmlFor="entry_direction">Entry direction</label>
+              <select
+                id="entry_direction"
+                value={entryDirection}
+                onChange={(e) => setEntryDirection(e.target.value)}
+              >
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+              </select>
+
+              <label htmlFor="paid_to">{entryDirection === 'income' ? 'Received from' : 'Paid to'}</label>
+              {isAddingPaidToVendor ? (
                 <VendorForm
-                  saving={creatingVendor}
-                  error={createVendorError}
-                  onSave={handleCreateVendor}
+                  saving={creatingPaidToVendor}
+                  error={createPaidToVendorError}
+                  onSave={handleCreatePaidToVendor}
                   onCancel={() => {
-                    setIsAddingVendor(false)
-                    setCreateVendorError(null)
+                    setIsAddingPaidToVendor(false)
+                    setCreatePaidToVendorError(null)
+                  }}
+                />
+              ) : isAddingPaidToProspectiveTenant ? (
+                <ProspectiveTenantForm
+                  saving={creatingPaidToProspectiveTenant}
+                  error={createPaidToProspectiveTenantError}
+                  onSave={handleCreatePaidToProspectiveTenant}
+                  onCancel={() => {
+                    setIsAddingPaidToProspectiveTenant(false)
+                    setCreatePaidToProspectiveTenantError(null)
                   }}
                 />
               ) : (
                 <SearchableSelect
-                  options={vendorOptions}
-                  value={vendorId}
-                  onChange={setVendorId}
-                  placeholder="Search vendors…"
-                  onAddNew={() => setIsAddingVendor(true)}
-                  addNewLabel="+ Add vendor"
+                  options={paidToOptions}
+                  value={paidToEntityId}
+                  onChange={selectPaidToEntity}
+                  placeholder="Search vendors, tenants, and potential tenants…"
+                  onAddNew={() => setIsAddingPaidToVendor(true)}
+                  addNewLabel="+ Add new vendor"
+                  onAddNewSecondary={() => setIsAddingPaidToProspectiveTenant(true)}
+                  addNewSecondaryLabel="+ Add potential tenant"
                 />
               )}
 
@@ -346,7 +397,7 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
 
           {entryType === 'visit' && (
             <>
-              <label htmlFor="met_with">Who was met with</label>
+              <label htmlFor="met_with">Met with</label>
               {isAddingMetWithVendor ? (
                 <VendorForm
                   saving={creatingMetWithVendor}

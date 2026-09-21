@@ -13,6 +13,9 @@ export interface Vendor {
   // notes). relationship is a pick-list value (vendor_relationship),
   // not a fixed enum, per the pick-list-first convention.
   relationship: string | null
+  // Roadmap 1.31 — same pick-list-first convention (vendor_type:
+  // Store/Contractor/Service provider/Other).
+  vendor_type: string | null
   notes: string | null
   split_percentage: number | null
   split_description: string | null
@@ -27,7 +30,7 @@ export interface VendorSplitRuleInput {
 }
 
 const VENDOR_COLUMNS =
-  'id, account_id, name, contact_email, contact_phone, has_w9, has_insurance, relationship, notes, split_percentage, split_description, archived'
+  'id, account_id, name, contact_email, contact_phone, has_w9, has_insurance, relationship, vendor_type, notes, split_percentage, split_description, archived'
 
 export async function listVendors(accountId: string) {
   return supabase.from('vendors').select(VENDOR_COLUMNS).eq('account_id', accountId).order('name').returns<Vendor[]>()

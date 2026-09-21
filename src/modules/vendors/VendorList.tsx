@@ -39,6 +39,7 @@ export function VendorList({
       <thead>
         <tr>
           <th>Name</th>
+          <th>Vendor type</th>
           <th>Contact email</th>
           <th>Contact phone</th>
           <th>W9</th>
@@ -53,7 +54,7 @@ export function VendorList({
         {vendors.map((vendor) =>
           editingId === vendor.id ? (
             <tr key={vendor.id}>
-              <td colSpan={9}>
+              <td colSpan={10}>
                 <VendorForm
                   initialValues={{
                     name: vendor.name,
@@ -62,6 +63,7 @@ export function VendorList({
                     has_w9: vendor.has_w9,
                     has_insurance: vendor.has_insurance,
                     relationship: vendor.relationship,
+                    vendor_type: vendor.vendor_type,
                     notes: vendor.notes,
                   }}
                   saving={saving}
@@ -75,6 +77,7 @@ export function VendorList({
             <Fragment key={vendor.id}>
               <tr className={vendor.archived ? 'row-voided' : ''}>
                 <td>{vendor.name}</td>
+                <td>{vendor.vendor_type ?? '—'}</td>
                 <td>{vendor.contact_email ?? '—'}</td>
                 <td>{vendor.contact_phone ?? '—'}</td>
                 <td>{vendor.has_w9 ? 'On file' : '—'}</td>

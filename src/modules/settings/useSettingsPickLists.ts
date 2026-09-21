@@ -19,6 +19,7 @@ export function useSettingsPickLists() {
   const visitType = usePickListOptions('visit_type')
   const paymentHow = usePickListOptions('payment_how')
   const vendorRelationship = usePickListOptions('vendor_relationship')
+  const vendorType = usePickListOptions('vendor_type')
 
   return [
     { title: 'Subcategories', ...subcategory },
@@ -34,5 +35,6 @@ export function useSettingsPickLists() {
     { title: 'Contact methods', ...contactMethod },
     { title: 'Visit types', ...visitType },
     { title: 'Vendor relationships', ...vendorRelationship },
+    { title: 'Vendor types', ...vendorType },
   ]
 }

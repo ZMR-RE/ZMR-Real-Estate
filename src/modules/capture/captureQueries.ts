@@ -21,14 +21,19 @@ export interface CaptureEntry {
   end_destination: string | null
   unit_id: string | null
   unit: { id: string; unit_label: string } | null
-  vendor_id: string | null
-  vendor: { id: string; name: string } | null
   amount: string | null
   category: string | null
   financial_account_id: string | null
   financial_account: { id: string; nickname: string; last_four: string; account_type: string } | null
   payment_method: string | null
   repair_or_improvement: string | null
+  entry_direction: string | null
+  paid_to_vendor_id: string | null
+  paid_to_vendor: { id: string; name: string } | null
+  paid_to_tenant_id: string | null
+  paid_to_tenant: { id: string; name: string } | null
+  paid_to_prospective_tenant_id: string | null
+  paid_to_prospective_tenant: { id: string; name: string } | null
   met_with: string | null
   met_with_vendor_id: string | null
   met_with_vendor: { id: string; name: string } | null
@@ -47,14 +52,20 @@ export interface CaptureEntry {
   attachments: CaptureAttachment[]
 }
 
-// Two FKs from capture_log to vendors now exist (vendor_id, plus 1.28's
-// met_with_vendor_id) — PostgREST needs each embed's specific
-// constraint name to disambiguate which one it's following, or every
-// vendors embed (including the pre-existing vendor_id one) errors.
-// Postgres auto-names an unnamed `references` constraint
-// `<table>_<column>_fkey`; both were added that way.
+// Multiple FKs from capture_log to vendors/tenants/prospective_tenants
+// now exist (vendor-side: met_with_vendor_id + 1.31's paid_to_vendor_id;
+// tenant-side: met_with_tenant_id + paid_to_tenant_id; prospective-
+// tenant-side: met_with_prospective_tenant_id +
+// paid_to_prospective_tenant_id) — PostgREST needs every one of these
+// embeds' specific constraint name to disambiguate which FK it's
+// following, or all of them error. Postgres auto-names an unnamed
+// `references` constraint `<table>_<column>_fkey`; all were added that
+// way. The old vendor_id column (1.17) is deliberately NOT selected
+// here anymore — 20260921200000 backfilled it into paid_to_vendor_id
+// and the UI never writes it again (kept in the DB, unused, per
+// CLAUDE.md's no-drop-without-approval rule).
 const CAPTURE_ENTRY_COLUMNS =
-  'id, entry_type, entry_date, notes, miles_driven, start_destination, end_destination, unit_id, unit:units(id, unit_label), vendor_id, vendor:vendors!capture_log_vendor_id_fkey(id, name), amount, category, financial_account_id, financial_account:property_financial_accounts(id, nickname, last_four, account_type), payment_method, repair_or_improvement, met_with, met_with_vendor_id, met_with_vendor:vendors!capture_log_met_with_vendor_id_fkey(id, name), met_with_tenant_id, met_with_tenant:tenants(id, name), met_with_prospective_tenant_id, met_with_prospective_tenant:prospective_tenants(id, name), visit_type, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
+  'id, entry_type, entry_date, notes, miles_driven, start_destination, end_destination, unit_id, unit:units(id, unit_label), amount, category, financial_account_id, financial_account:property_financial_accounts(id, nickname, last_four, account_type), payment_method, repair_or_improvement, entry_direction, paid_to_vendor_id, paid_to_vendor:vendors!capture_log_paid_to_vendor_id_fkey(id, name), paid_to_tenant_id, paid_to_tenant:tenants!capture_log_paid_to_tenant_id_fkey(id, name), paid_to_prospective_tenant_id, paid_to_prospective_tenant:prospective_tenants!capture_log_paid_to_prospective_tenant_id_fkey(id, name), met_with, met_with_vendor_id, met_with_vendor:vendors!capture_log_met_with_vendor_id_fkey(id, name), met_with_tenant_id, met_with_tenant:tenants!capture_log_met_with_tenant_id_fkey(id, name), met_with_prospective_tenant_id, met_with_prospective_tenant:prospective_tenants!capture_log_met_with_prospective_tenant_id_fkey(id, name), visit_type, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
 
 // Root-cause fix for a real bug found while building 1.21: PostgREST
 // doesn't reliably return every numeric(...) column as a JSON string —
@@ -92,12 +103,15 @@ export interface CreateCaptureEntryInput {
   startDestination: string | null
   endDestination: string | null
   unitId: string | null
-  vendorId: string | null
   amount: number | null
   category: string | null
   financialAccountId: string | null
   paymentMethod: string | null
   repairOrImprovement: string | null
+  entryDirection: string | null
+  paidToVendorId: string | null
+  paidToTenantId: string | null
+  paidToProspectiveTenantId: string | null
   metWith: string | null
   metWithVendorId: string | null
   metWithTenantId: string | null
@@ -129,12 +143,15 @@ export async function createCaptureEntry(input: CreateCaptureEntryInput) {
       start_destination: input.startDestination,
       end_destination: input.endDestination,
       unit_id: input.unitId,
-      vendor_id: input.vendorId,
       amount: input.amount,
       category: input.category,
       financial_account_id: input.financialAccountId,
       payment_method: input.paymentMethod,
       repair_or_improvement: input.repairOrImprovement,
+      entry_direction: input.entryDirection,
+      paid_to_vendor_id: input.paidToVendorId,
+      paid_to_tenant_id: input.paidToTenantId,
+      paid_to_prospective_tenant_id: input.paidToProspectiveTenantId,
       met_with: input.metWith,
       met_with_vendor_id: input.metWithVendorId,
       met_with_tenant_id: input.metWithTenantId,
@@ -225,12 +242,15 @@ export interface UpdateCaptureEntryDetailsInput {
   startDestination: string | null
   endDestination: string | null
   unitId: string | null
-  vendorId: string | null
   amount: number | null
   category: string | null
   financialAccountId: string | null
   paymentMethod: string | null
   repairOrImprovement: string | null
+  entryDirection: string | null
+  paidToVendorId: string | null
+  paidToTenantId: string | null
+  paidToProspectiveTenantId: string | null
   metWith: string | null
   metWithVendorId: string | null
   metWithTenantId: string | null
@@ -253,12 +273,15 @@ export async function updateCaptureEntryDetails(id: string, input: UpdateCapture
       start_destination: input.startDestination,
       end_destination: input.endDestination,
       unit_id: input.unitId,
-      vendor_id: input.vendorId,
       amount: input.amount,
       category: input.category,
       financial_account_id: input.financialAccountId,
       payment_method: input.paymentMethod,
       repair_or_improvement: input.repairOrImprovement,
+      entry_direction: input.entryDirection,
+      paid_to_vendor_id: input.paidToVendorId,
+      paid_to_tenant_id: input.paidToTenantId,
+      paid_to_prospective_tenant_id: input.paidToProspectiveTenantId,
       met_with: input.metWith,
       met_with_vendor_id: input.metWithVendorId,
       met_with_tenant_id: input.metWithTenantId,
