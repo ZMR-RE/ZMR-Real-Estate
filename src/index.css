@@ -1085,6 +1085,38 @@ th {
 }
 
 /* ============================================================
+   Capture History filter bar (roadmap 1.24) — Type and Show used to be
+   two bare label/select pairs with no shared container (each select at
+   the global 100% width, so they stacked full-row with nothing to keep
+   them visually distinct). Now a single row of clearly boxed filters
+   that wraps to stack cleanly at mobile widths instead of overlapping.
+   ============================================================ */
+.capture-history-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.capture-history-filter {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 180px;
+  max-width: 260px;
+}
+
+.capture-history-filter label {
+  margin-top: 0;
+}
+
+@media (max-width: 600px) {
+  .capture-history-filter {
+    max-width: none;
+  }
+}
+
+/* ============================================================
    Status messages
    ============================================================ */
 [role='alert'] {

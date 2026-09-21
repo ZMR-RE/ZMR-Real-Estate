@@ -73,6 +73,12 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       columns for type, property, date, and both status indicators
       (Complete/Needs details, Reconciled/Not reconciled), filterable by
       type — not the current unstructured list
+- [x] 1.24 Redesign History's filter bar: consolidate the current two
+      dropdowns ("Type" and "Show") into one clear, non-overlapping
+      filter. Show real column headers (Type / Property / Date /
+      Complete / Reconciled) at all times, including the empty state
+      ("Nothing logged yet") — so the screen's structure is visible
+      before any data exists.
 
 ## 2. Phase 2 — Parallelized Build (5 terminals, once Phase 1 schema is locked and stable)
 - [x] 2.1 Rent Ops — invoicing, receipts, on-time payment tracking

@@ -31,10 +31,26 @@ interface CaptureHistoryListProps {
   onViewAttachment: (path: string) => void
 }
 
-// Roadmap 1.10/1.11/1.15 — Quick Capture's "History" tab (formerly
+const COLUMN_COUNT = 6
+
+// Roadmap 1.10/1.11/1.15/1.24 — Quick Capture's "History" tab (formerly
 // "Recently logged"). The "Mark complete" override and remaining-field
 // edit both live here (and in Reconciliation's list), never in the
 // create form.
+//
+// 1.24 — Type and Show used to be two bare label/select pairs with no
+// shared container, which visually ran together (especially at mobile
+// widths). They're now one filter-bar row, each control clearly boxed
+// so neither the controls nor their labels overlap. The table's headers
+// (including the Complete/Reconciled split, previously one merged
+// "Status" column) render unconditionally so the screen's structure is
+// visible before any data exists — <thead> stays outside the entries.length
+// check. The empty-state message renders as its own block below the
+// table rather than inside a colSpan'd row: this app's table CSS sets
+// `display: block` on <table> (for mobile horizontal scroll), which
+// breaks native colSpan width-sharing between thead and a single wide
+// tbody cell, so a colSpan row would render far narrower than the
+// header row instead of spanning it.
 export function CaptureHistoryList({
   entries,
   completeFilter,
@@ -53,40 +69,49 @@ export function CaptureHistoryList({
 }: CaptureHistoryListProps) {
   return (
     <div>
-      <label htmlFor="type_filter">Type</label>
-      <select id="type_filter" value={typeFilter} onChange={(e) => onTypeFilterChange(e.target.value as TypeFilter)}>
-        <option value="all">All types</option>
-        {ENTRY_TYPES.map((type) => (
-          <option key={type} value={type}>
-            {ENTRY_TYPE_LABELS[type]}
-          </option>
-        ))}
-      </select>
+      <div className="capture-history-filter-bar">
+        <div className="capture-history-filter">
+          <label htmlFor="type_filter">Type</label>
+          <select
+            id="type_filter"
+            value={typeFilter}
+            onChange={(e) => onTypeFilterChange(e.target.value as TypeFilter)}
+          >
+            <option value="all">All types</option>
+            {ENTRY_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {ENTRY_TYPE_LABELS[type]}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <label htmlFor="complete_filter">Show</label>
-      <select
-        id="complete_filter"
-        value={completeFilter}
-        onChange={(e) => onCompleteFilterChange(e.target.value as CompleteFilter)}
-      >
-        <option value="all">All</option>
-        <option value="complete">Complete</option>
-        <option value="needs_details">Needs details</option>
-      </select>
+        <div className="capture-history-filter">
+          <label htmlFor="complete_filter">Show</label>
+          <select
+            id="complete_filter"
+            value={completeFilter}
+            onChange={(e) => onCompleteFilterChange(e.target.value as CompleteFilter)}
+          >
+            <option value="all">All</option>
+            <option value="complete">Complete</option>
+            <option value="needs_details">Needs details</option>
+          </select>
+        </div>
+      </div>
 
-      {entries.length === 0 ? (
-        <p className="empty-state">Nothing logged yet.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Date</th>
-              <th>Property</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Property</th>
+            <th>Date</th>
+            <th>Complete</th>
+            <th>Reconciled</th>
+            <th></th>
+          </tr>
+        </thead>
+        {entries.length > 0 && (
           <tbody>
             {entries.map((entry) => {
               const complete = isCaptureEntryComplete(entry)
@@ -94,12 +119,14 @@ export function CaptureHistoryList({
                 <Fragment key={entry.id}>
                   <tr className={complete ? 'capture-entry-complete' : undefined}>
                     <td>{ENTRY_TYPE_LABELS[entry.entry_type]}</td>
-                    <td>{entry.entry_date}</td>
                     <td>{propertyLabel(entry.property)}</td>
+                    <td>{entry.entry_date}</td>
                     <td>
                       <span className={`status-badge ${complete ? 'status-badge-success' : 'status-badge-warning'}`}>
                         {complete ? 'Complete' : 'Needs details'}
-                      </span>{' '}
+                      </span>
+                    </td>
+                    <td>
                       <span className={`status-badge ${entry.reconciled ? 'status-badge-success' : 'status-badge-neutral'}`}>
                         {entry.reconciled ? 'Reconciled' : 'Not reconciled'}
                       </span>
@@ -137,7 +164,7 @@ export function CaptureHistoryList({
                   </tr>
                   {editingId === entry.id && (
                     <tr>
-                      <td colSpan={5}>
+                      <td colSpan={COLUMN_COUNT}>
                         <CaptureEntryDetailsForm
                           entry={entry}
                           saving={processingId === entry.id}
@@ -152,8 +179,10 @@ export function CaptureHistoryList({
               )
             })}
           </tbody>
-        </table>
-      )}
+        )}
+      </table>
+
+      {entries.length === 0 && <p className="empty-state">Nothing logged yet.</p>}
     </div>
   )
 }
