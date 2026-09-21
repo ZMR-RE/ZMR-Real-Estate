@@ -108,6 +108,18 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   top-level expense Category (governed directly by Chart of Accounts,
   9.1 — user-editable at the Subcategory level, not Category itself).
 
+## Required-field convention
+- Fields are unmarked by default. Only genuinely required fields get a
+  red asterisk (*) next to the label — never "(optional)" text on the
+  majority of fields. Required must be enforced both visually and
+  functionally: submission is blocked, not just visually hinted, when a
+  required field is empty.
+
+## Universal action labeling
+- Use "Save" as the universal label for any action that persists a
+  record, everywhere in the app — not "Capture," "Submit," or other
+  synonyms specific to one screen.
+
 ## Mobile responsiveness
 - The application must be fully usable on a mobile phone, since Quick
   Capture in particular is expected to be used on-site at a property via
