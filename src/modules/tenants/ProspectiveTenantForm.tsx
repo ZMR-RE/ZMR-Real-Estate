@@ -20,7 +20,9 @@ export function ProspectiveTenantForm({ saving, error, onSave, onCancel }: Prosp
     <div className="inline-form">
       {error && <p role="alert">{error}</p>}
 
-      <label htmlFor="prospective_tenant_form_name">Name</label>
+      <label htmlFor="prospective_tenant_form_name">
+        Name<span className="required-marker">*</span>
+      </label>
       <input
         id="prospective_tenant_form_name"
         required

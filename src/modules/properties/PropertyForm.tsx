@@ -87,7 +87,9 @@ export function PropertyForm({
     <form onSubmit={handleSubmit} ref={formRef}>
       <div className="field-grid">
         <div className="field">
-          <label htmlFor="name">Name</label>
+          <label htmlFor="name">
+            Name<span className="required-marker">*</span>
+          </label>
           <input
             id="name"
             required

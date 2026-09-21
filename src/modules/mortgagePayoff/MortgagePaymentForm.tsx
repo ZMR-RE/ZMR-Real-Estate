@@ -24,7 +24,9 @@ export function MortgagePaymentForm({ initialValues, saving, error, onSave }: Mo
       <h3>Log a payment</h3>
       {error && <p role="alert">{error}</p>}
 
-      <label htmlFor="payment_date">Date</label>
+      <label htmlFor="payment_date">
+        Date<span className="required-marker">*</span>
+      </label>
       <input
         id="payment_date"
         type="date"
@@ -33,7 +35,9 @@ export function MortgagePaymentForm({ initialValues, saving, error, onSave }: Mo
         onChange={(e) => setValues((prev) => ({ ...prev, payment_date: e.target.value }))}
       />
 
-      <label htmlFor="payment_amount">Total amount ($)</label>
+      <label htmlFor="payment_amount">
+        Total amount ($)<span className="required-marker">*</span>
+      </label>
       <input
         id="payment_amount"
         type="number"
@@ -45,7 +49,9 @@ export function MortgagePaymentForm({ initialValues, saving, error, onSave }: Mo
         onChange={(e) => setValues((prev) => ({ ...prev, amount: e.target.value }))}
       />
 
-      <label htmlFor="principal_amount">Principal ($)</label>
+      <label htmlFor="principal_amount">
+        Principal ($)<span className="required-marker">*</span>
+      </label>
       <input
         id="principal_amount"
         type="number"
@@ -57,7 +63,9 @@ export function MortgagePaymentForm({ initialValues, saving, error, onSave }: Mo
         onChange={(e) => setValues((prev) => ({ ...prev, principal_amount: e.target.value }))}
       />
 
-      <label htmlFor="interest_amount">Interest ($)</label>
+      <label htmlFor="interest_amount">
+        Interest ($)<span className="required-marker">*</span>
+      </label>
       <input
         id="interest_amount"
         type="number"

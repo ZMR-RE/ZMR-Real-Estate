@@ -23,7 +23,9 @@ export function PropertyValueHistoryForm({ idPrefix, initialValues, saving, onSa
 
   return (
     <form onSubmit={handleSubmit}>
-      <label htmlFor={`${idPrefix}_entry_date`}>Date</label>
+      <label htmlFor={`${idPrefix}_entry_date`}>
+        Date<span className="required-marker">*</span>
+      </label>
       <input
         id={`${idPrefix}_entry_date`}
         type="date"
@@ -32,7 +34,9 @@ export function PropertyValueHistoryForm({ idPrefix, initialValues, saving, onSa
         onChange={(e) => setValues((prev) => ({ ...prev, entry_date: e.target.value }))}
       />
 
-      <label htmlFor={`${idPrefix}_value`}>Value ($)</label>
+      <label htmlFor={`${idPrefix}_value`}>
+        Value ($)<span className="required-marker">*</span>
+      </label>
       <input
         id={`${idPrefix}_value`}
         type="number"
@@ -44,7 +48,9 @@ export function PropertyValueHistoryForm({ idPrefix, initialValues, saving, onSa
         onChange={(e) => setValues((prev) => ({ ...prev, value: e.target.value }))}
       />
 
-      <label htmlFor={`${idPrefix}_source`}>Source</label>
+      <label htmlFor={`${idPrefix}_source`}>
+        Source<span className="required-marker">*</span>
+      </label>
       <input
         id={`${idPrefix}_source`}
         list={`${idPrefix}_source_options`}

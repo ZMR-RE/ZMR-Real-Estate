@@ -22,7 +22,9 @@ export function HoldingCompanyForm({ saving, error, onSave, onCancel }: HoldingC
     <div className="inline-form">
       {error && <p role="alert">{error}</p>}
 
-      <label htmlFor="holding_company_form_name">Holding Company name</label>
+      <label htmlFor="holding_company_form_name">
+        Holding Company name<span className="required-marker">*</span>
+      </label>
       <input
         id="holding_company_form_name"
         required

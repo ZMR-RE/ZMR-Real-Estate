@@ -23,7 +23,9 @@ export function TenantForm({ saving, error, onSave, onCancel }: TenantFormProps)
     <div className="inline-form">
       {error && <p role="alert">{error}</p>}
 
-      <label htmlFor="tenant_form_name">Tenant name</label>
+      <label htmlFor="tenant_form_name">
+        Tenant name<span className="required-marker">*</span>
+      </label>
       <input
         id="tenant_form_name"
         required

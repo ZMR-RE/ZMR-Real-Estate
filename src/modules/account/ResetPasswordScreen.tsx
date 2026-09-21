@@ -44,7 +44,9 @@ export function ResetPasswordScreen({ onSignOut }: ResetPasswordScreenProps) {
       <form onSubmit={handleSubmit}>
         <h1>Set a new password</h1>
 
-        <label htmlFor="new_password">New password</label>
+        <label htmlFor="new_password">
+          New password<span className="required-marker">*</span>
+        </label>
         <input
           id="new_password"
           type="password"
@@ -54,7 +56,9 @@ export function ResetPasswordScreen({ onSignOut }: ResetPasswordScreenProps) {
           required
         />
 
-        <label htmlFor="confirm_password">Confirm new password</label>
+        <label htmlFor="confirm_password">
+          Confirm new password<span className="required-marker">*</span>
+        </label>
         <input
           id="confirm_password"
           type="password"

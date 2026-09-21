@@ -36,7 +36,9 @@ export function MortgageDetailsForm({
       <label htmlFor="lender_name">Lender</label>
       <input id="lender_name" {...field('lender_name')} />
 
-      <label htmlFor="original_loan_amount">Original loan amount ($)</label>
+      <label htmlFor="original_loan_amount">
+        Original loan amount ($)<span className="required-marker">*</span>
+      </label>
       <input
         id="original_loan_amount"
         type="number"
@@ -48,7 +50,9 @@ export function MortgageDetailsForm({
         required
       />
 
-      <label htmlFor="current_balance">Current balance ($)</label>
+      <label htmlFor="current_balance">
+        Current balance ($)<span className="required-marker">*</span>
+      </label>
       <input
         id="current_balance"
         type="number"
@@ -60,7 +64,9 @@ export function MortgageDetailsForm({
         required
       />
 
-      <label htmlFor="interest_rate">Interest rate (annual %)</label>
+      <label htmlFor="interest_rate">
+        Interest rate (annual %)<span className="required-marker">*</span>
+      </label>
       <input
         id="interest_rate"
         type="number"
@@ -72,7 +78,9 @@ export function MortgageDetailsForm({
         required
       />
 
-      <label htmlFor="monthly_payment">Monthly payment — P&I ($)</label>
+      <label htmlFor="monthly_payment">
+        Monthly payment — P&I ($)<span className="required-marker">*</span>
+      </label>
       <input
         id="monthly_payment"
         type="number"
@@ -84,7 +92,9 @@ export function MortgageDetailsForm({
         required
       />
 
-      <label htmlFor="loan_start_date">Loan start date</label>
+      <label htmlFor="loan_start_date">
+        Loan start date<span className="required-marker">*</span>
+      </label>
       <input
         id="loan_start_date"
         type="date"
@@ -105,7 +115,9 @@ export function MortgageDetailsForm({
         onChange={(e) => setValues((prev) => ({ ...prev, escrow_balance: e.target.value || null }))}
       />
 
-      <label htmlFor="term_years">Term (years)</label>
+      <label htmlFor="term_years">
+        Term (years)<span className="required-marker">*</span>
+      </label>
       <input
         id="term_years"
         type="number"

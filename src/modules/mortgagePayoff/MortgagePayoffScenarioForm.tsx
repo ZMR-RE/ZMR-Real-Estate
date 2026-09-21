@@ -27,7 +27,9 @@ export function MortgagePayoffScenarioForm({
     <form className="mortgage-payoff-scenario-form" onSubmit={handleSubmit}>
       <h2>Payoff scenario</h2>
 
-      <label htmlFor="extra_amount">Extra payment ($)</label>
+      <label htmlFor="extra_amount">
+        Extra payment ($)<span className="required-marker">*</span>
+      </label>
       <input
         id="extra_amount"
         type="number"

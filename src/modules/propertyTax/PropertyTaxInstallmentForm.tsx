@@ -36,7 +36,9 @@ export function PropertyTaxInstallmentForm({
     <form className="property-tax-installment-form" onSubmit={handleSubmit}>
       {error && <p role="alert">{error}</p>}
 
-      <label htmlFor="tax_year">Tax year</label>
+      <label htmlFor="tax_year">
+        Tax year<span className="required-marker">*</span>
+      </label>
       <input
         id="tax_year"
         type="number"

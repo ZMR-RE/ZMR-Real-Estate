@@ -70,7 +70,9 @@ export function LlcForm({
     <div className="inline-form">
       {error && <p role="alert">{error}</p>}
 
-      <label htmlFor="llc_form_name">Organization type name</label>
+      <label htmlFor="llc_form_name">
+        Organization type name<span className="required-marker">*</span>
+      </label>
       <input
         id="llc_form_name"
         required

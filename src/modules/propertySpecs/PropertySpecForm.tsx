@@ -18,7 +18,9 @@ export function PropertySpecForm({ initialValues, saving, onSave, onCancel }: Pr
 
   return (
     <form onSubmit={handleSubmit}>
-      <label htmlFor="spec_label">Label</label>
+      <label htmlFor="spec_label">
+        Label<span className="required-marker">*</span>
+      </label>
       <input
         id="spec_label"
         required
@@ -27,7 +29,9 @@ export function PropertySpecForm({ initialValues, saving, onSave, onCancel }: Pr
         onChange={(e) => setValues((prev) => ({ ...prev, label: e.target.value }))}
       />
 
-      <label htmlFor="spec_value">Value</label>
+      <label htmlFor="spec_value">
+        Value<span className="required-marker">*</span>
+      </label>
       <input
         id="spec_value"
         required

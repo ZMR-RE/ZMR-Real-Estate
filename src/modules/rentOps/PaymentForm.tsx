@@ -33,7 +33,9 @@ export function PaymentForm({ invoiceId, saving, onSave, onCancel }: PaymentForm
     <form onSubmit={handleSubmit}>
       <h3>Record payment</h3>
 
-      <label htmlFor="payment_amount">Amount</label>
+      <label htmlFor="payment_amount">
+        Amount<span className="required-marker">*</span>
+      </label>
       <input
         id="payment_amount"
         type="number"
@@ -44,7 +46,9 @@ export function PaymentForm({ invoiceId, saving, onSave, onCancel }: PaymentForm
         required
       />
 
-      <label htmlFor="paid_date">Paid date</label>
+      <label htmlFor="paid_date">
+        Paid date<span className="required-marker">*</span>
+      </label>
       <input
         id="paid_date"
         type="date"

@@ -43,7 +43,9 @@ export function ActionItemForm({
 
   return (
     <form onSubmit={handleSubmit}>
-      <label htmlFor="action_item_title">Title</label>
+      <label htmlFor="action_item_title">
+        Title<span className="required-marker">*</span>
+      </label>
       <input
         id="action_item_title"
         required
@@ -101,7 +103,9 @@ export function ActionItemForm({
         placeholder="Select an assignee"
       />
 
-      <label htmlFor="action_item_due_date">Due date</label>
+      <label htmlFor="action_item_due_date">
+        Due date<span className="required-marker">*</span>
+      </label>
       <input
         id="action_item_due_date"
         type="date"

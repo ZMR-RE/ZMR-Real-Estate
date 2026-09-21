@@ -52,7 +52,9 @@ export function DepositTransactionForm({
         <option value="applied_to_damages">Applied to damages</option>
       </select>
 
-      <label htmlFor="deposit_tx_amount">Amount</label>
+      <label htmlFor="deposit_tx_amount">
+        Amount<span className="required-marker">*</span>
+      </label>
       <input
         id="deposit_tx_amount"
         type="number"
@@ -64,7 +66,9 @@ export function DepositTransactionForm({
         required
       />
 
-      <label htmlFor="deposit_tx_date">Date</label>
+      <label htmlFor="deposit_tx_date">
+        Date<span className="required-marker">*</span>
+      </label>
       <input
         id="deposit_tx_date"
         type="date"

@@ -21,6 +21,9 @@ export function UtilityRecordForm({ initialValues, saving, onSave, onCancel }: U
 
   return (
     <form onSubmit={handleSubmit}>
+      <label htmlFor="utility_type">
+        Utility type<span className="required-marker">*</span>
+      </label>
       <PickListSelect
         id="utility_type"
         listName="utility_type"

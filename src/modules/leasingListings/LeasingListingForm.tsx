@@ -19,6 +19,9 @@ export function LeasingListingForm({ initialValues, saving, onSave, onCancel }: 
 
   return (
     <form onSubmit={handleSubmit}>
+      <label htmlFor="listing_platform">
+        Platform<span className="required-marker">*</span>
+      </label>
       <PickListSelect
         id="listing_platform"
         listName="listing_platform"
@@ -29,7 +32,9 @@ export function LeasingListingForm({ initialValues, saving, onSave, onCancel }: 
         required
       />
 
-      <label htmlFor="date_posted">Date posted</label>
+      <label htmlFor="date_posted">
+        Date posted<span className="required-marker">*</span>
+      </label>
       <input
         id="date_posted"
         type="date"

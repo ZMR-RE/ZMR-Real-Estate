@@ -42,7 +42,9 @@ export function DocumentLinkForm({ saving, onSave, onCancel }: DocumentLinkFormP
         </button>
       </div>
 
-      <label htmlFor="document_link_category">Category</label>
+      <label htmlFor="document_link_category">
+        Category<span className="required-marker">*</span>
+      </label>
       <PickListSelect
         id="document_link_category"
         listName="document_type"
@@ -53,7 +55,7 @@ export function DocumentLinkForm({ saving, onSave, onCancel }: DocumentLinkFormP
         placeholder="Select a category"
       />
 
-      <label htmlFor="document_link_label">Label (optional)</label>
+      <label htmlFor="document_link_label">Label</label>
       <input
         id="document_link_label"
         value={label}
@@ -63,7 +65,9 @@ export function DocumentLinkForm({ saving, onSave, onCancel }: DocumentLinkFormP
 
       {mode === 'file' ? (
         <>
-          <label htmlFor="document_link_file">File</label>
+          <label htmlFor="document_link_file">
+            File<span className="required-marker">*</span>
+          </label>
           <input
             id="document_link_file"
             type="file"
@@ -72,7 +76,10 @@ export function DocumentLinkForm({ saving, onSave, onCancel }: DocumentLinkFormP
         </>
       ) : (
         <>
-          <label htmlFor="document_link_url">{mode === 'drive' ? 'Google Drive folder URL' : 'Link URL'}</label>
+          <label htmlFor="document_link_url">
+            {mode === 'drive' ? 'Google Drive folder URL' : 'Link URL'}
+            <span className="required-marker">*</span>
+          </label>
           <input
             id="document_link_url"
             type="url"

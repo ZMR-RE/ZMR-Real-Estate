@@ -70,7 +70,9 @@ export function TransactionForm({
 
   return (
     <form onSubmit={handleSubmit}>
-      <label htmlFor="property_id">Property</label>
+      <label htmlFor="property_id">
+        Property<span className="required-marker">*</span>
+      </label>
       <SearchableSelect
         options={propertyOptions}
         value={values.propertyId || null}
@@ -120,7 +122,9 @@ export function TransactionForm({
         onChange={(value) => setValues((prev) => ({ ...prev, subcategory: value || null }))}
       />
 
-      <label htmlFor="vendor_id">Vendor</label>
+      <label htmlFor="vendor_id">
+        Vendor<span className="required-marker">*</span>
+      </label>
       {isAddingVendor ? (
         <VendorForm
           saving={creatingVendor}
@@ -142,7 +146,9 @@ export function TransactionForm({
         />
       )}
 
-      <label htmlFor="payment_method">Payment method</label>
+      <label htmlFor="payment_method">
+        Payment method<span className="required-marker">*</span>
+      </label>
       <PickListSelect
         id="payment_method"
         listName="payment_method"
@@ -172,7 +178,9 @@ export function TransactionForm({
         </>
       )}
 
-      <label htmlFor="amount">Amount</label>
+      <label htmlFor="amount">
+        Amount<span className="required-marker">*</span>
+      </label>
       <input
         id="amount"
         type="number"
@@ -183,7 +191,9 @@ export function TransactionForm({
         onChange={(e) => setValues((prev) => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
       />
 
-      <label htmlFor="transaction_date">Date</label>
+      <label htmlFor="transaction_date">
+        Date<span className="required-marker">*</span>
+      </label>
       <input
         id="transaction_date"
         type="date"

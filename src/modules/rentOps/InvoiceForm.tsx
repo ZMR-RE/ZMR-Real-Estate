@@ -41,7 +41,9 @@ export function InvoiceForm({ propertyOptions, saving, onSave, onCancel }: Invoi
     <form onSubmit={handleSubmit}>
       <h2>New invoice</h2>
 
-      <label htmlFor="invoice_property">Property</label>
+      <label htmlFor="invoice_property">
+        Property<span className="required-marker">*</span>
+      </label>
       <SearchableSelect
         options={propertyOptions}
         value={propertyId}
@@ -52,7 +54,9 @@ export function InvoiceForm({ propertyOptions, saving, onSave, onCancel }: Invoi
       <label htmlFor="billed_to">Billed to</label>
       <input id="billed_to" value={billedTo} onChange={(e) => setBilledTo(e.target.value)} />
 
-      <label htmlFor="period_start">Period start</label>
+      <label htmlFor="period_start">
+        Period start<span className="required-marker">*</span>
+      </label>
       <input
         id="period_start"
         type="date"
@@ -61,7 +65,9 @@ export function InvoiceForm({ propertyOptions, saving, onSave, onCancel }: Invoi
         required
       />
 
-      <label htmlFor="period_end">Period end</label>
+      <label htmlFor="period_end">
+        Period end<span className="required-marker">*</span>
+      </label>
       <input
         id="period_end"
         type="date"
@@ -70,7 +76,9 @@ export function InvoiceForm({ propertyOptions, saving, onSave, onCancel }: Invoi
         required
       />
 
-      <label htmlFor="amount_due">Amount due</label>
+      <label htmlFor="amount_due">
+        Amount due<span className="required-marker">*</span>
+      </label>
       <input
         id="amount_due"
         type="number"
@@ -81,7 +89,9 @@ export function InvoiceForm({ propertyOptions, saving, onSave, onCancel }: Invoi
         required
       />
 
-      <label htmlFor="due_date">Due date</label>
+      <label htmlFor="due_date">
+        Due date<span className="required-marker">*</span>
+      </label>
       <input
         id="due_date"
         type="date"

@@ -30,7 +30,9 @@ export function FinancialAccountForm({ initialValues, saving, onSave, onCancel }
         <option value="credit_card">Credit card</option>
       </select>
 
-      <label htmlFor="financial_account_nickname">Nickname</label>
+      <label htmlFor="financial_account_nickname">
+        Nickname<span className="required-marker">*</span>
+      </label>
       <input
         id="financial_account_nickname"
         required
@@ -39,7 +41,9 @@ export function FinancialAccountForm({ initialValues, saving, onSave, onCancel }
         placeholder="e.g. Chase checking"
       />
 
-      <label htmlFor="financial_account_last_four">Last 4 digits</label>
+      <label htmlFor="financial_account_last_four">
+        Last 4 digits<span className="required-marker">*</span>
+      </label>
       <input
         id="financial_account_last_four"
         required

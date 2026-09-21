@@ -19,7 +19,9 @@ export function UnitForm({ initialValues, saving, onSave, onCancel }: UnitFormPr
 
   return (
     <form onSubmit={handleSubmit}>
-      <label htmlFor="unit_label">Unit #</label>
+      <label htmlFor="unit_label">
+        Unit #<span className="required-marker">*</span>
+      </label>
       <input
         id="unit_label"
         required
@@ -28,6 +30,9 @@ export function UnitForm({ initialValues, saving, onSave, onCancel }: UnitFormPr
         onChange={(e) => setValues((prev) => ({ ...prev, unit_label: e.target.value }))}
       />
 
+      <label htmlFor="unit_status">
+        Unit status<span className="required-marker">*</span>
+      </label>
       <PickListSelect
         id="unit_status"
         listName="unit_status"

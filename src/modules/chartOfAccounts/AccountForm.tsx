@@ -27,7 +27,9 @@ export function AccountForm({ initialValues, saving, isNew, onSave, onCancel }: 
         ))}
       </select>
 
-      <label htmlFor="account_form_name">Account name</label>
+      <label htmlFor="account_form_name">
+        Account name<span className="required-marker">*</span>
+      </label>
       <input
         id="account_form_name"
         required

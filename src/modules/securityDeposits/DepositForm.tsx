@@ -39,7 +39,9 @@ export function DepositForm({ saving, todayDateString, onSave, onCancel }: Depos
       <label htmlFor="deposit_unit">Unit</label>
       <input id="deposit_unit" value={unit} onChange={(e) => setUnit(e.target.value)} />
 
-      <label htmlFor="deposit_tenant">Tenant name</label>
+      <label htmlFor="deposit_tenant">
+        Tenant name<span className="required-marker">*</span>
+      </label>
       <input
         id="deposit_tenant"
         value={tenantName}
@@ -47,7 +49,9 @@ export function DepositForm({ saving, todayDateString, onSave, onCancel }: Depos
         required
       />
 
-      <label htmlFor="deposit_amount">Amount received</label>
+      <label htmlFor="deposit_amount">
+        Amount received<span className="required-marker">*</span>
+      </label>
       <input
         id="deposit_amount"
         type="number"
@@ -58,7 +62,9 @@ export function DepositForm({ saving, todayDateString, onSave, onCancel }: Depos
         required
       />
 
-      <label htmlFor="deposit_date">Date received</label>
+      <label htmlFor="deposit_date">
+        Date received<span className="required-marker">*</span>
+      </label>
       <input
         id="deposit_date"
         type="date"

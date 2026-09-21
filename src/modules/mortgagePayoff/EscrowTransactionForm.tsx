@@ -24,7 +24,9 @@ export function EscrowTransactionForm({ initialValues, saving, error, onSave }: 
       <h3>Log an escrow transaction</h3>
       {error && <p role="alert">{error}</p>}
 
-      <label htmlFor="escrow_transaction_date">Date</label>
+      <label htmlFor="escrow_transaction_date">
+        Date<span className="required-marker">*</span>
+      </label>
       <input
         id="escrow_transaction_date"
         type="date"
@@ -45,7 +47,9 @@ export function EscrowTransactionForm({ initialValues, saving, error, onSave }: 
         <option value="disbursement">Disbursement (paid out of escrow)</option>
       </select>
 
-      <label htmlFor="escrow_amount">Amount ($)</label>
+      <label htmlFor="escrow_amount">
+        Amount ($)<span className="required-marker">*</span>
+      </label>
       <input
         id="escrow_amount"
         type="number"

@@ -35,7 +35,9 @@ export function VendorForm({ initialValues, saving, error, onSave, onCancel }: V
     <div className="inline-form">
       {error && <p role="alert">{error}</p>}
 
-      <label htmlFor="vendor_form_name">Vendor name</label>
+      <label htmlFor="vendor_form_name">
+        Vendor name<span className="required-marker">*</span>
+      </label>
       <input
         id="vendor_form_name"
         required
