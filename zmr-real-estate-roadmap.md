@@ -73,6 +73,35 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       columns for type, property, date, and both status indicators
       (Complete/Needs details, Reconciled/Not reconciled), filterable by
       type — not the current unstructured list
+- [ ] 1.16 Receipt: add Unit (optional, shown only if property has
+      units), Payment method (optional, reuse existing Financials
+      pick-list), Repair vs. Improvement (optional dropdown). Reorder
+      Receipt's fields to: Property, Unit, Date, Vendor, Amount,
+      Category, Payment method, Repair/Improvement, Notes, Attachments.
+- [ ] 1.17 Vendor field must link to the real Vendors entity (8.3),
+      not remain free text — dropdown with inline "+ Add vendor",
+      matching the same pattern already used for Organization type.
+      Add a Vendor management view in Settings (list, add, archive,
+      restore) alongside the existing Organization types view.
+- [ ] 1.18 Amount field: format/round to 2 decimal places (currency),
+      reject more than 2 decimal digits of input.
+- [ ] 1.19 Fix Category/Subcategory UI: replace the separate "Manage
+      subcategories" button with the standard "Manage options" pattern
+      used everywhere else in the app — same component, same
+      interaction, no bespoke model for this one field.
+- [ ] 1.20 Add Visit type (pick-list): seed with Maintenance/Repair,
+      Estimate/Quote, Inspection, Tenant meeting, Showing, Move-in/
+      Move-out, Other.
+- [ ] 1.21 Mileage: add optional Start destination and End destination
+      fields. When both are filled and miles are recorded, save this as
+      a reusable named trip. Selecting a previously-used trip auto-fills
+      its recorded mileage. Miles + description alone (no start/end)
+      still counts as a complete, valid entry.
+- [ ] 1.22 Verify Property field never shows an "add new" option inside
+      Quick Capture — properties must only be addable via Property
+      Registry, then appear automatically in every property picker.
+- [ ] 1.23 Verify Date field defaults to today's date on every new
+      capture, remains freely editable.
 - [x] 1.24 Redesign History's filter bar: consolidate the current two
       dropdowns ("Type" and "Show") into one clear, non-overlapping
       filter. Show real column headers (Type / Property / Date /
