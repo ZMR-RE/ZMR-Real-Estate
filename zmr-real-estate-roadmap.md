@@ -527,7 +527,12 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       a future paid vendor-verification tier (e.g. a one-time $20-25 fee
       for a vendor to be listed as verified/trusted on the platform,
       for resale customers to draw from) — noted as a speculative future
-      revenue idea, not yet scoped for build
+      revenue idea, not yet scoped for build. Future consideration: a
+      vendor verification/marketplace tier — once the platform has real
+      users, offer contractors a one-time fee to be listed as
+      verified/recommended, with cross-user ratings on price, speed,
+      and quality. Valuable as a shared trusted-vendor list even
+      without a fee, and a real differentiator versus competitors.
 
 ## 9. Phase 9 — Bookkeeping Depth
 - [x] 9.1 Chart of Accounts screen: preloaded with a standard rental real-estate chart of accounts, user-editable (add/remap accounts)
