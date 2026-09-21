@@ -85,10 +85,23 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       restore) alongside the existing Organization types view.
 - [ ] 1.18 Amount field: format/round to 2 decimal places (currency),
       reject more than 2 decimal digits of input.
-- [ ] 1.19 Fix Category/Subcategory UI: replace the separate "Manage
+- [x] 1.19 Fix Category/Subcategory UI: replace the separate "Manage
       subcategories" button with the standard "Manage options" pattern
       used everywhere else in the app — same component, same
-      interaction, no bespoke model for this one field.
+      interaction, no bespoke model for this one field. ALREADY
+      SATISFIED, no code change — searched the codebase for a bespoke
+      subcategory component (none exists: `find src -iname "*subcat*"`
+      returns nothing) and confirmed Quick Capture's Category field
+      already renders via the shared PickListSelect + ManageOptionsPanel
+      component (listName="subcategory"), the exact same one every other
+      pick-list field in the app uses (Payment methods, Contact methods,
+      Settings' Pick lists section, etc.). "Manage subcategories" is
+      just that shared component's generated label
+      (`Manage ${title.toLowerCase()}`) for this list's title
+      ("Subcategories") — not a separate, bespoke button. Verified live:
+      opened it and confirmed the exact standard panel (add-new-value
+      row, list with Archive/Restore per option, an archived "Plumbing"
+      entry with a working Restore button).
 - [ ] 1.20 Add Visit type (pick-list): seed with Maintenance/Repair,
       Estimate/Quote, Inspection, Tenant meeting, Showing, Move-in/
       Move-out, Other.
@@ -97,11 +110,23 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       a reusable named trip. Selecting a previously-used trip auto-fills
       its recorded mileage. Miles + description alone (no start/end)
       still counts as a complete, valid entry.
-- [ ] 1.22 Verify Property field never shows an "add new" option inside
+- [x] 1.22 Verify Property field never shows an "add new" option inside
       Quick Capture — properties must only be addable via Property
       Registry, then appear automatically in every property picker.
-- [ ] 1.23 Verify Date field defaults to today's date on every new
-      capture, remains freely editable.
+      VERIFIED, no code change needed. CaptureForm.tsx's property
+      SearchableSelect never passes the `onAddNew` prop, and
+      SearchableSelect.tsx only ever renders its "+ Add new" menu item
+      when `onAddNew` is provided (`{onAddNew && (...)}`) — structurally
+      impossible for it to appear here, not just a visual coincidence.
+      Confirmed live too: typing into the property field's search box
+      listed only the two real properties (2169 Ash St, 5336 W Foster
+      Ave), no add-new row.
+- [x] 1.23 Verify Date field defaults to today's date on every new
+      capture, remains freely editable. VERIFIED, no code change needed.
+      useCaptureForm.ts initializes and resets `entryDate` via
+      `todayDateString()`. Confirmed live: a fresh Receipt capture's
+      Date field held 2026-09-21 (today), in a plain editable
+      `<input type="date">`.
 - [x] 1.24 Redesign History's filter bar: consolidate the current two
       dropdowns ("Type" and "Show") into one clear, non-overlapping
       filter. Show real column headers (Type / Property / Date /
