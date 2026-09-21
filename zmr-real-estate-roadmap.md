@@ -278,6 +278,28 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       Complete / Reconciled) at all times, including the empty state
       ("Nothing logged yet") — so the screen's structure is visible
       before any data exists.
+- [ ] 1.25 Global required-field convention: remove "(optional)" text
+      labels everywhere in Quick Capture. Only Type/Property/Date (the
+      genuinely required fields) get a red asterisk (*) next to the
+      label. Confirm Save is functionally blocked (not just visually
+      hinted) when any required field is empty — test this explicitly,
+      don't assume the disabled-button styling already enforces it.
+- [ ] 1.26 Rename the "Capture" button to "Save" everywhere in Quick
+      Capture.
+- [ ] 1.27 Add a consistent visual cue (chevron or search icon) to every
+      interactive-selector field — both the Property search/type-ahead
+      and standard pick-list dropdowns (Visit type, Category, etc.) —
+      so both are visually recognizable as clickable selectors, even
+      though their underlying widget differs (searchable for long lists
+      like Property, plain dropdown for short fixed lists).
+- [ ] 1.28 Visit's "Who was met with" becomes a real entity picker
+      instead of free text: searches both Vendors (8.3, account-wide)
+      and Tenants (8.4, scoped to the selected property's current/past
+      tenants), visually grouped by type, with a fallback "Someone else"
+      free-text option for one-off visitors who are neither.
+- [ ] 1.29 Confirm the new Visit type "Manage visit types" button uses
+      the same corrected "Manage options" shared component from 1.19,
+      not a bespoke duplicate — verify before committing.
 
 ## 2. Phase 2 — Parallelized Build (5 terminals, once Phase 1 schema is locked and stable)
 - [x] 2.1 Rent Ops — invoicing, receipts, on-time payment tracking
