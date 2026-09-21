@@ -15,7 +15,7 @@ export function useUnitOptionsForProperty(propertyId: string | null) {
       return
     }
     listUnits(accountId, propertyId).then(({ data }) => {
-      setUnitOptions((data ?? []).map((u) => ({ id: u.id, label: u.unit_label })))
+      setUnitOptions((data ?? []).filter((u) => !u.archived).map((u) => ({ id: u.id, label: u.unit_label })))
     })
   }, [accountId, propertyId])
 

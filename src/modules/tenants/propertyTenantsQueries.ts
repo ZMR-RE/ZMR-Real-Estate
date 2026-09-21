@@ -20,6 +20,7 @@ export async function listCurrentTenantsForProperty(accountId: string, propertyI
     .select('id, start_date, rent_amount, tenant:tenants(id, name), unit:units!inner(id, unit_label, property_id)')
     .eq('account_id', accountId)
     .eq('unit.property_id', propertyId)
+    .eq('archived', false)
     .is('end_date', null)
     .order('start_date', { ascending: false })
     .returns<PropertyCurrentTenant[]>()
@@ -43,6 +44,7 @@ export async function listAllTenantsForProperty(accountId: string, propertyId: s
     .select('tenant:tenants(id, name), unit:units!inner(property_id)')
     .eq('account_id', accountId)
     .eq('unit.property_id', propertyId)
+    .eq('archived', false)
     .returns<{ tenant: { id: string; name: string } | null }[]>()
 
   if (error) return { data: null, error }

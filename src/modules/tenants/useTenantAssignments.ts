@@ -4,6 +4,7 @@ import { useTenants } from './useTenants'
 import {
   createTenantUnitAssignment,
   listTenantUnitAssignments,
+  setTenantUnitAssignmentArchived,
   type TenantUnitAssignment,
   type TenantUnitAssignmentInput,
 } from './tenantsQueries'
@@ -57,6 +58,19 @@ export function useTenantAssignments(unitId: string) {
     await refresh()
   }
 
+  const toggleArchived = async (assignment: TenantUnitAssignment) => {
+    setSaving(true)
+    const { error: saveError } = await setTenantUnitAssignmentArchived(assignment.id, !assignment.archived)
+    setSaving(false)
+
+    if (saveError) {
+      setError(saveError.message)
+      return
+    }
+    setError(null)
+    await refresh()
+  }
+
   return {
     assignments,
     loading,
@@ -68,6 +82,7 @@ export function useTenantAssignments(unitId: string) {
     startAdding,
     cancelAdding,
     add,
+    toggleArchived,
     todayDateString: todayDateString(),
   }
 }

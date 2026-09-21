@@ -601,6 +601,47 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       verified/recommended, with cross-user ratings on price, speed,
       and quality. Valuable as a shared trusted-vendor list even
       without a fee, and a real differentiator versus competitors.
+- [x] 8.12 Units and Tenants need the same Archive/Restore pattern
+      already built for Financial accounts (7.18) and Organization types
+      (8.2c) — currently no way to remove a Unit or Tenant record through
+      the dashboard at all, forcing direct database cleanup every time
+      test/incorrect data needs removing. Units: new `units.archived`
+      column, `setUnitArchived`, Archive/Restore button + Active/Archived
+      badge on each unit card (dimmed via the shared .row-voided class
+      when archived, same as every other archived-row pattern in the
+      app — never hard-deleted). Tenant: the dashboard's actual surface
+      for a Tenant record is the per-unit assignment table
+      (TenantAssignmentList.tsx), so archive/restore landed on
+      `tenant_units.archived` (the assignment), not the `tenants` person
+      table itself, which has no standalone admin list to archive from
+      and stays selectable for future assignments regardless. Both
+      property-scoped tenant reads (Overview's Tenants box via
+      listCurrentTenantsForProperty, Quick Capture's "who was met with"
+      via listAllTenantsForProperty) now exclude archived assignments.
+      Archived-unit filtering also applied to the two picker consumers
+      safe to touch without colliding with another terminal's in-progress
+      edits (Action Queue's unit picker, the Occupancy Snapshot KPI);
+      Quick Capture's own Unit picker (useCaptureForm.ts,
+      CaptureEntryDetailsForm.tsx) was mid-edit by another terminal for
+      unrelated work at build time — deliberately left untouched per the
+      Parallel terminal safety rule, flagged as a follow-up once that
+      terminal's work lands rather than risking a collision.
+
+      Verified live on 5336 W Foster Ave / Unit A: archived the unit,
+      confirmed the card dimmed and the badge/button flipped, restored
+      it, confirmed it reverted cleanly (a pre-existing real record,
+      only toggled — no delete needed, matching the archive/restore
+      contract itself). Created a fresh test tenant + assignment
+      ("ZMR Session Test Tenant 8.12"), archived it, confirmed the row
+      dimmed with Status/Restore, and confirmed it disappeared from both
+      the property Overview's Tenants box and Quick Capture Visit's "who
+      was met with" picker — left archived (not hard-deleted) as the
+      correct end state now that a real removal path exists. Also
+      noticed and cleaned up, via direct DB action (own session's prior
+      test data, no dashboard delete/archive path exists yet for that
+      table — out of this item's scope to add one), two leftover
+      `prospective_tenants` test rows from earlier in the session that
+      had surfaced in the same "who was met with" picker.
 
 ## 9. Phase 9 — Bookkeeping Depth
 - [x] 9.1 Chart of Accounts screen: preloaded with a standard rental real-estate chart of accounts, user-editable (add/remap accounts)

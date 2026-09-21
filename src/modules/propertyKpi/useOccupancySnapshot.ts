@@ -28,7 +28,7 @@ export function useOccupancySnapshot(propertyId: string) {
         return
       }
       setError(null)
-      setUnits(data ?? [])
+      setUnits((data ?? []).filter((u) => !u.archived))
     })
   }, [accountId, propertyId])
 

@@ -13,15 +13,31 @@ interface TenantAssignmentsSectionProps {
 // and a tenant record (tenants table) persists independent of any
 // current unit assignment.
 export function TenantAssignmentsSection({ unitId, title }: TenantAssignmentsSectionProps) {
-  const { assignments, loading, error, isAdding, saving, tenantOptions, addTenant, startAdding, cancelAdding, add, todayDateString } =
-    useTenantAssignments(unitId)
+  const {
+    assignments,
+    loading,
+    error,
+    isAdding,
+    saving,
+    tenantOptions,
+    addTenant,
+    startAdding,
+    cancelAdding,
+    add,
+    toggleArchived,
+    todayDateString,
+  } = useTenantAssignments(unitId)
 
   return (
     <section>
       <h4>{title}</h4>
       {error && <p role="alert">{error}</p>}
 
-      {loading ? <p>Loading…</p> : <TenantAssignmentList assignments={assignments} />}
+      {loading ? (
+        <p>Loading…</p>
+      ) : (
+        <TenantAssignmentList assignments={assignments} onToggleArchived={toggleArchived} />
+      )}
 
       {isAdding ? (
         <TenantAssignmentForm

@@ -18,8 +18,20 @@ const BLANK_UNIT = { unit_label: '', status: '' }
 // that unit's id (7.4's unit_id wired through) — separate from the
 // property-level specs section elsewhere on this page.
 export function UnitsSection({ propertyId }: UnitsSectionProps) {
-  const { units, loading, error, isAdding, editingId, saving, startAdding, startEditing, cancelForm, add, save } =
-    useUnits(propertyId)
+  const {
+    units,
+    loading,
+    error,
+    isAdding,
+    editingId,
+    saving,
+    startAdding,
+    startEditing,
+    cancelForm,
+    add,
+    save,
+    toggleArchived,
+  } = useUnits(propertyId)
 
   return (
     <section>
@@ -41,11 +53,17 @@ export function UnitsSection({ propertyId }: UnitsSectionProps) {
               />
             </div>
           ) : (
-            <div key={unit.id} className="unit-card">
+            <div key={unit.id} className={`unit-card${unit.archived ? ' row-voided' : ''}`}>
               <h3>{unit.unit_label}</h3>
               <p>Status: {unit.status}</p>
+              <span className={`status-badge ${unit.archived ? 'status-badge-neutral' : 'status-badge-success'}`}>
+                {unit.archived ? 'Archived' : 'Active'}
+              </span>
               <button type="button" onClick={() => startEditing(unit.id)}>
                 Edit
+              </button>
+              <button type="button" onClick={() => toggleArchived(unit)}>
+                {unit.archived ? 'Restore' : 'Archive'}
               </button>
 
               <PropertySpecsSection

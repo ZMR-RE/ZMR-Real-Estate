@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
-import { createUnit, listUnits, updateUnit, type Unit, type UnitInput } from './unitsQueries'
+import { createUnit, listUnits, setUnitArchived, updateUnit, type Unit, type UnitInput } from './unitsQueries'
 
 export function useUnits(propertyId: string) {
   const { accountId } = useAuth()
@@ -73,6 +73,19 @@ export function useUnits(propertyId: string) {
     await refresh()
   }
 
+  const toggleArchived = async (unit: Unit) => {
+    setSaving(true)
+    const { error: saveError } = await setUnitArchived(unit.id, !unit.archived)
+    setSaving(false)
+
+    if (saveError) {
+      setError(saveError.message)
+      return
+    }
+    setError(null)
+    await refresh()
+  }
+
   return {
     units,
     loading,
@@ -85,5 +98,6 @@ export function useUnits(propertyId: string) {
     cancelForm,
     add,
     save,
+    toggleArchived,
   }
 }

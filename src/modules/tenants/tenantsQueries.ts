@@ -43,6 +43,7 @@ export interface TenantUnitAssignment {
   rent_amount: string | null
   late_fee: string | null
   tenant: { id: string; name: string } | null
+  archived: boolean
 }
 
 export interface TenantUnitAssignmentInput {
@@ -54,7 +55,7 @@ export interface TenantUnitAssignmentInput {
 }
 
 const TENANT_UNIT_ASSIGNMENT_COLUMNS =
-  'id, unit_id, start_date, end_date, rent_amount, late_fee, tenant:tenants(id, name)'
+  'id, unit_id, start_date, end_date, rent_amount, late_fee, tenant:tenants(id, name), archived'
 
 // A unit's tenancy history — every row is one assignment period, not just
 // the current one. end_date null means still assigned (roadmap 8.4: a
@@ -85,6 +86,23 @@ export async function createTenantUnitAssignment(
       rent_amount: input.rentAmount,
       late_fee: input.lateFee,
     })
+    .select(TENANT_UNIT_ASSIGNMENT_COLUMNS)
+    .single()
+}
+
+// Roadmap 8.12 — archive/restore for a tenant assignment (the dashboard
+// surface for "remove a Tenant record": a wrong/test assignment, same
+// scenario as an incorrect Financial account or Organization type).
+// Never a hard delete — an archived assignment still shows in this
+// unit's tenancy history, just stops counting as a real current/past
+// tenant anywhere else (Overview's Tenants box, Quick Capture's "who
+// was met with" picker). The underlying Tenant (person) record is
+// untouched and stays selectable for future assignments.
+export async function setTenantUnitAssignmentArchived(id: string, archived: boolean) {
+  return supabase
+    .from('tenant_units')
+    .update({ archived })
+    .eq('id', id)
     .select(TENANT_UNIT_ASSIGNMENT_COLUMNS)
     .single()
 }
