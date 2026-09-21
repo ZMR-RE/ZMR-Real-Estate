@@ -64,6 +64,7 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     financialAccountId,
     setFinancialAccountId,
     financialAccountOptions,
+    refreshFinancialAccountOptions,
     paymentMethod,
     setPaymentMethod,
     repairOrImprovement,
@@ -312,6 +313,7 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
                 options={financialAccountOptions}
                 value={financialAccountId}
                 onChange={setFinancialAccountId}
+                onOpen={refreshFinancialAccountOptions}
                 placeholder="Search financial accounts…"
               />
 

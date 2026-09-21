@@ -109,11 +109,8 @@ export function useCaptureForm(onCaptured?: () => void) {
 
   // Roadmap 1.16 correction — Financial account, scoped to whichever
   // property is selected, same pattern as Unit.
-  useEffect(() => {
-    if (!accountId || !propertyId) {
-      setFinancialAccountOptions([])
-      return
-    }
+  const refreshFinancialAccountOptions = () => {
+    if (!accountId || !propertyId) return
     listFinancialAccounts(accountId, propertyId).then(({ data }) => {
       setFinancialAccountOptions(
         (data ?? [])
@@ -121,6 +118,14 @@ export function useCaptureForm(onCaptured?: () => void) {
           .map((a) => ({ id: a.id, label: `${a.nickname} ...${a.last_four}` })),
       )
     })
+  }
+
+  useEffect(() => {
+    if (!accountId || !propertyId) {
+      setFinancialAccountOptions([])
+      return
+    }
+    refreshFinancialAccountOptions()
   }, [accountId, propertyId])
 
   // Roadmap 1.28 — tenant options are property-scoped, same reasoning as
@@ -419,6 +424,7 @@ export function useCaptureForm(onCaptured?: () => void) {
     financialAccountId,
     setFinancialAccountId,
     financialAccountOptions,
+    refreshFinancialAccountOptions,
     paymentMethod,
     setPaymentMethod,
     repairOrImprovement,

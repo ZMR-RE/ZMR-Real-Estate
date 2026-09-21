@@ -24,6 +24,14 @@ interface SearchableSelectProps {
   // onAddNew, never replacing it.
   onAddNewSecondary?: () => void
   addNewSecondaryLabel?: string
+  // Roadmap 1.16 fix — options are whatever the caller last fetched, which
+  // for a property-scoped list (e.g. financial accounts) can go stale the
+  // moment something is added elsewhere while this picker's screen stays
+  // mounted (no propertyId change to re-trigger the caller's own fetch
+  // effect). Optional: called every time the menu opens, so a caller with
+  // a live-changing options source can refresh right before the user sees
+  // it — no reload or reselection required.
+  onOpen?: () => void
 }
 
 export function SearchableSelect({
@@ -35,6 +43,7 @@ export function SearchableSelect({
   addNewLabel = '+ Add new',
   onAddNewSecondary,
   addNewSecondaryLabel = '+ Add new',
+  onOpen,
 }: SearchableSelectProps) {
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -52,6 +61,7 @@ export function SearchableSelect({
         onFocus={() => {
           setQuery('')
           setIsOpen(true)
+          onOpen?.()
         }}
         onBlur={() => setIsOpen(false)}
       />

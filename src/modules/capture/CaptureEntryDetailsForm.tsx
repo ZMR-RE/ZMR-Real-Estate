@@ -106,7 +106,7 @@ export function CaptureEntryDetailsForm({
 
   // Roadmap 1.16 correction — Financial account, scoped to this entry's
   // own (fixed, non-editable here) property, same pattern as Unit above.
-  useEffect(() => {
+  const refreshFinancialAccountOptions = () => {
     if (!accountId || entry.entry_type !== 'receipt') return
     listFinancialAccounts(accountId, entry.property.id).then(({ data }) => {
       setFinancialAccountOptions(
@@ -115,6 +115,10 @@ export function CaptureEntryDetailsForm({
           .map((a) => ({ id: a.id, label: `${a.nickname} ...${a.last_four}` })),
       )
     })
+  }
+
+  useEffect(() => {
+    refreshFinancialAccountOptions()
   }, [accountId, entry.entry_type, entry.property.id])
 
   // Roadmap 1.28 — tenant options for this entry's own (fixed) property,
@@ -318,6 +322,7 @@ export function CaptureEntryDetailsForm({
             options={financialAccountOptions}
             value={financialAccountId || null}
             onChange={setFinancialAccountId}
+            onOpen={refreshFinancialAccountOptions}
             placeholder="Search financial accounts…"
           />
 
