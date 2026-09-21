@@ -36,6 +36,11 @@ import { supabase } from '../supabaseClient'
 // TransactionForm still uses payment_method for its own unrelated flat
 // field, and capture_log.payment_method (the column) now sources its
 // value from this list instead, once a financial_account_id is picked.
+// vendor_relationship was added by
+// 20260921170000_vendors_relationship_notes.sql (roadmap 1.28 revision)
+// — a persistent tag on the Vendor record itself (Used/Estimate
+// obtained/Recommended/Do not use), seeded with those 4 explicitly
+// given values, same precedent as contact_method/visit_type's seeds.
 export type PickListName =
   | 'subcategory'
   | 'payment_method'
@@ -50,6 +55,7 @@ export type PickListName =
   | 'zoning_use_code'
   | 'contact_method'
   | 'visit_type'
+  | 'vendor_relationship'
 
 export interface PickListOption {
   id: string

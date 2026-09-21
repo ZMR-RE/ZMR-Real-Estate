@@ -3,6 +3,11 @@ import { useState } from 'react'
 export interface SearchableSelectOption {
   id: string
   label: string
+  // Roadmap 1.28 — optional grouping (e.g. "Vendors" / "Tenants" in
+  // Visit's "Who was met with" picker). Options are expected to already
+  // be ordered so same-group items sit together; a group header renders
+  // once, right before the first option of each new group encountered.
+  group?: string
 }
 
 interface SearchableSelectProps {
@@ -12,6 +17,13 @@ interface SearchableSelectProps {
   placeholder?: string
   onAddNew?: () => void
   addNewLabel?: string
+  // Roadmap 1.28 revision — a second, differently-labeled inline
+  // creation action, for pickers offering more than one kind of "add
+  // new" (Visit's "who was met with": + Add new vendor / + Add
+  // potential tenant). Rendered as an additional footer entry alongside
+  // onAddNew, never replacing it.
+  onAddNewSecondary?: () => void
+  addNewSecondaryLabel?: string
 }
 
 export function SearchableSelect({
@@ -21,6 +33,8 @@ export function SearchableSelect({
   placeholder,
   onAddNew,
   addNewLabel = '+ Add new',
+  onAddNewSecondary,
+  addNewSecondaryLabel = '+ Add new',
 }: SearchableSelectProps) {
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -44,8 +58,11 @@ export function SearchableSelect({
       {isOpen && (
         <ul className="searchable-select-menu">
           {filtered.length === 0 && <li className="searchable-select-empty">No matches</li>}
-          {filtered.map((option) => (
+          {filtered.map((option, index) => (
             <li key={option.id}>
+              {option.group && option.group !== filtered[index - 1]?.group && (
+                <p className="searchable-select-group-label">{option.group}</p>
+              )}
               <button
                 type="button"
                 onMouseDown={(e) => {
@@ -69,6 +86,20 @@ export function SearchableSelect({
                 }}
               >
                 {addNewLabel}
+              </button>
+            </li>
+          )}
+          {onAddNewSecondary && (
+            <li className="searchable-select-add-new">
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  onAddNewSecondary()
+                  setIsOpen(false)
+                }}
+              >
+                {addNewSecondaryLabel}
               </button>
             </li>
           )}

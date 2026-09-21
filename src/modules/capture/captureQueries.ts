@@ -30,6 +30,12 @@ export interface CaptureEntry {
   payment_method: string | null
   repair_or_improvement: string | null
   met_with: string | null
+  met_with_vendor_id: string | null
+  met_with_vendor: { id: string; name: string } | null
+  met_with_tenant_id: string | null
+  met_with_tenant: { id: string; name: string } | null
+  met_with_prospective_tenant_id: string | null
+  met_with_prospective_tenant: { id: string; name: string } | null
   visit_type: string | null
   contact_name: string | null
   contact_method: string | null
@@ -41,8 +47,14 @@ export interface CaptureEntry {
   attachments: CaptureAttachment[]
 }
 
+// Two FKs from capture_log to vendors now exist (vendor_id, plus 1.28's
+// met_with_vendor_id) — PostgREST needs each embed's specific
+// constraint name to disambiguate which one it's following, or every
+// vendors embed (including the pre-existing vendor_id one) errors.
+// Postgres auto-names an unnamed `references` constraint
+// `<table>_<column>_fkey`; both were added that way.
 const CAPTURE_ENTRY_COLUMNS =
-  'id, entry_type, entry_date, notes, miles_driven, start_destination, end_destination, unit_id, unit:units(id, unit_label), vendor_id, vendor:vendors(id, name), amount, category, financial_account_id, financial_account:property_financial_accounts(id, nickname, last_four, account_type), payment_method, repair_or_improvement, met_with, visit_type, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
+  'id, entry_type, entry_date, notes, miles_driven, start_destination, end_destination, unit_id, unit:units(id, unit_label), vendor_id, vendor:vendors!capture_log_vendor_id_fkey(id, name), amount, category, financial_account_id, financial_account:property_financial_accounts(id, nickname, last_four, account_type), payment_method, repair_or_improvement, met_with, met_with_vendor_id, met_with_vendor:vendors!capture_log_met_with_vendor_id_fkey(id, name), met_with_tenant_id, met_with_tenant:tenants(id, name), met_with_prospective_tenant_id, met_with_prospective_tenant:prospective_tenants(id, name), visit_type, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
 
 // Root-cause fix for a real bug found while building 1.21: PostgREST
 // doesn't reliably return every numeric(...) column as a JSON string —
@@ -87,6 +99,9 @@ export interface CreateCaptureEntryInput {
   paymentMethod: string | null
   repairOrImprovement: string | null
   metWith: string | null
+  metWithVendorId: string | null
+  metWithTenantId: string | null
+  metWithProspectiveTenantId: string | null
   visitType: string | null
   contactName: string | null
   contactMethod: string | null
@@ -121,6 +136,9 @@ export async function createCaptureEntry(input: CreateCaptureEntryInput) {
       payment_method: input.paymentMethod,
       repair_or_improvement: input.repairOrImprovement,
       met_with: input.metWith,
+      met_with_vendor_id: input.metWithVendorId,
+      met_with_tenant_id: input.metWithTenantId,
+      met_with_prospective_tenant_id: input.metWithProspectiveTenantId,
       visit_type: input.visitType,
       contact_name: input.contactName,
       contact_method: input.contactMethod,
@@ -214,6 +232,9 @@ export interface UpdateCaptureEntryDetailsInput {
   paymentMethod: string | null
   repairOrImprovement: string | null
   metWith: string | null
+  metWithVendorId: string | null
+  metWithTenantId: string | null
+  metWithProspectiveTenantId: string | null
   visitType: string | null
   contactName: string | null
   contactMethod: string | null
@@ -239,6 +260,9 @@ export async function updateCaptureEntryDetails(id: string, input: UpdateCapture
       payment_method: input.paymentMethod,
       repair_or_improvement: input.repairOrImprovement,
       met_with: input.metWith,
+      met_with_vendor_id: input.metWithVendorId,
+      met_with_tenant_id: input.metWithTenantId,
+      met_with_prospective_tenant_id: input.metWithProspectiveTenantId,
       visit_type: input.visitType,
       contact_name: input.contactName,
       contact_method: input.contactMethod,

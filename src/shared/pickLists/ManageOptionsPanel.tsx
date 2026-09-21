@@ -10,6 +10,15 @@ interface ManageOptionsPanelProps {
   onAdd: (value: string) => Promise<void>
   onArchive: (id: string) => Promise<void>
   onRestore: (id: string) => Promise<void>
+  // Roadmap 1.30 — PickListSelect drives this panel's open state itself
+  // (an inline "+ Manage [X]" entry inside its own dropdown triggers it,
+  // per the universal dropdown convention, rather than an adjacent
+  // toggle button). When both are omitted the panel falls back to its
+  // own internal open/closed state and renders its own toggle button —
+  // used by the standalone surfaces (Settings, Reconciliation Queue)
+  // that have no dropdown of their own to trigger it from.
+  isOpen?: boolean
+  onClose?: () => void
 }
 
 // The one shared "Manage options" surface for every account-scoped
@@ -32,8 +41,12 @@ export function ManageOptionsPanel({
   onAdd,
   onArchive,
   onRestore,
+  isOpen: controlledIsOpen,
+  onClose,
 }: ManageOptionsPanelProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  const isControlled = controlledIsOpen !== undefined
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isOpen = isControlled ? controlledIsOpen : internalOpen
   const [newValue, setNewValue] = useState('')
 
   const handleAdd = async () => {
@@ -42,14 +55,29 @@ export function ManageOptionsPanel({
     setNewValue('')
   }
 
+  const close = () => {
+    if (isControlled) onClose?.()
+    else setInternalOpen(false)
+  }
+
   return (
     <div className="manage-options">
-      <button type="button" className="manage-options-toggle" onClick={() => setIsOpen((open) => !open)}>
-        {isOpen ? 'Done' : `Manage ${title.toLowerCase()}`}
-      </button>
+      {!isControlled && (
+        <button type="button" className="manage-options-toggle" onClick={() => setInternalOpen((open) => !open)}>
+          {isOpen ? 'Done' : `Manage ${title.toLowerCase()}`}
+        </button>
+      )}
 
       {isOpen && (
         <div className="manage-options-panel">
+          {isControlled && (
+            <div className="manage-options-panel-header">
+              <p>Manage {title.toLowerCase()}</p>
+              <button type="button" onClick={close}>
+                Done
+              </button>
+            </div>
+          )}
           {error && <p role="alert">{error}</p>}
 
           <div className="manage-options-add-row">

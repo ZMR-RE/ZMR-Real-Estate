@@ -943,6 +943,21 @@ dd {
   font-size: var(--text-sm);
 }
 
+/* Roadmap 1.28 — group headers (e.g. "Vendors" / "Tenants") inside a
+   SearchableSelect menu, non-interactive. */
+.searchable-select-group-label {
+  margin: var(--space-2) 10px 2px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.searchable-select-menu li:first-child .searchable-select-group-label {
+  margin-top: 0;
+}
+
 /* ============================================================
    Pick-list dropdowns + Manage Options (roadmap 8.1)
    ============================================================ */
@@ -989,6 +1004,30 @@ dd {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
+}
+
+/* Roadmap 1.30 — only rendered when PickListSelect drives the panel via
+   its dropdown's inline "+ Manage" entry (no adjacent toggle button in
+   that mode, so the panel needs its own title + close affordance). */
+.manage-options-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.manage-options-panel-header p {
+  margin: 0;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--text-h);
+}
+
+.manage-options-panel-header button {
+  min-height: auto;
+  padding: 4px 10px;
+  font-size: var(--text-xs);
 }
 
 .manage-options-add-row {

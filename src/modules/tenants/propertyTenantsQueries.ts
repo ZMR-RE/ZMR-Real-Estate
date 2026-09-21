@@ -24,3 +24,32 @@ export async function listCurrentTenantsForProperty(accountId: string, propertyI
     .order('start_date', { ascending: false })
     .returns<PropertyCurrentTenant[]>()
 }
+
+export interface PropertyTenantOption {
+  id: string
+  name: string
+}
+
+// Roadmap 1.28 — Quick Capture's "Who was met with" picker needs every
+// tenant who has EVER been assigned to one of this property's units
+// (current or past — a visit could be with a tenant who's since moved
+// out), unlike listCurrentTenantsForProperty above (current only, by
+// design, for the Overview tab). Distinct by tenant since the same
+// tenant can have more than one assignment period (renewals, moving
+// between units on the same property).
+export async function listAllTenantsForProperty(accountId: string, propertyId: string) {
+  const { data, error } = await supabase
+    .from('tenant_units')
+    .select('tenant:tenants(id, name), unit:units!inner(property_id)')
+    .eq('account_id', accountId)
+    .eq('unit.property_id', propertyId)
+    .returns<{ tenant: { id: string; name: string } | null }[]>()
+
+  if (error) return { data: null, error }
+
+  const byId = new Map<string, PropertyTenantOption>()
+  for (const row of data ?? []) {
+    if (row.tenant) byId.set(row.tenant.id, row.tenant)
+  }
+  return { data: [...byId.values()].sort((a, b) => a.name.localeCompare(b.name)), error: null }
+}

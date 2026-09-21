@@ -8,6 +8,12 @@ export interface Vendor {
   contact_phone: string | null
   has_w9: boolean
   has_insurance: boolean
+  // Roadmap 1.28 revision — persistent to the vendor record itself
+  // (distinct from any one Quick Capture Visit's own per-encounter
+  // notes). relationship is a pick-list value (vendor_relationship),
+  // not a fixed enum, per the pick-list-first convention.
+  relationship: string | null
+  notes: string | null
   split_percentage: number | null
   split_description: string | null
   archived: boolean
@@ -21,7 +27,7 @@ export interface VendorSplitRuleInput {
 }
 
 const VENDOR_COLUMNS =
-  'id, account_id, name, contact_email, contact_phone, has_w9, has_insurance, split_percentage, split_description, archived'
+  'id, account_id, name, contact_email, contact_phone, has_w9, has_insurance, relationship, notes, split_percentage, split_description, archived'
 
 export async function listVendors(accountId: string) {
   return supabase.from('vendors').select(VENDOR_COLUMNS).eq('account_id', accountId).order('name').returns<Vendor[]>()
@@ -29,6 +35,17 @@ export async function listVendors(accountId: string) {
 
 export async function createVendor(accountId: string, input: VendorInput) {
   return supabase.from('vendors').insert({ ...input, account_id: accountId }).select(VENDOR_COLUMNS).single()
+}
+
+// Roadmap 1.28 revision — general vendor edit (name/contact/W9/
+// insurance/relationship/notes), added alongside VendorList's new Edit
+// action so Relationship and Notes are reachable after a vendor is first
+// created, not just at creation time. Scoped to VendorInput's fields
+// only — split-rule fields keep their own updateVendorSplitRule below,
+// and archived keeps setVendorArchived, same separation Organization
+// type uses (updateLlc vs setLlcArchived).
+export async function updateVendor(id: string, input: VendorInput) {
+  return supabase.from('vendors').update(input).eq('id', id).select(VENDOR_COLUMNS).single()
 }
 
 // Roadmap 1.17 — archive/restore for Vendor's new Settings management

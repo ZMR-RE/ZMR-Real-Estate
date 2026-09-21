@@ -3,6 +3,7 @@ import { SearchableSelect } from '../../shared/SearchableSelect'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
 import { formatAmountOnBlur, sanitizeAmountInput } from '../../shared/currencyInput'
 import { VendorForm } from '../vendors/VendorForm'
+import { ProspectiveTenantForm } from '../tenants/ProspectiveTenantForm'
 import { useCaptureForm } from './useCaptureForm'
 import { MAX_ATTACHMENTS_PER_ENTRY, type EntryType } from './captureQueries'
 
@@ -67,8 +68,12 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     setPaymentMethod,
     repairOrImprovement,
     setRepairOrImprovement,
-    metWith,
-    setMetWith,
+    metWithOptions,
+    metWithEntityId,
+    selectMetWithEntity,
+    selectNewMetWithVendor,
+    selectNewMetWithProspectiveTenant,
+    onCreateProspectiveTenant,
     visitType,
     setVisitType,
     contactName,
@@ -103,6 +108,49 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     setCreateVendorError(null)
     setVendorId(result.id)
     setIsAddingVendor(false)
+  }
+
+  // Roadmap 1.28 revision — Visit's "who was met with" picker gets its
+  // own inline "+ Add new vendor" (same pattern as Receipt's Vendor
+  // field above), separate state since the two fields' creation flows
+  // land in different places (vendorId vs metWithVendorId).
+  const [isAddingMetWithVendor, setIsAddingMetWithVendor] = useState(false)
+  const [creatingMetWithVendor, setCreatingMetWithVendor] = useState(false)
+  const [createMetWithVendorError, setCreateMetWithVendorError] = useState<string | null>(null)
+
+  const handleCreateMetWithVendor = async (input: Parameters<typeof onCreateVendor>[0]) => {
+    setCreatingMetWithVendor(true)
+    const result = await onCreateVendor(input)
+    setCreatingMetWithVendor(false)
+
+    if ('error' in result) {
+      setCreateMetWithVendorError(result.error)
+      return
+    }
+
+    setCreateMetWithVendorError(null)
+    selectNewMetWithVendor(result.id)
+    setIsAddingMetWithVendor(false)
+  }
+
+  // Roadmap 1.28 addition — same picker's "+ Add potential tenant".
+  const [isAddingMetWithProspectiveTenant, setIsAddingMetWithProspectiveTenant] = useState(false)
+  const [creatingMetWithProspectiveTenant, setCreatingMetWithProspectiveTenant] = useState(false)
+  const [createMetWithProspectiveTenantError, setCreateMetWithProspectiveTenantError] = useState<string | null>(null)
+
+  const handleCreateMetWithProspectiveTenant = async (input: Parameters<typeof onCreateProspectiveTenant>[0]) => {
+    setCreatingMetWithProspectiveTenant(true)
+    const result = await onCreateProspectiveTenant(input)
+    setCreatingMetWithProspectiveTenant(false)
+
+    if ('error' in result) {
+      setCreateMetWithProspectiveTenantError(result.error)
+      return
+    }
+
+    setCreateMetWithProspectiveTenantError(null)
+    selectNewMetWithProspectiveTenant(result.id)
+    setIsAddingMetWithProspectiveTenant(false)
   }
 
   const handleSubmit = (event: FormEvent) => {
@@ -297,7 +345,38 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
           {entryType === 'visit' && (
             <>
               <label htmlFor="met_with">Who was met with</label>
-              <input id="met_with" value={metWith} onChange={(e) => setMetWith(e.target.value)} />
+              {isAddingMetWithVendor ? (
+                <VendorForm
+                  saving={creatingMetWithVendor}
+                  error={createMetWithVendorError}
+                  onSave={handleCreateMetWithVendor}
+                  onCancel={() => {
+                    setIsAddingMetWithVendor(false)
+                    setCreateMetWithVendorError(null)
+                  }}
+                />
+              ) : isAddingMetWithProspectiveTenant ? (
+                <ProspectiveTenantForm
+                  saving={creatingMetWithProspectiveTenant}
+                  error={createMetWithProspectiveTenantError}
+                  onSave={handleCreateMetWithProspectiveTenant}
+                  onCancel={() => {
+                    setIsAddingMetWithProspectiveTenant(false)
+                    setCreateMetWithProspectiveTenantError(null)
+                  }}
+                />
+              ) : (
+                <SearchableSelect
+                  options={metWithOptions}
+                  value={metWithEntityId}
+                  onChange={selectMetWithEntity}
+                  placeholder="Search vendors, tenants, and potential tenants…"
+                  onAddNew={() => setIsAddingMetWithVendor(true)}
+                  addNewLabel="+ Add new vendor"
+                  onAddNewSecondary={() => setIsAddingMetWithProspectiveTenant(true)}
+                  addNewSecondaryLabel="+ Add potential tenant"
+                />
+              )}
 
               <label htmlFor="visit_type">Visit type</label>
               <PickListSelect

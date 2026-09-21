@@ -28,6 +28,9 @@ export interface SaveCaptureEntryDetailsInput {
   paymentMethod: string
   repairOrImprovement: string
   metWith: string
+  metWithVendorId: string
+  metWithTenantId: string
+  metWithProspectiveTenantId: string
   visitType: string
   contactName: string
   contactMethod: string
@@ -95,6 +98,9 @@ export async function saveCaptureEntryDetails(
     paymentMethod: input.paymentMethod || null,
     repairOrImprovement: input.repairOrImprovement || null,
     metWith: input.metWith.trim() || null,
+    metWithVendorId: input.metWithVendorId || null,
+    metWithTenantId: input.metWithTenantId || null,
+    metWithProspectiveTenantId: input.metWithProspectiveTenantId || null,
     visitType: input.visitType || null,
     contactName: input.contactName.trim() || null,
     contactMethod: input.contactMethod || null,

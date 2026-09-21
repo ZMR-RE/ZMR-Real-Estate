@@ -5,6 +5,13 @@ import { hasAtMostTwoDecimalPlaces } from '../../shared/currencyInput'
 import { listProperties } from '../properties/propertiesQueries'
 import { listUnits } from '../units/unitsQueries'
 import { listFinancialAccounts } from '../financialAccounts/financialAccountsQueries'
+import { listAllTenantsForProperty, type PropertyTenantOption } from '../tenants/propertyTenantsQueries'
+import {
+  createProspectiveTenant,
+  listProspectiveTenantsForProperty,
+  type ProspectiveTenant,
+  type ProspectiveTenantInput,
+} from '../tenants/prospectiveTenantsQueries'
 import { useVendors } from '../vendors/useVendors'
 import { listMileageTrips, upsertMileageTrip, type MileageTrip } from './mileageTripsQueries'
 import {
@@ -52,7 +59,11 @@ export function useCaptureForm(onCaptured?: () => void) {
   const [financialAccountId, setFinancialAccountIdState] = useState<string | null>(null)
   const [paymentMethod, setPaymentMethod] = useState('')
   const [repairOrImprovement, setRepairOrImprovement] = useState('')
-  const [metWith, setMetWith] = useState('')
+  const [tenantOptions, setTenantOptions] = useState<PropertyTenantOption[]>([])
+  const [prospectiveTenantOptions, setProspectiveTenantOptions] = useState<ProspectiveTenant[]>([])
+  const [metWithVendorId, setMetWithVendorId] = useState<string | null>(null)
+  const [metWithTenantId, setMetWithTenantId] = useState<string | null>(null)
+  const [metWithProspectiveTenantId, setMetWithProspectiveTenantId] = useState<string | null>(null)
   const [visitType, setVisitType] = useState('')
   const [contactName, setContactName] = useState('')
   const [contactMethod, setContactMethod] = useState('')
@@ -112,13 +123,100 @@ export function useCaptureForm(onCaptured?: () => void) {
     })
   }, [accountId, propertyId])
 
+  // Roadmap 1.28 — tenant options are property-scoped, same reasoning as
+  // Unit/Financial account above.
+  useEffect(() => {
+    if (!accountId || !propertyId) {
+      setTenantOptions([])
+      return
+    }
+    listAllTenantsForProperty(accountId, propertyId).then(({ data }) => {
+      setTenantOptions(data ?? [])
+    })
+  }, [accountId, propertyId])
+
+  // Roadmap 1.28 revision — potential tenants, same property scoping as
+  // Tenant above.
+  useEffect(() => {
+    if (!accountId || !propertyId) {
+      setProspectiveTenantOptions([])
+      return
+    }
+    listProspectiveTenantsForProperty(accountId, propertyId).then(({ data }) => {
+      setProspectiveTenantOptions(data ?? [])
+    })
+  }, [accountId, propertyId])
+
   // A unit selected under the previous property is never valid once the
   // property itself changes — every propertyId change starts Unit over.
+  // A previously-picked tenant/potential tenant is subject to the same
+  // rule (Financial account already was); Vendor stays valid across
+  // properties since it's account-wide, not property-scoped.
   const setPropertyId = (id: string | null) => {
     setPropertyIdState(id)
     setUnitId(null)
     setFinancialAccountIdState(null)
     setPaymentMethod('')
+    setMetWithTenantId(null)
+    setMetWithProspectiveTenantId(null)
+  }
+
+  // Roadmap 1.28 revision — no freeform fallback: "who was met with" is
+  // always a real Vendor, Tenant, or Potential tenant record. The
+  // picker's single `value` is whichever entity (if any) is currently
+  // selected; selecting one clears the other two so only one is ever
+  // active at a time. A person not yet on file is added as a real record
+  // on the spot — a Vendor or a Potential tenant, via the picker's own
+  // "+ Add new vendor" / "+ Add potential tenant" — never as loose text.
+  const metWithEntityId = metWithVendorId ?? metWithTenantId ?? metWithProspectiveTenantId ?? null
+  const metWithOptions = [
+    ...vendorOptions.map((v) => ({ ...v, group: 'Vendors' })),
+    ...tenantOptions.map((t) => ({ id: t.id, label: t.name, group: 'Tenants' })),
+    ...prospectiveTenantOptions.map((t) => ({ id: t.id, label: t.name, group: 'Potential tenants' })),
+  ]
+  const selectMetWithEntity = (id: string) => {
+    if (vendorOptions.some((v) => v.id === id)) {
+      setMetWithVendorId(id)
+      setMetWithTenantId(null)
+      setMetWithProspectiveTenantId(null)
+    } else if (tenantOptions.some((t) => t.id === id)) {
+      setMetWithTenantId(id)
+      setMetWithVendorId(null)
+      setMetWithProspectiveTenantId(null)
+    } else {
+      setMetWithProspectiveTenantId(id)
+      setMetWithVendorId(null)
+      setMetWithTenantId(null)
+    }
+  }
+  // Called once a vendor/potential tenant is created inline from this
+  // picker's own "+ Add new vendor" / "+ Add potential tenant" — the
+  // newly created id isn't in vendorOptions/prospectiveTenantOptions yet
+  // this render (those lists only update once their own state settles),
+  // so selectMetWithEntity's lookup can't be trusted here; the caller
+  // already knows for certain which kind it is.
+  const selectNewMetWithVendor = (id: string) => {
+    setMetWithVendorId(id)
+    setMetWithTenantId(null)
+    setMetWithProspectiveTenantId(null)
+  }
+  const selectNewMetWithProspectiveTenant = (id: string) => {
+    setMetWithProspectiveTenantId(id)
+    setMetWithVendorId(null)
+    setMetWithTenantId(null)
+  }
+
+  // Exposed for the picker's own "+ Add potential tenant" inline
+  // creation — mirrors useVendors' addVendor shape ({id} | {error}) so
+  // CaptureForm.tsx's handler can treat both the same way.
+  const onCreateProspectiveTenant = async (
+    input: ProspectiveTenantInput,
+  ): Promise<{ id: string } | { error: string }> => {
+    if (!accountId || !propertyId) return { error: 'Select a property first.' }
+    const { data, error: saveError } = await createProspectiveTenant(accountId, propertyId, input)
+    if (saveError || !data) return { error: saveError?.message ?? 'Could not add potential tenant.' }
+    setProspectiveTenantOptions((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+    return { id: data.id }
   }
 
   // The "how" selector only means anything alongside a chosen account —
@@ -151,7 +249,9 @@ export function useCaptureForm(onCaptured?: () => void) {
     setFinancialAccountIdState(null)
     setPaymentMethod('')
     setRepairOrImprovement('')
-    setMetWith('')
+    setMetWithVendorId(null)
+    setMetWithTenantId(null)
+    setMetWithProspectiveTenantId(null)
     setVisitType('')
     setContactName('')
     setContactMethod('')
@@ -229,7 +329,10 @@ export function useCaptureForm(onCaptured?: () => void) {
       financialAccountId,
       paymentMethod: paymentMethod || null,
       repairOrImprovement: repairOrImprovement || null,
-      metWith: metWith.trim() || null,
+      metWith: null,
+      metWithVendorId,
+      metWithTenantId,
+      metWithProspectiveTenantId,
       visitType: visitType || null,
       contactName: contactName.trim() || null,
       contactMethod: contactMethod || null,
@@ -320,8 +423,12 @@ export function useCaptureForm(onCaptured?: () => void) {
     setPaymentMethod,
     repairOrImprovement,
     setRepairOrImprovement,
-    metWith,
-    setMetWith,
+    metWithOptions,
+    metWithEntityId,
+    selectMetWithEntity,
+    selectNewMetWithVendor,
+    selectNewMetWithProspectiveTenant,
+    onCreateProspectiveTenant,
     visitType,
     setVisitType,
     contactName,

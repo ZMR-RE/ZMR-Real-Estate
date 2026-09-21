@@ -4,6 +4,9 @@ import { SearchableSelect, type SearchableSelectOption } from '../../shared/Sear
 import { formatAmountOnBlur, sanitizeAmountInput } from '../../shared/currencyInput'
 import { listUnits } from '../units/unitsQueries'
 import { listFinancialAccounts } from '../financialAccounts/financialAccountsQueries'
+import { listAllTenantsForProperty } from '../tenants/propertyTenantsQueries'
+import { listProspectiveTenantsForProperty, createProspectiveTenant, type ProspectiveTenantInput } from '../tenants/prospectiveTenantsQueries'
+import { ProspectiveTenantForm } from '../tenants/ProspectiveTenantForm'
 import { VendorForm } from '../vendors/VendorForm'
 import type { VendorInput } from '../vendors/vendorsQueries'
 import { MAX_ATTACHMENTS_PER_ENTRY, type CaptureEntry } from './captureQueries'
@@ -17,9 +20,13 @@ export interface CaptureEntryDetailsInput {
   vendorId: string
   amount: string
   category: string
+  financialAccountId: string
   paymentMethod: string
   repairOrImprovement: string
   metWith: string
+  metWithVendorId: string
+  metWithTenantId: string
+  metWithProspectiveTenantId: string
   visitType: string
   contactName: string
   contactMethod: string
@@ -72,7 +79,11 @@ export function CaptureEntryDetailsForm({
     setPaymentMethod('')
   }
   const [repairOrImprovement, setRepairOrImprovement] = useState(entry.repair_or_improvement ?? '')
-  const [metWith, setMetWith] = useState(entry.met_with ?? '')
+  const [tenantOptions, setTenantOptions] = useState<SearchableSelectOption[]>([])
+  const [prospectiveTenantOptions, setProspectiveTenantOptions] = useState<SearchableSelectOption[]>([])
+  const [metWithVendorId, setMetWithVendorId] = useState(entry.met_with_vendor_id ?? '')
+  const [metWithTenantId, setMetWithTenantId] = useState(entry.met_with_tenant_id ?? '')
+  const [metWithProspectiveTenantId, setMetWithProspectiveTenantId] = useState(entry.met_with_prospective_tenant_id ?? '')
   const [visitType, setVisitType] = useState(entry.visit_type ?? '')
   const [contactName, setContactName] = useState(entry.contact_name ?? '')
   const [contactMethod, setContactMethod] = useState(entry.contact_method ?? '')
@@ -106,6 +117,47 @@ export function CaptureEntryDetailsForm({
     })
   }, [accountId, entry.entry_type, entry.property.id])
 
+  // Roadmap 1.28 — tenant options for this entry's own (fixed) property,
+  // same pattern as Unit/Financial account above; needed for Visit's
+  // "who was met with" picker.
+  useEffect(() => {
+    if (!accountId || entry.entry_type !== 'visit') return
+    listAllTenantsForProperty(accountId, entry.property.id).then(({ data }) => {
+      setTenantOptions((data ?? []).map((t) => ({ id: t.id, label: t.name })))
+    })
+  }, [accountId, entry.entry_type, entry.property.id])
+
+  // Roadmap 1.28 revision — potential tenants, same pattern as Tenant
+  // above.
+  useEffect(() => {
+    if (!accountId || entry.entry_type !== 'visit') return
+    listProspectiveTenantsForProperty(accountId, entry.property.id).then(({ data }) => {
+      setProspectiveTenantOptions((data ?? []).map((t) => ({ id: t.id, label: t.name })))
+    })
+  }, [accountId, entry.entry_type, entry.property.id])
+
+  const metWithEntityId = metWithVendorId || metWithTenantId || metWithProspectiveTenantId || null
+  const metWithOptions: SearchableSelectOption[] = [
+    ...vendorOptions.map((v) => ({ ...v, group: 'Vendors' })),
+    ...tenantOptions.map((t) => ({ ...t, group: 'Tenants' })),
+    ...prospectiveTenantOptions.map((t) => ({ ...t, group: 'Potential tenants' })),
+  ]
+  const selectMetWithEntity = (id: string) => {
+    if (vendorOptions.some((v) => v.id === id)) {
+      setMetWithVendorId(id)
+      setMetWithTenantId('')
+      setMetWithProspectiveTenantId('')
+    } else if (tenantOptions.some((t) => t.id === id)) {
+      setMetWithTenantId(id)
+      setMetWithVendorId('')
+      setMetWithProspectiveTenantId('')
+    } else {
+      setMetWithProspectiveTenantId(id)
+      setMetWithVendorId('')
+      setMetWithTenantId('')
+    }
+  }
+
   const handleCreateVendor = async (input: VendorInput) => {
     setCreatingVendor(true)
     const result = await onCreateVendor(input)
@@ -119,6 +171,57 @@ export function CaptureEntryDetailsForm({
     setCreateVendorError(null)
     setVendorId(result.id)
     setIsAddingVendor(false)
+  }
+
+  // Roadmap 1.28 revision — Visit's "who was met with" picker gets its
+  // own inline "+ Add new vendor", separate state from Receipt's Vendor
+  // field above since the two land in different fields (vendorId vs
+  // metWithVendorId).
+  const [isAddingMetWithVendor, setIsAddingMetWithVendor] = useState(false)
+  const [creatingMetWithVendor, setCreatingMetWithVendor] = useState(false)
+  const [createMetWithVendorError, setCreateMetWithVendorError] = useState<string | null>(null)
+
+  const handleCreateMetWithVendor = async (input: VendorInput) => {
+    setCreatingMetWithVendor(true)
+    const result = await onCreateVendor(input)
+    setCreatingMetWithVendor(false)
+
+    if ('error' in result) {
+      setCreateMetWithVendorError(result.error)
+      return
+    }
+
+    setCreateMetWithVendorError(null)
+    setMetWithVendorId(result.id)
+    setMetWithTenantId('')
+    setMetWithProspectiveTenantId('')
+    setIsAddingMetWithVendor(false)
+  }
+
+  // Roadmap 1.28 addition — same picker's "+ Add potential tenant".
+  const [isAddingProspectiveTenant, setIsAddingProspectiveTenant] = useState(false)
+  const [creatingProspectiveTenant, setCreatingProspectiveTenant] = useState(false)
+  const [createProspectiveTenantError, setCreateProspectiveTenantError] = useState<string | null>(null)
+
+  const handleCreateProspectiveTenant = async (input: ProspectiveTenantInput) => {
+    if (!accountId) return
+    setCreatingProspectiveTenant(true)
+    const { data, error: saveError } = await createProspectiveTenant(accountId, entry.property.id, input)
+    setCreatingProspectiveTenant(false)
+
+    if (saveError || !data) {
+      setCreateProspectiveTenantError(saveError?.message ?? 'Could not add potential tenant.')
+      return
+    }
+
+    setCreateProspectiveTenantError(null)
+    setProspectiveTenantOptions((prev) =>
+      [...prev, { id: data.id, label: data.name }].sort((a, b) => a.label.localeCompare(b.label)),
+    )
+    setMetWithProspectiveTenantId(data.id)
+    setMetWithVendorId('')
+    setMetWithTenantId('')
+    setIsAddingProspectiveTenant(false)
   }
 
   return (
@@ -248,7 +351,38 @@ export function CaptureEntryDetailsForm({
       {entry.entry_type === 'visit' && (
         <>
           <label htmlFor={`met_with_${entry.id}`}>Who was met with</label>
-          <input id={`met_with_${entry.id}`} value={metWith} onChange={(e) => setMetWith(e.target.value)} />
+          {isAddingMetWithVendor ? (
+            <VendorForm
+              saving={creatingMetWithVendor}
+              error={createMetWithVendorError}
+              onSave={handleCreateMetWithVendor}
+              onCancel={() => {
+                setIsAddingMetWithVendor(false)
+                setCreateMetWithVendorError(null)
+              }}
+            />
+          ) : isAddingProspectiveTenant ? (
+            <ProspectiveTenantForm
+              saving={creatingProspectiveTenant}
+              error={createProspectiveTenantError}
+              onSave={handleCreateProspectiveTenant}
+              onCancel={() => {
+                setIsAddingProspectiveTenant(false)
+                setCreateProspectiveTenantError(null)
+              }}
+            />
+          ) : (
+            <SearchableSelect
+              options={metWithOptions}
+              value={metWithEntityId}
+              onChange={selectMetWithEntity}
+              placeholder="Search vendors, tenants, and potential tenants…"
+              onAddNew={() => setIsAddingMetWithVendor(true)}
+              addNewLabel="+ Add new vendor"
+              onAddNewSecondary={() => setIsAddingProspectiveTenant(true)}
+              addNewSecondaryLabel="+ Add potential tenant"
+            />
+          )}
 
           <label htmlFor={`visit_type_${entry.id}`}>Visit type</label>
           <PickListSelect
@@ -320,7 +454,10 @@ export function CaptureEntryDetailsForm({
             financialAccountId,
             paymentMethod,
             repairOrImprovement,
-            metWith,
+            metWith: '',
+            metWithVendorId,
+            metWithTenantId,
+            metWithProspectiveTenantId,
             visitType,
             contactName,
             contactMethod,

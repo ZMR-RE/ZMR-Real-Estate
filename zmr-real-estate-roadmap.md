@@ -338,11 +338,51 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       dropdowns) to confirm the shared-component change applied
       consistently app-wide with no layout breakage — no data changed on
       either check.
-- [ ] 1.28 Visit's "Who was met with" becomes a real entity picker
+- [x] 1.28 Visit's "Who was met with" becomes a real entity picker
       instead of free text: searches both Vendors (8.3, account-wide)
       and Tenants (8.4, scoped to the selected property's current/past
-      tenants), visually grouped by type, with a fallback "Someone else"
-      free-text option for one-off visitors who are neither.
+      tenants), visually grouped by type. REVISED mid-build (no freeform
+      fallback; third "Potential tenants" category added) — built to the
+      revised spec: `SearchableSelect` fed a merged, grouped option list
+      (Vendors / Tenants / Potential tenants — the last via a new
+      `prospective_tenants` table, property-scoped, since a prospect has
+      no lease to anchor them otherwise); no "Someone else" free-text
+      escape hatch anywhere. A person not yet on file is added as a real
+      record on the spot via two inline footer entries in the same
+      dropdown — "+ Add new vendor" (reuses the existing VendorForm) and
+      "+ Add potential tenant" (new minimal ProspectiveTenantForm, name
+      only) — `SearchableSelect` extended with a second optional
+      onAddNewSecondary/addNewSecondaryLabel pair to support both at
+      once. Vendor also gained a persistent "Relationship" tag
+      (vendor_relationship pick list: Used/Estimate obtained/
+      Recommended/Do not use, seeded with those exact 4 values) and a
+      persistent Notes field, both only reachable once VendorList grew
+      an Edit action (previously add/archive/restore only) mirroring
+      OrganizationTypeList's inline edit-row pattern. Backing schema:
+      capture_log.met_with_vendor_id/met_with_tenant_id (both FK,
+      mutually exclusive via a check constraint, widened to 3-way once
+      met_with_prospective_tenant_id was added) — met_with (free text)
+      stays only for pre-existing historical rows, never written by the
+      UI again. Verified live: opened Visit on 5336 W Foster Ave,
+      confirmed the dropdown grouped "Vendors"/"Tenants" correctly (a
+      test tenant assignment created live via the property's own Units →
+      Tenants → Assign tenant flow, since the account had zero tenants
+      anywhere before this); selected the tenant, saved, reopened via
+      History → Add details, confirmed it round-tripped correctly. Used
+      "+ Add potential tenant" inline (typed a name, saved), confirmed it
+      auto-selected and round-tripped the same way, then deleted that
+      capture entry (session's own test data — capture_log has a delete
+      path). Confirmed Receipt's own separate Vendor field (single
+      "+ Add vendor", no secondary, no grouping) render unaffected by the
+      SearchableSelect extension. Verified Vendor's new Relationship/
+      Notes fields in Settings → Vendors: edited a pre-existing test
+      vendor ("Test Tenant") to set both, confirmed they displayed in the
+      table, then reverted just those two fields back to blank per the
+      test-cleanup rule (a pre-existing record, edited not created).
+      Left in place and flagged to the user: the live tenant assignment
+      at 5336 W Foster Ave / Unit A (tenant "ZMR Session Test Tenant
+      1.28") — Tenants has no end-tenancy/delete UI yet, same precedent
+      as 1.21's mileage_trips rows.
 - [x] 1.29 Confirm the new Visit type "Manage visit types" button uses
       the same corrected "Manage options" shared component from 1.19,
       not a bespoke duplicate — verify before committing. ALREADY
@@ -354,6 +394,34 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       implementation. Confirmed by source (CaptureForm.tsx) and by 1.20's
       own live verification, which opened it and confirmed the standard
       add/archive panel.
+- [x] 1.30 Universal dropdown convention: every open-choice pick-list
+      dropdown ends with an inline "+ Add new [X]" / "Manage [X]" option
+      as its last entry (matching the existing Organization type/Vendor
+      pattern) — never a separate adjacent button. Applied to the shared
+      `PickListSelect` component itself (not a Visit-type-only bespoke
+      change — CLAUDE.md's single-source-of-truth rule and the item's own
+      "standard for all future pick-list fields" instruction both point
+      the same direction): the dropdown's native `<select>` now ends with
+      a sentinel `+ Manage [X]` option; choosing it opens the same
+      `ManageOptionsPanel` (now controlled via isOpen/onClose instead of
+      its own internal toggle button) without ever committing the
+      sentinel as the field's real value — React's controlled-select
+      reconciliation snaps the visible selection back to the real value
+      automatically. `ManageOptionsPanel` stays backward compatible for
+      its two standalone (no adjacent dropdown) uses — Settings' pick-list
+      manager and Reconciliation Queue's document-type manager — via an
+      optional isOpen/onClose pair: omitted, it falls back to its own
+      internal toggle button exactly as before. Verified live on Visit
+      type per the item's explicit scope (dropdown ends in
+      "+ Manage visit types"; selecting it opened the panel with the
+      select's own value staying blank, not snapping to the sentinel;
+      panel's own "Done" closes it); since the shared component changed,
+      also spot-checked Receipt's Category dropdown (ends in
+      "+ Manage subcategories", same behavior) and confirmed both of
+      ManageOptionsPanel's standalone uses (Settings' 13 pick-list
+      toggles including the new Vendor relationships list, and
+      Reconciliation Queue's Document types toggle) still open/close via
+      their own button exactly as before — no regression.
 
 ## 2. Phase 2 — Parallelized Build (5 terminals, once Phase 1 schema is locked and stable)
 - [x] 2.1 Rent Ops — invoicing, receipts, on-time payment tracking

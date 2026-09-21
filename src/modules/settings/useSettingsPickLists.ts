@@ -18,6 +18,7 @@ export function useSettingsPickLists() {
   const contactMethod = usePickListOptions('contact_method')
   const visitType = usePickListOptions('visit_type')
   const paymentHow = usePickListOptions('payment_how')
+  const vendorRelationship = usePickListOptions('vendor_relationship')
 
   return [
     { title: 'Subcategories', ...subcategory },
@@ -32,5 +33,6 @@ export function useSettingsPickLists() {
     { title: 'Zoning/use codes', ...zoningUseCode },
     { title: 'Contact methods', ...contactMethod },
     { title: 'Visit types', ...visitType },
+    { title: 'Vendor relationships', ...vendorRelationship },
   ]
 }
