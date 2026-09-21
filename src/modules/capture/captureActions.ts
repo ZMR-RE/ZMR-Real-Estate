@@ -1,4 +1,5 @@
 import { hasAtMostTwoDecimalPlaces } from '../../shared/currencyInput'
+import { upsertMileageTrip } from './mileageTripsQueries'
 import {
   addCaptureAttachments,
   updateCaptureEntryDetails,
@@ -17,10 +18,13 @@ function attachmentTypeFor(file: File): AttachmentType | null {
 export interface SaveCaptureEntryDetailsInput {
   notes: string
   milesDriven: string
+  startDestination: string
+  endDestination: string
   unitId: string
   vendorId: string
   amount: string
   category: string
+  financialAccountId: string
   paymentMethod: string
   repairOrImprovement: string
   metWith: string
@@ -81,10 +85,13 @@ export async function saveCaptureEntryDetails(
   const { error: updateError } = await updateCaptureEntryDetails(entry.id, {
     notes: input.notes.trim() || null,
     milesDriven: parsedMiles,
+    startDestination: input.startDestination.trim() || null,
+    endDestination: input.endDestination.trim() || null,
     unitId: input.unitId || null,
     vendorId: input.vendorId || null,
     amount: parsedAmount,
     category: input.category || null,
+    financialAccountId: input.financialAccountId || null,
     paymentMethod: input.paymentMethod || null,
     repairOrImprovement: input.repairOrImprovement || null,
     metWith: input.metWith.trim() || null,
@@ -95,6 +102,24 @@ export async function saveCaptureEntryDetails(
   })
   if (updateError) {
     return { error: updateError.message }
+  }
+
+  // Roadmap 1.21 — a route filled in later (not just at capture time)
+  // still becomes a reusable trip once it has a start, end, and miles.
+  if (
+    entry.entry_type === 'mileage' &&
+    input.startDestination.trim() &&
+    input.endDestination.trim() &&
+    parsedMiles !== null &&
+    parsedMiles > 0
+  ) {
+    await upsertMileageTrip(
+      accountId,
+      entry.property.id,
+      input.startDestination.trim(),
+      input.endDestination.trim(),
+      parsedMiles,
+    )
   }
 
   return { error: null }

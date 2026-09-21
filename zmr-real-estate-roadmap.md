@@ -74,36 +74,59 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       (Complete/Needs details, Reconciled/Not reconciled), filterable by
       type — not the current unstructured list
 - [x] 1.16 Receipt: add Unit (optional, shown only if property has
-      units), Payment method (optional, reuse existing Financials
-      pick-list), Repair vs. Improvement (optional dropdown). Reorder
-      Receipt's fields to: Property, Unit, Date, Vendor, Amount,
+      units), Payment method, Repair vs. Improvement (optional dropdown).
+      Reorder Receipt's fields to: Property, Unit, Date, Vendor, Amount,
       Category, Payment method, Repair/Improvement, Notes, Attachments.
       New capture_log columns: unit_id (real FK to units, on delete set
       null — not free text like financial_transactions.unit, since Quick
       Capture already links Property for real and Unit deserves the same
-      treatment), payment_method (reuses the existing 'payment_method'
-      pick list, nullable unlike financial_transactions.payment_method's
-      NOT NULL — this item says optional), repair_or_improvement (fixed
-      2-value check constraint, matching financial_transactions'
-      identical column exactly rather than a new pick list — flagged in
+      treatment), repair_or_improvement (fixed 2-value check constraint,
+      matching financial_transactions' identical column exactly rather
+      than a new pick list — flagged in
       shared/pickLists/pickListsQueries.ts's PickListName comment as a
       deliberate exception to the new Pick-list-first rule, so the two
       stay in lockstep for whatever a reconciled entry becomes). Unit
       options are fetched reactively keyed on whichever property is
       selected (both in the create form and, per-row, in the Recently
       logged/Reconciliation detail form, since every row's entry has a
-      different fixed property there). Verified live: 2169 Ash St and
-      5336 W Foster Ave both correctly show no Unit field (zero units
-      logged for either) at first; 5336 W Foster Ave's field order
-      screenshotted top-to-bottom confirms exactly Property → Unit
-      (optional) → Date → Vendor (optional) → Amount (optional) →
-      Category (optional) → Payment method (optional) → Repair/
-      Improvement (optional) → Notes (optional) → Attachments, matching
-      this item's required order exactly; captured a full Receipt
-      (Unit "Unit A", Vendor "ABC Roofing", Amount 250, Payment method
-      "Cash", Repair/Improvement "improvement") and confirmed every one
-      of those five values round-tripped through History → Add details,
-      then deleted the test entry (my own session's data). Did not
+      different fixed property there).
+
+      Payment method CORRECTED before this item was reviewed: originally
+      built as a flat reuse of Financials' 'payment_method' pick list per
+      this item's first wording, then redesigned per direct follow-up
+      instruction into a two-step picker — pick the property's saved
+      Financial account (7.18) first ("Chase checking ...4471"), then a
+      secondary "how" selector (Debit card/Check/Zelle/ACH), so one
+      account covers multiple payment methods instead of needing a
+      duplicate near-identical account per method. New
+      capture_log.financial_account_id (FK to property_financial_accounts,
+      on delete set null); capture_log.payment_method (already added)
+      now stores the "how" value, sourced from a new, separate
+      'payment_how' pick list — deliberately not the shared
+      'payment_method' list, which Financials' own TransactionForm still
+      uses unrelated to this. The "how" selector only renders once a
+      Financial account is chosen.
+
+      Verified live: 2169 Ash St and 5336 W Foster Ave both correctly
+      show no Unit field (zero units logged for either) at first; 5336 W
+      Foster Ave's field order screenshotted top-to-bottom confirms
+      exactly Property → Unit (optional) → Date → Vendor (optional) →
+      Amount (optional) → Category (optional) → Payment method
+      (optional) → Repair/Improvement (optional) → Notes (optional) →
+      Attachments, matching this item's required order exactly; captured
+      a full Receipt (Unit "Unit A", Vendor "ABC Roofing", Amount 250,
+      Repair/Improvement "improvement") and confirmed those values
+      round-tripped through History → Add details, then separately
+      created a test Financial account via the Property Profile (the
+      sanctioned UI path), confirmed it appears in Quick Capture's
+      picker as "Chase checking ...4471" exactly matching the requested
+      format, selected it, confirmed the "How" selector appeared with
+      all 4 seeded values, selected "Debit card", captured, and
+      confirmed both fields round-tripped through History → Add details;
+      archived the test account afterward via the Property Profile's own
+      Financial accounts admin view and confirmed it correctly
+      disappeared from Quick Capture's picker; then deleted both test
+      capture entries (my own session's data). Did not
       create a fresh Unit record purely to test the "hidden when zero
       units" edge case beyond what 2169 Ash St already demonstrated —
       units have no delete/archive path in this app, so that would have
@@ -184,11 +207,54 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       confirmed the list is manageable from Settings ("Manage visit
       types", all 7 values present, add/archive available). Test entry
       voided afterward (my own session's data).
-- [ ] 1.21 Mileage: add optional Start destination and End destination
+- [x] 1.21 Mileage: add optional Start destination and End destination
       fields. When both are filled and miles are recorded, save this as
       a reusable named trip. Selecting a previously-used trip auto-fills
       its recorded mileage. Miles + description alone (no start/end)
-      still counts as a complete, valid entry.
+      still counts as a complete, valid entry. New capture_log
+      start_destination/end_destination columns and a new mileage_trips
+      table (account_id/property_id scoped per explicit product decision
+      — a route stays associated with the property it was logged
+      against; unique on property+start+end so re-logging the same route
+      updates its remembered mileage rather than duplicating). A "Use a
+      previous trip" dropdown appears in the create form once the
+      selected property has ≥1 saved trip; selecting one auto-fills
+      start/end/miles (still editable after). The upsert also fires from
+      the Recently logged/Reconciliation detail-completion path, not
+      just at capture time. Untouched: captureCalculations.ts's
+      completeness check already only requires miles_driven > 0, so this
+      item's "miles + description alone still counts as complete" was
+      already true and needed no change.
+
+      Found and root-cause-fixed a real bug while verifying this live:
+      selecting a saved trip repeatedly made Capture silently do nothing
+      (no network request, no error shown, entryType/propertyId all
+      looked correct — cost a long debugging detour before landing on
+      the actual cause). PostgREST returns mileage_trips.miles as a
+      genuine JS number in this context, not the string every other
+      numeric(...) column in this schema is documented as returning;
+      selectTrip passed that raw number into milesDriven state, and
+      submit()'s `milesDriven.trim()` throws on a number, silently
+      aborting the whole async submit with no network call and no
+      surfaced error. Fixed at the data boundary (listMileageTrips now
+      coerces miles to String(...) so MileageTrip.miles's type is
+      actually true at runtime) rather than defensively patching every
+      consumer. While tracing it, found the exact same class of bug
+      already latent in captureQueries.ts, unrelated to anything built
+      this session: capture_log.amount can come back the same way, so
+      "Add details → don't touch Amount → Save details" silently no-
+      opped whenever a receipt already had an amount set. Fixed
+      alongside it — every capture_log read/write function now
+      normalizes miles_driven/amount to strings before returning
+      (captureQueries.ts's new normalizeCaptureEntry). Verified live
+      after the fix: trip auto-fill → Capture → saved correctly, "Add
+      details" on a receipt with an existing amount → Save details
+      without touching Amount → saved correctly (previously silently
+      failed). Two trips ("Home Office → 2169 Ash St", "Manual Start →
+      Manual End") remain in the picker as leftover test artifacts —
+      mileage_trips has no delete/admin UI (same limitation as Units,
+      out of this item's scope), so they can't be cleaned up from the
+      dashboard; harmless, but the account owner will see them.
 - [x] 1.22 Verify Property field never shows an "add new" option inside
       Quick Capture — properties must only be addable via Property
       Registry, then appear automatically in every property picker.

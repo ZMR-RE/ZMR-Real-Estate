@@ -29,9 +29,17 @@ import { supabase } from '../supabaseClient'
 // NOT one of these either — kept as a fixed 2-value dropdown so the two
 // stay in lockstep with each other, since a capture entry's value has to
 // match the fixed enum a reconciled financial_transaction row accepts.
+// payment_how was added by 20260921130000_capture_log_financial_account.sql
+// (roadmap 1.16 correction) — Quick Capture's Receipt "how was this
+// financial account used" selector (Debit card/Check/Zelle/ACH),
+// deliberately a SEPARATE list from payment_method: Financials'
+// TransactionForm still uses payment_method for its own unrelated flat
+// field, and capture_log.payment_method (the column) now sources its
+// value from this list instead, once a financial_account_id is picked.
 export type PickListName =
   | 'subcategory'
   | 'payment_method'
+  | 'payment_how'
   | 'document_type'
   | 'task_type'
   | 'unit_status'

@@ -46,6 +46,12 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     setNotes,
     milesDriven,
     setMilesDriven,
+    startDestination,
+    setStartDestination,
+    endDestination,
+    setEndDestination,
+    tripOptions,
+    selectTrip,
     vendorId,
     setVendorId,
     vendorOptions,
@@ -54,6 +60,9 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     setAmount,
     category,
     setCategory,
+    financialAccountId,
+    setFinancialAccountId,
+    financialAccountOptions,
     paymentMethod,
     setPaymentMethod,
     repairOrImprovement,
@@ -153,6 +162,37 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
 
           {entryType === 'mileage' && (
             <>
+              {tripOptions.length > 0 && (
+                <>
+                  <label htmlFor="trip">Use a previous trip (optional)</label>
+                  <select
+                    id="trip"
+                    value=""
+                    onChange={(e) => {
+                      const trip = tripOptions.find((t) => t.id === e.target.value)
+                      if (trip) selectTrip(trip)
+                    }}
+                  >
+                    <option value="">Select a trip…</option>
+                    {tripOptions.map((trip) => (
+                      <option key={trip.id} value={trip.id}>
+                        {trip.start_destination} → {trip.end_destination} ({trip.miles} mi)
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
+
+              <label htmlFor="start_destination">Start destination (optional)</label>
+              <input
+                id="start_destination"
+                value={startDestination}
+                onChange={(e) => setStartDestination(e.target.value)}
+              />
+
+              <label htmlFor="end_destination">End destination (optional)</label>
+              <input id="end_destination" value={endDestination} onChange={(e) => setEndDestination(e.target.value)} />
+
               <label htmlFor="miles_driven">Miles driven</label>
               <input
                 id="miles_driven"
@@ -212,15 +252,27 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
                 placeholder="Select category…"
               />
 
-              <label htmlFor="payment_method">Payment method (optional)</label>
-              <PickListSelect
-                id="payment_method"
-                listName="payment_method"
-                title="Payment methods"
-                value={paymentMethod}
-                onChange={setPaymentMethod}
-                placeholder="Select payment method…"
+              <label htmlFor="financial_account">Payment method (optional)</label>
+              <SearchableSelect
+                options={financialAccountOptions}
+                value={financialAccountId}
+                onChange={setFinancialAccountId}
+                placeholder="Search financial accounts…"
               />
+
+              {financialAccountId && (
+                <>
+                  <label htmlFor="payment_how">How (optional)</label>
+                  <PickListSelect
+                    id="payment_how"
+                    listName="payment_how"
+                    title="Payment how"
+                    value={paymentMethod}
+                    onChange={setPaymentMethod}
+                    placeholder="Select how…"
+                  />
+                </>
+              )}
 
               <label htmlFor="repair_or_improvement">Repair/Improvement (optional)</label>
               <select

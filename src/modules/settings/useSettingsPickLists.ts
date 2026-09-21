@@ -17,10 +17,12 @@ export function useSettingsPickLists() {
   const zoningUseCode = usePickListOptions('zoning_use_code')
   const contactMethod = usePickListOptions('contact_method')
   const visitType = usePickListOptions('visit_type')
+  const paymentHow = usePickListOptions('payment_how')
 
   return [
     { title: 'Subcategories', ...subcategory },
     { title: 'Payment methods', ...paymentMethod },
+    { title: 'Payment how', ...paymentHow },
     { title: 'Document types', ...documentType },
     { title: 'Task types', ...taskType },
     { title: 'Unit statuses', ...unitStatus },

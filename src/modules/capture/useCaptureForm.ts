@@ -4,7 +4,9 @@ import { propertyLabel } from '../../shared/propertyLabel'
 import { hasAtMostTwoDecimalPlaces } from '../../shared/currencyInput'
 import { listProperties } from '../properties/propertiesQueries'
 import { listUnits } from '../units/unitsQueries'
+import { listFinancialAccounts } from '../financialAccounts/financialAccountsQueries'
 import { useVendors } from '../vendors/useVendors'
+import { listMileageTrips, upsertMileageTrip, type MileageTrip } from './mileageTripsQueries'
 import {
   addCaptureAttachments,
   createCaptureEntry,
@@ -40,9 +42,14 @@ export function useCaptureForm(onCaptured?: () => void) {
   const [entryDate, setEntryDate] = useState(todayDateString())
   const [notes, setNotes] = useState('')
   const [milesDriven, setMilesDriven] = useState('')
+  const [startDestination, setStartDestination] = useState('')
+  const [endDestination, setEndDestination] = useState('')
+  const [tripOptions, setTripOptions] = useState<MileageTrip[]>([])
   const [vendorId, setVendorId] = useState<string | null>(null)
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState('')
+  const [financialAccountOptions, setFinancialAccountOptions] = useState<{ id: string; label: string }[]>([])
+  const [financialAccountId, setFinancialAccountIdState] = useState<string | null>(null)
   const [paymentMethod, setPaymentMethod] = useState('')
   const [repairOrImprovement, setRepairOrImprovement] = useState('')
   const [metWith, setMetWith] = useState('')
@@ -77,11 +84,57 @@ export function useCaptureForm(onCaptured?: () => void) {
     })
   }, [accountId, propertyId])
 
+  // Roadmap 1.21 — reusable trips, scoped to whichever property is
+  // selected (same reasoning/pattern as Unit above).
+  useEffect(() => {
+    if (!accountId || !propertyId) {
+      setTripOptions([])
+      return
+    }
+    listMileageTrips(accountId, propertyId).then(({ data }) => {
+      setTripOptions(data ?? [])
+    })
+  }, [accountId, propertyId])
+
+  // Roadmap 1.16 correction — Financial account, scoped to whichever
+  // property is selected, same pattern as Unit.
+  useEffect(() => {
+    if (!accountId || !propertyId) {
+      setFinancialAccountOptions([])
+      return
+    }
+    listFinancialAccounts(accountId, propertyId).then(({ data }) => {
+      setFinancialAccountOptions(
+        (data ?? [])
+          .filter((a) => !a.archived)
+          .map((a) => ({ id: a.id, label: `${a.nickname} ...${a.last_four}` })),
+      )
+    })
+  }, [accountId, propertyId])
+
   // A unit selected under the previous property is never valid once the
   // property itself changes — every propertyId change starts Unit over.
   const setPropertyId = (id: string | null) => {
     setPropertyIdState(id)
     setUnitId(null)
+    setFinancialAccountIdState(null)
+    setPaymentMethod('')
+  }
+
+  // The "how" selector only means anything alongside a chosen account —
+  // switching (or clearing) the account starts it over too.
+  const setFinancialAccountId = (id: string | null) => {
+    setFinancialAccountIdState(id)
+    setPaymentMethod('')
+  }
+
+  // Selecting a previously-used trip auto-fills its recorded mileage
+  // (and the start/end pair that identifies it) — the user can still
+  // edit miles afterward if this particular trip varied slightly.
+  const selectTrip = (trip: MileageTrip) => {
+    setStartDestination(trip.start_destination)
+    setEndDestination(trip.end_destination)
+    setMilesDriven(trip.miles)
   }
 
   const reset = () => {
@@ -90,9 +143,12 @@ export function useCaptureForm(onCaptured?: () => void) {
     setEntryDate(todayDateString())
     setNotes('')
     setMilesDriven('')
+    setStartDestination('')
+    setEndDestination('')
     setVendorId(null)
     setAmount('')
     setCategory('')
+    setFinancialAccountIdState(null)
     setPaymentMethod('')
     setRepairOrImprovement('')
     setMetWith('')
@@ -164,10 +220,13 @@ export function useCaptureForm(onCaptured?: () => void) {
       entryDate,
       notes: notes.trim() || null,
       milesDriven: parsedMiles,
+      startDestination: startDestination.trim() || null,
+      endDestination: endDestination.trim() || null,
       unitId,
       vendorId,
       amount: parsedAmount,
       category: category || null,
+      financialAccountId,
       paymentMethod: paymentMethod || null,
       repairOrImprovement: repairOrImprovement || null,
       metWith: metWith.trim() || null,
@@ -181,6 +240,21 @@ export function useCaptureForm(onCaptured?: () => void) {
       setSubmitting(false)
       setError(insertError?.message ?? 'Could not save entry.')
       return
+    }
+
+    // Roadmap 1.21 — a start/end pair alongside recorded miles becomes a
+    // reusable trip; not a save-blocking step (miles + description alone
+    // still counts as a complete, valid entry per this item's own rule),
+    // so a failure here doesn't roll back or block the entry that was
+    // already saved above.
+    if (
+      entryType === 'mileage' &&
+      startDestination.trim() &&
+      endDestination.trim() &&
+      parsedMiles !== null &&
+      parsedMiles > 0
+    ) {
+      await upsertMileageTrip(accountId, propertyId, startDestination.trim(), endDestination.trim(), parsedMiles)
     }
 
     if (files.length > 0) {
@@ -225,6 +299,12 @@ export function useCaptureForm(onCaptured?: () => void) {
     setNotes,
     milesDriven,
     setMilesDriven,
+    startDestination,
+    setStartDestination,
+    endDestination,
+    setEndDestination,
+    tripOptions,
+    selectTrip,
     vendorId,
     setVendorId,
     vendorOptions,
@@ -233,6 +313,9 @@ export function useCaptureForm(onCaptured?: () => void) {
     setAmount,
     category,
     setCategory,
+    financialAccountId,
+    setFinancialAccountId,
+    financialAccountOptions,
     paymentMethod,
     setPaymentMethod,
     repairOrImprovement,

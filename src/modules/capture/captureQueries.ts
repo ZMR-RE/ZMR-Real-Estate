@@ -17,12 +17,16 @@ export interface CaptureEntry {
   entry_date: string
   notes: string | null
   miles_driven: string | null
+  start_destination: string | null
+  end_destination: string | null
   unit_id: string | null
   unit: { id: string; unit_label: string } | null
   vendor_id: string | null
   vendor: { id: string; name: string } | null
   amount: string | null
   category: string | null
+  financial_account_id: string | null
+  financial_account: { id: string; nickname: string; last_four: string; account_type: string } | null
   payment_method: string | null
   repair_or_improvement: string | null
   met_with: string | null
@@ -38,7 +42,26 @@ export interface CaptureEntry {
 }
 
 const CAPTURE_ENTRY_COLUMNS =
-  'id, entry_type, entry_date, notes, miles_driven, unit_id, unit:units(id, unit_label), vendor_id, vendor:vendors(id, name), amount, category, payment_method, repair_or_improvement, met_with, visit_type, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
+  'id, entry_type, entry_date, notes, miles_driven, start_destination, end_destination, unit_id, unit:units(id, unit_label), vendor_id, vendor:vendors(id, name), amount, category, financial_account_id, financial_account:property_financial_accounts(id, nickname, last_four, account_type), payment_method, repair_or_improvement, met_with, visit_type, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
+
+// Root-cause fix for a real bug found while building 1.21: PostgREST
+// doesn't reliably return every numeric(...) column as a JSON string —
+// miles_driven/amount can come back as genuine JS numbers depending on
+// context. Every other consumer only ever sees these fields via a text
+// input's onChange (always a string), so this never surfaced until
+// something (mileage's trip auto-fill) set state directly from fetched
+// data. CaptureEntryDetailsForm does the same (`useState(entry.amount ??
+// '')`), so "open Add details, don't touch Amount, Save" was silently
+// broken too — .trim() throws on a number, the whole save silently no-
+// ops. Normalizing right here, once, is cheaper and safer than auditing
+// every consumer for defensive String() calls.
+function normalizeCaptureEntry(entry: CaptureEntry): CaptureEntry {
+  return {
+    ...entry,
+    miles_driven: entry.miles_driven === null ? null : String(entry.miles_driven),
+    amount: entry.amount === null ? null : String(entry.amount),
+  }
+}
 
 export async function uploadAttachment(accountId: string, file: File) {
   const path = `${accountId}/${crypto.randomUUID()}-${file.name}`
@@ -54,10 +77,13 @@ export interface CreateCaptureEntryInput {
   entryDate: string
   notes: string | null
   milesDriven: number | null
+  startDestination: string | null
+  endDestination: string | null
   unitId: string | null
   vendorId: string | null
   amount: number | null
   category: string | null
+  financialAccountId: string | null
   paymentMethod: string | null
   repairOrImprovement: string | null
   metWith: string | null
@@ -75,7 +101,7 @@ export interface CreateCaptureEntryInput {
 // creating the row. Attachments are inserted separately
 // (addCaptureAttachments) once this row's id exists.
 export async function createCaptureEntry(input: CreateCaptureEntryInput) {
-  return supabase
+  const result = await supabase
     .from('capture_log')
     .insert({
       account_id: input.accountId,
@@ -85,10 +111,13 @@ export async function createCaptureEntry(input: CreateCaptureEntryInput) {
       entry_date: input.entryDate,
       notes: input.notes,
       miles_driven: input.milesDriven,
+      start_destination: input.startDestination,
+      end_destination: input.endDestination,
       unit_id: input.unitId,
       vendor_id: input.vendorId,
       amount: input.amount,
       category: input.category,
+      financial_account_id: input.financialAccountId,
       payment_method: input.paymentMethod,
       repair_or_improvement: input.repairOrImprovement,
       met_with: input.metWith,
@@ -99,6 +128,8 @@ export async function createCaptureEntry(input: CreateCaptureEntryInput) {
     })
     .select(CAPTURE_ENTRY_COLUMNS)
     .single<CaptureEntry>()
+  if (result.data) result.data = normalizeCaptureEntry(result.data)
+  return result
 }
 
 export interface UploadedAttachment {
@@ -165,16 +196,21 @@ export async function listCaptureEntries(accountId: string, filters: CaptureEntr
     query = query.limit(filters.limit)
   }
 
-  return query.returns<CaptureEntry[]>()
+  const result = await query.returns<CaptureEntry[]>()
+  if (result.data) result.data = result.data.map(normalizeCaptureEntry)
+  return result
 }
 
 export interface UpdateCaptureEntryDetailsInput {
   notes: string | null
   milesDriven: number | null
+  startDestination: string | null
+  endDestination: string | null
   unitId: string | null
   vendorId: string | null
   amount: number | null
   category: string | null
+  financialAccountId: string | null
   paymentMethod: string | null
   repairOrImprovement: string | null
   metWith: string | null
@@ -188,15 +224,18 @@ export interface UpdateCaptureEntryDetailsInput {
 // logged/Reconciliation": this is that edit path. Never called from the
 // Quick Capture create form itself.
 export async function updateCaptureEntryDetails(id: string, input: UpdateCaptureEntryDetailsInput) {
-  return supabase
+  const result = await supabase
     .from('capture_log')
     .update({
       notes: input.notes,
       miles_driven: input.milesDriven,
+      start_destination: input.startDestination,
+      end_destination: input.endDestination,
       unit_id: input.unitId,
       vendor_id: input.vendorId,
       amount: input.amount,
       category: input.category,
+      financial_account_id: input.financialAccountId,
       payment_method: input.paymentMethod,
       repair_or_improvement: input.repairOrImprovement,
       met_with: input.metWith,
@@ -208,27 +247,33 @@ export async function updateCaptureEntryDetails(id: string, input: UpdateCapture
     .eq('id', id)
     .select(CAPTURE_ENTRY_COLUMNS)
     .single<CaptureEntry>()
+  if (result.data) result.data = normalizeCaptureEntry(result.data)
+  return result
 }
 
 // Roadmap 1.11's manual override — forces Complete regardless of the
 // computed field-completeness check (captureCalculations.ts). Only ever
 // set from Recently logged/Reconciliation, never from Quick Capture.
 export async function setManuallyCompleted(id: string, value: boolean) {
-  return supabase
+  const result = await supabase
     .from('capture_log')
     .update({ manually_completed: value })
     .eq('id', id)
     .select(CAPTURE_ENTRY_COLUMNS)
     .single<CaptureEntry>()
+  if (result.data) result.data = normalizeCaptureEntry(result.data)
+  return result
 }
 
 export async function markReconciled(id: string) {
-  return supabase
+  const result = await supabase
     .from('capture_log')
     .update({ reconciled: true, reconciled_at: new Date().toISOString() })
     .eq('id', id)
     .select(CAPTURE_ENTRY_COLUMNS)
     .single<CaptureEntry>()
+  if (result.data) result.data = normalizeCaptureEntry(result.data)
+  return result
 }
 
 // Roadmap 1.9 — the only "removal" path for a capture entry, and only
