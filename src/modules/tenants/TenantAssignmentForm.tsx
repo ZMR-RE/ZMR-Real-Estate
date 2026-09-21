@@ -46,7 +46,7 @@ export function TenantAssignmentForm({
   }
 
   const handleSave = () => {
-    if (!tenantId) return
+    if (!tenantId || !startDate) return
     onSave({
       tenantId,
       startDate,
@@ -58,7 +58,9 @@ export function TenantAssignmentForm({
 
   return (
     <div className="inline-form">
-      <label htmlFor="assignment_tenant">Tenant</label>
+      <label htmlFor="assignment_tenant">
+        Tenant<span className="required-marker">*</span>
+      </label>
       {isAddingTenant ? (
         <TenantForm
           saving={creatingTenant}
@@ -80,7 +82,9 @@ export function TenantAssignmentForm({
         />
       )}
 
-      <label htmlFor="assignment_start">Start date</label>
+      <label htmlFor="assignment_start">
+        Start date<span className="required-marker">*</span>
+      </label>
       <input
         id="assignment_start"
         type="date"
@@ -114,7 +118,7 @@ export function TenantAssignmentForm({
         onChange={(e) => setLateFee(e.target.value)}
       />
 
-      <button type="button" disabled={saving || !tenantId} onClick={handleSave}>
+      <button type="button" disabled={saving || !tenantId || !startDate} onClick={handleSave}>
         {saving ? 'Saving…' : 'Assign tenant'}
       </button>
       <button type="button" onClick={onCancel} disabled={saving}>
