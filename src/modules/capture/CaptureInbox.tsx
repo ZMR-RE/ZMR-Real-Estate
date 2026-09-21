@@ -54,6 +54,7 @@ export function CaptureInbox() {
       {tab === 'history' && (
         <CaptureHistoryList
           entries={entries}
+          accountId={accountId}
           completeFilter={completeFilter}
           onCompleteFilterChange={setCompleteFilter}
           typeFilter={typeFilter}

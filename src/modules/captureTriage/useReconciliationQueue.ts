@@ -184,6 +184,7 @@ export function useReconciliationQueue() {
 
   return {
     entries,
+    accountId,
     propertyOptions,
     propertyFilter,
     setPropertyFilter,

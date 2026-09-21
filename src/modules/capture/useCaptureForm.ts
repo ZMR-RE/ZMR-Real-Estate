@@ -3,6 +3,7 @@ import { useAuth } from '../../shared/auth/AuthContext'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { hasAtMostTwoDecimalPlaces } from '../../shared/currencyInput'
 import { listProperties } from '../properties/propertiesQueries'
+import { listUnits } from '../units/unitsQueries'
 import { useVendors } from '../vendors/useVendors'
 import {
   addCaptureAttachments,
@@ -33,13 +34,17 @@ export function useCaptureForm(onCaptured?: () => void) {
   const [propertyOptions, setPropertyOptions] = useState<{ id: string; label: string }[]>([])
   const [propertiesLoading, setPropertiesLoading] = useState(true)
   const [entryType, setEntryType] = useState<EntryType | null>(null)
-  const [propertyId, setPropertyId] = useState<string | null>(null)
+  const [propertyId, setPropertyIdState] = useState<string | null>(null)
+  const [unitOptions, setUnitOptions] = useState<{ id: string; label: string }[]>([])
+  const [unitId, setUnitId] = useState<string | null>(null)
   const [entryDate, setEntryDate] = useState(todayDateString())
   const [notes, setNotes] = useState('')
   const [milesDriven, setMilesDriven] = useState('')
   const [vendorId, setVendorId] = useState<string | null>(null)
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('')
+  const [repairOrImprovement, setRepairOrImprovement] = useState('')
   const [metWith, setMetWith] = useState('')
   const [visitType, setVisitType] = useState('')
   const [contactName, setContactName] = useState('')
@@ -59,6 +64,26 @@ export function useCaptureForm(onCaptured?: () => void) {
     })
   }, [accountId])
 
+  // Roadmap 1.16 — Unit only makes sense scoped to whichever property is
+  // currently selected, so it's re-fetched every time propertyId changes
+  // rather than loaded once up front like propertyOptions.
+  useEffect(() => {
+    if (!accountId || !propertyId) {
+      setUnitOptions([])
+      return
+    }
+    listUnits(accountId, propertyId).then(({ data }) => {
+      setUnitOptions((data ?? []).map((u) => ({ id: u.id, label: u.unit_label })))
+    })
+  }, [accountId, propertyId])
+
+  // A unit selected under the previous property is never valid once the
+  // property itself changes — every propertyId change starts Unit over.
+  const setPropertyId = (id: string | null) => {
+    setPropertyIdState(id)
+    setUnitId(null)
+  }
+
   const reset = () => {
     setEntryType(null)
     setPropertyId(null)
@@ -68,6 +93,8 @@ export function useCaptureForm(onCaptured?: () => void) {
     setVendorId(null)
     setAmount('')
     setCategory('')
+    setPaymentMethod('')
+    setRepairOrImprovement('')
     setMetWith('')
     setVisitType('')
     setContactName('')
@@ -137,9 +164,12 @@ export function useCaptureForm(onCaptured?: () => void) {
       entryDate,
       notes: notes.trim() || null,
       milesDriven: parsedMiles,
+      unitId,
       vendorId,
       amount: parsedAmount,
       category: category || null,
+      paymentMethod: paymentMethod || null,
+      repairOrImprovement: repairOrImprovement || null,
       metWith: metWith.trim() || null,
       visitType: visitType || null,
       contactName: contactName.trim() || null,
@@ -186,6 +216,9 @@ export function useCaptureForm(onCaptured?: () => void) {
     setEntryType,
     propertyId,
     setPropertyId,
+    unitId,
+    setUnitId,
+    unitOptions,
     entryDate,
     setEntryDate,
     notes,
@@ -200,6 +233,10 @@ export function useCaptureForm(onCaptured?: () => void) {
     setAmount,
     category,
     setCategory,
+    paymentMethod,
+    setPaymentMethod,
+    repairOrImprovement,
+    setRepairOrImprovement,
     metWith,
     setMetWith,
     visitType,

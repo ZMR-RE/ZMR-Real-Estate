@@ -73,11 +73,43 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       columns for type, property, date, and both status indicators
       (Complete/Needs details, Reconciled/Not reconciled), filterable by
       type — not the current unstructured list
-- [ ] 1.16 Receipt: add Unit (optional, shown only if property has
+- [x] 1.16 Receipt: add Unit (optional, shown only if property has
       units), Payment method (optional, reuse existing Financials
       pick-list), Repair vs. Improvement (optional dropdown). Reorder
       Receipt's fields to: Property, Unit, Date, Vendor, Amount,
       Category, Payment method, Repair/Improvement, Notes, Attachments.
+      New capture_log columns: unit_id (real FK to units, on delete set
+      null — not free text like financial_transactions.unit, since Quick
+      Capture already links Property for real and Unit deserves the same
+      treatment), payment_method (reuses the existing 'payment_method'
+      pick list, nullable unlike financial_transactions.payment_method's
+      NOT NULL — this item says optional), repair_or_improvement (fixed
+      2-value check constraint, matching financial_transactions'
+      identical column exactly rather than a new pick list — flagged in
+      shared/pickLists/pickListsQueries.ts's PickListName comment as a
+      deliberate exception to the new Pick-list-first rule, so the two
+      stay in lockstep for whatever a reconciled entry becomes). Unit
+      options are fetched reactively keyed on whichever property is
+      selected (both in the create form and, per-row, in the Recently
+      logged/Reconciliation detail form, since every row's entry has a
+      different fixed property there). Verified live: 2169 Ash St and
+      5336 W Foster Ave both correctly show no Unit field (zero units
+      logged for either) at first; 5336 W Foster Ave's field order
+      screenshotted top-to-bottom confirms exactly Property → Unit
+      (optional) → Date → Vendor (optional) → Amount (optional) →
+      Category (optional) → Payment method (optional) → Repair/
+      Improvement (optional) → Notes (optional) → Attachments, matching
+      this item's required order exactly; captured a full Receipt
+      (Unit "Unit A", Vendor "ABC Roofing", Amount 250, Payment method
+      "Cash", Repair/Improvement "improvement") and confirmed every one
+      of those five values round-tripped through History → Add details,
+      then deleted the test entry (my own session's data). Did not
+      create a fresh Unit record purely to test the "hidden when zero
+      units" edge case beyond what 2169 Ash St already demonstrated —
+      units have no delete/archive path in this app, so that would have
+      left permanent, unremovable test data; the positive-display path
+      was instead verified using an existing real unit (5336 W Foster
+      Ave's "Unit A").
 - [x] 1.17 Vendor field must link to the real Vendors entity (8.3),
       not remain free text — dropdown with inline "+ Add vendor",
       matching the same pattern already used for Organization type.

@@ -16,6 +16,7 @@ import { ReconciliationList } from './ReconciliationList'
 export function ReconciliationQueue() {
   const {
     entries,
+    accountId,
     propertyOptions,
     propertyFilter,
     setPropertyFilter,
@@ -77,6 +78,7 @@ export function ReconciliationQueue() {
       ) : (
         <ReconciliationList
           entries={entries}
+          accountId={accountId}
           processingId={processingId}
           categoryOptions={documentTypeOptions.activeOptions}
           categoryByEntry={categoryByEntry}

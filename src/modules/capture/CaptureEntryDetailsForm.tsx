@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
 import { SearchableSelect, type SearchableSelectOption } from '../../shared/SearchableSelect'
 import { formatAmountOnBlur, sanitizeAmountInput } from '../../shared/currencyInput'
+import { listUnits } from '../units/unitsQueries'
 import { VendorForm } from '../vendors/VendorForm'
 import type { VendorInput } from '../vendors/vendorsQueries'
 import { MAX_ATTACHMENTS_PER_ENTRY, type CaptureEntry } from './captureQueries'
@@ -9,9 +10,12 @@ import { MAX_ATTACHMENTS_PER_ENTRY, type CaptureEntry } from './captureQueries'
 export interface CaptureEntryDetailsInput {
   notes: string
   milesDriven: string
+  unitId: string
   vendorId: string
   amount: string
   category: string
+  paymentMethod: string
+  repairOrImprovement: string
   metWith: string
   visitType: string
   contactName: string
@@ -22,6 +26,7 @@ export interface CaptureEntryDetailsInput {
 
 interface CaptureEntryDetailsFormProps {
   entry: CaptureEntry
+  accountId: string | null
   saving: boolean
   error: string | null
   vendorOptions: SearchableSelectOption[]
@@ -38,6 +43,7 @@ interface CaptureEntryDetailsFormProps {
 // driven always could.
 export function CaptureEntryDetailsForm({
   entry,
+  accountId,
   saving,
   error,
   vendorOptions,
@@ -47,9 +53,13 @@ export function CaptureEntryDetailsForm({
 }: CaptureEntryDetailsFormProps) {
   const [notes, setNotes] = useState(entry.notes ?? '')
   const [milesDriven, setMilesDriven] = useState(entry.miles_driven ?? '')
+  const [unitId, setUnitId] = useState(entry.unit_id ?? '')
+  const [unitOptions, setUnitOptions] = useState<SearchableSelectOption[]>([])
   const [vendorId, setVendorId] = useState(entry.vendor_id ?? '')
   const [amount, setAmount] = useState(entry.amount ?? '')
   const [category, setCategory] = useState(entry.category ?? '')
+  const [paymentMethod, setPaymentMethod] = useState(entry.payment_method ?? '')
+  const [repairOrImprovement, setRepairOrImprovement] = useState(entry.repair_or_improvement ?? '')
   const [metWith, setMetWith] = useState(entry.met_with ?? '')
   const [visitType, setVisitType] = useState(entry.visit_type ?? '')
   const [contactName, setContactName] = useState(entry.contact_name ?? '')
@@ -60,6 +70,16 @@ export function CaptureEntryDetailsForm({
   const [creatingVendor, setCreatingVendor] = useState(false)
   const [createVendorError, setCreateVendorError] = useState<string | null>(null)
   const remainingSlots = MAX_ATTACHMENTS_PER_ENTRY - entry.attachments.length
+
+  // Roadmap 1.16 — Unit, scoped to this entry's own (fixed, non-editable
+  // here) property. Fetched per-instance rather than threaded down as a
+  // prop since every row in a list of entries has a different property.
+  useEffect(() => {
+    if (!accountId || entry.entry_type !== 'receipt') return
+    listUnits(accountId, entry.property.id).then(({ data }) => {
+      setUnitOptions((data ?? []).map((u) => ({ id: u.id, label: u.unit_label })))
+    })
+  }, [accountId, entry.entry_type, entry.property.id])
 
   const handleCreateVendor = async (input: VendorInput) => {
     setCreatingVendor(true)
@@ -95,6 +115,18 @@ export function CaptureEntryDetailsForm({
 
       {entry.entry_type === 'receipt' && (
         <>
+          {unitOptions.length > 0 && (
+            <>
+              <label htmlFor={`unit_${entry.id}`}>Unit</label>
+              <SearchableSelect
+                options={unitOptions}
+                value={unitId || null}
+                onChange={setUnitId}
+                placeholder="Search units…"
+              />
+            </>
+          )}
+
           <label htmlFor={`vendor_${entry.id}`}>Vendor</label>
           {isAddingVendor ? (
             <VendorForm
@@ -138,6 +170,27 @@ export function CaptureEntryDetailsForm({
             onChange={setCategory}
             placeholder="Select category…"
           />
+
+          <label htmlFor={`payment_method_${entry.id}`}>Payment method</label>
+          <PickListSelect
+            id={`payment_method_${entry.id}`}
+            listName="payment_method"
+            title="Payment methods"
+            value={paymentMethod}
+            onChange={setPaymentMethod}
+            placeholder="Select payment method…"
+          />
+
+          <label htmlFor={`repair_or_improvement_${entry.id}`}>Repair/Improvement</label>
+          <select
+            id={`repair_or_improvement_${entry.id}`}
+            value={repairOrImprovement}
+            onChange={(e) => setRepairOrImprovement(e.target.value)}
+          >
+            <option value="">—</option>
+            <option value="repair">Repair</option>
+            <option value="improvement">Improvement</option>
+          </select>
         </>
       )}
 
@@ -207,9 +260,12 @@ export function CaptureEntryDetailsForm({
           onSave({
             notes,
             milesDriven,
+            unitId,
             vendorId,
             amount,
             category,
+            paymentMethod,
+            repairOrImprovement,
             metWith,
             visitType,
             contactName,

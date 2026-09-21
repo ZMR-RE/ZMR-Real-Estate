@@ -17,10 +17,14 @@ export interface CaptureEntry {
   entry_date: string
   notes: string | null
   miles_driven: string | null
+  unit_id: string | null
+  unit: { id: string; unit_label: string } | null
   vendor_id: string | null
   vendor: { id: string; name: string } | null
   amount: string | null
   category: string | null
+  payment_method: string | null
+  repair_or_improvement: string | null
   met_with: string | null
   visit_type: string | null
   contact_name: string | null
@@ -34,7 +38,7 @@ export interface CaptureEntry {
 }
 
 const CAPTURE_ENTRY_COLUMNS =
-  'id, entry_type, entry_date, notes, miles_driven, vendor_id, vendor:vendors(id, name), amount, category, met_with, visit_type, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
+  'id, entry_type, entry_date, notes, miles_driven, unit_id, unit:units(id, unit_label), vendor_id, vendor:vendors(id, name), amount, category, payment_method, repair_or_improvement, met_with, visit_type, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
 
 export async function uploadAttachment(accountId: string, file: File) {
   const path = `${accountId}/${crypto.randomUUID()}-${file.name}`
@@ -50,9 +54,12 @@ export interface CreateCaptureEntryInput {
   entryDate: string
   notes: string | null
   milesDriven: number | null
+  unitId: string | null
   vendorId: string | null
   amount: number | null
   category: string | null
+  paymentMethod: string | null
+  repairOrImprovement: string | null
   metWith: string | null
   visitType: string | null
   contactName: string | null
@@ -78,9 +85,12 @@ export async function createCaptureEntry(input: CreateCaptureEntryInput) {
       entry_date: input.entryDate,
       notes: input.notes,
       miles_driven: input.milesDriven,
+      unit_id: input.unitId,
       vendor_id: input.vendorId,
       amount: input.amount,
       category: input.category,
+      payment_method: input.paymentMethod,
+      repair_or_improvement: input.repairOrImprovement,
       met_with: input.metWith,
       visit_type: input.visitType,
       contact_name: input.contactName,
@@ -161,9 +171,12 @@ export async function listCaptureEntries(accountId: string, filters: CaptureEntr
 export interface UpdateCaptureEntryDetailsInput {
   notes: string | null
   milesDriven: number | null
+  unitId: string | null
   vendorId: string | null
   amount: number | null
   category: string | null
+  paymentMethod: string | null
+  repairOrImprovement: string | null
   metWith: string | null
   visitType: string | null
   contactName: string | null
@@ -180,9 +193,12 @@ export async function updateCaptureEntryDetails(id: string, input: UpdateCapture
     .update({
       notes: input.notes,
       miles_driven: input.milesDriven,
+      unit_id: input.unitId,
       vendor_id: input.vendorId,
       amount: input.amount,
       category: input.category,
+      payment_method: input.paymentMethod,
+      repair_or_improvement: input.repairOrImprovement,
       met_with: input.metWith,
       visit_type: input.visitType,
       contact_name: input.contactName,

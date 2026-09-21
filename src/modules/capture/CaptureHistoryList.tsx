@@ -18,6 +18,7 @@ const ENTRY_TYPES: EntryType[] = ['receipt', 'visit', 'communication', 'mileage'
 
 interface CaptureHistoryListProps {
   entries: CaptureEntry[]
+  accountId: string | null
   completeFilter: CompleteFilter
   onCompleteFilterChange: (filter: CompleteFilter) => void
   typeFilter: TypeFilter
@@ -57,6 +58,7 @@ const COLUMN_COUNT = 6
 // header row instead of spanning it.
 export function CaptureHistoryList({
   entries,
+  accountId,
   completeFilter,
   onCompleteFilterChange,
   typeFilter,
@@ -173,6 +175,7 @@ export function CaptureHistoryList({
                       <td colSpan={COLUMN_COUNT}>
                         <CaptureEntryDetailsForm
                           entry={entry}
+                          accountId={accountId}
                           saving={processingId === entry.id}
                           error={detailsError}
                           vendorOptions={vendorOptions}

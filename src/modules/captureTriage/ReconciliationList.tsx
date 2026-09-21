@@ -18,6 +18,7 @@ const ENTRY_TYPE_LABELS: Record<EntryType, string> = {
 
 interface ReconciliationListProps {
   entries: QueueEntry[]
+  accountId: string | null
   processingId: string | null
   categoryOptions: PickListOption[]
   categoryByEntry: Record<string, DocumentCategory | ''>
@@ -37,6 +38,7 @@ interface ReconciliationListProps {
 
 export function ReconciliationList({
   entries,
+  accountId,
   processingId,
   categoryOptions,
   categoryByEntry,
@@ -142,6 +144,7 @@ export function ReconciliationList({
                   <td colSpan={7}>
                     <CaptureEntryDetailsForm
                       entry={entry}
+                      accountId={accountId}
                       saving={processingId === entry.id}
                       error={detailsError}
                       vendorOptions={vendorOptions}

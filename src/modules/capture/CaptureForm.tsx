@@ -37,6 +37,9 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     setEntryType,
     propertyId,
     setPropertyId,
+    unitId,
+    setUnitId,
+    unitOptions,
     entryDate,
     setEntryDate,
     notes,
@@ -51,6 +54,10 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     setAmount,
     category,
     setCategory,
+    paymentMethod,
+    setPaymentMethod,
+    repairOrImprovement,
+    setRepairOrImprovement,
     metWith,
     setMetWith,
     visitType,
@@ -123,6 +130,18 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
             />
           )}
 
+          {entryType === 'receipt' && unitOptions.length > 0 && (
+            <>
+              <label htmlFor="unit">Unit (optional)</label>
+              <SearchableSelect
+                options={unitOptions}
+                value={unitId}
+                onChange={setUnitId}
+                placeholder="Search units…"
+              />
+            </>
+          )}
+
           <label htmlFor="entry_date">Date</label>
           <input
             id="entry_date"
@@ -192,6 +211,27 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
                 onChange={setCategory}
                 placeholder="Select category…"
               />
+
+              <label htmlFor="payment_method">Payment method (optional)</label>
+              <PickListSelect
+                id="payment_method"
+                listName="payment_method"
+                title="Payment methods"
+                value={paymentMethod}
+                onChange={setPaymentMethod}
+                placeholder="Select payment method…"
+              />
+
+              <label htmlFor="repair_or_improvement">Repair/Improvement (optional)</label>
+              <select
+                id="repair_or_improvement"
+                value={repairOrImprovement}
+                onChange={(e) => setRepairOrImprovement(e.target.value)}
+              >
+                <option value="">—</option>
+                <option value="repair">Repair</option>
+                <option value="improvement">Improvement</option>
+              </select>
             </>
           )}
 
