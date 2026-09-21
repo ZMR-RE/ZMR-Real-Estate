@@ -49,6 +49,8 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     setCategory,
     metWith,
     setMetWith,
+    visitType,
+    setVisitType,
     contactName,
     setContactName,
     contactMethod,
@@ -154,6 +156,16 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
             <>
               <label htmlFor="met_with">Who was met with (optional)</label>
               <input id="met_with" value={metWith} onChange={(e) => setMetWith(e.target.value)} />
+
+              <label htmlFor="visit_type">Visit type (optional)</label>
+              <PickListSelect
+                id="visit_type"
+                listName="visit_type"
+                title="Visit types"
+                value={visitType}
+                onChange={setVisitType}
+                placeholder="Select visit type…"
+              />
             </>
           )}
 

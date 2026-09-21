@@ -21,6 +21,7 @@ export interface CaptureEntry {
   amount: string | null
   category: string | null
   met_with: string | null
+  visit_type: string | null
   contact_name: string | null
   contact_method: string | null
   subject: string | null
@@ -32,7 +33,7 @@ export interface CaptureEntry {
 }
 
 const CAPTURE_ENTRY_COLUMNS =
-  'id, entry_type, entry_date, notes, miles_driven, vendor, amount, category, met_with, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
+  'id, entry_type, entry_date, notes, miles_driven, vendor, amount, category, met_with, visit_type, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
 
 export async function uploadAttachment(accountId: string, file: File) {
   const path = `${accountId}/${crypto.randomUUID()}-${file.name}`
@@ -52,6 +53,7 @@ export interface CreateCaptureEntryInput {
   amount: number | null
   category: string | null
   metWith: string | null
+  visitType: string | null
   contactName: string | null
   contactMethod: string | null
   subject: string | null
@@ -79,6 +81,7 @@ export async function createCaptureEntry(input: CreateCaptureEntryInput) {
       amount: input.amount,
       category: input.category,
       met_with: input.metWith,
+      visit_type: input.visitType,
       contact_name: input.contactName,
       contact_method: input.contactMethod,
       subject: input.subject,
@@ -161,6 +164,7 @@ export interface UpdateCaptureEntryDetailsInput {
   amount: number | null
   category: string | null
   metWith: string | null
+  visitType: string | null
   contactName: string | null
   contactMethod: string | null
   subject: string | null
@@ -179,6 +183,7 @@ export async function updateCaptureEntryDetails(id: string, input: UpdateCapture
       amount: input.amount,
       category: input.category,
       met_with: input.metWith,
+      visit_type: input.visitType,
       contact_name: input.contactName,
       contact_method: input.contactMethod,
       subject: input.subject,

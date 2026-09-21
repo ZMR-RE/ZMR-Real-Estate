@@ -20,6 +20,7 @@ export interface SaveCaptureEntryDetailsInput {
   amount: string
   category: string
   metWith: string
+  visitType: string
   contactName: string
   contactMethod: string
   subject: string
@@ -77,6 +78,7 @@ export async function saveCaptureEntryDetails(
     amount: parsedAmount,
     category: input.category || null,
     metWith: input.metWith.trim() || null,
+    visitType: input.visitType || null,
     contactName: input.contactName.trim() || null,
     contactMethod: input.contactMethod || null,
     subject: input.subject.trim() || null,

@@ -16,6 +16,7 @@ export function useSettingsPickLists() {
   const purchaseMethod = usePickListOptions('purchase_method')
   const zoningUseCode = usePickListOptions('zoning_use_code')
   const contactMethod = usePickListOptions('contact_method')
+  const visitType = usePickListOptions('visit_type')
 
   return [
     { title: 'Subcategories', ...subcategory },
@@ -28,5 +29,6 @@ export function useSettingsPickLists() {
     { title: 'Purchase methods', ...purchaseMethod },
     { title: 'Zoning/use codes', ...zoningUseCode },
     { title: 'Contact methods', ...contactMethod },
+    { title: 'Visit types', ...visitType },
   ]
 }

@@ -102,9 +102,18 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       opened it and confirmed the exact standard panel (add-new-value
       row, list with Archive/Restore per option, an archived "Plumbing"
       entry with a working Restore button).
-- [ ] 1.20 Add Visit type (pick-list): seed with Maintenance/Repair,
+- [x] 1.20 Add Visit type (pick-list): seed with Maintenance/Repair,
       Estimate/Quote, Inspection, Tenant meeting, Showing, Move-in/
-      Move-out, Other.
+      Move-out, Other. New capture_log.visit_type column (plain text,
+      same pattern as contact_method); wired into both the Quick Capture
+      create form and the Recently logged/Reconciliation detail-
+      completion form via the standard PickListSelect. Verified live:
+      all 7 seeded values present in the dropdown, captured a Visit
+      entry with "Inspection" selected, confirmed it round-tripped
+      through History → Add details showing "Inspection" pre-filled, and
+      confirmed the list is manageable from Settings ("Manage visit
+      types", all 7 values present, add/archive available). Test entry
+      voided afterward (my own session's data).
 - [ ] 1.21 Mileage: add optional Start destination and End destination
       fields. When both are filled and miles are recorded, save this as
       a reusable named trip. Selecting a previously-used trip auto-fills

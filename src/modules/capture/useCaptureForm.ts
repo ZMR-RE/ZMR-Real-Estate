@@ -38,6 +38,7 @@ export function useCaptureForm(onCaptured?: () => void) {
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState('')
   const [metWith, setMetWith] = useState('')
+  const [visitType, setVisitType] = useState('')
   const [contactName, setContactName] = useState('')
   const [contactMethod, setContactMethod] = useState('')
   const [subject, setSubject] = useState('')
@@ -65,6 +66,7 @@ export function useCaptureForm(onCaptured?: () => void) {
     setAmount('')
     setCategory('')
     setMetWith('')
+    setVisitType('')
     setContactName('')
     setContactMethod('')
     setSubject('')
@@ -132,6 +134,7 @@ export function useCaptureForm(onCaptured?: () => void) {
       amount: parsedAmount,
       category: category || null,
       metWith: metWith.trim() || null,
+      visitType: visitType || null,
       contactName: contactName.trim() || null,
       contactMethod: contactMethod || null,
       subject: subject.trim() || null,
@@ -190,6 +193,8 @@ export function useCaptureForm(onCaptured?: () => void) {
     setCategory,
     metWith,
     setMetWith,
+    visitType,
+    setVisitType,
     contactName,
     setContactName,
     contactMethod,

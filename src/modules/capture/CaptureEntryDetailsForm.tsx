@@ -9,6 +9,7 @@ export interface CaptureEntryDetailsInput {
   amount: string
   category: string
   metWith: string
+  visitType: string
   contactName: string
   contactMethod: string
   subject: string
@@ -36,6 +37,7 @@ export function CaptureEntryDetailsForm({ entry, saving, error, onSave, onCancel
   const [amount, setAmount] = useState(entry.amount ?? '')
   const [category, setCategory] = useState(entry.category ?? '')
   const [metWith, setMetWith] = useState(entry.met_with ?? '')
+  const [visitType, setVisitType] = useState(entry.visit_type ?? '')
   const [contactName, setContactName] = useState(entry.contact_name ?? '')
   const [contactMethod, setContactMethod] = useState(entry.contact_method ?? '')
   const [subject, setSubject] = useState(entry.subject ?? '')
@@ -91,6 +93,16 @@ export function CaptureEntryDetailsForm({ entry, saving, error, onSave, onCancel
         <>
           <label htmlFor={`met_with_${entry.id}`}>Who was met with</label>
           <input id={`met_with_${entry.id}`} value={metWith} onChange={(e) => setMetWith(e.target.value)} />
+
+          <label htmlFor={`visit_type_${entry.id}`}>Visit type</label>
+          <PickListSelect
+            id={`visit_type_${entry.id}`}
+            listName="visit_type"
+            title="Visit types"
+            value={visitType}
+            onChange={setVisitType}
+            placeholder="Select visit type…"
+          />
         </>
       )}
 
@@ -140,7 +152,19 @@ export function CaptureEntryDetailsForm({ entry, saving, error, onSave, onCancel
         type="button"
         disabled={saving}
         onClick={() =>
-          onSave({ notes, milesDriven, vendor, amount, category, metWith, contactName, contactMethod, subject, newFiles })
+          onSave({
+            notes,
+            milesDriven,
+            vendor,
+            amount,
+            category,
+            metWith,
+            visitType,
+            contactName,
+            contactMethod,
+            subject,
+            newFiles,
+          })
         }
       >
         {saving ? 'Saving…' : 'Save details'}

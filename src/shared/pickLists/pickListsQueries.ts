@@ -20,7 +20,15 @@ import { supabase } from '../supabaseClient'
 // existing free-text value still displays via PickListSelect's
 // current-value fallback even before an account adds any options).
 // properties.state is NOT one of these — it's a fixed 50-state dropdown
-// (src/shared/usStates.ts), not an account-editable pick list.
+// (src/shared/usStates.ts), not an account-editable pick list. visit_type
+// was added by 20260921090000_capture_log_visit_type.sql (roadmap 1.20),
+// seeded with the 7 values that item specified — an explicitly given
+// taxonomy, not a guess, same as contact_method's seed.
+// financial_transactions.repair_or_improvement (and Quick Capture's copy
+// of it, capture_log.repair_or_improvement, roadmap 1.16) is deliberately
+// NOT one of these either — kept as a fixed 2-value dropdown so the two
+// stay in lockstep with each other, since a capture entry's value has to
+// match the fixed enum a reconciled financial_transaction row accepts.
 export type PickListName =
   | 'subcategory'
   | 'payment_method'
@@ -33,6 +41,7 @@ export type PickListName =
   | 'purchase_method'
   | 'zoning_use_code'
   | 'contact_method'
+  | 'visit_type'
 
 export interface PickListOption {
   id: string
