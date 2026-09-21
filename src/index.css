@@ -483,6 +483,15 @@ code {
   opacity: 0.55;
 }
 
+/* Roadmap 1.25 — Quick Capture's required-field convention: only the
+   genuinely required fields (Type/Property/Date) get this marker next
+   to their label, instead of every optional field being individually
+   tagged "(optional)". */
+.required-marker {
+  color: var(--danger);
+  margin-left: 2px;
+}
+
 /* ============================================================
    Forms
    ============================================================ */

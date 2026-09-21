@@ -278,14 +278,43 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       Complete / Reconciled) at all times, including the empty state
       ("Nothing logged yet") — so the screen's structure is visible
       before any data exists.
-- [ ] 1.25 Global required-field convention: remove "(optional)" text
+- [x] 1.25 Global required-field convention: remove "(optional)" text
       labels everywhere in Quick Capture. Only Type/Property/Date (the
       genuinely required fields) get a red asterisk (*) next to the
       label. Confirm Save is functionally blocked (not just visually
       hinted) when any required field is empty — test this explicitly,
       don't assume the disabled-button styling already enforces it.
-- [ ] 1.26 Rename the "Capture" button to "Save" everywhere in Quick
-      Capture.
+      Scoped to Quick Capture only, per this item's own "everywhere in
+      Quick Capture" wording — not a retroactive sweep of every
+      `required` field elsewhere in the app (PropertyForm, Financials'
+      TransactionForm, etc.), which weren't part of this request. New
+      shared `.required-marker` CSS class (src/index.css, colored via
+      the existing --danger token) plus a visible "Type" label added
+      above the type-selector button group (it previously had no
+      on-screen label at all, only an aria-label). Every "(optional)"
+      suffix removed from CaptureForm.tsx's field labels (16 of them);
+      CaptureEntryDetailsForm.tsx already had none. Verified live, three
+      separate mechanisms since Type/Property/Date are each enforced
+      differently: Type — structurally impossible to submit without
+      (the whole form, including the Save button, doesn't render until
+      a type is chosen); Property — confirmed the Save button's
+      `disabled` reflects true with no property selected, and that
+      clicking it anyway does nothing (no submission); Date — confirmed
+      separately, since Save's own `disabled` prop does NOT check
+      entryDate: cleared the date field, confirmed
+      `validity.valid === false`, then clicked Save and confirmed the
+      form stayed open (native HTML `required` constraint validation
+      blocked the actual submission, not just a visual/JS check) —
+      restored the date afterward. Also confirmed via computed style
+      that `.required-marker` renders in the actual danger-red color
+      (`rgb(181, 68, 47)`, matching --danger), not just presence of the
+      character.
+- [x] 1.26 Rename the "Capture" button to "Save" everywhere in Quick
+      Capture. Only the create form's submit button said "Capture" (the
+      "Capture"/"History" tab labels are a different UI element — a
+      section name, not this action button — left unchanged since
+      renaming a tab to "Save" wouldn't make sense). Verified live: the
+      button now reads "Save" (and "Saving…" while submitting, unchanged).
 - [ ] 1.27 Add a consistent visual cue (chevron or search icon) to every
       interactive-selector field — both the Property search/type-ahead
       and standard pick-list dropdowns (Visit type, Category, etc.) —
@@ -297,9 +326,17 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       and Tenants (8.4, scoped to the selected property's current/past
       tenants), visually grouped by type, with a fallback "Someone else"
       free-text option for one-off visitors who are neither.
-- [ ] 1.29 Confirm the new Visit type "Manage visit types" button uses
+- [x] 1.29 Confirm the new Visit type "Manage visit types" button uses
       the same corrected "Manage options" shared component from 1.19,
-      not a bespoke duplicate — verify before committing.
+      not a bespoke duplicate — verify before committing. ALREADY
+      SATISFIED, no code change — Visit type was built in 1.20 using
+      `<PickListSelect listName="visit_type">`, the identical shared
+      component every other pick list in the app uses (payment_how,
+      contact_method, subcategory, etc.); "Manage visit types" is that
+      component's generated ManageOptionsPanel label, not a separate
+      implementation. Confirmed by source (CaptureForm.tsx) and by 1.20's
+      own live verification, which opened it and confirmed the standard
+      add/archive panel.
 
 ## 2. Phase 2 — Parallelized Build (5 terminals, once Phase 1 schema is locked and stable)
 - [x] 2.1 Rent Ops — invoicing, receipts, on-time payment tracking

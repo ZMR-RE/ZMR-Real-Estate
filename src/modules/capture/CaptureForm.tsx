@@ -112,7 +112,10 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
 
   return (
     <form className="capture-form" onSubmit={handleSubmit}>
-      <div className="type-selector" role="group" aria-label="Type">
+      <label id="type_label">
+        Type<span className="required-marker">*</span>
+      </label>
+      <div className="type-selector" role="group" aria-labelledby="type_label">
         {ENTRY_TYPES.map((type) => (
           <button
             key={type.value}
@@ -127,7 +130,9 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
 
       {entryType && (
         <>
-          <label htmlFor="property">Property</label>
+          <label htmlFor="property">
+            Property<span className="required-marker">*</span>
+          </label>
           {propertiesLoading ? (
             <p>Loading properties…</p>
           ) : (
@@ -141,7 +146,7 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
 
           {entryType === 'receipt' && unitOptions.length > 0 && (
             <>
-              <label htmlFor="unit">Unit (optional)</label>
+              <label htmlFor="unit">Unit</label>
               <SearchableSelect
                 options={unitOptions}
                 value={unitId}
@@ -151,7 +156,9 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
             </>
           )}
 
-          <label htmlFor="entry_date">Date</label>
+          <label htmlFor="entry_date">
+            Date<span className="required-marker">*</span>
+          </label>
           <input
             id="entry_date"
             type="date"
@@ -164,7 +171,7 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
             <>
               {tripOptions.length > 0 && (
                 <>
-                  <label htmlFor="trip">Use a previous trip (optional)</label>
+                  <label htmlFor="trip">Use a previous trip</label>
                   <select
                     id="trip"
                     value=""
@@ -183,14 +190,14 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
                 </>
               )}
 
-              <label htmlFor="start_destination">Start destination (optional)</label>
+              <label htmlFor="start_destination">Start destination</label>
               <input
                 id="start_destination"
                 value={startDestination}
                 onChange={(e) => setStartDestination(e.target.value)}
               />
 
-              <label htmlFor="end_destination">End destination (optional)</label>
+              <label htmlFor="end_destination">End destination</label>
               <input id="end_destination" value={endDestination} onChange={(e) => setEndDestination(e.target.value)} />
 
               <label htmlFor="miles_driven">Miles driven</label>
@@ -208,7 +215,7 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
 
           {entryType === 'receipt' && (
             <>
-              <label htmlFor="vendor">Vendor (optional)</label>
+              <label htmlFor="vendor">Vendor</label>
               {isAddingVendor ? (
                 <VendorForm
                   saving={creatingVendor}
@@ -230,7 +237,7 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
                 />
               )}
 
-              <label htmlFor="amount">Amount (optional)</label>
+              <label htmlFor="amount">Amount</label>
               <input
                 id="amount"
                 type="number"
@@ -242,7 +249,7 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
                 onBlur={(e) => setAmount(formatAmountOnBlur(e.target.value))}
               />
 
-              <label htmlFor="category">Category (optional)</label>
+              <label htmlFor="category">Category</label>
               <PickListSelect
                 id="category"
                 listName="subcategory"
@@ -252,7 +259,7 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
                 placeholder="Select category…"
               />
 
-              <label htmlFor="financial_account">Payment method (optional)</label>
+              <label htmlFor="financial_account">Payment method</label>
               <SearchableSelect
                 options={financialAccountOptions}
                 value={financialAccountId}
@@ -262,7 +269,7 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
 
               {financialAccountId && (
                 <>
-                  <label htmlFor="payment_how">How (optional)</label>
+                  <label htmlFor="payment_how">How</label>
                   <PickListSelect
                     id="payment_how"
                     listName="payment_how"
@@ -274,7 +281,7 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
                 </>
               )}
 
-              <label htmlFor="repair_or_improvement">Repair/Improvement (optional)</label>
+              <label htmlFor="repair_or_improvement">Repair/Improvement</label>
               <select
                 id="repair_or_improvement"
                 value={repairOrImprovement}
@@ -289,10 +296,10 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
 
           {entryType === 'visit' && (
             <>
-              <label htmlFor="met_with">Who was met with (optional)</label>
+              <label htmlFor="met_with">Who was met with</label>
               <input id="met_with" value={metWith} onChange={(e) => setMetWith(e.target.value)} />
 
-              <label htmlFor="visit_type">Visit type (optional)</label>
+              <label htmlFor="visit_type">Visit type</label>
               <PickListSelect
                 id="visit_type"
                 listName="visit_type"
@@ -306,10 +313,10 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
 
           {entryType === 'communication' && (
             <>
-              <label htmlFor="contact_name">Contact name (optional)</label>
+              <label htmlFor="contact_name">Contact name</label>
               <input id="contact_name" value={contactName} onChange={(e) => setContactName(e.target.value)} />
 
-              <label htmlFor="contact_method">Method (optional)</label>
+              <label htmlFor="contact_method">Method</label>
               <PickListSelect
                 id="contact_method"
                 listName="contact_method"
@@ -319,15 +326,15 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
                 placeholder="Select method…"
               />
 
-              <label htmlFor="subject">Subject (optional)</label>
+              <label htmlFor="subject">Subject</label>
               <input id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
             </>
           )}
 
-          <label htmlFor="notes">{entryType === 'mileage' ? 'Purpose (optional)' : 'Notes (optional)'}</label>
+          <label htmlFor="notes">{entryType === 'mileage' ? 'Purpose' : 'Notes'}</label>
           <textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
 
-          <label htmlFor="attachment">Attachments (optional, up to {MAX_ATTACHMENTS_PER_ENTRY})</label>
+          <label htmlFor="attachment">Attachments (up to {MAX_ATTACHMENTS_PER_ENTRY})</label>
           <input
             key={savedAt ?? 'initial'}
             id="attachment"
@@ -357,7 +364,7 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
           {savedAt && <p className="success-message">Saved.</p>}
 
           <button type="submit" disabled={submitting || !propertyId}>
-            {submitting ? 'Saving…' : 'Capture'}
+            {submitting ? 'Saving…' : 'Save'}
           </button>
         </>
       )}
