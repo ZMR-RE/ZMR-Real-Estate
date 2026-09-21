@@ -522,6 +522,20 @@ textarea {
   transition: border-color 0.12s ease;
 }
 
+/* Roadmap 1.27 — a consistent chevron on every native <select>, so a
+   dropdown reads as a clickable selector the same way everywhere in the
+   app rather than relying on each browser/OS's own (inconsistently
+   styled) native arrow. appearance:none removes that native arrow so
+   this one replaces it, not doubles it. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235b6472' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  padding-right: calc(var(--space-3) * 2 + 10px);
+}
+
 textarea {
   min-height: 80px;
   resize: vertical;
@@ -877,6 +891,17 @@ dd {
    ============================================================ */
 .searchable-select {
   position: relative;
+}
+
+/* Same chevron as the native <select> rule above — this is a plain text
+   input under the hood, so without it there was no visual cue at all
+   that it's a clickable selector (a native select gets one for free
+   from the browser; this doesn't). */
+.searchable-select input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235b6472' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  padding-right: calc(var(--space-3) * 2 + 10px);
 }
 
 .searchable-select-menu {

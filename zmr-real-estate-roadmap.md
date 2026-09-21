@@ -315,12 +315,29 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       section name, not this action button — left unchanged since
       renaming a tab to "Save" wouldn't make sense). Verified live: the
       button now reads "Save" (and "Saving…" while submitting, unchanged).
-- [ ] 1.27 Add a consistent visual cue (chevron or search icon) to every
+- [x] 1.27 Add a consistent visual cue (chevron or search icon) to every
       interactive-selector field — both the Property search/type-ahead
       and standard pick-list dropdowns (Visit type, Category, etc.) —
       so both are visually recognizable as clickable selectors, even
       though their underlying widget differs (searchable for long lists
-      like Property, plain dropdown for short fixed lists).
+      like Property, plain dropdown for short fixed lists). Used the
+      same chevron for both widget types rather than a different icon
+      per type, for maximum consistency (this item's own wording allows
+      either). Fixed at the two shared components (src/shared/
+      SearchableSelect.tsx's input, and the global `select` rule in
+      index.css that every PickListSelect/native <select> already
+      inherits from) rather than a Quick-Capture-only treatment, so it's
+      genuinely consistent everywhere in the app, not just here — native
+      selects get `appearance: none` plus the same chevron
+      background-image every browser/OS would otherwise render its own
+      (inconsistent-looking) native arrow for. Verified live: chevron
+      renders on Quick Capture's Property/Vendor/Payment-method
+      SearchableSelect fields and its Category/Repair-Improvement native
+      selects; also spot-checked History's Type/Show filters and
+      Property Profile's edit form (State/Status/Organization type
+      dropdowns) to confirm the shared-component change applied
+      consistently app-wide with no layout breakage — no data changed on
+      either check.
 - [ ] 1.28 Visit's "Who was met with" becomes a real entity picker
       instead of free text: searches both Vendors (8.3, account-wide)
       and Tenants (8.4, scoped to the selected property's current/past
