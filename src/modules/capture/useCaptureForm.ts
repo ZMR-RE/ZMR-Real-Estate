@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { propertyLabel } from '../../shared/propertyLabel'
+import { hasAtMostTwoDecimalPlaces } from '../../shared/currencyInput'
 import { listProperties } from '../properties/propertiesQueries'
 import {
   addCaptureAttachments,
@@ -116,6 +117,10 @@ export function useCaptureForm(onCaptured?: () => void) {
     const parsedAmount = amount.trim() ? Number(amount) : null
     if (amount.trim() && (Number.isNaN(parsedAmount) || (parsedAmount as number) <= 0)) {
       setError('Amount must be a positive number.')
+      return
+    }
+    if (amount.trim() && !hasAtMostTwoDecimalPlaces(amount)) {
+      setError('Amount can have at most 2 decimal places.')
       return
     }
 

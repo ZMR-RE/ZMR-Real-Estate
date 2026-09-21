@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
+import { formatAmountOnBlur, sanitizeAmountInput } from '../../shared/currencyInput'
 import { MAX_ATTACHMENTS_PER_ENTRY, type CaptureEntry } from './captureQueries'
 
 export interface CaptureEntryDetailsInput {
@@ -74,7 +75,8 @@ export function CaptureEntryDetailsForm({ entry, saving, error, onSave, onCancel
             step="0.01"
             inputMode="decimal"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => setAmount(sanitizeAmountInput(e.target.value))}
+            onBlur={(e) => setAmount(formatAmountOnBlur(e.target.value))}
           />
 
           <label htmlFor={`category_${entry.id}`}>Category</label>

@@ -1,3 +1,4 @@
+import { hasAtMostTwoDecimalPlaces } from '../../shared/currencyInput'
 import {
   addCaptureAttachments,
   updateCaptureEntryDetails,
@@ -54,6 +55,9 @@ export async function saveCaptureEntryDetails(
   const parsedAmount = input.amount.trim() ? Number(input.amount) : null
   if (input.amount.trim() && (Number.isNaN(parsedAmount) || (parsedAmount as number) <= 0)) {
     return { error: 'Amount must be a positive number.' }
+  }
+  if (input.amount.trim() && !hasAtMostTwoDecimalPlaces(input.amount)) {
+    return { error: 'Amount can have at most 2 decimal places.' }
   }
 
   if (input.newFiles.length > 0) {

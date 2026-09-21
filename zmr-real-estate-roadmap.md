@@ -83,8 +83,19 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       matching the same pattern already used for Organization type.
       Add a Vendor management view in Settings (list, add, archive,
       restore) alongside the existing Organization types view.
-- [ ] 1.18 Amount field: format/round to 2 decimal places (currency),
-      reject more than 2 decimal digits of input.
+- [x] 1.18 Amount field: format/round to 2 decimal places (currency),
+      reject more than 2 decimal digits of input. New shared
+      src/shared/currencyInput.ts (sanitizeAmountInput truncates a 3rd
+      decimal digit in real time as it's typed/pasted; formatAmountOnBlur
+      rounds/pads to exactly 2 on blur; hasAtMostTwoDecimalPlaces is a
+      submit-time guard, belt-and-suspenders alongside the real-time
+      truncation), used by both Quick Capture's create form and its
+      Recently logged/Reconciliation detail-completion form — the two
+      places capture_log.amount can be edited. Kept the input as
+      type="number" (it already was; this item doesn't ask to change it).
+      Verified live: typing "12.999" character-by-character stopped at
+      "12.99" (real-time truncation); typing "12.5" then clicking away
+      real-user-blurred it to "12.50".
 - [x] 1.19 Fix Category/Subcategory UI: replace the separate "Manage
       subcategories" button with the standard "Manage options" pattern
       used everywhere else in the app — same component, same

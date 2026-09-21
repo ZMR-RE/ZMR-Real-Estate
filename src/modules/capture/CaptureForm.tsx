@@ -1,6 +1,7 @@
 import type { FormEvent } from 'react'
 import { SearchableSelect } from '../../shared/SearchableSelect'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
+import { formatAmountOnBlur, sanitizeAmountInput } from '../../shared/currencyInput'
 import { useCaptureForm } from './useCaptureForm'
 import { MAX_ATTACHMENTS_PER_ENTRY, type EntryType } from './captureQueries'
 
@@ -137,7 +138,8 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
                 step="0.01"
                 inputMode="decimal"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => setAmount(sanitizeAmountInput(e.target.value))}
+                onBlur={(e) => setAmount(formatAmountOnBlur(e.target.value))}
               />
 
               <label htmlFor="category">Category (optional)</label>
