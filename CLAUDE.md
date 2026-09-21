@@ -100,6 +100,14 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   scope was completed, leave it unchecked and note specifically what
   remains, rather than marking it fully complete.
 
+## Cross-module integration verification
+- When a field is meant to display or search data owned by a different
+  module (e.g. Quick Capture's Payment method reading from Property's
+  Financial accounts), verification must test the full round trip: add
+  real data in the source module, then confirm it correctly appears in
+  the consuming field — not just that each module works correctly in
+  isolation.
+
 ## Pick-list-first fields
 - Any field representing a closed set of categorical choices defaults
   to the account-scoped pick-list system (8.1) — user add/archive/edit —
