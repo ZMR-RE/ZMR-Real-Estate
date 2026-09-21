@@ -474,6 +474,29 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       test capture entry was voided (own session's data), the test
       vendor was archived (vendors have no hard-delete).
 
+      Follow-up — Cross-module data freshness fix (CLAUDE.md) applied to
+      this picker: the "Paid to"/"Received from" Vendor/Tenant/
+      Potential-tenant picker had the same stale-until-remount gap
+      Financial account had before its own onOpen refresh, across all
+      three of its sources (vendorOptions account-wide via useVendors,
+      tenant/potential-tenant options property-scoped). Fixed in both
+      the create form (useCaptureForm.ts's refreshPaidToOptions) and the
+      "Add details" edit form (CaptureEntryDetailsForm.tsx's own
+      refreshPaidToOptions, with vendorOptions' refresh threaded down
+      from CaptureInbox/ReconciliationQueue via a new
+      refreshVendorOptions prop). Visit's "Met with" picker shares the
+      same underlying data but wasn't touched — out of this fix's scope.
+      Verified live: opened the "Paid to" picker (empty), added a vendor
+      via Financials' transaction form's inline "+ Add new vendor" in a
+      second tab without reloading the first, reopened the still-mounted
+      picker and confirmed the new vendor appeared and was selectable;
+      repeated for the "Add details" edit form on a saved entry, where
+      the already-selected vendor's name — previously blank because the
+      row's own stale vendorOptions couldn't resolve its label — now
+      resolved correctly once the picker's onOpen refresh ran. Test
+      vendor and capture entry cleaned up afterward the same way as
+      above.
+
 ## 2. Phase 2 — Parallelized Build (5 terminals, once Phase 1 schema is locked and stable)
 - [x] 2.1 Rent Ops — invoicing, receipts, on-time payment tracking
 - [x] 2.2 Task Engine — per-property to-do lists, recurring items, "coming up" view across the portfolio

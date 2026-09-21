@@ -70,6 +70,7 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     setEntryDirection,
     paidToOptions,
     paidToEntityId,
+    refreshPaidToOptions,
     selectPaidToEntity,
     selectNewPaidToVendor,
     selectNewPaidToProspectiveTenant,
@@ -329,6 +330,7 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
                   options={paidToOptions}
                   value={paidToEntityId}
                   onChange={selectPaidToEntity}
+                  onOpen={refreshPaidToOptions}
                   placeholder="Search vendors, tenants, and potential tenants…"
                   onAddNew={() => setIsAddingPaidToVendor(true)}
                   addNewLabel="+ Add new vendor"

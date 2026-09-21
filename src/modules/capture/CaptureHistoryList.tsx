@@ -30,6 +30,7 @@ interface CaptureHistoryListProps {
   detailsError: string | null
   vendorOptions: SearchableSelectOption[]
   onCreateVendor: (input: VendorInput) => Promise<{ id: string } | { error: string }>
+  refreshVendorOptions: () => void
   onSaveDetails: (entry: CaptureEntry, input: CaptureEntryDetailsInput) => void
   onToggleManuallyCompleted: (entry: CaptureEntry) => void
   onVoid: (id: string) => void
@@ -70,6 +71,7 @@ export function CaptureHistoryList({
   detailsError,
   vendorOptions,
   onCreateVendor,
+  refreshVendorOptions,
   onSaveDetails,
   onToggleManuallyCompleted,
   onVoid,
@@ -180,6 +182,7 @@ export function CaptureHistoryList({
                           error={detailsError}
                           vendorOptions={vendorOptions}
                           onCreateVendor={onCreateVendor}
+                          refreshVendorOptions={refreshVendorOptions}
                           onSave={(input) => onSaveDetails(entry, input)}
                           onCancel={onCancelEditing}
                         />

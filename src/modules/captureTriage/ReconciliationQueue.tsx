@@ -26,6 +26,7 @@ export function ReconciliationQueue() {
     documentTypeOptions,
     vendorOptions,
     onCreateVendor,
+    refreshVendorOptions,
     categoryByEntry,
     setCategory,
     reconcile,
@@ -91,6 +92,7 @@ export function ReconciliationQueue() {
           detailsError={detailsError}
           vendorOptions={vendorOptions}
           onCreateVendor={onCreateVendor}
+          refreshVendorOptions={refreshVendorOptions}
           onSaveDetails={saveDetails}
           onToggleManuallyCompleted={toggleManuallyCompleted}
           onVoid={voidEntry}

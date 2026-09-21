@@ -39,7 +39,7 @@ function attachmentTypeFor(file: File): AttachmentType | null {
 // never defaults entryType away from null.
 export function useCaptureForm(onCaptured?: () => void) {
   const { accountId, session } = useAuth()
-  const { vendorOptions, addVendor } = useVendors(accountId)
+  const { vendorOptions, addVendor, refreshVendorOptions } = useVendors(accountId)
   const [propertyOptions, setPropertyOptions] = useState<{ id: string; label: string }[]>([])
   const [propertiesLoading, setPropertiesLoading] = useState(true)
   const [entryType, setEntryType] = useState<EntryType | null>(null)
@@ -238,6 +238,23 @@ export function useCaptureForm(onCaptured?: () => void) {
     ...tenantOptions.map((t) => ({ id: t.id, label: t.name, group: 'Tenants' })),
     ...prospectiveTenantOptions.map((t) => ({ id: t.id, label: t.name, group: 'Potential tenants' })),
   ]
+  // Cross-module data freshness (CLAUDE.md) — same gap Financial account
+  // had (roadmap 1.16 correction) before its onOpen refresh: this
+  // picker's three sources (vendors is account-wide, tenants/potential
+  // tenants are property-scoped) only ever re-fetch on mount or when
+  // propertyId changes, so a vendor/tenant/potential tenant added
+  // elsewhere while this form stays mounted wouldn't show up without a
+  // reload. Called from the "Paid to"/"Received from" picker's onOpen.
+  const refreshPaidToOptions = () => {
+    refreshVendorOptions()
+    if (!accountId || !propertyId) return
+    listAllTenantsForProperty(accountId, propertyId).then(({ data }) => {
+      setTenantOptions(data ?? [])
+    })
+    listProspectiveTenantsForProperty(accountId, propertyId).then(({ data }) => {
+      setProspectiveTenantOptions(data ?? [])
+    })
+  }
   const selectPaidToEntity = (id: string) => {
     if (vendorOptions.some((v) => v.id === id)) {
       setPaidToVendorId(id)
@@ -490,6 +507,7 @@ export function useCaptureForm(onCaptured?: () => void) {
     setEntryDirection,
     paidToOptions,
     paidToEntityId,
+    refreshPaidToOptions,
     selectPaidToEntity,
     selectNewPaidToVendor,
     selectNewPaidToProspectiveTenant,

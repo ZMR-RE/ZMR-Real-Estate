@@ -44,6 +44,7 @@ interface CaptureEntryDetailsFormProps {
   error: string | null
   vendorOptions: SearchableSelectOption[]
   onCreateVendor: (input: VendorInput) => Promise<{ id: string } | { error: string }>
+  refreshVendorOptions: () => void
   onSave: (input: CaptureEntryDetailsInput) => void
   onCancel: () => void
 }
@@ -61,6 +62,7 @@ export function CaptureEntryDetailsForm({
   error,
   vendorOptions,
   onCreateVendor,
+  refreshVendorOptions,
   onSave,
   onCancel,
 }: CaptureEntryDetailsFormProps) {
@@ -144,21 +146,39 @@ export function CaptureEntryDetailsForm({
   // same pattern as Unit/Financial account above; needed for Visit's
   // "who was met with" picker. Roadmap 1.31 widened this to Receipt too
   // (its "Paid to"/"Received from" picker needs the same options).
-  useEffect(() => {
+  const refreshTenantOptions = () => {
     if (!accountId || (entry.entry_type !== 'visit' && entry.entry_type !== 'receipt')) return
     listAllTenantsForProperty(accountId, entry.property.id).then(({ data }) => {
       setTenantOptions((data ?? []).map((t) => ({ id: t.id, label: t.name })))
     })
-  }, [accountId, entry.entry_type, entry.property.id])
+  }
+
+  useEffect(refreshTenantOptions, [accountId, entry.entry_type, entry.property.id])
 
   // Roadmap 1.28 revision — potential tenants, same pattern as Tenant
   // above. Roadmap 1.31 widened this to Receipt too, same reasoning.
-  useEffect(() => {
+  const refreshProspectiveTenantOptions = () => {
     if (!accountId || (entry.entry_type !== 'visit' && entry.entry_type !== 'receipt')) return
     listProspectiveTenantsForProperty(accountId, entry.property.id).then(({ data }) => {
       setProspectiveTenantOptions((data ?? []).map((t) => ({ id: t.id, label: t.name })))
     })
-  }, [accountId, entry.entry_type, entry.property.id])
+  }
+
+  useEffect(refreshProspectiveTenantOptions, [accountId, entry.entry_type, entry.property.id])
+
+  // Cross-module data freshness (CLAUDE.md) — same gap Financial account
+  // had before its onOpen refresh (refreshFinancialAccountOptions
+  // above): vendor is account-wide and tenant/potential tenant are
+  // property-scoped, but all three only ever re-fetch on mount, not when
+  // this already-mounted row's picker is reopened. Wired to the "Paid
+  // to"/"Received from" picker's onOpen — the flagged, pre-existing gap
+  // on that specific picker (Visit's "Met with" picker isn't touched
+  // here, out of this fix's scope).
+  const refreshPaidToOptions = () => {
+    refreshVendorOptions()
+    refreshTenantOptions()
+    refreshProspectiveTenantOptions()
+  }
 
   // Roadmap 1.31 — Receipt's "Paid to"/"Received from" picker, exact
   // mirror of "who was met with" below.
@@ -377,6 +397,7 @@ export function CaptureEntryDetailsForm({
               options={paidToOptions}
               value={paidToEntityId}
               onChange={selectPaidToEntity}
+              onOpen={refreshPaidToOptions}
               placeholder="Search vendors, tenants, and potential tenants…"
               onAddNew={() => setIsAddingPaidToVendor(true)}
               addNewLabel="+ Add new vendor"

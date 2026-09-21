@@ -20,7 +20,7 @@ import { listUnreconciled, type QueueEntry } from './reconciliationQueries'
 export function useReconciliationQueue() {
   const { session, accountId } = useAuth()
   const documentTypeOptions = usePickListOptions('document_type')
-  const { vendorOptions, addVendor } = useVendors(accountId)
+  const { vendorOptions, addVendor, refreshVendorOptions } = useVendors(accountId)
   const [entries, setEntries] = useState<QueueEntry[]>([])
   const [propertyOptions, setPropertyOptions] = useState<{ id: string; label: string }[]>([])
   const [propertyFilter, setPropertyFilter] = useState<string | null>(null)
@@ -194,6 +194,7 @@ export function useReconciliationQueue() {
     documentTypeOptions,
     vendorOptions,
     onCreateVendor: addVendor,
+    refreshVendorOptions,
     categoryByEntry,
     setCategory,
     reconcile,

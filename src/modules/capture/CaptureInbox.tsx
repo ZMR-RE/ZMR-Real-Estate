@@ -18,7 +18,7 @@ const TABS: { key: InboxTab; label: string }[] = [
 export function CaptureInbox() {
   const [tab, setTab] = useState<InboxTab>('capture')
   const { accountId } = useAuth()
-  const { vendorOptions, addVendor } = useVendors(accountId)
+  const { vendorOptions, addVendor, refreshVendorOptions } = useVendors(accountId)
   const {
     entries,
     completeFilter,
@@ -66,6 +66,7 @@ export function CaptureInbox() {
           detailsError={detailsError}
           vendorOptions={vendorOptions}
           onCreateVendor={addVendor}
+          refreshVendorOptions={refreshVendorOptions}
           onSaveDetails={saveDetails}
           onToggleManuallyCompleted={toggleManuallyCompleted}
           onVoid={voidEntry}

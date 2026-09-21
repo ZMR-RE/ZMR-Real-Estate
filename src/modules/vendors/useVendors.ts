@@ -25,6 +25,12 @@ export function useVendors(accountId: string | null) {
     refresh()
   }, [refresh])
 
+  // Roadmap 1.16-correction pattern (Financial accounts) applied to
+  // Vendor pickers — exposed so a caller whose picker is already open/
+  // mounted elsewhere can force a re-fetch (e.g. onOpen) instead of only
+  // refreshing on mount.
+  const refreshVendorOptions = refresh
+
   const addVendor = async (input: VendorInput): Promise<{ id: string } | { error: string }> => {
     if (!accountId) return { error: 'No account selected' }
     const { data, error } = await createVendor(accountId, input)
@@ -37,5 +43,5 @@ export function useVendors(accountId: string | null) {
     return { id: data.id }
   }
 
-  return { vendorOptions, addVendor }
+  return { vendorOptions, addVendor, refreshVendorOptions }
 }
