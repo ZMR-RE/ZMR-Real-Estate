@@ -980,7 +980,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       and its CSS deleted); the widened content area and the tooltip
       fix above are unaffected and stay.
 
-- [ ] 7.31 Property Information Edit-mode overhaul, grounded in NN/g and
+- [x] 7.31 Property Information Edit-mode overhaul, grounded in NN/g and
       Baymard single-column form research (single-column forms: 78%
       one-try success vs. 42% for multi-column, 15.4s faster
       completion):
@@ -1000,6 +1000,35 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       6. Add Provider name and Provider contact fields to each Utility
          records entry (extends the existing box, not a new section).
          Add a new Utility records entry type option: "Garbage/Trash."
+
+      Verification: new columns (municipal_zoning_code,
+      county_assessor_use_code, garage_spaces, street_parking,
+      parking_notes on properties; provider_name, provider_contact on
+      utility_records) added via migration 20260922100000, old
+      zoning_use_code/garage_parking_spaces columns kept unused per the
+      no-drop rule (confirmed empty before the split). basement_type
+      and street_parking pick lists seeded with the exact values given
+      in this item's text; municipal_zoning_code/county_assessor_use_code
+      left zero-seeded (no values were specified); utility_type gained
+      "Garbage/Trash." PropertyForm.tsx rewritten to `.field-column`/
+      `.field-row` (new CSS in index.css), with the three named tight
+      rows collapsing to single column under 600px. Purchase & valuation
+      / Physical facts subsection headers restored in Edit mode using
+      the same `.property-field-group` classes as View mode.
+      UtilityRecordForm/List/Section and utilitiesQueries updated for
+      Provider name/contact. `npm run build` clean. Verified live on
+      2169 Ash St: filled and saved Basement/Garage spaces/Street
+      parking/Parking notes, confirmed round-trip, then reverted those
+      fields to blank (pre-existing record, edited not deleted); added
+      and saved a Garbage/Trash utility record with Provider name/
+      contact, confirmed display, then deleted that record directly
+      (own-session test data, no UI delete path exists for utility
+      records) and re-confirmed empty. Checked desktop width, mobile
+      width (390px, iframe simulation) — tight rows and Save/Cancel
+      stack full-width and stay touch-sized — and dark mode (all fields
+      and subsection headers readable). Municipal zoning code/County
+      assessor use code fields observed with real values on later
+      reload — unrelated to this session's testing, left untouched.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
