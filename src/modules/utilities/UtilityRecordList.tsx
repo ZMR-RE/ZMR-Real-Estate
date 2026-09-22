@@ -3,6 +3,9 @@ import type { UtilityRecord, UtilityRecordInput } from './utilitiesQueries'
 
 interface UtilityRecordListProps {
   records: UtilityRecord[]
+  // Box interaction standard: the box's default view state shows plain
+  // read-only rows, no per-row Edit.
+  readOnly?: boolean
   editingId: string | null
   saving: boolean
   onStartEditing: (id: string) => void
@@ -12,6 +15,7 @@ interface UtilityRecordListProps {
 
 export function UtilityRecordList({
   records,
+  readOnly = false,
   editingId,
   saving,
   onStartEditing,
@@ -23,46 +27,50 @@ export function UtilityRecordList({
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Utility</th>
-          <th>Responsibility</th>
-          <th>Notes</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {records.map((record) =>
-          editingId === record.id ? (
-            <tr key={record.id}>
-              <td colSpan={4}>
-                <UtilityRecordForm
-                  initialValues={{
-                    utility_type: record.utility_type,
-                    responsibility: record.responsibility,
-                    notes: record.notes,
-                  }}
-                  saving={saving}
-                  onSave={(input) => onSave(record.id, input)}
-                  onCancel={onCancel}
-                />
-              </td>
-            </tr>
-          ) : (
-            <tr key={record.id}>
-              <td>{record.utility_type}</td>
-              <td>{record.responsibility}</td>
-              <td>{record.notes ?? ''}</td>
-              <td>
-                <button type="button" onClick={() => onStartEditing(record.id)}>
-                  Edit
-                </button>
-              </td>
-            </tr>
-          ),
-        )}
-      </tbody>
-    </table>
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Utility</th>
+            <th>Responsibility</th>
+            <th>Notes</th>
+            {!readOnly && <th></th>}
+          </tr>
+        </thead>
+        <tbody>
+          {records.map((record) =>
+            !readOnly && editingId === record.id ? (
+              <tr key={record.id}>
+                <td colSpan={4}>
+                  <UtilityRecordForm
+                    initialValues={{
+                      utility_type: record.utility_type,
+                      responsibility: record.responsibility,
+                      notes: record.notes,
+                    }}
+                    saving={saving}
+                    onSave={(input) => onSave(record.id, input)}
+                    onCancel={onCancel}
+                  />
+                </td>
+              </tr>
+            ) : (
+              <tr key={record.id}>
+                <td>{record.utility_type}</td>
+                <td>{record.responsibility}</td>
+                <td>{record.notes ?? ''}</td>
+                {!readOnly && (
+                  <td>
+                    <button type="button" onClick={() => onStartEditing(record.id)}>
+                      Edit
+                    </button>
+                  </td>
+                )}
+              </tr>
+            ),
+          )}
+        </tbody>
+      </table>
+    </div>
   )
 }

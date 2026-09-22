@@ -81,9 +81,7 @@ export function PropertyProfileOverviewTab({
 
       <PropertySpecsSection propertyId={property.id} />
 
-      <CollapsibleSection title="Utility records">
-        <UtilityRecordsSection propertyId={property.id} />
-      </CollapsibleSection>
+      <UtilityRecordsSection propertyId={property.id} />
 
       <CollapsibleSection title="Security deposits">
         <SecurityDepositsSection propertyId={property.id} />

@@ -100,9 +100,7 @@ export function UnitsSection({ propertyId }: UnitsSectionProps) {
                   <TenantAssignmentsSection unitId={unit.id} />
                 </CollapsibleSection>
 
-                <CollapsibleSection title="Utility records">
-                  <UtilityRecordsSection propertyId={propertyId} unitId={unit.id} />
-                </CollapsibleSection>
+                <UtilityRecordsSection propertyId={propertyId} unitId={unit.id} />
               </div>
             </div>
           ),
