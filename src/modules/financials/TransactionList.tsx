@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { CATEGORY_LABELS, type Transaction } from './financialsQueries'
 import { TransactionDocuments } from './TransactionDocuments'
@@ -10,6 +11,10 @@ interface TransactionListProps {
   onVoid: (id: string) => void
   onApplySplit: (transaction: Transaction) => void
   reimbursedSourceIds: Set<string>
+  // Roadmap 9.9 — the transaction→capture half of the bridge's
+  // traceable link; ids of currently-loaded transactions that
+  // originated from a reconciled Quick Capture receipt.
+  capturedTransactionIds: Set<string>
   applyingSplit: boolean
 }
 
@@ -28,6 +33,7 @@ export function TransactionList({
   onVoid,
   onApplySplit,
   reimbursedSourceIds,
+  capturedTransactionIds,
   applyingSplit,
 }: TransactionListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -58,7 +64,15 @@ export function TransactionList({
               <td>{propertyLabel(tx.property)}</td>
               <td>{tx.entry_type === 'income' ? 'Income' : 'Expense'}</td>
               <td>{CATEGORY_LABELS[tx.category]}</td>
-              <td>{tx.description ?? ''}</td>
+              <td>
+                {tx.description ?? ''}
+                {capturedTransactionIds.has(tx.id) && (
+                  <>
+                    {' '}
+                    <Link to="/capture">(from Quick Capture)</Link>
+                  </>
+                )}
+              </td>
               <td>${tx.amount.toFixed(2)}</td>
               <td>
                 <button type="button" onClick={() => onSelect(tx.id)}>

@@ -3,6 +3,7 @@ import { useAuth } from '../../shared/auth/AuthContext'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { listProperties } from '../properties/propertiesQueries'
 import { useVendors } from '../vendors/useVendors'
+import { listCaptureEntriesByTransactionIds } from '../capture/captureQueries'
 import {
   createReimbursementTransaction,
   createTransaction,
@@ -62,6 +63,11 @@ export function useFinancials() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [saving, setSaving] = useState(false)
+  // Roadmap 9.9 — the transaction→capture half of the bridge's traceable
+  // link. Same reverse-lookup shape as reimbursedSourceIds below: rather
+  // than a mirrored column on financial_transactions, ask capture_log
+  // which of the currently-loaded transaction ids it originated.
+  const [capturedTransactionIds, setCapturedTransactionIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!accountId) return
@@ -86,6 +92,16 @@ export function useFinancials() {
   useEffect(() => {
     refresh()
   }, [refresh])
+
+  useEffect(() => {
+    if (!accountId || transactions.length === 0) {
+      setCapturedTransactionIds(new Set())
+      return
+    }
+    listCaptureEntriesByTransactionIds(accountId, transactions.map((t) => t.id)).then(({ data }) => {
+      setCapturedTransactionIds(new Set((data ?? []).map((link) => link.financial_transaction_id)))
+    })
+  }, [accountId, transactions])
 
   const selectedTransaction = transactions.find((t) => t.id === selectedId) ?? null
 
@@ -205,6 +221,7 @@ export function useFinancials() {
     voidEntry,
     applySplit,
     reimbursedSourceIds,
+    capturedTransactionIds,
     summaryByPropertyAndCategory: summarizeByPropertyAndCategory(transactions),
     summaryByProperty: summarizeByProperty(transactions),
     exportTaxCsv,

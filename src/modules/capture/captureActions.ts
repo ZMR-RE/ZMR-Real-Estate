@@ -23,6 +23,7 @@ export interface SaveCaptureEntryDetailsInput {
   unitId: string
   amount: string
   category: string
+  transactionCategory: string
   financialAccountId: string
   paymentMethod: string
   repairOrImprovement: string
@@ -96,6 +97,7 @@ export async function saveCaptureEntryDetails(
     unitId: input.unitId || null,
     amount: parsedAmount,
     category: input.category || null,
+    transactionCategory: input.transactionCategory || null,
     financialAccountId: input.financialAccountId || null,
     paymentMethod: input.paymentMethod || null,
     repairOrImprovement: input.repairOrImprovement || null,

@@ -73,6 +73,13 @@ export interface Transaction {
   category: Category
   subcategory: string | null
   vendor: { id: string; name: string; split_percentage: number | null; split_description: string | null } | null
+  // Roadmap 9.9 — a bridged transaction's payer may be a tenant or
+  // prospective tenant instead of a vendor (matching capture_log's own
+  // three-way "paid to" design); at most one of vendor/tenant/
+  // prospective_tenant is ever set. Always null for a manually-entered
+  // transaction, which still requires a vendor via TransactionForm.
+  tenant: { id: string; name: string } | null
+  prospective_tenant: { id: string; name: string } | null
   unit: string | null
   payment_method: string
   repair_or_improvement: RepairOrImprovement | null
@@ -109,7 +116,7 @@ export async function listTransactions(accountId: string, filters: TransactionFi
   let query = supabase
     .from('financial_transactions')
     .select(
-      'id, entry_type, category, subcategory, vendor:vendors(id, name, split_percentage, split_description), unit, payment_method, repair_or_improvement, amount, transaction_date, description, voided, statement_reconciled, property:properties(id, name, address), reimbursement_source_id',
+      'id, entry_type, category, subcategory, vendor:vendors(id, name, split_percentage, split_description), tenant:tenants(id, name), prospective_tenant:prospective_tenants(id, name), unit, payment_method, repair_or_improvement, amount, transaction_date, description, voided, statement_reconciled, property:properties(id, name, address), reimbursement_source_id',
     )
     .eq('account_id', accountId)
     .eq('voided', false)
@@ -147,6 +154,61 @@ export async function createTransaction(accountId: string, recordedBy: string, i
     })
     .select()
     .single()
+}
+
+// Roadmap 9.9 — the Quick Capture → Financials bridge's own insert path,
+// deliberately separate from TransactionInput/createTransaction rather
+// than reusing them: a bridged transaction's payer is tri-state (vendor
+// OR tenant OR prospective tenant OR none), never enforced-required the
+// way TransactionForm's manual entry still is, and amount can be
+// negative (Refund-Return, netting against the same expense category —
+// see 20260922030000). Exactly one of vendorId/tenantId/
+// prospectiveTenantId may be set, matching
+// financial_transactions_payer_single_entity; leave all three null/
+// undefined for a receipt with no payer selected.
+export interface TransactionFromCaptureInput {
+  propertyId: string
+  entryType: EntryType
+  category: Category
+  subcategory: string | null
+  vendorId: string | null
+  tenantId: string | null
+  prospectiveTenantId: string | null
+  unit: string | null
+  paymentMethod: string
+  repairOrImprovement: RepairOrImprovement | null
+  amount: number
+  transactionDate: string
+  description: string | null
+}
+
+export async function createTransactionFromCapture(
+  accountId: string,
+  recordedBy: string,
+  input: TransactionFromCaptureInput,
+) {
+  return supabase
+    .from('financial_transactions')
+    .insert({
+      account_id: accountId,
+      property_id: input.propertyId,
+      entry_type: input.entryType,
+      category: input.category,
+      subcategory: input.subcategory,
+      vendor_id: input.vendorId,
+      tenant_id: input.tenantId,
+      prospective_tenant_id: input.prospectiveTenantId,
+      unit: input.unit,
+      payment_method: input.paymentMethod,
+      repair_or_improvement: input.repairOrImprovement,
+      amount: input.amount,
+      transaction_date: input.transactionDate,
+      description: input.description,
+      statement_reconciled: false,
+      recorded_by: recordedBy,
+    })
+    .select('id')
+    .single<{ id: string }>()
 }
 
 export interface ReimbursementTransactionInput {

@@ -54,6 +54,11 @@ export function useCaptureForm(onCaptured?: () => void) {
   const [tripOptions, setTripOptions] = useState<MileageTrip[]>([])
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState('')
+  // Roadmap 9.9 — the top-level Schedule-E category the bridge needs;
+  // `category` above is actually the subcategory (see its own field
+  // comment in captureQueries.ts). Not required to save the capture
+  // entry itself (roadmap 1.7), only to reconcile it.
+  const [transactionCategory, setTransactionCategory] = useState('')
   const [financialAccountOptions, setFinancialAccountOptions] = useState<{ id: string; label: string }[]>([])
   const [financialAccountId, setFinancialAccountIdState] = useState<string | null>(null)
   const [paymentMethod, setPaymentMethod] = useState('')
@@ -326,6 +331,7 @@ export function useCaptureForm(onCaptured?: () => void) {
     setEndDestination('')
     setAmount('')
     setCategory('')
+    setTransactionCategory('')
     setFinancialAccountIdState(null)
     setPaymentMethod('')
     setRepairOrImprovement('')
@@ -409,6 +415,7 @@ export function useCaptureForm(onCaptured?: () => void) {
       unitId,
       amount: parsedAmount,
       category: category || null,
+      transactionCategory: transactionCategory || null,
       financialAccountId,
       paymentMethod: paymentMethod || null,
       repairOrImprovement: repairOrImprovement || null,
@@ -501,6 +508,8 @@ export function useCaptureForm(onCaptured?: () => void) {
     setAmount,
     category,
     setCategory,
+    transactionCategory,
+    setTransactionCategory,
     financialAccountId,
     setFinancialAccountId,
     financialAccountOptions,

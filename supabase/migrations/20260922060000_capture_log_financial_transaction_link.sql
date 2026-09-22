@@ -1,0 +1,11 @@
+-- Roadmap 9.9 (Quick Capture → Financials bridge) — a traceable
+-- reference between a reconciled Receipt and the real
+-- financial_transactions row it created, so a user can navigate from
+-- one to the other. One-way FK plus a reverse lookup on the read side
+-- (Financials looks up capture_log rows by financial_transaction_id to
+-- show "from Quick Capture"), matching this schema's existing precedent
+-- for exactly this kind of link — financial_transactions.
+-- reimbursement_source_id is the same one-way-FK-plus-reverse-query
+-- shape (see useFinancials.ts's reimbursedSourceIds), not a pair of
+-- mirrored columns kept in sync on both tables.
+alter table capture_log add column financial_transaction_id uuid references financial_transactions(id) on delete set null;

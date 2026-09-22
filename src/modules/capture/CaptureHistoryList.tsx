@@ -1,4 +1,5 @@
 import { Fragment } from 'react'
+import { Link } from 'react-router-dom'
 import { propertyLabel } from '../../shared/propertyLabel'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import type { VendorInput } from '../vendors/vendorsQueries'
@@ -147,6 +148,14 @@ export function CaptureHistoryList({
                           View {a.attachment_type}
                         </button>
                       ))}
+                      {/* Roadmap 9.9 — the capture→transaction half of the
+                          bridge's traceable link; Financials doesn't
+                          support deep-linking to a specific row, so this
+                          goes to the page itself, findable there by date/
+                          amount/category. */}
+                      {entry.entry_type === 'receipt' && entry.financial_transaction_id && (
+                        <Link to="/financials">View transaction</Link>
+                      )}
                       {!entry.reconciled && (
                         <>
                           <button

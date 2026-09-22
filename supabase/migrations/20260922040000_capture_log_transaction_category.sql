@@ -1,0 +1,31 @@
+-- Roadmap 9.9 (Quick Capture → Financials bridge) — financial_transactions
+-- requires a top-level, Schedule-E-mapped category (entry_type +
+-- category, e.g. expense/'repairs') on every row, not null. Quick
+-- Capture's existing Receipt "Category" field never captured that — it
+-- reuses the 'subcategory' pick list (see 20260918170000's own comment:
+-- "category reuses the existing 'subcategory' pick list"), which is a
+-- different, user-editable vocabulary from the fixed 16-value Schedule E
+-- list. There was no clean, non-guessed source for the required field.
+--
+-- Confirmed with the user rather than defaulting silently to
+-- 'other_expense'/'other_income' (which would have quietly degraded
+-- every bridged receipt's tax accuracy): add a real second field to
+-- Receipt capture, `transaction_category`, storing one of the exact
+-- same Category enum string values already used by
+-- financial_transactions.category (financialsQueries.ts's
+-- EXPENSE_CATEGORIES/INCOME_CATEGORIES) — no new categories introduced,
+-- so no Chart of Accounts changes needed.
+--
+-- No DB-level CHECK constraint here, matching the existing convention
+-- for capture_log's other conditionally-required fields (receipt_type,
+-- payment_method, category itself) — completeness is validated at the
+-- app layer (useReconciliationQueue's reconcile()), since a value here
+-- is optional to save the capture entry itself (roadmap 1.7) but
+-- required before it can be reconciled into a real transaction.
+--
+-- Distinct column name from the existing `category` (which is really
+-- "subcategory") specifically to avoid the same ambiguity that caused
+-- this gap in the first place; the UI-facing label for the existing
+-- `category` field is being corrected from "Category" to "Subcategory"
+-- alongside this migration, to match what it has always actually meant.
+alter table capture_log add column transaction_category text;

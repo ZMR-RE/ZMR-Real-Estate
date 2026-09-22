@@ -5,6 +5,7 @@ import { usePickListOptions } from '../../shared/pickLists/usePickListOptions'
 import { listProperties } from '../properties/propertiesQueries'
 import { useVendors } from '../vendors/useVendors'
 import { moveToDocuments, type DocumentCategory } from '../documents/documentsQueries'
+import { createTransactionFromCapture, type Category, type RepairOrImprovement } from '../financials/financialsQueries'
 import { isCaptureEntryComplete } from '../capture/captureCalculations'
 import { saveCaptureEntryDetails, type SaveCaptureEntryDetailsInput } from '../capture/captureActions'
 import {
@@ -60,9 +61,13 @@ export function useReconciliationQueue() {
   }
 
   // Moves every staged attachment into its permanent Documents path and
-  // records each in the documents table (roadmap 2.6), then marks the
-  // capture_log entry reconciled — in that order, so an entry never gets
-  // marked reconciled with an attachment still stuck in staging. A
+  // records each in the documents table (roadmap 2.6), then — for a
+  // Receipt (roadmap 9.9, Receipt-only per confirmed scope) — creates
+  // the real financial_transactions row this entry's fields describe,
+  // then marks the capture_log entry reconciled and links it to that
+  // transaction. In that order, so an entry never gets marked reconciled
+  // with an attachment still stuck in staging, or without the real
+  // transaction its Reconciled status implies now exists. A document
   // category is only required when there's actually something to move
   // (roadmap 1.7 made attachments optional, so a mileage or notes-only
   // entry can have zero). Roadmap 1.11 — blocked entirely while the
@@ -79,6 +84,28 @@ export function useReconciliationQueue() {
       setError('Choose a document category before reconciling.')
       return
     }
+
+    // Roadmap 9.9 — a Receipt can be "Complete" (has an attachment) and
+    // still be missing what's actually required to create a real
+    // transaction, since none of these three were ever required to
+    // reconcile before this bridge existed. Checked up front, before
+    // moving any attachments, so a failed check never leaves the entry
+    // half-processed.
+    if (entry.entry_type === 'receipt') {
+      if (entry.amount === null) {
+        setError('Amount is required before this receipt can be reconciled.')
+        return
+      }
+      if (!entry.transaction_category) {
+        setError('Category is required before this receipt can be reconciled.')
+        return
+      }
+      if (!entry.payment_method) {
+        setError('Payment method is required before this receipt can be reconciled.')
+        return
+      }
+    }
+
     if (!accountId || !session) return
 
     setProcessingId(entry.id)
@@ -113,7 +140,53 @@ export function useReconciliationQueue() {
       }
     }
 
-    const { error: reconcileError } = await markReconciled(entry.id)
+    let financialTransactionId: string | null = null
+
+    if (entry.entry_type === 'receipt') {
+      // receipt_type defaults to 'expense' in the capture form itself;
+      // null here only for pre-1.31 rows that predate the field.
+      const receiptType = entry.receipt_type ?? 'expense'
+      const isRefundReturn = receiptType === 'refund_return'
+      const magnitude = Number(entry.amount)
+
+      const { data: transaction, error: transactionError } = await createTransactionFromCapture(
+        accountId,
+        session.user.id,
+        {
+          propertyId: entry.property.id,
+          // Refund-Return reduces the original expense category's total
+          // rather than adding to Income — implemented as a negative
+          // amount on an 'expense' row in that same category, so it nets
+          // out naturally wherever P&L already sums by category (see
+          // 20260922030000's amount<>0 constraint).
+          entryType: isRefundReturn ? 'expense' : (receiptType as 'expense' | 'income'),
+          category: entry.transaction_category as Category,
+          subcategory: entry.category,
+          vendorId: entry.paid_to_vendor_id,
+          tenantId: entry.paid_to_tenant_id,
+          prospectiveTenantId: entry.paid_to_prospective_tenant_id,
+          unit: entry.unit?.unit_label ?? null,
+          paymentMethod: entry.payment_method as string,
+          repairOrImprovement: entry.repair_or_improvement as RepairOrImprovement | null,
+          amount: isRefundReturn ? -magnitude : magnitude,
+          transactionDate: entry.entry_date,
+          description: entry.notes?.trim() || null,
+        },
+      )
+
+      if (transactionError || !transaction) {
+        setProcessingId(null)
+        setError(transactionError?.message ?? 'Could not create the transaction for this receipt.')
+        return
+      }
+
+      financialTransactionId = transaction.id
+    }
+
+    const { error: reconcileError } = await markReconciled(
+      entry.id,
+      entry.entry_type === 'receipt' ? financialTransactionId : undefined,
+    )
     setProcessingId(null)
 
     if (reconcileError) {

@@ -830,7 +830,85 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 9.6 Per-transaction document attachment field — upload, stored via the 2.5 document architecture
 - [ ] 9.7 Monthly reconciliation checklist (recurring template in Action Queue): bank/CC statement reconciliation, rent received vs. invoiced, invoices sent, mortgage payment posted, security deposits reconciled, lease renewals approaching, insurance renewal approaching, tax installment due, year-end 1099 prep
 - [ ] 9.8 Manual bank/credit card statement import (CSV upload + parsing + categorization) as the near-term alternative to live bank-feed sync
-- [ ] 9.9 Receipt-to-transaction attachment: a Log It capture can be linked to an existing transaction (imported or manual) in Reconciliation
+- [x] 9.9 Quick Capture → Financials bridge: reconciling a Receipt-type
+      capture entry now creates a real financial_transactions row from
+      its captured fields (vendor/tenant/prospective-tenant payer,
+      amount, category, payment method, repair/improvement, property,
+      date), linked back to the capture entry so either side can
+      navigate to the other — closing the gap where a reconciled receipt
+      previously had zero effect on P&L, Balance Sheet, or any report.
+      REVISED SCOPE from this item's original wording ("linked to an
+      existing transaction, imported or manual") to auto-creating a new
+      transaction from the capture's own fields — confirmed with the
+      user; the original wording no longer matched the feature this item
+      had actually come to mean in practice (see 9.31's Refund-Return
+      work, which already referred to this exact auto-creation concept
+      as "the 9.9 bridge").
+
+      Receipt-only, confirmed with the user: Visit/Communication/Mileage
+      entries reconcile exactly as before, no transaction created.
+
+      Three real schema gaps found and resolved, each confirmed with the
+      user before building rather than defaulted/guessed around:
+      - financial_transactions.amount required amount > 0. Refund-Return
+        (reduces the original expense category's total, not an addition
+        to Income) is implemented as a negative-amount transaction in
+        that same expense category, netting out naturally in existing
+        P&L sums with no special-case logic — required loosening the
+        constraint to amount <> 0. TransactionForm's manual-entry input
+        keeps min="0.01" unchanged; only the bridge can write negative.
+      - financial_transactions.category (the required, Schedule-E-mapped
+        top-level bucket) had no source in Quick Capture — the existing
+        Receipt "Category" field is actually a subcategory value (reuses
+        the 'subcategory' pick list). Added a real second field,
+        capture_log.transaction_category, to Quick Capture's Receipt
+        flow (both CaptureForm.tsx and CaptureEntryDetailsForm.tsx),
+        storing the same fixed Category vocabulary financial_transactions
+        already uses — no new categories, no Chart of Accounts changes.
+        The pre-existing field's UI label was corrected from "Category"
+        to "Subcategory" to match what it always actually meant. Required
+        before a Receipt can be reconciled (not before it can be saved,
+        matching every other Receipt field's roadmap-1.7 progressive-
+        completion convention), for all three receipt types — Income
+        included, since financial_transactions.category is NOT NULL
+        regardless of entry_type.
+      - financial_transactions.vendor_id was required and vendor-only,
+        but a Receipt's "Paid to/Received from" can already be a vendor,
+        tenant, prospective tenant, or nothing at all. Made vendor_id
+        nullable and added tenant_id/prospective_tenant_id alongside it
+        (exact mirror of capture_log's own three-way paid_to_* design,
+        including its mutual-exclusivity constraint) — the bridge
+        populates whichever one matches the capture entry, or leaves all
+        three null. Manual entry via TransactionForm is unaffected: its
+        Vendor field keeps its required-field enforcement unchanged.
+
+      Also required amount/payment method to be present before a Receipt
+      reconciles (previously only "has an attachment" gated it) — a real
+      transaction can't be created without them.
+
+      Verified live end-to-end (dev server): (1) a real Expense receipt
+      with category, vendor, and amount — reconciled, confirmed a
+      correctly-categorized, correctly-vendored transaction in Financials
+      affecting P&L and the by-property-and-category summary; (2) a
+      Refund-Return receipt — confirmed it reduced the same expense
+      category's P&L total by exactly its amount, no special-case
+      handling needed; (3) a receipt with no "Paid to" selected —
+      confirmed it reconciled cleanly into a transaction with a null
+      vendor_id, no error. Both navigation directions confirmed
+      (capture entry → "View transaction" link; transaction →
+      "(from Quick Capture)" link). Test data (one capture entry per
+      scenario, one test vendor, their resulting transactions) created
+      and deleted via a scoped, user-approved database script after
+      verification — the dashboard has no delete UI for these entities
+      yet. Typecheck and production build both pass clean.
+
+      Flagged, not fixed in this pass: CaptureForm.tsx (525 lines),
+      CaptureEntryDetailsForm.tsx (614 lines), and useCaptureForm.ts
+      (551 lines) were already over the 300-line file-size-discipline
+      threshold before this item and grew further from the new Category
+      field — worth a structural split (e.g. per-entry-type
+      subcomponents) as follow-up, deferred here to avoid compounding an
+      already-large change with a hasty refactor.
 - [x] 9.10 Mileage log: quick-entry in Log It, tied to a specific property; rollup summary surfaced in Financials for tax purposes
 - [x] 9.11 Export function (PDF/CSV) for any report, for sending to an accountant — PARTIAL scope per approval: Financials' transaction list and Chart of Accounts covered; other report/list views can adopt the same shared exporter (src/shared/exporting/tableExport.ts) as they come up
 - [ ] 9.12 QuickBooks/Xero-compatible export format, in addition to Schedule E native reporting (9.3)

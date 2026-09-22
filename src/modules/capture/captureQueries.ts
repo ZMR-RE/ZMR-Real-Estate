@@ -23,6 +23,16 @@ export interface CaptureEntry {
   unit: { id: string; unit_label: string } | null
   amount: string | null
   category: string | null
+  // Roadmap 9.9 — the top-level, Schedule-E-mapped category
+  // (financial_transactions.category's vocabulary) a Receipt needs
+  // before it can be bridged into a real transaction. Distinct from
+  // `category` above, which is actually a subcategory value (see that
+  // field's own migration comment) — this one is the "real" category.
+  transaction_category: string | null
+  // Roadmap 9.9 — set once this entry has been reconciled into a real
+  // financial_transactions row, so either side can navigate to the
+  // other. Never set for non-Receipt entry types.
+  financial_transaction_id: string | null
   financial_account_id: string | null
   financial_account: { id: string; nickname: string; last_four: string; account_type: string } | null
   payment_method: string | null
@@ -65,7 +75,7 @@ export interface CaptureEntry {
 // and the UI never writes it again (kept in the DB, unused, per
 // CLAUDE.md's no-drop-without-approval rule).
 const CAPTURE_ENTRY_COLUMNS =
-  'id, entry_type, entry_date, notes, miles_driven, start_destination, end_destination, unit_id, unit:units(id, unit_label), amount, category, financial_account_id, financial_account:property_financial_accounts(id, nickname, last_four, account_type), payment_method, repair_or_improvement, receipt_type, paid_to_vendor_id, paid_to_vendor:vendors!capture_log_paid_to_vendor_id_fkey(id, name), paid_to_tenant_id, paid_to_tenant:tenants!capture_log_paid_to_tenant_id_fkey(id, name), paid_to_prospective_tenant_id, paid_to_prospective_tenant:prospective_tenants!capture_log_paid_to_prospective_tenant_id_fkey(id, name), met_with, met_with_vendor_id, met_with_vendor:vendors!capture_log_met_with_vendor_id_fkey(id, name), met_with_tenant_id, met_with_tenant:tenants!capture_log_met_with_tenant_id_fkey(id, name), met_with_prospective_tenant_id, met_with_prospective_tenant:prospective_tenants!capture_log_met_with_prospective_tenant_id_fkey(id, name), visit_type, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
+  'id, entry_type, entry_date, notes, miles_driven, start_destination, end_destination, unit_id, unit:units(id, unit_label), amount, category, transaction_category, financial_transaction_id, financial_account_id, financial_account:property_financial_accounts(id, nickname, last_four, account_type), payment_method, repair_or_improvement, receipt_type, paid_to_vendor_id, paid_to_vendor:vendors!capture_log_paid_to_vendor_id_fkey(id, name), paid_to_tenant_id, paid_to_tenant:tenants!capture_log_paid_to_tenant_id_fkey(id, name), paid_to_prospective_tenant_id, paid_to_prospective_tenant:prospective_tenants!capture_log_paid_to_prospective_tenant_id_fkey(id, name), met_with, met_with_vendor_id, met_with_vendor:vendors!capture_log_met_with_vendor_id_fkey(id, name), met_with_tenant_id, met_with_tenant:tenants!capture_log_met_with_tenant_id_fkey(id, name), met_with_prospective_tenant_id, met_with_prospective_tenant:prospective_tenants!capture_log_met_with_prospective_tenant_id_fkey(id, name), visit_type, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
 
 // Root-cause fix for a real bug found while building 1.21: PostgREST
 // doesn't reliably return every numeric(...) column as a JSON string —
@@ -105,6 +115,7 @@ export interface CreateCaptureEntryInput {
   unitId: string | null
   amount: number | null
   category: string | null
+  transactionCategory: string | null
   financialAccountId: string | null
   paymentMethod: string | null
   repairOrImprovement: string | null
@@ -145,6 +156,7 @@ export async function createCaptureEntry(input: CreateCaptureEntryInput) {
       unit_id: input.unitId,
       amount: input.amount,
       category: input.category,
+      transaction_category: input.transactionCategory,
       financial_account_id: input.financialAccountId,
       payment_method: input.paymentMethod,
       repair_or_improvement: input.repairOrImprovement,
@@ -244,6 +256,7 @@ export interface UpdateCaptureEntryDetailsInput {
   unitId: string | null
   amount: number | null
   category: string | null
+  transactionCategory: string | null
   financialAccountId: string | null
   paymentMethod: string | null
   repairOrImprovement: string | null
@@ -275,6 +288,7 @@ export async function updateCaptureEntryDetails(id: string, input: UpdateCapture
       unit_id: input.unitId,
       amount: input.amount,
       category: input.category,
+      transaction_category: input.transactionCategory,
       financial_account_id: input.financialAccountId,
       payment_method: input.paymentMethod,
       repair_or_improvement: input.repairOrImprovement,
@@ -312,10 +326,18 @@ export async function setManuallyCompleted(id: string, value: boolean) {
   return result
 }
 
-export async function markReconciled(id: string) {
+// Roadmap 9.9 — financialTransactionId links this entry to the real
+// financial_transactions row created for it (Receipt entries only; the
+// bridge is Receipt-only, confirmed with the user). Omitted for every
+// other entry type, which reconcile exactly as before.
+export async function markReconciled(id: string, financialTransactionId?: string | null) {
   const result = await supabase
     .from('capture_log')
-    .update({ reconciled: true, reconciled_at: new Date().toISOString() })
+    .update({
+      reconciled: true,
+      reconciled_at: new Date().toISOString(),
+      ...(financialTransactionId !== undefined ? { financial_transaction_id: financialTransactionId } : {}),
+    })
     .eq('id', id)
     .select(CAPTURE_ENTRY_COLUMNS)
     .single<CaptureEntry>()
@@ -339,6 +361,27 @@ export async function voidCaptureEntry(id: string) {
 
 export async function getAttachmentSignedUrl(path: string) {
   return supabase.storage.from('capture-attachments').createSignedUrl(path, 60)
+}
+
+// Roadmap 9.9 — the reverse half of capture_log.financial_transaction_id
+// (a one-way FK, same shape as financial_transactions.
+// reimbursement_source_id): given a set of transaction ids, find which
+// capture_log entry originated each one, so Financials can show "from
+// Quick Capture" and link back. Returns just enough to build that
+// lookup, not full CaptureEntry rows.
+export interface CaptureLinkByTransaction {
+  id: string
+  financial_transaction_id: string
+}
+
+export async function listCaptureEntriesByTransactionIds(accountId: string, transactionIds: string[]) {
+  if (transactionIds.length === 0) return { data: [] as CaptureLinkByTransaction[], error: null }
+  return supabase
+    .from('capture_log')
+    .select('id, financial_transaction_id')
+    .eq('account_id', accountId)
+    .in('financial_transaction_id', transactionIds)
+    .returns<CaptureLinkByTransaction[]>()
 }
 
 // Property Profile's Activity Log tab (roadmap 7.1) — visit/communication

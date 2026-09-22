@@ -6,6 +6,7 @@ import { VendorForm } from '../vendors/VendorForm'
 import { ProspectiveTenantForm } from '../tenants/ProspectiveTenantForm'
 import { useCaptureForm } from './useCaptureForm'
 import { MAX_ATTACHMENTS_PER_ENTRY, type EntryType } from './captureQueries'
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, CATEGORY_LABELS } from '../financials/financialsQueries'
 
 interface CaptureFormProps {
   onCaptured?: () => void
@@ -58,6 +59,8 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     setAmount,
     category,
     setCategory,
+    transactionCategory,
+    setTransactionCategory,
     financialAccountId,
     setFinancialAccountId,
     financialAccountOptions,
@@ -352,14 +355,28 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
                 onBlur={(e) => setAmount(formatAmountOnBlur(e.target.value))}
               />
 
-              <label htmlFor="category">Category</label>
+              <label htmlFor="transaction_category">Category</label>
+              <select
+                id="transaction_category"
+                value={transactionCategory}
+                onChange={(e) => setTransactionCategory(e.target.value)}
+              >
+                <option value="">Select category…</option>
+                {(receiptType === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((c) => (
+                  <option key={c} value={c}>
+                    {CATEGORY_LABELS[c]}
+                  </option>
+                ))}
+              </select>
+
+              <label htmlFor="category">Subcategory</label>
               <PickListSelect
                 id="category"
                 listName="subcategory"
                 title="Subcategories"
                 value={category}
                 onChange={setCategory}
-                placeholder="Select category…"
+                placeholder="Select subcategory…"
               />
 
               <label htmlFor="financial_account">Payment method</label>

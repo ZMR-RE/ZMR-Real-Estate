@@ -10,6 +10,7 @@ import { ProspectiveTenantForm } from '../tenants/ProspectiveTenantForm'
 import { VendorForm } from '../vendors/VendorForm'
 import type { VendorInput } from '../vendors/vendorsQueries'
 import { MAX_ATTACHMENTS_PER_ENTRY, type CaptureEntry } from './captureQueries'
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, CATEGORY_LABELS } from '../financials/financialsQueries'
 
 export interface CaptureEntryDetailsInput {
   notes: string
@@ -19,6 +20,7 @@ export interface CaptureEntryDetailsInput {
   unitId: string
   amount: string
   category: string
+  transactionCategory: string
   financialAccountId: string
   paymentMethod: string
   repairOrImprovement: string
@@ -74,6 +76,7 @@ export function CaptureEntryDetailsForm({
   const [unitOptions, setUnitOptions] = useState<SearchableSelectOption[]>([])
   const [amount, setAmount] = useState(entry.amount ?? '')
   const [category, setCategory] = useState(entry.category ?? '')
+  const [transactionCategory, setTransactionCategory] = useState(entry.transaction_category ?? '')
   const [financialAccountId, setFinancialAccountIdState] = useState(entry.financial_account_id ?? '')
   const [financialAccountOptions, setFinancialAccountOptions] = useState<SearchableSelectOption[]>([])
   const [paymentMethod, setPaymentMethod] = useState(entry.payment_method ?? '')
@@ -419,14 +422,28 @@ export function CaptureEntryDetailsForm({
             onBlur={(e) => setAmount(formatAmountOnBlur(e.target.value))}
           />
 
-          <label htmlFor={`category_${entry.id}`}>Category</label>
+          <label htmlFor={`transaction_category_${entry.id}`}>Category</label>
+          <select
+            id={`transaction_category_${entry.id}`}
+            value={transactionCategory}
+            onChange={(e) => setTransactionCategory(e.target.value)}
+          >
+            <option value="">Select category…</option>
+            {(receiptType === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((c) => (
+              <option key={c} value={c}>
+                {CATEGORY_LABELS[c]}
+              </option>
+            ))}
+          </select>
+
+          <label htmlFor={`category_${entry.id}`}>Subcategory</label>
           <PickListSelect
             id={`category_${entry.id}`}
             listName="subcategory"
             title="Subcategories"
             value={category}
             onChange={setCategory}
-            placeholder="Select category…"
+            placeholder="Select subcategory…"
           />
 
           <label htmlFor={`financial_account_${entry.id}`}>Payment method</label>
@@ -567,6 +584,7 @@ export function CaptureEntryDetailsForm({
             unitId,
             amount,
             category,
+            transactionCategory,
             financialAccountId,
             paymentMethod,
             repairOrImprovement,

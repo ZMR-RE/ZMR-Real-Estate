@@ -40,6 +40,7 @@ export function Financials() {
     voidEntry,
     applySplit,
     reimbursedSourceIds,
+    capturedTransactionIds,
     summaryByPropertyAndCategory,
     summaryByProperty,
     exportTaxCsv,
@@ -126,6 +127,7 @@ export function Financials() {
             onVoid={voidEntry}
             onApplySplit={applySplit}
             reimbursedSourceIds={reimbursedSourceIds}
+            capturedTransactionIds={capturedTransactionIds}
             applyingSplit={saving}
           />
         </>
