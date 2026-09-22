@@ -629,7 +629,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       (iframe-based, since this session's resize_window tool doesn't
       affect this environment's viewport) — header wraps to a stacked
       layout, fields go single-column, no horizontal overflow.
-- [ ] 7.23 Financial accounts: archived accounts hidden by default,
+- [x] 7.23 Financial accounts: archived accounts hidden by default,
       behind a "Show archived" toggle in the section header.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
