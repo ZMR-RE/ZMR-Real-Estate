@@ -31,29 +31,31 @@ export function PropertyTaxTrendCard({ loading, error, years }: PropertyTaxTrend
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Year</th>
-          <th>Total tax</th>
-          <th>Change from prior year</th>
-        </tr>
-      </thead>
-      <tbody>
-        {years.map((year) => (
-          <tr key={year.taxYear}>
-            <td>{year.taxYear}</td>
-            <td>{currencyFormatter.format(year.total)}</td>
-            <td>
-              {year.changeFromPriorYear === null
-                ? '—'
-                : `${currencyFormatter.format(year.changeFromPriorYear)}${
-                    year.changePercent !== null ? ` (${percentFormatter.format(year.changePercent)})` : ''
-                  }`}
-            </td>
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Total tax</th>
+            <th>Change from prior year</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {years.map((year) => (
+            <tr key={year.taxYear}>
+              <td>{year.taxYear}</td>
+              <td>{currencyFormatter.format(year.total)}</td>
+              <td>
+                {year.changeFromPriorYear === null
+                  ? '—'
+                  : `${currencyFormatter.format(year.changeFromPriorYear)}${
+                      year.changePercent !== null ? ` (${percentFormatter.format(year.changePercent)})` : ''
+                    }`}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

@@ -26,44 +26,46 @@ export function OrganizationTypePropertiesPanel({ accountId, llcId, llcOptions }
       {properties.length === 0 ? (
         <p className="empty-state">No properties currently assigned to this Organization type.</p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Property</th>
-              <th>Reassign to</th>
-            </tr>
-          </thead>
-          <tbody>
-            {properties.map((property) => (
-              <tr key={property.id}>
-                <td>{property.address ?? property.name}</td>
-                <td>
-                  {reassigningId === property.id ? (
-                    'Saving…'
-                  ) : (
-                    <select
-                      value=""
-                      disabled={reassigningId !== null}
-                      onChange={(e) => {
-                        const id = e.target.value
-                        if (id) reassign(property.id, id === NO_LLC_ID ? null : id)
-                      }}
-                    >
-                      <option value="">Choose a new Organization type…</option>
-                      {llcOptions
-                        .filter((o) => o.id !== llcId)
-                        .map((option) => (
-                          <option key={option.id} value={option.id}>
-                            {option.label}
-                          </option>
-                        ))}
-                    </select>
-                  )}
-                </td>
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Reassign to</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {properties.map((property) => (
+                <tr key={property.id}>
+                  <td>{property.address ?? property.name}</td>
+                  <td>
+                    {reassigningId === property.id ? (
+                      'Saving…'
+                    ) : (
+                      <select
+                        value=""
+                        disabled={reassigningId !== null}
+                        onChange={(e) => {
+                          const id = e.target.value
+                          if (id) reassign(property.id, id === NO_LLC_ID ? null : id)
+                        }}
+                      >
+                        <option value="">Choose a new Organization type…</option>
+                        {llcOptions
+                          .filter((o) => o.id !== llcId)
+                          .map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.label}
+                            </option>
+                          ))}
+                      </select>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )

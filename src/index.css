@@ -81,6 +81,14 @@
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
 
+  /* CLAUDE.md Sticky/frozen headers — .tab-bar's real rendered height
+     (measured live), reused wherever a sticky table header on the same
+     page needs to sit just below the tab bar instead of underneath it.
+     Declared on :root, not .tab-bar itself, since a table's <thead> is
+     .tab-bar's sibling, not its descendant — a custom property only
+     cascades to descendants of where it's set. */
+  --sticky-tab-bar-height: 43px;
+
   font: var(--text-base) / 150% var(--sans);
   color-scheme: light dark;
   color: var(--text);
@@ -683,11 +691,22 @@ dd {
 /* ============================================================
    Tabs (Property Profile, etc.)
    ============================================================ */
+/* CLAUDE.md Sticky/frozen headers — every tab bar stays visible while
+   scrolling, same "frozen rows" pattern as a spreadsheet. Applied here
+   once, globally, since every tab bar in the app (Property Profile,
+   Quick Capture, Reports) already shares this one class — no per-screen
+   opt-in needed. --sticky-tab-bar-height is reused below so a sticky
+   table header on the same page knows how far down to sit, rather than
+   sticking underneath (hidden behind) the tab bar. */
 .tab-bar {
   display: flex;
   gap: 4px;
   border-bottom: 1px solid var(--border);
   margin: var(--space-5) 0 var(--space-6);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
 }
 
 .tab-bar button {
@@ -724,7 +743,20 @@ dd {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   margin-top: var(--space-3);
-  overflow: hidden;
+  /* CLAUDE.md Sticky/frozen headers — this was `overflow: hidden`,
+     here purely to clip content to the box's own rounded corners (no
+     scroll/collapse-animation behavior depends on it). `hidden`
+     establishes a CSS scroll container same as `auto`/`scroll` even
+     though nothing here is ever actually scrollable, which was the
+     third layer of the same problem: it silently became the "nearest
+     scrolling ancestor" for any sticky thead nested inside a box
+     (nearly every table in the app lives inside one of these), pinning
+     it to this box's own edge instead of the real page. `clip` (set
+     symmetrically on both axes, so it doesn't trigger the mismatched-
+     axis auto-coercion documented near .table-scroll/table) keeps
+     the identical rounded-corner clipping without establishing a scroll
+     container, so sticky correctly escapes to the page. */
+  overflow: clip;
 }
 
 .collapsible-section > summary {
@@ -796,11 +828,17 @@ dd {
 }
 
 /* ============================================================
-   Property Overview layout — every section is a full-width
-   CollapsibleSection box, stacked vertically (Property Overview
-   redesign). Boxes no longer sit side-by-side in a fixed 2-column
-   grid, which used to leave large empty gaps when adjacent boxes had
-   different heights.
+   Property Overview layout — Standard rollout completeness: two
+   curated columns at desktop widths (Property information/Financial
+   accounts/Insurance; Market & rent value history/Property tax
+   installments/Tenants), each its own independent vertical stack rather
+   than a shared-row grid — that's what avoids the earlier "large empty
+   gaps when adjacent boxes had different heights" problem (a shared-row
+   grid stretches every cell in a row to the tallest one; two
+   independent flex columns just end at their own natural height
+   instead). Specs & measurements, Utility records, Security deposits,
+   and Units stay full-width below both columns, unaffected by any of
+   this. Single column at mobile widths.
    ============================================================ */
 .property-overview-grid {
   display: flex;
@@ -809,6 +847,30 @@ dd {
 }
 
 .property-overview-grid > .collapsible-section {
+  margin-top: 0;
+}
+
+.property-overview-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+  gap: var(--space-4);
+}
+
+@media (max-width: 900px) {
+  .property-overview-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.property-overview-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.property-overview-column > .collapsible-section {
   margin-top: 0;
 }
 
@@ -1022,6 +1084,7 @@ dd {
 
 .page-header-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
@@ -1168,15 +1231,72 @@ dd {
 }
 
 /* ============================================================
+   Action item documents (roadmap 10.5) — same shape as transaction
+   documents above (kept separate since it also renders an add-a-link
+   form alongside the file upload, transaction documents has no link
+   half).
+   ============================================================ */
+.action-item-documents {
+  padding: var(--space-3) 0;
+}
+
+.action-item-documents-list {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+}
+
+.action-item-documents-list li {
+  margin-bottom: 6px;
+}
+
+.action-item-documents-add {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* ============================================================
    Tables — presented as a rounded card with spacious rows
    ============================================================ */
+/* CLAUDE.md Sticky/frozen headers — overflow-x:auto (needed for mobile's
+   horizontal table scroll, per the Mobile responsiveness rule) used to
+   live directly on <table>, which made the table itself a CSS scroll
+   container: that silently breaks position:sticky on its own thead
+   (sticky then tracks the table's own non-scrolling box instead of the
+   page, so it never actually pins). Moved onto this wrapper instead —
+   every table-rendering component wraps its <table> in a
+   `<div className="table-scroll">`.
+   Confirmed empirically (twice — on the old <table> and again on this
+   wrapper) that there is no way to keep this working on every width:
+   setting overflow-x:auto with overflow-y left at anything but a
+   matching non-visible value makes Chrome silently promote overflow-y
+   to auto too (a real scroll container), and the usual overflow-y:clip
+   workaround doesn't survive that coercion either — clip itself gets
+   coerced to hidden the moment overflow-x is auto on the same element,
+   still a scroll container, sticky still breaks. One element cannot be
+   "scrolls on X, not a scroll container on Y" in this browser.
+   Root-caused trade-off, approved: overflow-x:auto only applies at
+   mobile widths (below), where a long table is far less likely to also
+   need vertical sticky-header scrolling; desktop keeps sticky headers
+   fully working since .table-scroll carries no overflow at all there. */
+.table-scroll {
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .table-scroll {
+    overflow-x: auto;
+  }
+}
+
 table {
   width: 100%;
   max-width: 100%;
   border-collapse: collapse;
   margin-top: var(--space-4);
   display: block;
-  overflow-x: auto;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -1191,8 +1311,24 @@ td {
   white-space: nowrap;
 }
 
+/* CLAUDE.md Sticky/frozen headers — every long, column-headered table's
+   header row stays visible while scrolling ("frozen rows," same as a
+   spreadsheet). One global rule, not a per-table opt-in: every <table>
+   in the app already shares this markup shape. On a page that also has
+   a sticky .tab-bar above it, the header sticks just below the tab
+   bar's own height (--sticky-tab-bar-height, set on .tab-bar) instead
+   of underneath/hidden behind it; on a page with no tab bar, it sticks
+   to the very top. */
 thead th {
   padding-top: var(--space-4);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--surface);
+}
+
+.app-main:has(.tab-bar) thead th {
+  top: var(--sticky-tab-bar-height, 0px);
 }
 
 tbody tr:last-child td {
@@ -1325,6 +1461,121 @@ th {
   margin-top: 0;
 }
 
+/* Roadmap 10.5 — Action Queue's Property/Type/Status/Assignee/search
+   row, same flex-wrap filter-bar shape as the two above (kept separate
+   for the same reason). */
+.action-queue-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.action-queue-filter {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 160px;
+  max-width: 220px;
+}
+
+.action-queue-filter label {
+  margin-top: 0;
+}
+
+/* Roadmap 10.5 — top summary strip: four stat tiles (Overdue / Due this
+   week / Upcoming / Automated). Overdue/Due-this-week reuse the same
+   --danger/--warning tokens 7.15's row coloring and every status-badge
+   already use — not a new palette. */
+.action-queue-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.action-queue-summary-tile {
+  flex: 1 1 140px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.action-queue-summary-count {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  color: var(--text-h);
+  letter-spacing: -0.01em;
+}
+
+.action-queue-summary-label {
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+
+.action-queue-summary-tile-danger {
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+}
+
+.action-queue-summary-tile-danger .action-queue-summary-count {
+  color: var(--danger);
+}
+
+.action-queue-summary-tile-warning {
+  border-color: var(--warning-border);
+  background: var(--warning-bg);
+}
+
+.action-queue-summary-tile-warning .action-queue-summary-count {
+  color: var(--warning);
+}
+
+/* Roadmap 10.5 — the Due date column's sort toggle sits inside a <th>;
+   reset it back to look like a plain header label with a click target,
+   not a button. */
+.action-queue-sort-button {
+  min-height: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  font-weight: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+.action-queue-row {
+  cursor: pointer;
+}
+
+/* Roadmap 10.5 — the inline expand-in-row detail view (same convention
+   as Quick Capture History/Reconciliation/Property Specs' own inline
+   edit rows). */
+.action-item-detail {
+  padding: var(--space-3) 0;
+}
+
+.action-item-detail-fields {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-3) 0;
+}
+
+.action-item-detail-fields dt {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.action-item-detail-fields dd {
+  margin: 0;
+}
+
 @media (max-width: 600px) {
   .capture-history-filter {
     max-width: none;
@@ -1332,6 +1583,18 @@ th {
 
   .property-specs-filter {
     max-width: none;
+  }
+
+  .action-queue-filter {
+    max-width: none;
+  }
+
+  .action-item-detail-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .action-item-detail-fields dt {
+    margin-top: var(--space-2);
   }
 }
 

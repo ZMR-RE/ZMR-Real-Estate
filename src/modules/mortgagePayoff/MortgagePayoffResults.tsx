@@ -28,32 +28,34 @@ export function MortgagePayoffResults({ result }: MortgagePayoffResultsProps) {
     <div className="mortgage-payoff-results">
       <h2>Scenario result</h2>
 
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            <th>Current schedule</th>
-            <th>With extra payment</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Payoff date</td>
-            <td>{dateFormatter.format(originalPayoffDate)}</td>
-            <td>{dateFormatter.format(acceleratedPayoffDate)}</td>
-          </tr>
-          <tr>
-            <td>Time to pay off</td>
-            <td>{formatDuration(original.months)}</td>
-            <td>{formatDuration(accelerated.months)}</td>
-          </tr>
-          <tr>
-            <td>Remaining interest</td>
-            <td>{currencyFormatter.format(original.totalInterest)}</td>
-            <td>{currencyFormatter.format(accelerated.totalInterest)}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div className="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Current schedule</th>
+              <th>With extra payment</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Payoff date</td>
+              <td>{dateFormatter.format(originalPayoffDate)}</td>
+              <td>{dateFormatter.format(acceleratedPayoffDate)}</td>
+            </tr>
+            <tr>
+              <td>Time to pay off</td>
+              <td>{formatDuration(original.months)}</td>
+              <td>{formatDuration(accelerated.months)}</td>
+            </tr>
+            <tr>
+              <td>Remaining interest</td>
+              <td>{currencyFormatter.format(original.totalInterest)}</td>
+              <td>{currencyFormatter.format(accelerated.totalInterest)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <p className="mortgage-payoff-summary">
         Paying off <strong>{formatDuration(Math.max(monthsSaved, 0))}</strong> sooner saves{' '}

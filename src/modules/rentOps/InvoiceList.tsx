@@ -21,42 +21,44 @@ export function InvoiceList({ invoices, onRecordPayment }: InvoiceListProps) {
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Property</th>
-          <th>Billed to</th>
-          <th>Period</th>
-          <th>Amount due</th>
-          <th>Due date</th>
-          <th>Paid</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {invoices.map((invoice) => {
-          const totalPaid = invoice.payments.reduce((sum, p) => sum + Number(p.amount), 0)
-          return (
-            <tr key={invoice.id}>
-              <td>{propertyLabel(invoice.property)}</td>
-              <td>{invoice.billed_to ?? '—'}</td>
-              <td>
-                {invoice.period_start} – {invoice.period_end}
-              </td>
-              <td>${Number(invoice.amount_due).toFixed(2)}</td>
-              <td>{invoice.due_date}</td>
-              <td>${totalPaid.toFixed(2)}</td>
-              <td>{STATUS_LABELS[invoiceStatus(invoice)]}</td>
-              <td>
-                <button type="button" onClick={() => onRecordPayment(invoice.id)}>
-                  Record payment
-                </button>
-              </td>
-            </tr>
-          )
-        })}
-      </tbody>
-    </table>
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Billed to</th>
+            <th>Period</th>
+            <th>Amount due</th>
+            <th>Due date</th>
+            <th>Paid</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {invoices.map((invoice) => {
+            const totalPaid = invoice.payments.reduce((sum, p) => sum + Number(p.amount), 0)
+            return (
+              <tr key={invoice.id}>
+                <td>{propertyLabel(invoice.property)}</td>
+                <td>{invoice.billed_to ?? '—'}</td>
+                <td>
+                  {invoice.period_start} – {invoice.period_end}
+                </td>
+                <td>${Number(invoice.amount_due).toFixed(2)}</td>
+                <td>{invoice.due_date}</td>
+                <td>${totalPaid.toFixed(2)}</td>
+                <td>{STATUS_LABELS[invoiceStatus(invoice)]}</td>
+                <td>
+                  <button type="button" onClick={() => onRecordPayment(invoice.id)}>
+                    Record payment
+                  </button>
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
   )
 }

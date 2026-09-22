@@ -18,39 +18,41 @@ export function EscrowTransactionList({ transactions, onVoid, voiding }: EscrowT
   }
 
   return (
-    <table className="escrow-transaction-list">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Type</th>
-          <th>Amount</th>
-          <th>Description</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {transactions.map((transaction) => (
-          <tr key={transaction.id} className={transaction.voided ? 'row-voided' : undefined}>
-            <td>{transaction.transaction_date}</td>
-            <td>
-              {transaction.transaction_type === 'deposit' ? 'Deposit' : 'Disbursement'}
-              {transaction.voided ? ' (voided)' : ''}
-            </td>
-            <td>
-              {transaction.transaction_type === 'disbursement' ? '−' : '+'}
-              {currencyFormatter.format(Number(transaction.amount))}
-            </td>
-            <td>{transaction.description ?? '—'}</td>
-            <td>
-              {!transaction.voided && (
-                <button type="button" onClick={() => onVoid(transaction.id)} disabled={voiding}>
-                  Void
-                </button>
-              )}
-            </td>
+    <div className="table-scroll">
+      <table className="escrow-transaction-list">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Description</th>
+            <th></th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {transactions.map((transaction) => (
+            <tr key={transaction.id} className={transaction.voided ? 'row-voided' : undefined}>
+              <td>{transaction.transaction_date}</td>
+              <td>
+                {transaction.transaction_type === 'deposit' ? 'Deposit' : 'Disbursement'}
+                {transaction.voided ? ' (voided)' : ''}
+              </td>
+              <td>
+                {transaction.transaction_type === 'disbursement' ? '−' : '+'}
+                {currencyFormatter.format(Number(transaction.amount))}
+              </td>
+              <td>{transaction.description ?? '—'}</td>
+              <td>
+                {!transaction.voided && (
+                  <button type="button" onClick={() => onVoid(transaction.id)} disabled={voiding}>
+                    Void
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

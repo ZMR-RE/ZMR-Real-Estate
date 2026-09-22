@@ -22,40 +22,44 @@ export function ProfitAndLossReport({ profitAndLoss, year }: ProfitAndLossReport
       <p>Schedule E format.</p>
 
       <h3>Income</h3>
-      <table>
-        <tbody>
-          {incomeLines.map((line) => (
-            <tr key={line.category}>
-              <td>{line.label}</td>
-              <td>{money(line.amount)}</td>
+      <div className="table-scroll">
+        <table>
+          <tbody>
+            {incomeLines.map((line) => (
+              <tr key={line.category}>
+                <td>{line.label}</td>
+                <td>{money(line.amount)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Total income</td>
+              <td>{money(totalIncome)}</td>
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td>Total income</td>
-            <td>{money(totalIncome)}</td>
-          </tr>
-        </tfoot>
-      </table>
+          </tfoot>
+        </table>
+      </div>
 
       <h3>Expenses</h3>
-      <table>
-        <tbody>
-          {expenseLines.map((line) => (
-            <tr key={line.category}>
-              <td>{line.label}</td>
-              <td>{money(line.amount)}</td>
+      <div className="table-scroll">
+        <table>
+          <tbody>
+            {expenseLines.map((line) => (
+              <tr key={line.category}>
+                <td>{line.label}</td>
+                <td>{money(line.amount)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Total expenses</td>
+              <td>{money(totalExpense)}</td>
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td>Total expenses</td>
-            <td>{money(totalExpense)}</td>
-          </tr>
-        </tfoot>
-      </table>
+          </tfoot>
+        </table>
+      </div>
 
       <h3>{netIncome >= 0 ? 'Net income' : 'Net loss'}</h3>
       <p>{money(netIncome)}</p>

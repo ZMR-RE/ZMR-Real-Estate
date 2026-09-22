@@ -24,24 +24,26 @@ function ValueTrend({ title, history }: { title: string; history: PropertyValueL
   return (
     <>
       <h4>{title}</h4>
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Value</th>
-            <th>Source</th>
-          </tr>
-        </thead>
-        <tbody>
-          {active.map((entry) => (
-            <tr key={entry.id}>
-              <td>{entry.entry_date}</td>
-              <td>{currencyFormatter.format(Number(entry.value))}</td>
-              <td>{entry.source}</td>
+      <div className="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Value</th>
+              <th>Source</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {active.map((entry) => (
+              <tr key={entry.id}>
+                <td>{entry.entry_date}</td>
+                <td>{currencyFormatter.format(Number(entry.value))}</td>
+                <td>{entry.source}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </>
   )
 }

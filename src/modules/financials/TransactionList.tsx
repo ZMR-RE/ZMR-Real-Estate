@@ -44,79 +44,81 @@ export function TransactionList({
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Property</th>
-          <th>Type</th>
-          <th>Category</th>
-          <th>Description</th>
-          <th>Amount</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {transactions.map((tx) => (
-          <Fragment key={tx.id}>
-            <tr>
-              <td>{tx.transaction_date}</td>
-              <td>{propertyLabel(tx.property)}</td>
-              <td>{tx.entry_type === 'income' ? 'Income' : 'Expense'}</td>
-              <td>{CATEGORY_LABELS[tx.category]}</td>
-              <td>
-                {tx.description ?? ''}
-                {capturedTransactionIds.has(tx.id) && (
-                  <>
-                    {' '}
-                    <Link to="/capture">(from Quick Capture)</Link>
-                  </>
-                )}
-              </td>
-              <td>${tx.amount.toFixed(2)}</td>
-              <td>
-                <button type="button" onClick={() => onSelect(tx.id)}>
-                  Edit
-                </button>
-                <button type="button" onClick={() => onVoid(tx.id)}>
-                  Void
-                </button>
-                {tx.property && (
-                  <button type="button" onClick={() => setExpandedId((id) => (id === tx.id ? null : tx.id))}>
-                    {expandedId === tx.id ? 'Hide documents' : 'Documents'}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setExpandedHistoryId((id) => (id === tx.id ? null : tx.id))}
-                >
-                  {expandedHistoryId === tx.id ? 'Hide history' : 'History'}
-                </button>
-                {canApplySplit(tx, reimbursedSourceIds) && (
-                  <button type="button" onClick={() => onApplySplit(tx)} disabled={applyingSplit}>
-                    Apply saved split ({tx.vendor?.split_percentage}%
-                    {tx.vendor?.split_description ? ` — ${tx.vendor.split_description}` : ''})
-                  </button>
-                )}
-              </td>
-            </tr>
-            {expandedId === tx.id && tx.property && (
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Amount</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {transactions.map((tx) => (
+            <Fragment key={tx.id}>
               <tr>
-                <td colSpan={7}>
-                  <TransactionDocuments transactionId={tx.id} propertyId={tx.property.id} />
+                <td>{tx.transaction_date}</td>
+                <td>{propertyLabel(tx.property)}</td>
+                <td>{tx.entry_type === 'income' ? 'Income' : 'Expense'}</td>
+                <td>{CATEGORY_LABELS[tx.category]}</td>
+                <td>
+                  {tx.description ?? ''}
+                  {capturedTransactionIds.has(tx.id) && (
+                    <>
+                      {' '}
+                      <Link to="/capture">(from Quick Capture)</Link>
+                    </>
+                  )}
+                </td>
+                <td>${tx.amount.toFixed(2)}</td>
+                <td>
+                  <button type="button" onClick={() => onSelect(tx.id)}>
+                    Edit
+                  </button>
+                  <button type="button" onClick={() => onVoid(tx.id)}>
+                    Void
+                  </button>
+                  {tx.property && (
+                    <button type="button" onClick={() => setExpandedId((id) => (id === tx.id ? null : tx.id))}>
+                      {expandedId === tx.id ? 'Hide documents' : 'Documents'}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setExpandedHistoryId((id) => (id === tx.id ? null : tx.id))}
+                  >
+                    {expandedHistoryId === tx.id ? 'Hide history' : 'History'}
+                  </button>
+                  {canApplySplit(tx, reimbursedSourceIds) && (
+                    <button type="button" onClick={() => onApplySplit(tx)} disabled={applyingSplit}>
+                      Apply saved split ({tx.vendor?.split_percentage}%
+                      {tx.vendor?.split_description ? ` — ${tx.vendor.split_description}` : ''})
+                    </button>
+                  )}
                 </td>
               </tr>
-            )}
-            {expandedHistoryId === tx.id && (
-              <tr>
-                <td colSpan={7}>
-                  <TransactionAuditHistory transactionId={tx.id} />
-                </td>
-              </tr>
-            )}
-          </Fragment>
-        ))}
-      </tbody>
-    </table>
+              {expandedId === tx.id && tx.property && (
+                <tr>
+                  <td colSpan={7}>
+                    <TransactionDocuments transactionId={tx.id} propertyId={tx.property.id} />
+                  </td>
+                </tr>
+              )}
+              {expandedHistoryId === tx.id && (
+                <tr>
+                  <td colSpan={7}>
+                    <TransactionAuditHistory transactionId={tx.id} />
+                  </td>
+                </tr>
+              )}
+            </Fragment>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

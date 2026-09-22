@@ -66,29 +66,31 @@ export function InsuranceLedgerList({ policies, readOnly = false, onEdit, onView
   }
 
   return (
-    <table className="insurance-ledger">
-      <thead>
-        <tr>
-          <th>Provider</th>
-          <th>Coverage</th>
-          {!readOnly && <th></th>}
-        </tr>
-      </thead>
-      <tbody>
-        {policies.map((policy) => (
-          <tr key={policy.id}>
-            <td>{policy.provider}</td>
-            <CoverageCell policy={policy} onViewDocument={onViewDocument} />
-            {!readOnly && (
-              <td>
-                <button type="button" onClick={() => onEdit?.(policy.id)}>
-                  Edit
-                </button>
-              </td>
-            )}
+    <div className="table-scroll">
+      <table className="insurance-ledger">
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Coverage</th>
+            {!readOnly && <th></th>}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {policies.map((policy) => (
+            <tr key={policy.id}>
+              <td>{policy.provider}</td>
+              <CoverageCell policy={policy} onViewDocument={onViewDocument} />
+              {!readOnly && (
+                <td>
+                  <button type="button" onClick={() => onEdit?.(policy.id)}>
+                    Edit
+                  </button>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

@@ -20,39 +20,41 @@ export function TenantAssignmentList({ assignments, onToggleArchived }: TenantAs
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Tenant</th>
-          <th>Start date</th>
-          <th>End date</th>
-          <th>Rent</th>
-          <th>Late fee</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {assignments.map((assignment) => (
-          <tr key={assignment.id} className={assignment.archived ? 'row-voided' : ''}>
-            <td>{assignment.tenant?.name ?? '—'}</td>
-            <td>{assignment.start_date}</td>
-            <td>{assignment.end_date ?? 'Current'}</td>
-            <td>{assignment.rent_amount !== null ? currencyFormatter.format(Number(assignment.rent_amount)) : '—'}</td>
-            <td>{assignment.late_fee !== null ? currencyFormatter.format(Number(assignment.late_fee)) : '—'}</td>
-            <td>
-              <span className={`status-badge ${assignment.archived ? 'status-badge-neutral' : 'status-badge-success'}`}>
-                {assignment.archived ? 'Archived' : 'Active'}
-              </span>
-            </td>
-            <td>
-              <button type="button" onClick={() => onToggleArchived(assignment)}>
-                {assignment.archived ? 'Restore' : 'Archive'}
-              </button>
-            </td>
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Tenant</th>
+            <th>Start date</th>
+            <th>End date</th>
+            <th>Rent</th>
+            <th>Late fee</th>
+            <th>Status</th>
+            <th></th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {assignments.map((assignment) => (
+            <tr key={assignment.id} className={assignment.archived ? 'row-voided' : ''}>
+              <td>{assignment.tenant?.name ?? '—'}</td>
+              <td>{assignment.start_date}</td>
+              <td>{assignment.end_date ?? 'Current'}</td>
+              <td>{assignment.rent_amount !== null ? currencyFormatter.format(Number(assignment.rent_amount)) : '—'}</td>
+              <td>{assignment.late_fee !== null ? currencyFormatter.format(Number(assignment.late_fee)) : '—'}</td>
+              <td>
+                <span className={`status-badge ${assignment.archived ? 'status-badge-neutral' : 'status-badge-success'}`}>
+                  {assignment.archived ? 'Archived' : 'Active'}
+                </span>
+              </td>
+              <td>
+                <button type="button" onClick={() => onToggleArchived(assignment)}>
+                  {assignment.archived ? 'Restore' : 'Archive'}
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

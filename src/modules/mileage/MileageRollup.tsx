@@ -17,22 +17,24 @@ export function MileageRollup({ year }: MileageRollupProps) {
       ) : summary.length === 0 ? (
         <p className="empty-state">No mileage logged for this year.</p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Property</th>
-              <th>Total miles</th>
-            </tr>
-          </thead>
-          <tbody>
-            {summary.map((row) => (
-              <tr key={row.propertyId}>
-                <td>{row.propertyName}</td>
-                <td>{row.totalMiles.toFixed(1)}</td>
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Total miles</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {summary.map((row) => (
+                <tr key={row.propertyId}>
+                  <td>{row.propertyName}</td>
+                  <td>{row.totalMiles.toFixed(1)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )

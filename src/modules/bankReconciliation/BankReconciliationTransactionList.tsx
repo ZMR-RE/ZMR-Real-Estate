@@ -16,36 +16,38 @@ export function BankReconciliationTransactionList({
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>On statement</th>
-          <th>Date</th>
-          <th>Type</th>
-          <th>Vendor</th>
-          <th>Amount</th>
-          <th>Already reconciled</th>
-        </tr>
-      </thead>
-      <tbody>
-        {transactions.map((tx) => (
-          <tr key={tx.id}>
-            <td>
-              <input
-                type="checkbox"
-                checked={selectedIds.has(tx.id)}
-                onChange={() => onToggle(tx.id)}
-                aria-label={`Include ${tx.vendor?.name ?? 'transaction'} on ${tx.transaction_date}`}
-              />
-            </td>
-            <td>{tx.transaction_date}</td>
-            <td>{tx.entry_type === 'income' ? 'Income' : 'Expense'}</td>
-            <td>{tx.vendor?.name ?? '—'}</td>
-            <td>${tx.amount.toFixed(2)}</td>
-            <td>{tx.statement_reconciled ? 'Yes' : ''}</td>
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>On statement</th>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Vendor</th>
+            <th>Amount</th>
+            <th>Already reconciled</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {transactions.map((tx) => (
+            <tr key={tx.id}>
+              <td>
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(tx.id)}
+                  onChange={() => onToggle(tx.id)}
+                  aria-label={`Include ${tx.vendor?.name ?? 'transaction'} on ${tx.transaction_date}`}
+                />
+              </td>
+              <td>{tx.transaction_date}</td>
+              <td>{tx.entry_type === 'income' ? 'Income' : 'Expense'}</td>
+              <td>{tx.vendor?.name ?? '—'}</td>
+              <td>${tx.amount.toFixed(2)}</td>
+              <td>{tx.statement_reconciled ? 'Yes' : ''}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

@@ -72,41 +72,43 @@ export function PropertyTaxLedgerList({
   }
 
   return (
-    <table className="property-tax-ledger">
-      <thead>
-        <tr>
-          <th>Year</th>
-          <th>1st installment</th>
-          <th>2nd installment</th>
-          {!readOnly && <th></th>}
-        </tr>
-      </thead>
-      <tbody>
-        {installments.map((installment) => (
-          <tr key={installment.id}>
-            <td>{installment.tax_year}</td>
-            <InstallmentCell
-              amount={installment.installment_1_amount}
-              paidDate={installment.installment_1_paid_date}
-              documents={installment.documents.filter((d) => d.tax_installment_number === 1)}
-              onViewDocument={onViewDocument}
-            />
-            <InstallmentCell
-              amount={installment.installment_2_amount}
-              paidDate={installment.installment_2_paid_date}
-              documents={installment.documents.filter((d) => d.tax_installment_number === 2)}
-              onViewDocument={onViewDocument}
-            />
-            {!readOnly && (
-              <td>
-                <button type="button" onClick={() => onEdit?.(installment.id)}>
-                  Edit
-                </button>
-              </td>
-            )}
+    <div className="table-scroll">
+      <table className="property-tax-ledger">
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>1st installment</th>
+            <th>2nd installment</th>
+            {!readOnly && <th></th>}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {installments.map((installment) => (
+            <tr key={installment.id}>
+              <td>{installment.tax_year}</td>
+              <InstallmentCell
+                amount={installment.installment_1_amount}
+                paidDate={installment.installment_1_paid_date}
+                documents={installment.documents.filter((d) => d.tax_installment_number === 1)}
+                onViewDocument={onViewDocument}
+              />
+              <InstallmentCell
+                amount={installment.installment_2_amount}
+                paidDate={installment.installment_2_paid_date}
+                documents={installment.documents.filter((d) => d.tax_installment_number === 2)}
+                onViewDocument={onViewDocument}
+              />
+              {!readOnly && (
+                <td>
+                  <button type="button" onClick={() => onEdit?.(installment.id)}>
+                    Edit
+                  </button>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

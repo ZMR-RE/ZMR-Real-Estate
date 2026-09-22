@@ -32,36 +32,38 @@ export function PropertyValueHistoryList({
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Value</th>
-          <th>Source</th>
-          {!readOnly && <th></th>}
-        </tr>
-      </thead>
-      <tbody>
-        {entries.map((entry) => (
-          <tr key={entry.id} className={entry.voided ? 'row-voided' : undefined}>
-            <td>{entry.entry_date}</td>
-            <td>
-              {currencyFormatter.format(Number(entry.value))}
-              {entry.voided ? ' (voided)' : ''}
-            </td>
-            <td>{entry.source}</td>
-            {!readOnly && (
-              <td>
-                {!entry.voided && (
-                  <button type="button" onClick={() => onVoid?.(entry.id)} disabled={voiding}>
-                    Void
-                  </button>
-                )}
-              </td>
-            )}
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Value</th>
+            <th>Source</th>
+            {!readOnly && <th></th>}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {entries.map((entry) => (
+            <tr key={entry.id} className={entry.voided ? 'row-voided' : undefined}>
+              <td>{entry.entry_date}</td>
+              <td>
+                {currencyFormatter.format(Number(entry.value))}
+                {entry.voided ? ' (voided)' : ''}
+              </td>
+              <td>{entry.source}</td>
+              {!readOnly && (
+                <td>
+                  {!entry.voided && (
+                    <button type="button" onClick={() => onVoid?.(entry.id)} disabled={voiding}>
+                      Void
+                    </button>
+                  )}
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

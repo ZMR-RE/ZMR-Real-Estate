@@ -32,44 +32,46 @@ export function LeasingListingList({
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Platform</th>
-          <th>Date posted</th>
-          <th>Days live</th>
-          <th>Notes</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {listings.map((listing) =>
-          editingId === listing.id ? (
-            <tr key={listing.id}>
-              <td colSpan={5}>
-                <LeasingListingForm
-                  initialValues={{ platform: listing.platform, date_posted: listing.date_posted, notes: listing.notes }}
-                  saving={saving}
-                  onSave={(input) => onSave(listing.id, input)}
-                  onCancel={onCancel}
-                />
-              </td>
-            </tr>
-          ) : (
-            <tr key={listing.id}>
-              <td>{listing.platform}</td>
-              <td>{listing.date_posted}</td>
-              <td>{daysLive(listing.date_posted)}</td>
-              <td>{listing.notes ?? ''}</td>
-              <td>
-                <button type="button" onClick={() => onStartEditing(listing.id)}>
-                  Edit
-                </button>
-              </td>
-            </tr>
-          ),
-        )}
-      </tbody>
-    </table>
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Platform</th>
+            <th>Date posted</th>
+            <th>Days live</th>
+            <th>Notes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {listings.map((listing) =>
+            editingId === listing.id ? (
+              <tr key={listing.id}>
+                <td colSpan={5}>
+                  <LeasingListingForm
+                    initialValues={{ platform: listing.platform, date_posted: listing.date_posted, notes: listing.notes }}
+                    saving={saving}
+                    onSave={(input) => onSave(listing.id, input)}
+                    onCancel={onCancel}
+                  />
+                </td>
+              </tr>
+            ) : (
+              <tr key={listing.id}>
+                <td>{listing.platform}</td>
+                <td>{listing.date_posted}</td>
+                <td>{daysLive(listing.date_posted)}</td>
+                <td>{listing.notes ?? ''}</td>
+                <td>
+                  <button type="button" onClick={() => onStartEditing(listing.id)}>
+                    Edit
+                  </button>
+                </td>
+              </tr>
+            ),
+          )}
+        </tbody>
+      </table>
+    </div>
   )
 }

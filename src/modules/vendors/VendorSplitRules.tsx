@@ -73,48 +73,50 @@ export function VendorSplitRules() {
       ) : vendors.length === 0 ? (
         <p className="empty-state">No vendors yet.</p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Vendor</th>
-              <th>Split %</th>
-              <th>Description</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {vendors.map((vendor) =>
-              editingId === vendor.id ? (
-                <EditRow
-                  key={vendor.id}
-                  vendor={vendor}
-                  saving={saving}
-                  onSave={(pct, desc) => saveSplitRule(vendor.id, pct, desc)}
-                  onCancel={cancelEditing}
-                />
-              ) : (
-                <tr key={vendor.id}>
-                  <td>{vendor.name}</td>
-                  <td colSpan={2}>
-                    {vendor.split_percentage != null
-                      ? `${vendor.split_percentage}% — ${vendor.split_description ?? 'no description'}`
-                      : 'No split rule'}
-                  </td>
-                  <td>
-                    <button type="button" onClick={() => startEditing(vendor.id)}>
-                      {vendor.split_percentage != null ? 'Edit split rule' : 'Set split rule'}
-                    </button>
-                    {vendor.split_percentage != null && (
-                      <button type="button" onClick={() => clearSplitRule(vendor.id)} disabled={saving}>
-                        Remove
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Vendor</th>
+                <th>Split %</th>
+                <th>Description</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {vendors.map((vendor) =>
+                editingId === vendor.id ? (
+                  <EditRow
+                    key={vendor.id}
+                    vendor={vendor}
+                    saving={saving}
+                    onSave={(pct, desc) => saveSplitRule(vendor.id, pct, desc)}
+                    onCancel={cancelEditing}
+                  />
+                ) : (
+                  <tr key={vendor.id}>
+                    <td>{vendor.name}</td>
+                    <td colSpan={2}>
+                      {vendor.split_percentage != null
+                        ? `${vendor.split_percentage}% — ${vendor.split_description ?? 'no description'}`
+                        : 'No split rule'}
+                    </td>
+                    <td>
+                      <button type="button" onClick={() => startEditing(vendor.id)}>
+                        {vendor.split_percentage != null ? 'Edit split rule' : 'Set split rule'}
                       </button>
-                    )}
-                  </td>
-                </tr>
-              ),
-            )}
-          </tbody>
-        </table>
+                      {vendor.split_percentage != null && (
+                        <button type="button" onClick={() => clearSplitRule(vendor.id)} disabled={saving}>
+                          Remove
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ),
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   )

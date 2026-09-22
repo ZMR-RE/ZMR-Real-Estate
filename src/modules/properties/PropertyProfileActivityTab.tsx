@@ -16,33 +16,35 @@ export function PropertyProfileActivityTab({ entries }: PropertyProfileActivityT
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Type</th>
-          <th>Notes</th>
-          <th>Attachments</th>
-        </tr>
-      </thead>
-      <tbody>
-        {entries.map((entry) => (
-          <tr key={entry.id}>
-            <td>{entry.entry_date}</td>
-            <td>{entry.entry_type === 'visit' ? 'Visit' : 'Communication'}</td>
-            <td>{entry.notes ?? ''}</td>
-            <td>
-              {entry.attachments.length === 0
-                ? '—'
-                : entry.attachments.map((a) => (
-                    <button key={a.id} type="button" onClick={() => viewAttachment(a.storage_path)}>
-                      View {a.attachment_type}
-                    </button>
-                  ))}
-            </td>
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Notes</th>
+            <th>Attachments</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {entries.map((entry) => (
+            <tr key={entry.id}>
+              <td>{entry.entry_date}</td>
+              <td>{entry.entry_type === 'visit' ? 'Visit' : 'Communication'}</td>
+              <td>{entry.notes ?? ''}</td>
+              <td>
+                {entry.attachments.length === 0
+                  ? '—'
+                  : entry.attachments.map((a) => (
+                      <button key={a.id} type="button" onClick={() => viewAttachment(a.storage_path)}>
+                        View {a.attachment_type}
+                      </button>
+                    ))}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

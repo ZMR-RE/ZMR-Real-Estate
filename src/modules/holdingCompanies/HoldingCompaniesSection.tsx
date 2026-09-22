@@ -22,22 +22,24 @@ export function HoldingCompaniesSection() {
       ) : holdingCompanies.length === 0 ? (
         <p className="empty-state">No Holding companies yet.</p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Holding company</th>
-              <th>Owns</th>
-            </tr>
-          </thead>
-          <tbody>
-            {holdingCompanies.map((holdingCompany) => (
-              <tr key={holdingCompany.id}>
-                <td>{holdingCompany.name}</td>
-                <td>{holdingCompany.llcNames.length > 0 ? holdingCompany.llcNames.join(', ') : '—'}</td>
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Holding company</th>
+                <th>Owns</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {holdingCompanies.map((holdingCompany) => (
+                <tr key={holdingCompany.id}>
+                  <td>{holdingCompany.name}</td>
+                  <td>{holdingCompany.llcNames.length > 0 ? holdingCompany.llcNames.join(', ') : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   )

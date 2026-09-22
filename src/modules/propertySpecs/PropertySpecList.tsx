@@ -44,55 +44,57 @@ export function PropertySpecList({
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Scope</th>
-          <th>Area</th>
-          <th>Label</th>
-          <th>Value</th>
-          <th>Last updated</th>
-          {!readOnly && <th></th>}
-        </tr>
-      </thead>
-      <tbody>
-        {specs.map((spec) =>
-          !readOnly && editingId === spec.id ? (
-            <tr key={spec.id}>
-              <td colSpan={6}>
-                <PropertySpecForm
-                  initialValues={{
-                    unitId: spec.unit_id,
-                    area: spec.area ?? '',
-                    label: spec.label,
-                    value: spec.value,
-                  }}
-                  unitOptions={unitOptions}
-                  onRefreshUnitOptions={onRefreshUnitOptions}
-                  saving={saving}
-                  onSave={(input) => onSave(spec.id, input)}
-                  onCancel={onCancel}
-                />
-              </td>
-            </tr>
-          ) : (
-            <tr key={spec.id}>
-              <td>{scopeLabel(spec, unitOptions)}</td>
-              <td>{spec.area ?? '—'}</td>
-              <td>{spec.label}</td>
-              <td>{spec.value}</td>
-              <td>{new Date(spec.updated_at).toLocaleString()}</td>
-              {!readOnly && (
-                <td>
-                  <button type="button" onClick={() => onStartEditing(spec.id)}>
-                    Edit
-                  </button>
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Scope</th>
+            <th>Area</th>
+            <th>Label</th>
+            <th>Value</th>
+            <th>Last updated</th>
+            {!readOnly && <th></th>}
+          </tr>
+        </thead>
+        <tbody>
+          {specs.map((spec) =>
+            !readOnly && editingId === spec.id ? (
+              <tr key={spec.id}>
+                <td colSpan={6}>
+                  <PropertySpecForm
+                    initialValues={{
+                      unitId: spec.unit_id,
+                      area: spec.area ?? '',
+                      label: spec.label,
+                      value: spec.value,
+                    }}
+                    unitOptions={unitOptions}
+                    onRefreshUnitOptions={onRefreshUnitOptions}
+                    saving={saving}
+                    onSave={(input) => onSave(spec.id, input)}
+                    onCancel={onCancel}
+                  />
                 </td>
-              )}
-            </tr>
-          ),
-        )}
-      </tbody>
-    </table>
+              </tr>
+            ) : (
+              <tr key={spec.id}>
+                <td>{scopeLabel(spec, unitOptions)}</td>
+                <td>{spec.area ?? '—'}</td>
+                <td>{spec.label}</td>
+                <td>{spec.value}</td>
+                <td>{new Date(spec.updated_at).toLocaleString()}</td>
+                {!readOnly && (
+                  <td>
+                    <button type="button" onClick={() => onStartEditing(spec.id)}>
+                      Edit
+                    </button>
+                  </td>
+                )}
+              </tr>
+            ),
+          )}
+        </tbody>
+      </table>
+    </div>
   )
 }

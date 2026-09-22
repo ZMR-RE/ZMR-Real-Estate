@@ -32,39 +32,41 @@ export function BalanceSheetReport({ balanceSheet }: BalanceSheetReportProps) {
         </p>
       )}
 
-      <table>
-        <thead>
-          <tr>
-            <th>Property</th>
-            <th>Market value</th>
-            <th>Cash</th>
-            <th>Mortgage balance</th>
-            <th>Equity</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.propertyId}>
-              <td>{row.propertyName}</td>
-              <td>{row.marketValue === null ? '— not set' : money(row.marketValue)}</td>
-              <td>{money(row.cash)}</td>
-              <td>{money(row.mortgageBalance)}</td>
-              <td>{row.equity === null ? '—' : money(row.equity)}</td>
-            </tr>
-          ))}
-        </tbody>
-        {rows.length > 1 && (
-          <tfoot>
+      <div className="table-scroll">
+        <table>
+          <thead>
             <tr>
-              <td>Total</td>
-              <td>{money(totalMarketValue)}</td>
-              <td>{money(totalCash)}</td>
-              <td>{money(totalMortgageBalance)}</td>
-              <td>{money(totalEquity)}</td>
+              <th>Property</th>
+              <th>Market value</th>
+              <th>Cash</th>
+              <th>Mortgage balance</th>
+              <th>Equity</th>
             </tr>
-          </tfoot>
-        )}
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.propertyId}>
+                <td>{row.propertyName}</td>
+                <td>{row.marketValue === null ? '— not set' : money(row.marketValue)}</td>
+                <td>{money(row.cash)}</td>
+                <td>{money(row.mortgageBalance)}</td>
+                <td>{row.equity === null ? '—' : money(row.equity)}</td>
+              </tr>
+            ))}
+          </tbody>
+          {rows.length > 1 && (
+            <tfoot>
+              <tr>
+                <td>Total</td>
+                <td>{money(totalMarketValue)}</td>
+                <td>{money(totalCash)}</td>
+                <td>{money(totalMortgageBalance)}</td>
+                <td>{money(totalEquity)}</td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </div>
     </div>
   )
 }

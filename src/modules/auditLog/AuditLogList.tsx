@@ -28,26 +28,28 @@ export function AuditLogList({ rows, llcOptions }: AuditLogListProps) {
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Record</th>
-          <th>Change</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.id}>
-            <td>{row.changedAt}</td>
-            <td>{row.record}</td>
-            <td>
-              {row.who} changed {row.field} from &lsquo;{displayValue(row, row.rawOldValue, row.formattedOldValue, llcOptions)}&rsquo; to &lsquo;
-              {displayValue(row, row.rawNewValue, row.formattedNewValue, llcOptions)}&rsquo;
-            </td>
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Record</th>
+            <th>Change</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td>{row.changedAt}</td>
+              <td>{row.record}</td>
+              <td>
+                {row.who} changed {row.field} from &lsquo;{displayValue(row, row.rawOldValue, row.formattedOldValue, llcOptions)}&rsquo; to &lsquo;
+                {displayValue(row, row.rawNewValue, row.formattedNewValue, llcOptions)}&rsquo;
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

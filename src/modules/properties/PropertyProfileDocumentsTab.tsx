@@ -96,38 +96,40 @@ export function PropertyProfileDocumentsTab({ propertyId, documents, onView, onD
         <p className="empty-state">No documents match "{searchQuery}".</p>
       ) : (
         <>
-          <table>
-            <thead>
-              <tr>
-                <th>Label</th>
-                <th>Category</th>
-                <th>Added</th>
-                <th>Size</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagedDocuments.map((doc) => (
-                <tr key={doc.id}>
-                  <td>{doc.label ?? '—'}</td>
-                  <td>{doc.category}</td>
-                  <td>{new Date(doc.uploaded_at).toLocaleDateString()}</td>
-                  <td>{doc.file_size !== null ? `${(doc.file_size / 1024).toFixed(1)} KB` : '—'}</td>
-                  <td>
-                    {doc.link_url ? (
-                      <a href={doc.link_url} target="_blank" rel="noopener noreferrer">
-                        {doc.link_type === 'drive_folder' ? 'Open in Drive' : 'Open link'}
-                      </a>
-                    ) : (
-                      <button type="button" onClick={() => onView(doc.storage_path!)}>
-                        View
-                      </button>
-                    )}
-                  </td>
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Label</th>
+                  <th>Category</th>
+                  <th>Added</th>
+                  <th>Size</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {pagedDocuments.map((doc) => (
+                  <tr key={doc.id}>
+                    <td>{doc.label ?? '—'}</td>
+                    <td>{doc.category}</td>
+                    <td>{new Date(doc.uploaded_at).toLocaleDateString()}</td>
+                    <td>{doc.file_size !== null ? `${(doc.file_size / 1024).toFixed(1)} KB` : '—'}</td>
+                    <td>
+                      {doc.link_url ? (
+                        <a href={doc.link_url} target="_blank" rel="noopener noreferrer">
+                          {doc.link_type === 'drive_folder' ? 'Open in Drive' : 'Open link'}
+                        </a>
+                      ) : (
+                        <button type="button" onClick={() => onView(doc.storage_path!)}>
+                          View
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {pageCount > 1 && (
             <div className="documents-pagination">

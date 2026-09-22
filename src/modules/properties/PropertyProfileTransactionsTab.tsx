@@ -12,27 +12,29 @@ export function PropertyProfileTransactionsTab({ transactions }: PropertyProfile
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Type</th>
-          <th>Category</th>
-          <th>Description</th>
-          <th>Amount</th>
-        </tr>
-      </thead>
-      <tbody>
-        {transactions.map((tx) => (
-          <tr key={tx.id}>
-            <td>{tx.transaction_date}</td>
-            <td>{tx.entry_type === 'income' ? 'Income' : 'Expense'}</td>
-            <td>{CATEGORY_LABELS[tx.category]}</td>
-            <td>{tx.description ?? ''}</td>
-            <td>${tx.amount.toFixed(2)}</td>
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Amount</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {transactions.map((tx) => (
+            <tr key={tx.id}>
+              <td>{tx.transaction_date}</td>
+              <td>{tx.entry_type === 'income' ? 'Income' : 'Expense'}</td>
+              <td>{CATEGORY_LABELS[tx.category]}</td>
+              <td>{tx.description ?? ''}</td>
+              <td>${tx.amount.toFixed(2)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

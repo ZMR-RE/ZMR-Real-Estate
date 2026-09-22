@@ -20,32 +20,34 @@ export function CashFlowReport({ cashFlow, year }: CashFlowReportProps) {
     <div>
       <h2>Cash flow — {year}</h2>
 
-      <table>
-        <tbody>
-          <tr>
-            <td>Net income (from Profit &amp; Loss)</td>
-            <td>{money(netIncome)}</td>
-          </tr>
-          <tr>
-            <td>+ Depreciation (non-cash, added back)</td>
-            <td>{money(depreciationAddBack)}</td>
-          </tr>
-          <tr>
-            <td>= Cash from operations</td>
-            <td>{money(cashFromOperations)}</td>
-          </tr>
-          <tr>
-            <td>− Mortgage principal paid</td>
-            <td>{money(principalPaid)}</td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <td>Net cash flow</td>
-            <td>{money(netCashFlow)}</td>
-          </tr>
-        </tfoot>
-      </table>
+      <div className="table-scroll">
+        <table>
+          <tbody>
+            <tr>
+              <td>Net income (from Profit &amp; Loss)</td>
+              <td>{money(netIncome)}</td>
+            </tr>
+            <tr>
+              <td>+ Depreciation (non-cash, added back)</td>
+              <td>{money(depreciationAddBack)}</td>
+            </tr>
+            <tr>
+              <td>= Cash from operations</td>
+              <td>{money(cashFromOperations)}</td>
+            </tr>
+            <tr>
+              <td>− Mortgage principal paid</td>
+              <td>{money(principalPaid)}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Net cash flow</td>
+              <td>{money(netCashFlow)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   )
 }

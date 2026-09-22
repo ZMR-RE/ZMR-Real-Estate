@@ -41,72 +41,74 @@ export function OrganizationTypeList({
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Holding company</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {llcs.map((llc) =>
-          editingId === llc.id ? (
-            <tr key={llc.id}>
-              <td colSpan={4}>
-                <LlcForm
-                  initialValues={{
-                    name: llc.name,
-                    ein: llc.ein,
-                    formation_state: llc.formation_state,
-                    registered_agent: llc.registered_agent,
-                    formation_date: llc.formation_date,
-                    annual_report_due_date: llc.annual_report_due_date,
-                    holding_company_id: llc.holding_company_id,
-                  }}
-                  saving={saving}
-                  error={error}
-                  holdingCompanyOptions={holdingCompanyOptions}
-                  onCreateHoldingCompany={onCreateHoldingCompany}
-                  onSave={(input) => onSave(llc.id, input)}
-                  onCancel={onCancel}
-                />
-              </td>
-            </tr>
-          ) : (
-            <Fragment key={llc.id}>
-              <tr className={llc.archived ? 'row-voided' : ''}>
-                <td>{llc.name}</td>
-                <td>{llc.holding_company?.name ?? '—'}</td>
-                <td>
-                  <span className={`status-badge ${llc.archived ? 'status-badge-neutral' : 'status-badge-success'}`}>
-                    {llc.archived ? 'Archived' : 'Active'}
-                  </span>
-                </td>
-                <td>
-                  <button type="button" onClick={() => onStartEditing(llc.id)}>
-                    Edit
-                  </button>
-                  <button type="button" onClick={() => onToggleArchived(llc)}>
-                    {llc.archived ? 'Restore' : 'Archive'}
-                  </button>
-                  <button type="button" onClick={() => setExpandedId(expandedId === llc.id ? null : llc.id)}>
-                    {expandedId === llc.id ? 'Hide properties' : 'View properties'}
-                  </button>
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Holding company</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {llcs.map((llc) =>
+            editingId === llc.id ? (
+              <tr key={llc.id}>
+                <td colSpan={4}>
+                  <LlcForm
+                    initialValues={{
+                      name: llc.name,
+                      ein: llc.ein,
+                      formation_state: llc.formation_state,
+                      registered_agent: llc.registered_agent,
+                      formation_date: llc.formation_date,
+                      annual_report_due_date: llc.annual_report_due_date,
+                      holding_company_id: llc.holding_company_id,
+                    }}
+                    saving={saving}
+                    error={error}
+                    holdingCompanyOptions={holdingCompanyOptions}
+                    onCreateHoldingCompany={onCreateHoldingCompany}
+                    onSave={(input) => onSave(llc.id, input)}
+                    onCancel={onCancel}
+                  />
                 </td>
               </tr>
-              {expandedId === llc.id && (
-                <tr>
-                  <td colSpan={4}>
-                    <OrganizationTypePropertiesPanel accountId={accountId} llcId={llc.id} llcOptions={llcOptions} />
+            ) : (
+              <Fragment key={llc.id}>
+                <tr className={llc.archived ? 'row-voided' : ''}>
+                  <td>{llc.name}</td>
+                  <td>{llc.holding_company?.name ?? '—'}</td>
+                  <td>
+                    <span className={`status-badge ${llc.archived ? 'status-badge-neutral' : 'status-badge-success'}`}>
+                      {llc.archived ? 'Archived' : 'Active'}
+                    </span>
+                  </td>
+                  <td>
+                    <button type="button" onClick={() => onStartEditing(llc.id)}>
+                      Edit
+                    </button>
+                    <button type="button" onClick={() => onToggleArchived(llc)}>
+                      {llc.archived ? 'Restore' : 'Archive'}
+                    </button>
+                    <button type="button" onClick={() => setExpandedId(expandedId === llc.id ? null : llc.id)}>
+                      {expandedId === llc.id ? 'Hide properties' : 'View properties'}
+                    </button>
                   </td>
                 </tr>
-              )}
-            </Fragment>
-          ),
-        )}
-      </tbody>
-    </table>
+                {expandedId === llc.id && (
+                  <tr>
+                    <td colSpan={4}>
+                      <OrganizationTypePropertiesPanel accountId={accountId} llcId={llc.id} llcOptions={llcOptions} />
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            ),
+          )}
+        </tbody>
+      </table>
+    </div>
   )
 }

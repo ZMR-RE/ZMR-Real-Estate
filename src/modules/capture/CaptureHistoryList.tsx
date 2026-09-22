@@ -111,99 +111,101 @@ export function CaptureHistoryList({
         </div>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Type</th>
-            <th>Property</th>
-            <th>Date</th>
-            <th>Complete</th>
-            <th>Reconciled</th>
-            <th></th>
-          </tr>
-        </thead>
-        {entries.length > 0 && (
-          <tbody>
-            {entries.map((entry) => {
-              const complete = isCaptureEntryComplete(entry)
-              return (
-                <Fragment key={entry.id}>
-                  <tr className={complete ? 'capture-entry-complete' : undefined}>
-                    <td>{ENTRY_TYPE_LABELS[entry.entry_type]}</td>
-                    <td>{propertyLabel(entry.property)}</td>
-                    <td>{entry.entry_date}</td>
-                    <td>
-                      <span className={`status-badge ${complete ? 'status-badge-success' : 'status-badge-warning'}`}>
-                        {complete ? 'Complete' : 'Needs details'}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`status-badge ${entry.reconciled ? 'status-badge-success' : 'status-badge-neutral'}`}>
-                        {entry.reconciled ? 'Reconciled' : 'Not reconciled'}
-                      </span>
-                    </td>
-                    <td>
-                      {entry.attachments.map((a) => (
-                        <button key={a.id} type="button" onClick={() => onViewAttachment(a.storage_path)}>
-                          View {a.attachment_type}
-                        </button>
-                      ))}
-                      {/* Roadmap 9.9 — the capture→transaction half of the
-                          bridge's traceable link; Financials doesn't
-                          support deep-linking to a specific row, so this
-                          goes to the page itself, findable there by date/
-                          amount/category. */}
-                      {entry.entry_type === 'receipt' && entry.financial_transaction_id && (
-                        <Link to="/financials">View transaction</Link>
-                      )}
-                      {!entry.reconciled && (
-                        <>
-                          <button
-                            type="button"
-                            disabled={processingId === entry.id}
-                            onClick={() => onStartEditing(entry.id)}
-                          >
-                            {editingId === entry.id ? 'Editing…' : 'Add details'}
+      <div className="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Property</th>
+              <th>Date</th>
+              <th>Complete</th>
+              <th>Reconciled</th>
+              <th></th>
+            </tr>
+          </thead>
+          {entries.length > 0 && (
+            <tbody>
+              {entries.map((entry) => {
+                const complete = isCaptureEntryComplete(entry)
+                return (
+                  <Fragment key={entry.id}>
+                    <tr className={complete ? 'capture-entry-complete' : undefined}>
+                      <td>{ENTRY_TYPE_LABELS[entry.entry_type]}</td>
+                      <td>{propertyLabel(entry.property)}</td>
+                      <td>{entry.entry_date}</td>
+                      <td>
+                        <span className={`status-badge ${complete ? 'status-badge-success' : 'status-badge-warning'}`}>
+                          {complete ? 'Complete' : 'Needs details'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${entry.reconciled ? 'status-badge-success' : 'status-badge-neutral'}`}>
+                          {entry.reconciled ? 'Reconciled' : 'Not reconciled'}
+                        </span>
+                      </td>
+                      <td>
+                        {entry.attachments.map((a) => (
+                          <button key={a.id} type="button" onClick={() => onViewAttachment(a.storage_path)}>
+                            View {a.attachment_type}
                           </button>
-                          {!complete && (
+                        ))}
+                        {/* Roadmap 9.9 — the capture→transaction half of the
+                            bridge's traceable link; Financials doesn't
+                            support deep-linking to a specific row, so this
+                            goes to the page itself, findable there by date/
+                            amount/category. */}
+                        {entry.entry_type === 'receipt' && entry.financial_transaction_id && (
+                          <Link to="/financials">View transaction</Link>
+                        )}
+                        {!entry.reconciled && (
+                          <>
                             <button
                               type="button"
                               disabled={processingId === entry.id}
-                              onClick={() => onToggleManuallyCompleted(entry)}
+                              onClick={() => onStartEditing(entry.id)}
                             >
-                              Mark complete
+                              {editingId === entry.id ? 'Editing…' : 'Add details'}
                             </button>
-                          )}
-                          <button type="button" disabled={processingId === entry.id} onClick={() => onVoid(entry.id)}>
-                            Delete
-                          </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                  {editingId === entry.id && (
-                    <tr>
-                      <td colSpan={COLUMN_COUNT}>
-                        <CaptureEntryDetailsForm
-                          entry={entry}
-                          accountId={accountId}
-                          saving={processingId === entry.id}
-                          error={detailsError}
-                          vendorOptions={vendorOptions}
-                          onCreateVendor={onCreateVendor}
-                          refreshVendorOptions={refreshVendorOptions}
-                          onSave={(input) => onSaveDetails(entry, input)}
-                          onCancel={onCancelEditing}
-                        />
+                            {!complete && (
+                              <button
+                                type="button"
+                                disabled={processingId === entry.id}
+                                onClick={() => onToggleManuallyCompleted(entry)}
+                              >
+                                Mark complete
+                              </button>
+                            )}
+                            <button type="button" disabled={processingId === entry.id} onClick={() => onVoid(entry.id)}>
+                              Delete
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
-                  )}
-                </Fragment>
-              )
-            })}
-          </tbody>
-        )}
-      </table>
+                    {editingId === entry.id && (
+                      <tr>
+                        <td colSpan={COLUMN_COUNT}>
+                          <CaptureEntryDetailsForm
+                            entry={entry}
+                            accountId={accountId}
+                            saving={processingId === entry.id}
+                            error={detailsError}
+                            vendorOptions={vendorOptions}
+                            onCreateVendor={onCreateVendor}
+                            refreshVendorOptions={refreshVendorOptions}
+                            onSave={(input) => onSaveDetails(entry, input)}
+                            onCancel={onCancelEditing}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                )
+              })}
+            </tbody>
+          )}
+        </table>
+      </div>
 
       {entries.length === 0 && <p className="empty-state">Nothing logged yet.</p>}
     </div>

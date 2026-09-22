@@ -35,73 +35,75 @@ export function VendorList({
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Vendor type</th>
-          <th>Contact email</th>
-          <th>Contact phone</th>
-          <th>W9</th>
-          <th>Insurance</th>
-          <th>Relationship</th>
-          <th>Notes</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {vendors.map((vendor) =>
-          editingId === vendor.id ? (
-            <tr key={vendor.id}>
-              <td colSpan={10}>
-                <VendorForm
-                  initialValues={{
-                    name: vendor.name,
-                    contact_email: vendor.contact_email,
-                    contact_phone: vendor.contact_phone,
-                    has_w9: vendor.has_w9,
-                    has_insurance: vendor.has_insurance,
-                    relationship: vendor.relationship,
-                    vendor_type: vendor.vendor_type,
-                    notes: vendor.notes,
-                  }}
-                  saving={saving}
-                  error={error}
-                  onSave={(input) => onSave(vendor.id, input)}
-                  onCancel={onCancel}
-                />
-              </td>
-            </tr>
-          ) : (
-            <Fragment key={vendor.id}>
-              <tr className={vendor.archived ? 'row-voided' : ''}>
-                <td>{vendor.name}</td>
-                <td>{vendor.vendor_type ?? '—'}</td>
-                <td>{vendor.contact_email ?? '—'}</td>
-                <td>{vendor.contact_phone ?? '—'}</td>
-                <td>{vendor.has_w9 ? 'On file' : '—'}</td>
-                <td>{vendor.has_insurance ? 'On file' : '—'}</td>
-                <td>{vendor.relationship ?? '—'}</td>
-                <td>{vendor.notes ?? '—'}</td>
-                <td>
-                  <span className={`status-badge ${vendor.archived ? 'status-badge-neutral' : 'status-badge-success'}`}>
-                    {vendor.archived ? 'Archived' : 'Active'}
-                  </span>
-                </td>
-                <td>
-                  <button type="button" onClick={() => onStartEditing(vendor.id)}>
-                    Edit
-                  </button>
-                  <button type="button" onClick={() => onToggleArchived(vendor)}>
-                    {vendor.archived ? 'Restore' : 'Archive'}
-                  </button>
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Vendor type</th>
+            <th>Contact email</th>
+            <th>Contact phone</th>
+            <th>W9</th>
+            <th>Insurance</th>
+            <th>Relationship</th>
+            <th>Notes</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {vendors.map((vendor) =>
+            editingId === vendor.id ? (
+              <tr key={vendor.id}>
+                <td colSpan={10}>
+                  <VendorForm
+                    initialValues={{
+                      name: vendor.name,
+                      contact_email: vendor.contact_email,
+                      contact_phone: vendor.contact_phone,
+                      has_w9: vendor.has_w9,
+                      has_insurance: vendor.has_insurance,
+                      relationship: vendor.relationship,
+                      vendor_type: vendor.vendor_type,
+                      notes: vendor.notes,
+                    }}
+                    saving={saving}
+                    error={error}
+                    onSave={(input) => onSave(vendor.id, input)}
+                    onCancel={onCancel}
+                  />
                 </td>
               </tr>
-            </Fragment>
-          ),
-        )}
-      </tbody>
-    </table>
+            ) : (
+              <Fragment key={vendor.id}>
+                <tr className={vendor.archived ? 'row-voided' : ''}>
+                  <td>{vendor.name}</td>
+                  <td>{vendor.vendor_type ?? '—'}</td>
+                  <td>{vendor.contact_email ?? '—'}</td>
+                  <td>{vendor.contact_phone ?? '—'}</td>
+                  <td>{vendor.has_w9 ? 'On file' : '—'}</td>
+                  <td>{vendor.has_insurance ? 'On file' : '—'}</td>
+                  <td>{vendor.relationship ?? '—'}</td>
+                  <td>{vendor.notes ?? '—'}</td>
+                  <td>
+                    <span className={`status-badge ${vendor.archived ? 'status-badge-neutral' : 'status-badge-success'}`}>
+                      {vendor.archived ? 'Archived' : 'Active'}
+                    </span>
+                  </td>
+                  <td>
+                    <button type="button" onClick={() => onStartEditing(vendor.id)}>
+                      Edit
+                    </button>
+                    <button type="button" onClick={() => onToggleArchived(vendor)}>
+                      {vendor.archived ? 'Restore' : 'Archive'}
+                    </button>
+                  </td>
+                </tr>
+              </Fragment>
+            ),
+          )}
+        </tbody>
+      </table>
+    </div>
   )
 }

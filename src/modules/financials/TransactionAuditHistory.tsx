@@ -25,24 +25,26 @@ export function TransactionAuditHistory({ transactionId }: TransactionAuditHisto
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Change</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.id}>
-            <td>{row.changedAt}</td>
-            <td>
-              {row.who} changed {row.field} from &lsquo;{row.formattedOldValue}&rsquo; to &lsquo;
-              {row.formattedNewValue}&rsquo;
-            </td>
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Change</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td>{row.changedAt}</td>
+              <td>
+                {row.who} changed {row.field} from &lsquo;{row.formattedOldValue}&rsquo; to &lsquo;
+                {row.formattedNewValue}&rsquo;
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

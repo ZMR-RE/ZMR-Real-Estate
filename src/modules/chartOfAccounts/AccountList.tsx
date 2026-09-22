@@ -16,28 +16,30 @@ export function AccountList({ accounts, editingAccountId, onEdit }: AccountListP
         return (
           <section key={type}>
             <h3>{ACCOUNT_TYPE_LABELS[type]}</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Account name</th>
-                  <th>Description</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {accountsForType.map((account) => (
-                  <tr key={account.id}>
-                    <td>{account.name}</td>
-                    <td>{account.description}</td>
-                    <td>
-                      <button type="button" onClick={() => onEdit(account.id)} disabled={editingAccountId === account.id}>
-                        Edit
-                      </button>
-                    </td>
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Account name</th>
+                    <th>Description</th>
+                    <th />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {accountsForType.map((account) => (
+                    <tr key={account.id}>
+                      <td>{account.name}</td>
+                      <td>{account.description}</td>
+                      <td>
+                        <button type="button" onClick={() => onEdit(account.id)} disabled={editingAccountId === account.id}>
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
         )
       })}

@@ -18,47 +18,49 @@ interface CategoryMappingListProps {
 
 export function CategoryMappingList({ rows, accounts, savingMappingId, onChange, onSave, onCancel }: CategoryMappingListProps) {
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Financials category</th>
-          <th>Mapped to account</th>
-          <th />
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map(({ mapping, categoryLabel, pendingChartAccountId }) => {
-          const hasPendingChange = pendingChartAccountId !== null && pendingChartAccountId !== mapping.chart_account_id
-          const selectValue = pendingChartAccountId ?? mapping.chart_account_id
-
-          return (
-            <tr key={mapping.id}>
-              <td>{categoryLabel}</td>
-              <td>
-                <select value={selectValue} onChange={(e) => onChange(mapping.id, e.target.value)}>
-                  {accounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.name}
-                    </option>
-                  ))}
-                </select>
-              </td>
-              <td>
-                {hasPendingChange && (
-                  <>
-                    <button type="button" onClick={() => onSave(mapping.id)} disabled={savingMappingId === mapping.id}>
-                      {savingMappingId === mapping.id ? 'Saving…' : 'Save'}
-                    </button>
-                    <button type="button" onClick={() => onCancel(mapping.id)} disabled={savingMappingId === mapping.id}>
-                      Cancel
-                    </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          )
-        })}
-      </tbody>
-    </table>
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Financials category</th>
+            <th>Mapped to account</th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ mapping, categoryLabel, pendingChartAccountId }) => {
+            const hasPendingChange = pendingChartAccountId !== null && pendingChartAccountId !== mapping.chart_account_id
+            const selectValue = pendingChartAccountId ?? mapping.chart_account_id
+  
+            return (
+              <tr key={mapping.id}>
+                <td>{categoryLabel}</td>
+                <td>
+                  <select value={selectValue} onChange={(e) => onChange(mapping.id, e.target.value)}>
+                    {accounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.name}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td>
+                  {hasPendingChange && (
+                    <>
+                      <button type="button" onClick={() => onSave(mapping.id)} disabled={savingMappingId === mapping.id}>
+                        {savingMappingId === mapping.id ? 'Saving…' : 'Save'}
+                      </button>
+                      <button type="button" onClick={() => onCancel(mapping.id)} disabled={savingMappingId === mapping.id}>
+                        Cancel
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
   )
 }

@@ -37,53 +37,55 @@ export function FinancialAccountList({
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Nickname</th>
-          <th>Type</th>
-          <th>Last 4</th>
-          <th>Status</th>
-          {!readOnly && <th></th>}
-        </tr>
-      </thead>
-      <tbody>
-        {accounts.map((financialAccount) =>
-          !readOnly && editingId === financialAccount.id ? (
-            <tr key={financialAccount.id}>
-              <td colSpan={5}>
-                <FinancialAccountForm
-                  initialValues={financialAccount}
-                  saving={saving ?? false}
-                  onSave={(input) => onSave?.(financialAccount.id, input)}
-                  onCancel={() => onCancel?.()}
-                />
-              </td>
-            </tr>
-          ) : (
-            <tr key={financialAccount.id} className={financialAccount.archived ? 'row-voided' : ''}>
-              <td>{financialAccount.nickname}</td>
-              <td>{TYPE_LABELS[financialAccount.account_type]}</td>
-              <td>•••• {financialAccount.last_four}</td>
-              <td>
-                <span className={`status-badge ${financialAccount.archived ? 'status-badge-neutral' : 'status-badge-success'}`}>
-                  {financialAccount.archived ? 'Archived' : 'Active'}
-                </span>
-              </td>
-              {!readOnly && (
-                <td>
-                  <button type="button" onClick={() => onStartEditing?.(financialAccount.id)}>
-                    Edit
-                  </button>
-                  <button type="button" onClick={() => onToggleArchived?.(financialAccount)}>
-                    {financialAccount.archived ? 'Restore' : 'Archive'}
-                  </button>
+    <div className="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Nickname</th>
+            <th>Type</th>
+            <th>Last 4</th>
+            <th>Status</th>
+            {!readOnly && <th></th>}
+          </tr>
+        </thead>
+        <tbody>
+          {accounts.map((financialAccount) =>
+            !readOnly && editingId === financialAccount.id ? (
+              <tr key={financialAccount.id}>
+                <td colSpan={5}>
+                  <FinancialAccountForm
+                    initialValues={financialAccount}
+                    saving={saving ?? false}
+                    onSave={(input) => onSave?.(financialAccount.id, input)}
+                    onCancel={() => onCancel?.()}
+                  />
                 </td>
-              )}
-            </tr>
-          ),
-        )}
-      </tbody>
-    </table>
+              </tr>
+            ) : (
+              <tr key={financialAccount.id} className={financialAccount.archived ? 'row-voided' : ''}>
+                <td>{financialAccount.nickname}</td>
+                <td>{TYPE_LABELS[financialAccount.account_type]}</td>
+                <td>•••• {financialAccount.last_four}</td>
+                <td>
+                  <span className={`status-badge ${financialAccount.archived ? 'status-badge-neutral' : 'status-badge-success'}`}>
+                    {financialAccount.archived ? 'Archived' : 'Active'}
+                  </span>
+                </td>
+                {!readOnly && (
+                  <td>
+                    <button type="button" onClick={() => onStartEditing?.(financialAccount.id)}>
+                      Edit
+                    </button>
+                    <button type="button" onClick={() => onToggleArchived?.(financialAccount)}>
+                      {financialAccount.archived ? 'Restore' : 'Archive'}
+                    </button>
+                  </td>
+                )}
+              </tr>
+            ),
+          )}
+        </tbody>
+      </table>
+    </div>
   )
 }
