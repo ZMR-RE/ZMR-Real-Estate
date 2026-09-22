@@ -22,7 +22,7 @@ export interface CaptureEntryDetailsInput {
   financialAccountId: string
   paymentMethod: string
   repairOrImprovement: string
-  entryDirection: string
+  receiptType: string
   paidToVendorId: string
   paidToTenantId: string
   paidToProspectiveTenantId: string
@@ -87,7 +87,7 @@ export function CaptureEntryDetailsForm({
   // (scoped narrowly, not full 1.33): defaults to 'expense' for a
   // pre-existing receipt saved before this field existed, matching
   // useCaptureForm.ts's create-time default.
-  const [entryDirection, setEntryDirection] = useState(entry.entry_direction ?? 'expense')
+  const [receiptType, setReceiptType] = useState(entry.receipt_type ?? 'expense')
   const [tenantOptions, setTenantOptions] = useState<SearchableSelectOption[]>([])
   const [prospectiveTenantOptions, setProspectiveTenantOptions] = useState<SearchableSelectOption[]>([])
   // Roadmap 1.31 — Receipt's "Vendor" field becomes the same
@@ -361,17 +361,18 @@ export function CaptureEntryDetailsForm({
             </>
           )}
 
-          <label htmlFor={`entry_direction_${entry.id}`}>Entry direction</label>
+          <label htmlFor={`receipt_type_${entry.id}`}>Receipt type</label>
           <select
-            id={`entry_direction_${entry.id}`}
-            value={entryDirection}
-            onChange={(e) => setEntryDirection(e.target.value)}
+            id={`receipt_type_${entry.id}`}
+            value={receiptType}
+            onChange={(e) => setReceiptType(e.target.value)}
           >
             <option value="expense">Expense</option>
             <option value="income">Income</option>
+            <option value="refund_return">Refund/Return</option>
           </select>
 
-          <label htmlFor={`paid_to_${entry.id}`}>{entryDirection === 'income' ? 'Received from' : 'Paid to'}</label>
+          <label htmlFor={`paid_to_${entry.id}`}>{receiptType === 'expense' ? 'Paid to' : 'Received from'}</label>
           {isAddingPaidToVendor ? (
             <VendorForm
               saving={creatingPaidToVendor}
@@ -569,7 +570,7 @@ export function CaptureEntryDetailsForm({
             financialAccountId,
             paymentMethod,
             repairOrImprovement,
-            entryDirection,
+            receiptType,
             paidToVendorId,
             paidToTenantId,
             paidToProspectiveTenantId,

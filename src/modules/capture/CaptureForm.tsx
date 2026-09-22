@@ -66,8 +66,8 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
     setPaymentMethod,
     repairOrImprovement,
     setRepairOrImprovement,
-    entryDirection,
-    setEntryDirection,
+    receiptType,
+    setReceiptType,
     paidToOptions,
     paidToEntityId,
     refreshPaidToOptions,
@@ -294,17 +294,18 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
 
           {entryType === 'receipt' && (
             <>
-              <label htmlFor="entry_direction">Entry direction</label>
+              <label htmlFor="receipt_type">Receipt type</label>
               <select
-                id="entry_direction"
-                value={entryDirection}
-                onChange={(e) => setEntryDirection(e.target.value)}
+                id="receipt_type"
+                value={receiptType}
+                onChange={(e) => setReceiptType(e.target.value)}
               >
                 <option value="expense">Expense</option>
                 <option value="income">Income</option>
+                <option value="refund_return">Refund/Return</option>
               </select>
 
-              <label htmlFor="paid_to">{entryDirection === 'income' ? 'Received from' : 'Paid to'}</label>
+              <label htmlFor="paid_to">{receiptType === 'expense' ? 'Paid to' : 'Received from'}</label>
               {isAddingPaidToVendor ? (
                 <VendorForm
                   saving={creatingPaidToVendor}

@@ -27,7 +27,7 @@ export interface CaptureEntry {
   financial_account: { id: string; nickname: string; last_four: string; account_type: string } | null
   payment_method: string | null
   repair_or_improvement: string | null
-  entry_direction: string | null
+  receipt_type: string | null
   paid_to_vendor_id: string | null
   paid_to_vendor: { id: string; name: string } | null
   paid_to_tenant_id: string | null
@@ -65,7 +65,7 @@ export interface CaptureEntry {
 // and the UI never writes it again (kept in the DB, unused, per
 // CLAUDE.md's no-drop-without-approval rule).
 const CAPTURE_ENTRY_COLUMNS =
-  'id, entry_type, entry_date, notes, miles_driven, start_destination, end_destination, unit_id, unit:units(id, unit_label), amount, category, financial_account_id, financial_account:property_financial_accounts(id, nickname, last_four, account_type), payment_method, repair_or_improvement, entry_direction, paid_to_vendor_id, paid_to_vendor:vendors!capture_log_paid_to_vendor_id_fkey(id, name), paid_to_tenant_id, paid_to_tenant:tenants!capture_log_paid_to_tenant_id_fkey(id, name), paid_to_prospective_tenant_id, paid_to_prospective_tenant:prospective_tenants!capture_log_paid_to_prospective_tenant_id_fkey(id, name), met_with, met_with_vendor_id, met_with_vendor:vendors!capture_log_met_with_vendor_id_fkey(id, name), met_with_tenant_id, met_with_tenant:tenants!capture_log_met_with_tenant_id_fkey(id, name), met_with_prospective_tenant_id, met_with_prospective_tenant:prospective_tenants!capture_log_met_with_prospective_tenant_id_fkey(id, name), visit_type, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
+  'id, entry_type, entry_date, notes, miles_driven, start_destination, end_destination, unit_id, unit:units(id, unit_label), amount, category, financial_account_id, financial_account:property_financial_accounts(id, nickname, last_four, account_type), payment_method, repair_or_improvement, receipt_type, paid_to_vendor_id, paid_to_vendor:vendors!capture_log_paid_to_vendor_id_fkey(id, name), paid_to_tenant_id, paid_to_tenant:tenants!capture_log_paid_to_tenant_id_fkey(id, name), paid_to_prospective_tenant_id, paid_to_prospective_tenant:prospective_tenants!capture_log_paid_to_prospective_tenant_id_fkey(id, name), met_with, met_with_vendor_id, met_with_vendor:vendors!capture_log_met_with_vendor_id_fkey(id, name), met_with_tenant_id, met_with_tenant:tenants!capture_log_met_with_tenant_id_fkey(id, name), met_with_prospective_tenant_id, met_with_prospective_tenant:prospective_tenants!capture_log_met_with_prospective_tenant_id_fkey(id, name), visit_type, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
 
 // Root-cause fix for a real bug found while building 1.21: PostgREST
 // doesn't reliably return every numeric(...) column as a JSON string —
@@ -108,7 +108,7 @@ export interface CreateCaptureEntryInput {
   financialAccountId: string | null
   paymentMethod: string | null
   repairOrImprovement: string | null
-  entryDirection: string | null
+  receiptType: string | null
   paidToVendorId: string | null
   paidToTenantId: string | null
   paidToProspectiveTenantId: string | null
@@ -148,7 +148,7 @@ export async function createCaptureEntry(input: CreateCaptureEntryInput) {
       financial_account_id: input.financialAccountId,
       payment_method: input.paymentMethod,
       repair_or_improvement: input.repairOrImprovement,
-      entry_direction: input.entryDirection,
+      receipt_type: input.receiptType,
       paid_to_vendor_id: input.paidToVendorId,
       paid_to_tenant_id: input.paidToTenantId,
       paid_to_prospective_tenant_id: input.paidToProspectiveTenantId,
@@ -247,7 +247,7 @@ export interface UpdateCaptureEntryDetailsInput {
   financialAccountId: string | null
   paymentMethod: string | null
   repairOrImprovement: string | null
-  entryDirection: string | null
+  receiptType: string | null
   paidToVendorId: string | null
   paidToTenantId: string | null
   paidToProspectiveTenantId: string | null
@@ -278,7 +278,7 @@ export async function updateCaptureEntryDetails(id: string, input: UpdateCapture
       financial_account_id: input.financialAccountId,
       payment_method: input.paymentMethod,
       repair_or_improvement: input.repairOrImprovement,
-      entry_direction: input.entryDirection,
+      receipt_type: input.receiptType,
       paid_to_vendor_id: input.paidToVendorId,
       paid_to_tenant_id: input.paidToTenantId,
       paid_to_prospective_tenant_id: input.paidToProspectiveTenantId,

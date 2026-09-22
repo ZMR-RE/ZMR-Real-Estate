@@ -43,10 +43,11 @@ import { supabase } from '../supabaseClient'
 // given values, same precedent as contact_method/visit_type's seeds.
 // vendor_type was added by 20260921190000_vendor_type.sql (roadmap
 // 1.31), seeded with Store/Contractor/Service provider/Other — same
-// precedent again. capture_log.entry_direction (added alongside it,
+// precedent again. capture_log.receipt_type (added alongside it,
 // roadmap 1.31's "Paid to"/"Received from" refinement — groundwork for
-// 1.33) is deliberately NOT one of these: a fixed 2-value
-// income/expense field, same reasoning as repair_or_improvement below.
+// 1.33; renamed from entry_direction and widened to a 3rd value,
+// Refund/Return, by 20260922000000) is deliberately NOT one of these: a
+// fixed enum, same reasoning as repair_or_improvement below.
 export type PickListName =
   | 'subcategory'
   | 'payment_method'

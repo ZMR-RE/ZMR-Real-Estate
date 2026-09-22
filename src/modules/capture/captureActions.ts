@@ -26,7 +26,7 @@ export interface SaveCaptureEntryDetailsInput {
   financialAccountId: string
   paymentMethod: string
   repairOrImprovement: string
-  entryDirection: string
+  receiptType: string
   paidToVendorId: string
   paidToTenantId: string
   paidToProspectiveTenantId: string
@@ -99,7 +99,7 @@ export async function saveCaptureEntryDetails(
     financialAccountId: input.financialAccountId || null,
     paymentMethod: input.paymentMethod || null,
     repairOrImprovement: input.repairOrImprovement || null,
-    entryDirection: input.entryDirection || null,
+    receiptType: input.receiptType || null,
     paidToVendorId: input.paidToVendorId || null,
     paidToTenantId: input.paidToTenantId || null,
     paidToProspectiveTenantId: input.paidToProspectiveTenantId || null,

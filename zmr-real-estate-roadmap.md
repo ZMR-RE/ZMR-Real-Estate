@@ -497,6 +497,40 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       vendor and capture entry cleaned up afterward the same way as
       above.
 
+      Follow-up — "Entry direction" renamed to "Receipt type", widened
+      from 2 values to 3: Expense/Income/Refund-Return (new option
+      value refund_return). "Paid to" now shows for Expense only;
+      Income and Refund-Return both show "Received from" — Refund-Return
+      wasn't given its own distinct label since none was specified and
+      "money coming back" reads the same as Income from the field's
+      perspective. capture_log.entry_direction renamed to receipt_type
+      (20260922000000_capture_log_receipt_type.sql), a plain column
+      rename (not add-new-keep-old) since no real user data existed
+      under the old name yet.
+
+      Confirmed with the user before building: Refund-Return's spec'd
+      behavior ("computes as a REDUCTION to the original expense
+      category's total, not an addition to Income — confirm this is
+      reflected correctly in P&L") could not be verified, because
+      capture_log and Financials' P&L (financial_transactions) are two
+      disconnected tables today — reconciling a capture entry only sets
+      reconciled: true, it never creates a financial_transactions row
+      (that bridge is roadmap 9.9, unbuilt). Scope was confirmed as
+      Quick-Capture-only: the rename/3rd-value is built, but it has no
+      live effect on P&L, and none was claimed. Extending this to
+      Financials' own entry_type (which does feed P&L) or building the
+      9.9 bridge were both explicitly declined as out of scope for this
+      round.
+
+      Verified live: Receipt type shows all 3 options; selecting
+      Refund/Return switches the label to "Received from" (confirmed via
+      direct DOM check, not just visually); captured a real Receipt with
+      Refund/Return selected, saved, reopened via History → Add details,
+      confirmed receipt_type round-tripped as "refund_return" and the
+      label rendered "Received from" on reload. Checked dark mode. Test
+      entry deleted afterward (own session's data, no free-text field
+      needed a ZMR-TEST- prefix since none was entered).
+
 ## 2. Phase 2 — Parallelized Build (5 terminals, once Phase 1 schema is locked and stable)
 - [x] 2.1 Rent Ops — invoicing, receipts, on-time payment tracking
 - [x] 2.2 Task Engine — per-property to-do lists, recurring items, "coming up" view across the portfolio

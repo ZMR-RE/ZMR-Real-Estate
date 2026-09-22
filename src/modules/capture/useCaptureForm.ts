@@ -58,12 +58,18 @@ export function useCaptureForm(onCaptured?: () => void) {
   const [financialAccountId, setFinancialAccountIdState] = useState<string | null>(null)
   const [paymentMethod, setPaymentMethod] = useState('')
   const [repairOrImprovement, setRepairOrImprovement] = useState('')
-  // Roadmap 1.31 — "Paid to"/"Received from" refinement's groundwork
-  // (scoped narrowly, not full 1.33): a fixed 2-value field, defaulting
-  // to 'expense' since virtually all Receipt usage today is an expense
-  // and the label needs a determinate value to render. Only meaningful
-  // for entryType === 'receipt'.
-  const [entryDirection, setEntryDirection] = useState('expense')
+  // Roadmap 1.31 — "Receipt type" (renamed from "Entry direction" by
+  // 20260922000000, widened to 3 values: Expense/Income/Refund-Return).
+  // Groundwork for 1.33, scoped narrowly — the label switch only, no
+  // Category-filtering behavior. Refund-Return has no live P&L effect
+  // today (confirmed with the user): reconciling a capture entry only
+  // flags it reconciled, it never creates a financial_transactions row
+  // (that bridge is roadmap 9.9, unbuilt), so there's nothing yet for a
+  // "reduction to the expense category" to apply to. Defaults to
+  // 'expense' since virtually all Receipt usage today is an expense and
+  // the label needs a determinate value to render. Only meaningful for
+  // entryType === 'receipt'.
+  const [receiptType, setReceiptType] = useState('expense')
   const [tenantOptions, setTenantOptions] = useState<PropertyTenantOption[]>([])
   const [prospectiveTenantOptions, setProspectiveTenantOptions] = useState<ProspectiveTenant[]>([])
   // Roadmap 1.31 — Receipt's "Vendor" field becomes the same
@@ -323,7 +329,7 @@ export function useCaptureForm(onCaptured?: () => void) {
     setFinancialAccountIdState(null)
     setPaymentMethod('')
     setRepairOrImprovement('')
-    setEntryDirection('expense')
+    setReceiptType('expense')
     setPaidToVendorId(null)
     setPaidToTenantId(null)
     setPaidToProspectiveTenantId(null)
@@ -406,7 +412,7 @@ export function useCaptureForm(onCaptured?: () => void) {
       financialAccountId,
       paymentMethod: paymentMethod || null,
       repairOrImprovement: repairOrImprovement || null,
-      entryDirection: entryType === 'receipt' ? entryDirection : null,
+      receiptType: entryType === 'receipt' ? receiptType : null,
       paidToVendorId,
       paidToTenantId,
       paidToProspectiveTenantId,
@@ -503,8 +509,8 @@ export function useCaptureForm(onCaptured?: () => void) {
     setPaymentMethod,
     repairOrImprovement,
     setRepairOrImprovement,
-    entryDirection,
-    setEntryDirection,
+    receiptType,
+    setReceiptType,
     paidToOptions,
     paidToEntityId,
     refreshPaidToOptions,
