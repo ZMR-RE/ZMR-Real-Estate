@@ -258,6 +258,14 @@ code {
   min-height: 100svh;
 }
 
+/* Roadmap 7.29 — extends the Sticky/frozen headers rule to navigation:
+   the sidebar stays pinned in the viewport while .app-main scrolls,
+   same "frozen rows" idea as .tab-bar/thead th. height:100svh +
+   overflow-y:auto (rather than leaving it un-sized) also gives the nav
+   its own scroll if its content ever outgrows the viewport, instead of
+   pushing the whole page taller. Desktop-only — at the <=860px
+   breakpoint below this becomes a horizontal top bar, not a sidebar,
+   and reverts to static/in-flow. */
 .app-nav {
   width: 232px;
   flex-shrink: 0;
@@ -267,6 +275,10 @@ code {
   padding: var(--space-5) var(--space-3);
   background: var(--nav-bg);
   border-right: 1px solid var(--nav-border);
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow-y: auto;
 }
 
 .app-nav-brand {
@@ -526,10 +538,19 @@ label {
   margin-bottom: var(--space-1);
 }
 
+/* Roadmap 7.29 — `font: inherit` let a field's font-size silently
+   shrink to whatever its container happened to set (most inline-edit
+   forms render inside a table `<td>`, which sets font-size:14px for
+   its own cell text) instead of the app's normal 16px body text,
+   making Edit-mode fields noticeably harder to read while typing.
+   Pinning font-size explicitly (keeping font-family: inherit, so
+   fields still use the app's own typeface) makes every field the same
+   readable size no matter what it's nested inside. */
 input,
 select,
 textarea {
-  font: inherit;
+  font-family: inherit;
+  font-size: var(--text-base);
   padding: 10px var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -992,13 +1013,23 @@ dd {
   color: var(--text);
 }
 
+/* Roadmap 7.29 — this is plain, non-interactive text (see the comment
+   in PropertyFieldGroup.tsx: the Box interaction standard means the
+   box's own top-right Edit is the only way in, not this hint), but the
+   dashed underline made it look exactly like a clickable link, reading
+   as a stray/broken hyperlink when nothing happened on click. A dashed-
+   border pill instead reads as a tag/hint, not a link — no
+   text-decoration involved at all. */
 .property-field-group-add-prompt {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   margin: var(--space-2) 0 0;
+  padding: 3px 10px;
+  border: 1px dashed var(--border);
+  border-radius: 999px;
   font-size: var(--text-sm);
+  font-weight: 500;
   color: var(--text);
-  text-decoration: underline dashed;
-  text-underline-offset: 3px;
 }
 
 /* ============================================================
@@ -1749,6 +1780,12 @@ tr.capture-entry-complete td {
     padding: var(--space-3) var(--space-4);
     border-right: none;
     border-bottom: 1px solid var(--border);
+    /* Roadmap 7.29's sticky sidebar is desktop-only — this is a
+       horizontal top bar here, not a sidebar, so revert back to
+       normal in-flow positioning. */
+    position: static;
+    height: auto;
+    overflow-y: visible;
   }
 
   .app-nav-brand {
