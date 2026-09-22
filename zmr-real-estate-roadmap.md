@@ -1192,6 +1192,19 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       Same GAP as 7.32 above still applies to this item's live testing —
       not re-flagging separately.
 
+      ADDENDUM: additional scope dispatched after this item shipped —
+      two more Insurance ledger fields, Payment plan (pick-list, seeded
+      Annual/Monthly — the two values explicitly given) and Policy
+      discounts (free text, per the instruction's own stated option).
+      Migration 20260922130000. `npm run build` clean. Verified live on
+      the same 2169 Ash St policy: filled Payment plan (Annual) and
+      Policy discounts ("Bundled, claims-free"), confirmed round-trip
+      display, then reverted both to null and positively re-queried the
+      row directly to confirm the match. Checked desktop, a 390px
+      iframe-simulated mobile width, and dark mode — both new fields
+      render correctly in the existing stacked Coverage-cell block and
+      the edit form, no layout issues.
+
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
 - [x] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field) — the llcs table, properties.llc_id, and the real-list-plus-"+ Add new LLC" picker already existed (Phase 1); this pass added the missing formation_date field
