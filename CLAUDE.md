@@ -54,6 +54,15 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   was "removed," but that nothing else was altered, added, or left
   behind anywhere it wasn't before.
 
+## Cleanup self-verification
+- A terminal's own claim that test data was "cleaned up" is not
+  sufficient. Before reporting cleanup as complete, re-query the
+  specific record(s) touched — not just the record(s) the terminal
+  believes it created — and confirm the actual current state matches
+  what existed before the test began. If a test spans multiple records
+  (e.g. creating units to test a filter), enumerate and verify each one
+  individually, not just the count.
+
 ## Credential safety in testing
 - Never test password-reset, login, or credential flows using the real account's actual credentials in a way that changes them without asking first. If verifying a flow requires changing a real credential, stop and ask before proceeding, or use a disposable/test account instead. If a real credential is changed as part of testing, hand control back to the user immediately with the new value — never treat that as routine cleanup.
 
