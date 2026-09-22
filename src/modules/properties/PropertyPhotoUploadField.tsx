@@ -25,7 +25,7 @@ export function PropertyPhotoUploadField({ propertyId }: PropertyPhotoUploadFiel
       <label htmlFor="property_photo">Property photo</label>
       {error && <p role="alert">{error}</p>}
       {!loading && photoUrl && (
-        <div className="property-photo property-photo-preview">
+        <div className="property-photo">
           <img src={photoUrl} alt="Current property" />
         </div>
       )}

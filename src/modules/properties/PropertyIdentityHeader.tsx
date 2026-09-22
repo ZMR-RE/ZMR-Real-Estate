@@ -44,19 +44,22 @@ function formatCityStateZip(property: Property): string {
 // required DB column) since showing it here would just duplicate the
 // address. Contact email rides along as a minor secondary line rather
 // than its own field group.
+//
+// Roadmap 7.34 — restructured around the full-width hero photo: address/
+// city-state-zip moved onto the image itself (PropertyPhoto's own
+// overlay) rather than a separate text block beside a small thumbnail.
+// Organization type/$/sq ft/Status now form one row directly below the
+// image. The box's own top-right Edit (EditableSection, the Box
+// interaction standard's single entry point) is unchanged — nothing
+// here duplicates or relocates it, despite the row sitting visually
+// close to where Edit reads on screen.
 export function PropertyIdentityHeader({ property, llcOptions, marketValue }: PropertyIdentityHeaderProps) {
   const cityStateZip = formatCityStateZip(property)
 
   return (
     <div className="property-identity-header">
-      {/* Roadmap 7.32 (6) — property photo, displayed prominently next
-          to the address. */}
-      <PropertyPhoto propertyId={property.id} />
-      <div className="property-identity-main">
-        <h3 className="property-identity-address">{property.address ?? 'No address on file'}</h3>
-        {cityStateZip && <p className="property-identity-subline">{cityStateZip}</p>}
-        {property.contact_email && <p className="property-identity-subline">{property.contact_email}</p>}
-      </div>
+      <PropertyPhoto propertyId={property.id} address={property.address} cityStateZip={cityStateZip} />
+      {property.contact_email && <p className="property-identity-subline">{property.contact_email}</p>}
       <div className="property-identity-meta">
         <div className="field">
           <dt>Organization type</dt>
