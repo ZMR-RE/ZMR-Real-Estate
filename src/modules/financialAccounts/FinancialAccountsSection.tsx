@@ -11,12 +11,39 @@ interface FinancialAccountsSectionProps {
 // never a full account/card number — enforced both here (useFinancialAccounts'
 // validation) and at the DB level (the last_four check constraint).
 export function FinancialAccountsSection({ propertyId }: FinancialAccountsSectionProps) {
-  const { accounts, loading, error, isAdding, editingId, saving, startAdding, startEditing, cancelForm, add, save, toggleArchived } =
-    useFinancialAccounts(propertyId)
+  const {
+    accounts,
+    archivedCount,
+    showArchived,
+    setShowArchived,
+    loading,
+    error,
+    isAdding,
+    editingId,
+    saving,
+    startAdding,
+    startEditing,
+    cancelForm,
+    add,
+    save,
+    toggleArchived,
+  } = useFinancialAccounts(propertyId)
 
   return (
     <div>
       {error && <p role="alert">{error}</p>}
+
+      {archivedCount > 0 && (
+        <label htmlFor="financial_accounts_show_archived">
+          <input
+            id="financial_accounts_show_archived"
+            type="checkbox"
+            checked={showArchived}
+            onChange={(e) => setShowArchived(e.target.checked)}
+          />
+          Show archived ({archivedCount})
+        </label>
+      )}
 
       {loading ? (
         <p>Loading…</p>

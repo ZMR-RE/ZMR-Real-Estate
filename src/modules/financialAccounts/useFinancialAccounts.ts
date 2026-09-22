@@ -18,6 +18,12 @@ export function useFinancialAccounts(propertyId: string) {
   const [isAdding, setIsAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  // Roadmap 7.23 — archived accounts hidden by default, behind a "Show
+  // archived" toggle in the section header. UI-only filter, not a
+  // refetch: `accounts` always holds everything (an archived one must
+  // still resolve for historical Quick Capture/Financials rows that
+  // reference it), this just decides what the list renders.
+  const [showArchived, setShowArchived] = useState(false)
 
   const refresh = useCallback(async () => {
     if (!accountId) return
@@ -117,7 +123,10 @@ export function useFinancialAccounts(propertyId: string) {
   }
 
   return {
-    accounts,
+    accounts: showArchived ? accounts : accounts.filter((a) => !a.archived),
+    archivedCount: accounts.filter((a) => a.archived).length,
+    showArchived,
+    setShowArchived,
     loading,
     error,
     isAdding,
