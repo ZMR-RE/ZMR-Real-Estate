@@ -1189,31 +1189,14 @@ form > .property-field-group:first-of-type {
   margin-top: var(--space-6);
 }
 
+/* Sentence case, not the all-caps label style .searchable-select-group-
+   label uses below — that regressed against this app's existing
+   sentence-case section-header convention (h2/h3/h4, collapsible-section
+   titles, etc. are never uppercased). */
 .property-field-group-title {
   margin: 0 0 var(--space-3);
   font-size: var(--text-sm);
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text);
-}
-
-/* Roadmap 7.29 — this is plain, non-interactive text (see the comment
-   in PropertyFieldGroup.tsx: the Box interaction standard means the
-   box's own top-right Edit is the only way in, not this hint), but the
-   dashed underline made it look exactly like a clickable link, reading
-   as a stray/broken hyperlink when nothing happened on click. A dashed-
-   border pill instead reads as a tag/hint, not a link — no
-   text-decoration involved at all. */
-.property-field-group-add-prompt {
-  display: inline-flex;
-  align-items: center;
-  margin: var(--space-2) 0 0;
-  padding: 3px 10px;
-  border: 1px dashed var(--border);
-  border-radius: 999px;
-  font-size: var(--text-sm);
-  font-weight: 500;
   color: var(--text);
 }
 
@@ -1296,6 +1279,21 @@ form > .property-field-group:first-of-type {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+/* Roadmap 7.33 (4) — PickListCheckboxGroup, the multi-select
+   counterpart above. Options wrap onto multiple lines rather than a
+   single scrolling row, same reasoning as .field-row's own mobile
+   stacking below. */
+.pick-list-checkbox-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.pick-list-checkbox-option {
+  margin-top: 0;
 }
 
 .page-header-row {

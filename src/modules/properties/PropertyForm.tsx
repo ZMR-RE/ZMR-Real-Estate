@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { SearchableSelect } from '../../shared/SearchableSelect'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
+import { PickListCheckboxGroup } from '../../shared/pickLists/PickListCheckboxGroup'
 import { InfoTooltip } from '../../shared/InfoTooltip'
 import { US_STATES } from '../../shared/usStates'
 import { LlcForm } from '../llcs/LlcForm'
@@ -384,46 +385,20 @@ export function PropertyForm({
         </div>
       </div>
 
-      {/* Roadmap 7.32 (4) */}
-      <div className="property-field-group">
-        <h3 className="property-field-group-title">Heating &amp; cooling</h3>
-        <div className="field-column">
-          <div className="field">
-            <label htmlFor="ac_type">AC type</label>
-            <PickListSelect
-              id="ac_type"
-              listName="ac_type"
-              title="AC types"
-              placeholder="Select an AC type…"
-              {...pickListField('ac_type')}
-            />
-          </div>
+      {/* Roadmap 7.33 (3) — Heating & cooling group removed; HVAC is now
+          an Area option in Specs & measurements instead. */}
 
-          <div className="field">
-            <label htmlFor="heating_type">Heating type</label>
-            <PickListSelect
-              id="heating_type"
-              listName="heating_type"
-              title="Heating types"
-              placeholder="Select a heating type…"
-              {...pickListField('heating_type')}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Roadmap 7.32 (5) */}
+      {/* Roadmap 7.32 (5) / 7.33 (4) — multi-select checklist. */}
       <div className="property-field-group">
         <h3 className="property-field-group-title">Exterior information</h3>
         <div className="field-column">
           <div className="field">
-            <label htmlFor="exterior_wall_material">Exterior wall material</label>
-            <PickListSelect
-              id="exterior_wall_material"
+            <label>Exterior wall material</label>
+            <PickListCheckboxGroup
               listName="exterior_wall_material"
               title="Exterior wall materials"
-              placeholder="Select an exterior wall material…"
-              {...pickListField('exterior_wall_material')}
+              value={values.exterior_wall_materials}
+              onChange={(value) => setValues((prev) => ({ ...prev, exterior_wall_materials: value }))}
             />
           </div>
         </div>

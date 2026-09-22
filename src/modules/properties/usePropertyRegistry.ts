@@ -41,9 +41,7 @@ const BLANK_PROPERTY: PropertyInput = {
   lot_size_value: null,
   lot_size_unit: null,
   year_built: null,
-  ac_type: null,
-  heating_type: null,
-  exterior_wall_material: null,
+  exterior_wall_materials: [],
 }
 
 export function usePropertyRegistry() {

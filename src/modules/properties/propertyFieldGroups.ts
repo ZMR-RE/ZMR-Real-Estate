@@ -23,6 +23,14 @@ export interface PropertyFieldGroupDef {
 // CLAUDE.md's no-drop-without-approval rule; their real existing values
 // were carried forward as each property's first ledger entry
 // (20260922020000_property_insurance_policies.sql).
+//
+// Roadmap 7.33 (3) — the Heating & cooling group (ac_type/heating_type,
+// 7.32) is removed: HVAC is now an Area option inside the existing
+// Specs & measurements section instead (reuses that section's
+// per-unit/whole-building Scope architecture rather than being a
+// property-flat pair of fields). ac_type/heating_type columns and their
+// pick lists are kept, unused, never dropped — no property had a value
+// set (confirmed live before this removal).
 export const PROPERTY_FIELD_GROUPS: PropertyFieldGroupDef[] = [
   {
     id: 'purchase-valuation',
@@ -56,20 +64,13 @@ export const PROPERTY_FIELD_GROUPS: PropertyFieldGroupDef[] = [
       { key: 'property_type', label: 'Property type' },
     ],
   },
-  // Roadmap 7.32 (4) — new group, two pick-list fields.
-  {
-    id: 'heating-cooling',
-    title: 'Heating & cooling',
-    fields: [
-      { key: 'ac_type', label: 'AC type' },
-      { key: 'heating_type', label: 'Heating type' },
-    ],
-  },
-  // Roadmap 7.32 (5) — new group, one pick-list field.
+  // Roadmap 7.32 (5) / 7.33 (4) — exterior_wall_material converted from
+  // single-select to a multi-select checklist; the field key now points
+  // at the array column.
   {
     id: 'exterior-information',
     title: 'Exterior information',
-    fields: [{ key: 'exterior_wall_material', label: 'Exterior wall material' }],
+    fields: [{ key: 'exterior_wall_materials', label: 'Exterior wall material' }],
   },
 ]
 
@@ -80,10 +81,14 @@ export const PROPERTY_FIELD_GROUPS: PropertyFieldGroupDef[] = [
 // columns (lot_size_value/lot_size_unit) plus a legacy free-text
 // fallback (lot_size itself, see propertiesQueries.ts's Property.lot_size
 // comment) — present if either the structured value or the legacy text
-// has something.
+// has something — and 'exterior_wall_materials' (roadmap 7.33), an
+// array column, present if it has at least one selected value.
 export function hasFieldValue(property: Property, key: keyof Property): boolean {
   if (key === 'lot_size') {
     return property.lot_size_value !== null || (property.lot_size !== null && property.lot_size !== '')
+  }
+  if (key === 'exterior_wall_materials') {
+    return property.exterior_wall_materials.length > 0
   }
   const value = property[key]
   return value !== null && value !== ''

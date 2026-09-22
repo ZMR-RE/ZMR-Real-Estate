@@ -42,6 +42,10 @@ function renderFieldValue(property: Property, key: keyof Property): ReactNode {
         : property.lot_size
     case 'year_built':
       return property.year_built
+    case 'exterior_wall_materials':
+      // Roadmap 7.33 (4) — multi-select checklist; join for a single
+      // dt/dd row rather than one row per selected material.
+      return property.exterior_wall_materials.join(', ')
     default:
       return property[key] as string
   }
@@ -50,11 +54,15 @@ function renderFieldValue(property: Property, key: keyof Property): ReactNode {
 // Roadmap 7.22 — Overview tab declutter. Identity fields (address,
 // city/state/zip, contact email, organization type, status) pulled into
 // a dedicated header; every remaining field lives inside one of
-// PROPERTY_FIELD_GROUPS's labeled sub-sections, where fields without a
-// real value collapse into a single "+ Add …" prompt instead of each
-// showing "—". Insurance used to be one of these groups (with its own
-// documents special case) before it became its own historical ledger
-// (InsuranceLedger.tsx) — removed from here entirely, not just emptied.
+// PROPERTY_FIELD_GROUPS's labeled sub-sections. Insurance used to be one
+// of these groups (with its own documents special case) before it
+// became its own historical ledger (InsuranceLedger.tsx) — removed from
+// here entirely, not just emptied.
+//
+// CLAUDE.md's Empty field visibility rule (roadmap 7.33) — a field
+// without a value is omitted entirely (no "+ Add …" chip, no dash); a
+// group left with zero present fields is skipped too, rather than
+// rendering a bare title over nothing.
 export function PropertySummary({ property, llcOptions, marketValue }: PropertySummaryProps) {
   return (
     <div className="property-summary">
@@ -64,18 +72,10 @@ export function PropertySummary({ property, llcOptions, marketValue }: PropertyS
         const presentFields = group.fields
           .filter((field) => hasFieldValue(property, field.key))
           .map((field) => ({ label: field.label, value: renderFieldValue(property, field.key) }))
-        const missingFields = group.fields
-          .filter((field) => !hasFieldValue(property, field.key))
-          .map((field) => ({ key: field.key, label: field.label }))
 
-        return (
-          <PropertyFieldGroup
-            key={group.id}
-            title={group.title}
-            presentFields={presentFields}
-            missingFields={missingFields}
-          />
-        )
+        if (presentFields.length === 0) return null
+
+        return <PropertyFieldGroup key={group.id} title={group.title} presentFields={presentFields} />
       })}
     </div>
   )

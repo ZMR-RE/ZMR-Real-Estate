@@ -194,6 +194,12 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   future, without exception unless a specific deviation is explicitly
   approved and noted here.
 
+## Empty field visibility
+- In a box's view-only state, a field with no value is omitted
+  entirely — no placeholder, no "+ Add [field]" hint chip, no dash.
+- Edit mode is the only place empty fields are shown, and it always
+  shows every field regardless of whether it currently has a value.
+
 ## Expand-to-full-width
 - In any multi-column box layout, a collapsed box may share a row with
   another, but an expanded box always spans the full available width

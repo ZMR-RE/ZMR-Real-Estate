@@ -57,15 +57,24 @@ export interface Property {
   lot_size_value: string | null
   lot_size_unit: 'acres' | 'sqft' | null
   year_built: string | null
-  ac_type: string | null
-  heating_type: string | null
-  exterior_wall_material: string | null
+  // Roadmap 7.33 (3) — ac_type/heating_type columns still exist
+  // (unused, never dropped — HVAC moved to Specs & measurements'
+  // Area field instead) but are deliberately NOT in this interface or
+  // PROPERTY_COLUMNS below, same treatment as the original
+  // zoning_use_code/garage_parking_spaces columns: fully superseded,
+  // never read anywhere, so there's no reason to keep selecting them.
+  //
+  // Roadmap 7.33 (4) — exterior_wall_material (singular) is the same
+  // kind of fully-superseded column, replaced by the array below; also
+  // dropped from this interface/select rather than kept as a fallback,
+  // since (unlike lot_size) no property ever had a value in it.
+  exterior_wall_materials: string[]
 }
 
 export type PropertyInput = Omit<Property, 'id' | 'account_id'>
 
 const PROPERTY_COLUMNS =
-  'id, account_id, name, llc_id, address, city, state, zip, insurance_provider, insurance_policy_number, contact_email, purchase_price, status, purchase_date, property_type, purchase_method, property_tax_id, county, township, square_footage, lot_size, municipal_zoning_code, county_assessor_use_code, bedroom_count, bathroom_count, basement, garage_spaces, street_parking, parking_notes, lot_size_value, lot_size_unit, year_built, ac_type, heating_type, exterior_wall_material'
+  'id, account_id, name, llc_id, address, city, state, zip, insurance_provider, insurance_policy_number, contact_email, purchase_price, status, purchase_date, property_type, purchase_method, property_tax_id, county, township, square_footage, lot_size, municipal_zoning_code, county_assessor_use_code, bedroom_count, bathroom_count, basement, garage_spaces, street_parking, parking_notes, lot_size_value, lot_size_unit, year_built, exterior_wall_materials'
 
 export async function listProperties(accountId: string) {
   return supabase.from('properties').select(PROPERTY_COLUMNS).eq('account_id', accountId).order('address')
