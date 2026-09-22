@@ -952,6 +952,10 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       an existing entry loads its values and existing documents
       correctly. Test policy, its document (DB row and storage file),
       hard-deleted afterward (own session's data, no real-world meaning).
+- [ ] 9.23 Split CaptureForm.tsx, CaptureEntryDetailsForm.tsx, and
+      useCaptureForm.ts (all now 500+ lines) into smaller, per-type-
+      concern files, per the File size discipline rule — flagged by T5
+      during the 9.9 bridge build, not yet acted on.
 
 ## 10. Phase 10 — Navigation & Action Consolidation
 - [x] 10.1 Rename left nav to: Properties, Log It, Action Queue, Financials & Tax, Command Center, Automations, Portfolio KPIs
