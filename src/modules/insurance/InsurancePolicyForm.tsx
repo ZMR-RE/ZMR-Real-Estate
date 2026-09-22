@@ -75,14 +75,14 @@ export function InsurancePolicyForm({
         onChange={(e) => setValues((prev) => ({ ...prev, policy_number: e.target.value }))}
       />
 
-      <label htmlFor="insurance_contact_info">Contact info</label>
+      <label htmlFor="insurance_named_insured">Named insured</label>
       <input
-        id="insurance_contact_info"
-        value={values.contact_info}
-        onChange={(e) => setValues((prev) => ({ ...prev, contact_info: e.target.value }))}
+        id="insurance_named_insured"
+        value={values.named_insured}
+        onChange={(e) => setValues((prev) => ({ ...prev, named_insured: e.target.value }))}
       />
 
-      <label htmlFor="insurance_coverage_start">Coverage start</label>
+      <label htmlFor="insurance_coverage_start">Effective date</label>
       <input
         id="insurance_coverage_start"
         type="date"
@@ -90,7 +90,7 @@ export function InsurancePolicyForm({
         onChange={(e) => setValues((prev) => ({ ...prev, coverage_start_date: e.target.value }))}
       />
 
-      <label htmlFor="insurance_coverage_end">Coverage end</label>
+      <label htmlFor="insurance_coverage_end">Expiration date</label>
       <input
         id="insurance_coverage_end"
         type="date"
@@ -107,6 +107,40 @@ export function InsurancePolicyForm({
         inputMode="decimal"
         value={values.premium_amount}
         onChange={(e) => setValues((prev) => ({ ...prev, premium_amount: e.target.value }))}
+      />
+
+      <label htmlFor="insurance_deductible">Deductible ($)</label>
+      <input
+        id="insurance_deductible"
+        type="number"
+        min="0"
+        step="0.01"
+        inputMode="decimal"
+        value={values.deductible}
+        onChange={(e) => setValues((prev) => ({ ...prev, deductible: e.target.value }))}
+      />
+
+      <label htmlFor="insurance_representative_name">Representative name</label>
+      <input
+        id="insurance_representative_name"
+        value={values.representative_name}
+        onChange={(e) => setValues((prev) => ({ ...prev, representative_name: e.target.value }))}
+      />
+
+      <label htmlFor="insurance_representative_phone">Representative phone</label>
+      <input
+        id="insurance_representative_phone"
+        type="tel"
+        value={values.representative_phone}
+        onChange={(e) => setValues((prev) => ({ ...prev, representative_phone: e.target.value }))}
+      />
+
+      <label htmlFor="insurance_representative_email">Representative email</label>
+      <input
+        id="insurance_representative_email"
+        type="email"
+        value={values.representative_email}
+        onChange={(e) => setValues((prev) => ({ ...prev, representative_email: e.target.value }))}
       />
 
       <label htmlFor="insurance_documents">Documents</label>

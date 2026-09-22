@@ -13,29 +13,41 @@ import {
 export interface InsurancePolicyFormValues {
   provider: string
   policy_number: string
-  contact_info: string
   coverage_start_date: string
   coverage_end_date: string
   premium_amount: string
+  deductible: string
+  named_insured: string
+  representative_name: string
+  representative_phone: string
+  representative_email: string
 }
 
 const BLANK_FORM_VALUES: InsurancePolicyFormValues = {
   provider: '',
   policy_number: '',
-  contact_info: '',
   coverage_start_date: '',
   coverage_end_date: '',
   premium_amount: '',
+  deductible: '',
+  named_insured: '',
+  representative_name: '',
+  representative_phone: '',
+  representative_email: '',
 }
 
 function toFormValues(policy: InsurancePolicy): InsurancePolicyFormValues {
   return {
     provider: policy.provider,
     policy_number: policy.policy_number ?? '',
-    contact_info: policy.contact_info ?? '',
     coverage_start_date: policy.coverage_start_date ?? '',
     coverage_end_date: policy.coverage_end_date ?? '',
     premium_amount: policy.premium_amount ?? '',
+    deductible: policy.deductible ?? '',
+    named_insured: policy.named_insured ?? '',
+    representative_name: policy.representative_name ?? '',
+    representative_phone: policy.representative_phone ?? '',
+    representative_email: policy.representative_email ?? '',
   }
 }
 
@@ -104,10 +116,14 @@ export function useInsuranceLedger(propertyId: string) {
     const payload: InsurancePolicyInput = {
       provider: values.provider.trim(),
       policy_number: values.policy_number || null,
-      contact_info: values.contact_info || null,
       coverage_start_date: values.coverage_start_date || null,
       coverage_end_date: values.coverage_end_date || null,
       premium_amount: values.premium_amount || null,
+      deductible: values.deductible || null,
+      named_insured: values.named_insured || null,
+      representative_name: values.representative_name || null,
+      representative_phone: values.representative_phone || null,
+      representative_email: values.representative_email || null,
     }
 
     // Roadmap 9.5's pattern — the policy row itself carries no document

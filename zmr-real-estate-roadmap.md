@@ -1102,6 +1102,95 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       here rather than silently deviating; no data-safety impact, but
       worth deciding whether to re-run any of this under the test
       identity.
+- [x] 7.33 Five Property Information fixes, closing the section out:
+      1. Fix ALL CAPS section headers ("PURCHASE & VALUATION", "PHYSICAL
+         FACTS") to sentence case — a regression against the app's
+         existing convention.
+      2. New CLAUDE.md rule, Empty field visibility: a box's view-only
+         state omits an empty field entirely (no "+ Add …" chip, no
+         placeholder); Edit mode always shows every field regardless.
+      3. Remove Heating & Cooling as flat Property Information fields;
+         add "HVAC" as a new Area option in Specs & measurements
+         instead (reuses that section's existing per-unit/whole-building
+         Scope architecture).
+      4. Convert Exterior wall material from single-select to a
+         multi-select checklist (Frame/Masonry/Brick/Vinyl siding/
+         Stucco/Other).
+      5. Redesigned Insurance ledger: multiple dated policy entries
+         (provider, policy #, effective/expiration dates, premium,
+         deductible, named insured, representative name/phone/email,
+         documents), with Active/Expired status computed automatically
+         from expiration date vs. today.
+
+      Item 1: removed `.property-field-group-title`'s
+      text-transform: uppercase (and its companion letter-spacing) —
+      the group title strings were already sentence case in code
+      (propertyFieldGroups.ts), only the CSS was uppercasing them.
+
+      Item 2: PropertyFieldGroup.tsx/PropertySummary.tsx no longer
+      compute or render missingFields at all; a group left with zero
+      present fields is skipped entirely rather than showing a bare
+      title. `.property-field-group-add-prompt` CSS removed as dead.
+
+      Item 3: migration 20260922120000 seeds 'HVAC' into the
+      property_spec_area pick list. ac_type/heating_type columns and
+      pick lists kept, unused, never dropped (confirmed no property had
+      a value set) — dropped from the Property TS interface/
+      PROPERTY_COLUMNS entirely though, same "fully superseded" precedent
+      as the original zoning_use_code/garage_parking_spaces columns,
+      since (unlike lot_size) nothing needs them as a display fallback.
+
+      Item 4: new exterior_wall_materials text[] column + new
+      PickListCheckboxGroup shared component (checkboxes instead of a
+      dropdown, still backed by the same account-editable
+      'exterior_wall_material' pick list — add/archive still works).
+      Reseeded with the exact 6 values this item specifies: Frame/
+      Masonry added, Wood siding/Fiber cement/Stone/Aluminum siding
+      (not in the new list) archived, not deleted — no property had ever
+      had a value set, confirmed live before the change. The old
+      singular exterior_wall_material column is kept, unused, dropped
+      from the TS interface (same reasoning as item 3's ac_type/
+      heating_type).
+
+      Item 5: extended the already-solid existing ledger
+      (property_insurance_policies/InsuranceLedger.tsx, built earlier
+      this session) rather than rebuilding it — it already had provider/
+      policy #/coverage dates/premium/multi-document support in
+      Property Tax Installments' exact pattern. Migration
+      20260922120000 (bundled into 7.32's commit ahead of this item's
+      UI) added deductible, named_insured, representative_name/phone/
+      email. The old contact_info column is kept, unused (2169 Ash St's
+      only real entry has always had it blank, confirmed live) — a
+      structured representative replaces it going forward.
+      getInsuranceStatus() computes Active/Expired purely at render time
+      from coverage_end_date vs today (no end date = Active, not a
+      guess) — same real-time-check approach as the Action Queue
+      priority color system (7.15), not a stored column. "Coverage
+      start/end" relabeled "Effective date"/"Expiration date" per this
+      item's own wording.
+
+      `npm run build` clean (tsc -b). Verified live on 2169 Ash St:
+      sentence-case headers confirmed; zero "+ Add" prompts anywhere
+      even with several empty groups; HVAC appears in Specs &
+      measurements' Area dropdown; exterior wall checkboxes save/
+      display/revert correctly (Brick+Frame round-tripped then
+      cleared); edited the one real insurance policy (Country Financial/
+      P010766214, every other field already blank) filling all 8 new/
+      renamed fields plus a past expiration date, confirmed "Expired"
+      (red) badge, changed to a future date, confirmed "Active" (green)
+      badge, then reverted every field back to null — positively
+      re-queried after to confirm an exact match to the pre-test row
+      (id/account_id/property_id/provider/policy_number/created_at all
+      unchanged). Checked desktop, a 390px iframe-simulated mobile
+      width, and dark mode throughout — the Insurance ledger's wider
+      table does cause the same page-level horizontal scroll at 390px
+      that Property Tax Installments (an unmodified, pre-existing
+      ledger) also has — confirmed pre-existing/app-wide via direct
+      comparison, not a regression from this item, out of this task's
+      scope to fix.
+
+      Same GAP as 7.32 above still applies to this item's live testing —
+      not re-flagging separately.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type

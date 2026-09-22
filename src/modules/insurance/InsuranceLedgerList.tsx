@@ -1,4 +1,4 @@
-import type { InsurancePolicy } from './insuranceQueries'
+import { getInsuranceStatus, type InsurancePolicy } from './insuranceQueries'
 
 interface InsuranceLedgerListProps {
   policies: InsurancePolicy[]
@@ -16,9 +16,28 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 })
 
+const STATUS_LABELS = { active: 'Active', expired: 'Expired' } as const
+const STATUS_BADGE_VARIANTS = { active: 'status-badge-success', expired: 'status-badge-danger' } as const
+
+function StatusBadge({ policy }: { policy: InsurancePolicy }) {
+  const status = getInsuranceStatus(policy)
+  return <span className={`status-badge ${STATUS_BADGE_VARIANTS[status]}`}>{STATUS_LABELS[status]}</span>
+}
+
+function representativeLine(policy: InsurancePolicy): string {
+  return [policy.representative_name, policy.representative_phone, policy.representative_email]
+    .filter(Boolean)
+    .join(' · ')
+}
+
 // Stacked labeled block per entry, same reasoning as Property Tax's
 // InstallmentCell restructure (9.21) — a run-on inline line reads as
 // clutter once documents/coverage dates are all present at once.
+//
+// Roadmap 7.33 (5) — expanded with deductible, named insured, and a
+// structured representative (name/phone/email), replacing the single
+// free-text "Contact" row. "Coverage" relabeled Effective/Expiration to
+// match this item's own wording.
 function CoverageCell({ policy, onViewDocument }: { policy: InsurancePolicy; onViewDocument: (path: string) => void }) {
   return (
     <td>
@@ -28,18 +47,28 @@ function CoverageCell({ policy, onViewDocument }: { policy: InsurancePolicy; onV
           <span>{policy.policy_number ?? '—'}</span>
         </div>
         <div className="insurance-policy-row">
-          <span className="insurance-policy-label">Contact</span>
-          <span>{policy.contact_info ?? '—'}</span>
+          <span className="insurance-policy-label">Named insured</span>
+          <span>{policy.named_insured ?? '—'}</span>
         </div>
         <div className="insurance-policy-row">
-          <span className="insurance-policy-label">Coverage</span>
-          <span>
-            {policy.coverage_start_date ?? '—'} – {policy.coverage_end_date ?? '—'}
-          </span>
+          <span className="insurance-policy-label">Effective</span>
+          <span>{policy.coverage_start_date ?? '—'}</span>
+        </div>
+        <div className="insurance-policy-row">
+          <span className="insurance-policy-label">Expiration</span>
+          <span>{policy.coverage_end_date ?? '—'}</span>
         </div>
         <div className="insurance-policy-row">
           <span className="insurance-policy-label">Premium</span>
           <span>{policy.premium_amount ? currencyFormatter.format(Number(policy.premium_amount)) : '—'}</span>
+        </div>
+        <div className="insurance-policy-row">
+          <span className="insurance-policy-label">Deductible</span>
+          <span>{policy.deductible ? currencyFormatter.format(Number(policy.deductible)) : '—'}</span>
+        </div>
+        <div className="insurance-policy-row">
+          <span className="insurance-policy-label">Representative</span>
+          <span>{representativeLine(policy) || '—'}</span>
         </div>
         <div className="insurance-policy-row">
           <span className="insurance-policy-label">Documents</span>
@@ -71,6 +100,7 @@ export function InsuranceLedgerList({ policies, readOnly = false, onEdit, onView
         <thead>
           <tr>
             <th>Provider</th>
+            <th>Status</th>
             <th>Coverage</th>
             {!readOnly && <th></th>}
           </tr>
@@ -79,6 +109,9 @@ export function InsuranceLedgerList({ policies, readOnly = false, onEdit, onView
           {policies.map((policy) => (
             <tr key={policy.id}>
               <td>{policy.provider}</td>
+              <td>
+                <StatusBadge policy={policy} />
+              </td>
               <CoverageCell policy={policy} onViewDocument={onViewDocument} />
               {!readOnly && (
                 <td>
