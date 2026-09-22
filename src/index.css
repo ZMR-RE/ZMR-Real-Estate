@@ -769,6 +769,42 @@ dd {
 }
 
 /* ============================================================
+   EditableSection (shared/EditableSection.tsx) — the one shared
+   implementation of the Box interaction standard (CLAUDE.md). Reuses
+   .collapsible-section/.collapsible-section-body for the outer box and
+   body padding (same visual family as every collapsible box); this
+   header is its own plain div rather than <details>/<summary> — edit-
+   toggle and collapse-toggle are unrelated interactions, and this box
+   is never collapsed.
+   ============================================================ */
+.editable-section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+}
+
+.editable-section-title {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.editable-section-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.editable-section-edit {
+  min-height: auto;
+  padding: 4px 10px;
+  font-size: var(--text-xs);
+}
+
+/* ============================================================
    Property Overview layout — every section is a full-width
    CollapsibleSection box, stacked vertically (Property Overview
    redesign). Boxes no longer sit side-by-side in a fixed 2-column
