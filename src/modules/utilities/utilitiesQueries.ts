@@ -9,6 +9,10 @@ export interface UtilityRecord {
   utility_type: string
   responsibility: UtilityResponsibility
   notes: string | null
+  // Roadmap 7.31 — Provider name/contact added to the existing box (not
+  // a new section).
+  provider_name: string | null
+  provider_contact: string | null
   updated_at: string
 }
 
@@ -16,9 +20,12 @@ export interface UtilityRecordInput {
   utility_type: string
   responsibility: UtilityResponsibility
   notes: string | null
+  provider_name: string | null
+  provider_contact: string | null
 }
 
-const UTILITY_RECORD_COLUMNS = 'id, property_id, unit_id, utility_type, responsibility, notes, updated_at'
+const UTILITY_RECORD_COLUMNS =
+  'id, property_id, unit_id, utility_type, responsibility, notes, provider_name, provider_contact, updated_at'
 
 // unitId null lists building-level records only; a real id lists that
 // unit's records only — the two scopes never mix in one listing, same

@@ -49,6 +49,20 @@ export function UtilityRecordForm({ initialValues, saving, onSave, onCancel }: U
         ))}
       </select>
 
+      <label htmlFor="provider_name">Provider name</label>
+      <input
+        id="provider_name"
+        value={values.provider_name ?? ''}
+        onChange={(e) => setValues((prev) => ({ ...prev, provider_name: e.target.value || null }))}
+      />
+
+      <label htmlFor="provider_contact">Provider contact</label>
+      <input
+        id="provider_contact"
+        value={values.provider_contact ?? ''}
+        onChange={(e) => setValues((prev) => ({ ...prev, provider_contact: e.target.value || null }))}
+      />
+
       <label htmlFor="utility_notes">Notes</label>
       <textarea
         id="utility_notes"

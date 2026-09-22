@@ -9,7 +9,13 @@ interface UtilityRecordsSectionProps {
   unitId?: string | null
 }
 
-const BLANK_RECORD: UtilityRecordInput = { utility_type: '', responsibility: 'Owner', notes: null }
+const BLANK_RECORD: UtilityRecordInput = {
+  utility_type: '',
+  responsibility: 'Owner',
+  notes: null,
+  provider_name: null,
+  provider_contact: null,
+}
 
 // Roadmap 7.12 — utility records, linked to either the property
 // (building-level, unitId null) or one specific unit. Two separate

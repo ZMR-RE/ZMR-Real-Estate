@@ -33,6 +33,8 @@ export function UtilityRecordList({
           <tr>
             <th>Utility</th>
             <th>Responsibility</th>
+            <th>Provider name</th>
+            <th>Provider contact</th>
             <th>Notes</th>
             {!readOnly && <th></th>}
           </tr>
@@ -41,12 +43,14 @@ export function UtilityRecordList({
           {records.map((record) =>
             !readOnly && editingId === record.id ? (
               <tr key={record.id}>
-                <td colSpan={4}>
+                <td colSpan={6}>
                   <UtilityRecordForm
                     initialValues={{
                       utility_type: record.utility_type,
                       responsibility: record.responsibility,
                       notes: record.notes,
+                      provider_name: record.provider_name,
+                      provider_contact: record.provider_contact,
                     }}
                     saving={saving}
                     onSave={(input) => onSave(record.id, input)}
@@ -58,6 +62,8 @@ export function UtilityRecordList({
               <tr key={record.id}>
                 <td>{record.utility_type}</td>
                 <td>{record.responsibility}</td>
+                <td>{record.provider_name ?? ''}</td>
+                <td>{record.provider_contact ?? ''}</td>
                 <td>{record.notes ?? ''}</td>
                 {!readOnly && (
                   <td>
