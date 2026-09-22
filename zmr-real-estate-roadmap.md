@@ -919,6 +919,25 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       and PropertyProfileKpiTab.tsx also use CollapsibleSection but have
       no add/edit action to gate (pure display/reporting), so they don't
       need this standard.
+- [x] 7.29 Three dashboard-wide UI consistency fixes: (1) left sidebar
+      (`.app-nav`) is `position: sticky` at desktop widths so it stays
+      pinned in place while the main content area scrolls, extending
+      the Sticky/frozen headers rule to navigation itself — mobile's
+      existing horizontal top-bar layout is left unchanged (only a
+      "left sidebar" exists at desktop widths); (2) Edit-mode form
+      fields (input/select/textarea) were inheriting a smaller ambient
+      font-size (14px, from the `td` context most inline-edit forms
+      render inside per the app's table-based edit-row convention)
+      instead of the app's normal 16px body text, making them harder to
+      read while typing — the global input/select/textarea rule now
+      pins font-size explicitly so every field renders at the same
+      size regardless of its container; (3) Property Overview's
+      collapsed "+ Add {missing fields}" hint (PropertyFieldGroup.tsx)
+      was styled with a dashed underline that reads as a clickable
+      hyperlink despite being plain, non-interactive text (per the Box
+      interaction standard, editing has exactly one entry point — the
+      box's own top-right Edit action) — restyled as a dashed-border
+      pill/chip so it reads as a hint, not a broken link.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
