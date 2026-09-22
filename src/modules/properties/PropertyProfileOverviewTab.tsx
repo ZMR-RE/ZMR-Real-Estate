@@ -14,10 +14,7 @@ import { PropertyTenantsOverview } from '../tenants/PropertyTenantsOverview'
 import { FinancialAccountsSection } from '../financialAccounts/FinancialAccountsSection'
 import { PropertyForm } from './PropertyForm'
 import { PropertySummary } from './PropertySummary'
-import { PropertySnapshotPanel } from './PropertySnapshotPanel'
 import type { Property, PropertyInput } from './propertiesQueries'
-import type { Transaction } from '../financials/financialsQueries'
-import type { ActivityLogEntry } from '../capture/captureQueries'
 
 interface PropertyProfileOverviewTabProps {
   property: Property
@@ -28,8 +25,6 @@ interface PropertyProfileOverviewTabProps {
   onValueHistoryChanged: () => Promise<void>
   saving: boolean
   onSave: (input: PropertyInput) => Promise<boolean>
-  transactions: Transaction[]
-  activity: ActivityLogEntry[]
 }
 
 // Roadmap 7.10 — every section on this tab uses a consistent box
@@ -64,62 +59,56 @@ export function PropertyProfileOverviewTab({
   onValueHistoryChanged,
   saving,
   onSave,
-  transactions,
-  activity,
 }: PropertyProfileOverviewTabProps) {
   return (
-    <div className="property-overview-layout">
-      <div className="property-overview-grid">
+    <div className="property-overview-grid">
       <div className="property-overview-columns">
-          <div className="property-overview-column">
-            <EditableSection
-              title="Property information"
-              defaultOpen
-              view={<PropertySummary property={property} llcOptions={llcOptions} />}
-              edit={(exitEditing) => (
-                <PropertyForm
-                  key={property.id}
-                  initialValues={property}
-                  llcOptions={llcOptions}
-                  onCreateLlc={onCreateLlc}
-                  holdingCompanyOptions={holdingCompanyOptions}
-                  onCreateHoldingCompany={onCreateHoldingCompany}
-                  saving={saving}
-                  onSave={async (input) => {
-                    const ok = await onSave(input)
-                    if (ok) exitEditing()
-                  }}
-                  onCancel={exitEditing}
-                />
-              )}
-            />
+        <div className="property-overview-column">
+          <EditableSection
+            title="Property information"
+            defaultOpen
+            view={<PropertySummary property={property} llcOptions={llcOptions} />}
+            edit={(exitEditing) => (
+              <PropertyForm
+                key={property.id}
+                initialValues={property}
+                llcOptions={llcOptions}
+                onCreateLlc={onCreateLlc}
+                holdingCompanyOptions={holdingCompanyOptions}
+                onCreateHoldingCompany={onCreateHoldingCompany}
+                saving={saving}
+                onSave={async (input) => {
+                  const ok = await onSave(input)
+                  if (ok) exitEditing()
+                }}
+                onCancel={exitEditing}
+              />
+            )}
+          />
 
-            <FinancialAccountsSection propertyId={property.id} />
+          <FinancialAccountsSection propertyId={property.id} />
 
-            <InsuranceLedger propertyId={property.id} />
-          </div>
-
-          <div className="property-overview-column">
-            <PropertyValueHistorySection propertyId={property.id} onChanged={onValueHistoryChanged} />
-
-            <PropertyTaxLedger propertyId={property.id} />
-
-            <CollapsibleSection title="Tenants">
-              <PropertyTenantsOverview propertyId={property.id} />
-            </CollapsibleSection>
-          </div>
+          <InsuranceLedger propertyId={property.id} />
         </div>
 
-        <PropertySpecsSection propertyId={property.id} />
+        <div className="property-overview-column">
+          <PropertyValueHistorySection propertyId={property.id} onChanged={onValueHistoryChanged} />
 
-        <UtilityRecordsSection propertyId={property.id} />
+          <PropertyTaxLedger propertyId={property.id} />
 
-        <SecurityDepositsSection propertyId={property.id} />
-
-        <UnitsSection propertyId={property.id} />
+          <CollapsibleSection title="Tenants">
+            <PropertyTenantsOverview propertyId={property.id} />
+          </CollapsibleSection>
+        </div>
       </div>
 
-      <PropertySnapshotPanel propertyId={property.id} transactions={transactions} activity={activity} />
+      <PropertySpecsSection propertyId={property.id} />
+
+      <UtilityRecordsSection propertyId={property.id} />
+
+      <SecurityDepositsSection propertyId={property.id} />
+
+      <UnitsSection propertyId={property.id} />
     </div>
   )
 }

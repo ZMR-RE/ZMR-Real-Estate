@@ -96,8 +96,6 @@ export function PropertyProfile() {
           onValueHistoryChanged={refresh}
           saving={saving}
           onSave={saveProperty}
-          transactions={transactions}
-          activity={activity}
         />
       )}
       {tab === 'financials' && <PropertyProfileTransactionsTab transactions={transactions} />}
