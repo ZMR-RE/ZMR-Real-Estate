@@ -42,6 +42,18 @@ export async function listDocumentsForTransaction(accountId: string, transaction
     .returns<DocumentRecord[]>()
 }
 
+// Roadmap 10.5 — links + file attachments on an action item's detail
+// view, same table/pattern as listDocumentsForTransaction.
+export async function listDocumentsForActionItem(accountId: string, actionItemId: string) {
+  return supabase
+    .from('documents')
+    .select(DOCUMENT_COLUMNS)
+    .eq('account_id', accountId)
+    .eq('action_item_id', actionItemId)
+    .order('uploaded_at', { ascending: false })
+    .returns<DocumentRecord[]>()
+}
+
 export async function getDocumentSignedUrl(path: string) {
   return supabase.storage.from('documents').createSignedUrl(path, 60)
 }
@@ -148,6 +160,73 @@ export async function createPropertyLink(input: CreatePropertyLinkInput) {
       uploaded_by: uploadedBy,
       link_url: linkUrl,
       link_type: linkType,
+    })
+    .select(DOCUMENT_COLUMNS)
+    .single<DocumentRecord>()
+}
+
+interface UploadActionItemDocumentInput {
+  accountId: string
+  propertyId: string | null
+  actionItemId: string
+  category: DocumentCategory
+  uploadedBy: string
+  file: File
+}
+
+// Roadmap 10.5 — action items can be account-level (no property), unlike
+// every other attachable entity so far, so the path's property segment
+// falls back to a fixed "account-level" folder rather than requiring a
+// real property id.
+export async function uploadActionItemDocument(input: UploadActionItemDocumentInput) {
+  const { accountId, propertyId, actionItemId, category, uploadedBy, file } = input
+
+  const destinationPath = `${accountId}/${propertyId ?? 'account-level'}/${category}/${crypto.randomUUID()}-${file.name}`
+  const { error: uploadError } = await supabase.storage.from('documents').upload(destinationPath, file)
+  if (uploadError) {
+    return { error: uploadError }
+  }
+
+  return supabase
+    .from('documents')
+    .insert({
+      account_id: accountId,
+      property_id: propertyId,
+      action_item_id: actionItemId,
+      category,
+      uploaded_by: uploadedBy,
+      storage_path: destinationPath,
+      file_size: file.size,
+    })
+    .select(DOCUMENT_COLUMNS)
+    .single<DocumentRecord>()
+}
+
+interface CreateActionItemLinkInput {
+  accountId: string
+  propertyId: string | null
+  actionItemId: string
+  category: DocumentCategory
+  label: string | null
+  uploadedBy: string
+  linkUrl: string
+}
+
+// Roadmap 10.5 — the link half of an action item's Links & attachments,
+// same shape as createPropertyLink.
+export async function createActionItemLink(input: CreateActionItemLinkInput) {
+  const { accountId, propertyId, actionItemId, category, label, uploadedBy, linkUrl } = input
+
+  return supabase
+    .from('documents')
+    .insert({
+      account_id: accountId,
+      property_id: propertyId,
+      action_item_id: actionItemId,
+      category,
+      label,
+      uploaded_by: uploadedBy,
+      link_url: linkUrl,
     })
     .select(DOCUMENT_COLUMNS)
     .single<DocumentRecord>()

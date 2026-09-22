@@ -1,6 +1,6 @@
 import { supabase } from '../../shared/supabaseClient'
 
-export type RecurrenceInterval = 'none' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
+export type RecurrenceInterval = 'none' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'custom'
 
 export interface ActionItem {
   id: string
@@ -12,6 +12,8 @@ export interface ActionItem {
   assignee: string | null
   due_date: string
   recurrence: RecurrenceInterval
+  custom_interval_days: number | null
+  source_label: string | null
   completed: boolean
   completed_at: string | null
   property: { id: string; name: string; address: string | null; status: 'active' | 'inactive' | 'sold' } | null
@@ -27,15 +29,23 @@ export interface ActionItemInput {
   assignee: string | null
   dueDate: string
   recurrence: RecurrenceInterval
+  customIntervalDays: number | null
 }
 
 const ACTION_ITEM_COLUMNS =
-  'id, property_id, unit_id, type, title, notes, assignee, due_date, recurrence, completed, completed_at, property:properties(id, name, address, status), unit:units(id, unit_label)'
+  'id, property_id, unit_id, type, title, notes, assignee, due_date, recurrence, custom_interval_days, source_label, completed, completed_at, property:properties(id, name, address, status), unit:units(id, unit_label)'
 
 export interface ActionItemFilters {
   propertyId?: string | null
 }
 
+// Roadmap 10.5 — every item for the account comes back in one call;
+// Property/Type/Status/Assignee/search filtering (and due-date sorting)
+// happens client-side, same pattern as every other filtered list in this
+// app (Quick Capture History, Property Specs). propertyId stays a
+// server-side filter (not folded into the client-side set) since it's
+// also how the per-property KPI tab's Follow-ups card scopes its own
+// fetch — narrowing at the query, not after, for that caller.
 export async function listActionItems(accountId: string, filters: ActionItemFilters = {}) {
   let query = supabase
     .from('action_items')
@@ -63,15 +73,39 @@ export async function createActionItem(accountId: string, input: ActionItemInput
       assignee: input.assignee,
       due_date: input.dueDate,
       recurrence: input.recurrence,
+      custom_interval_days: input.recurrence === 'custom' ? input.customIntervalDays : null,
     })
     .select(ACTION_ITEM_COLUMNS)
     .single()
 }
 
-export async function markActionItemComplete(id: string) {
+export async function updateActionItem(id: string, input: ActionItemInput) {
   return supabase
     .from('action_items')
-    .update({ completed: true, completed_at: new Date().toISOString() })
+    .update({
+      property_id: input.propertyId,
+      unit_id: input.unitId,
+      type: input.type,
+      title: input.title,
+      notes: input.notes,
+      assignee: input.assignee,
+      due_date: input.dueDate,
+      recurrence: input.recurrence,
+      custom_interval_days: input.recurrence === 'custom' ? input.customIntervalDays : null,
+    })
+    .eq('id', id)
+    .select(ACTION_ITEM_COLUMNS)
+    .single()
+}
+
+// Roadmap 10.5 — a two-way toggle (was markActionItemComplete, one-way
+// only) so the detail view can also reopen an item completed by
+// mistake, same "Archive/Restore" shape used everywhere else in this
+// app for a reversible status flag.
+export async function setActionItemCompleted(id: string, completed: boolean) {
+  return supabase
+    .from('action_items')
+    .update({ completed, completed_at: completed ? new Date().toISOString() : null })
     .eq('id', id)
     .select(ACTION_ITEM_COLUMNS)
     .single()

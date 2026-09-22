@@ -23,8 +23,12 @@ const RECURRENCE_OPTIONS: { value: RecurrenceInterval; label: string }[] = [
   { value: 'monthly', label: 'Monthly' },
   { value: 'quarterly', label: 'Quarterly' },
   { value: 'yearly', label: 'Yearly' },
+  { value: 'custom', label: 'Custom' },
 ]
 
+// Roadmap 10.5 — create AND edit both go through this one form (Box
+// interaction standard: view, then an explicit Edit action reveals the
+// same editable fields — never a second, differently-shaped edit form).
 export function ActionItemForm({
   initialValues,
   propertyOptions,
@@ -34,7 +38,7 @@ export function ActionItemForm({
   onCancel,
 }: ActionItemFormProps) {
   const [values, setValues] = useState<ActionItemInput>(initialValues)
-  const unitOptions = useUnitOptionsForProperty(values.propertyId)
+  const { unitOptions, refresh: refreshUnitOptions } = useUnitOptionsForProperty(values.propertyId)
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
@@ -74,6 +78,7 @@ export function ActionItemForm({
             options={[{ id: NO_UNIT_ID, label: 'Whole property (no unit)' }, ...unitOptions]}
             value={values.unitId ?? NO_UNIT_ID}
             onChange={(id) => setValues((prev) => ({ ...prev, unitId: id === NO_UNIT_ID ? null : id }))}
+            onOpen={refreshUnitOptions}
             placeholder="Select a unit"
           />
         </>
@@ -118,7 +123,13 @@ export function ActionItemForm({
       <select
         id="action_item_recurrence"
         value={values.recurrence}
-        onChange={(e) => setValues((prev) => ({ ...prev, recurrence: e.target.value as RecurrenceInterval }))}
+        onChange={(e) =>
+          setValues((prev) => ({
+            ...prev,
+            recurrence: e.target.value as RecurrenceInterval,
+            customIntervalDays: e.target.value === 'custom' ? prev.customIntervalDays : null,
+          }))
+        }
       >
         {RECURRENCE_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
@@ -127,8 +138,32 @@ export function ActionItemForm({
         ))}
       </select>
 
-      <button type="submit" disabled={saving || !values.title.trim()}>
-        {saving ? 'Saving…' : 'Add action item'}
+      {values.recurrence === 'custom' && (
+        <>
+          <label htmlFor="action_item_custom_interval">
+            Repeat every (days)<span className="required-marker">*</span>
+          </label>
+          <input
+            id="action_item_custom_interval"
+            type="number"
+            min="1"
+            required
+            value={values.customIntervalDays ?? ''}
+            onChange={(e) =>
+              setValues((prev) => ({
+                ...prev,
+                customIntervalDays: e.target.value ? Number(e.target.value) : null,
+              }))
+            }
+          />
+        </>
+      )}
+
+      <button
+        type="submit"
+        disabled={saving || !values.title.trim() || (values.recurrence === 'custom' && !values.customIntervalDays)}
+      >
+        {saving ? 'Saving…' : 'Save'}
       </button>
       <button type="button" onClick={onCancel} disabled={saving}>
         Cancel
