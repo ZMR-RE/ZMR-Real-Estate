@@ -71,6 +71,14 @@ function CoverageCell({ policy, onViewDocument }: { policy: InsurancePolicy; onV
           <span>{representativeLine(policy) || '—'}</span>
         </div>
         <div className="insurance-policy-row">
+          <span className="insurance-policy-label">Payment plan</span>
+          <span>{policy.payment_plan ?? '—'}</span>
+        </div>
+        <div className="insurance-policy-row">
+          <span className="insurance-policy-label">Discounts</span>
+          <span>{policy.policy_discounts ?? '—'}</span>
+        </div>
+        <div className="insurance-policy-row">
           <span className="insurance-policy-label">Documents</span>
           {policy.documents.length === 0 ? (
             <span>—</span>

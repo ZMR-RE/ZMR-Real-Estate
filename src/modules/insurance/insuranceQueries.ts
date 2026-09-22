@@ -33,6 +33,11 @@ export interface InsurancePolicy {
   representative_name: string | null
   representative_phone: string | null
   representative_email: string | null
+  // Additional scope on top of 7.33 (5) — payment_plan is pick-list-
+  // backed (see the 20260922130000 migration's seeded
+  // 'insurance_payment_plan' list); policy_discounts is plain free text.
+  payment_plan: string | null
+  policy_discounts: string | null
   documents: InsurancePolicyDocument[]
 }
 
@@ -47,6 +52,8 @@ export interface InsurancePolicyInput {
   representative_name: string | null
   representative_phone: string | null
   representative_email: string | null
+  payment_plan: string | null
+  policy_discounts: string | null
 }
 
 // Roadmap 7.33 (5) — Active/Expired, computed at render time from
@@ -71,6 +78,7 @@ const POLICY_SELECT = `
   id, property_id, provider, policy_number, contact_info,
   coverage_start_date, coverage_end_date, premium_amount, deductible,
   named_insured, representative_name, representative_phone, representative_email,
+  payment_plan, policy_discounts,
   documents:documents!documents_property_insurance_policy_id_fkey(id, storage_path, file_size, uploaded_at)
 `
 

@@ -21,6 +21,8 @@ export interface InsurancePolicyFormValues {
   representative_name: string
   representative_phone: string
   representative_email: string
+  payment_plan: string
+  policy_discounts: string
 }
 
 const BLANK_FORM_VALUES: InsurancePolicyFormValues = {
@@ -34,6 +36,8 @@ const BLANK_FORM_VALUES: InsurancePolicyFormValues = {
   representative_name: '',
   representative_phone: '',
   representative_email: '',
+  payment_plan: '',
+  policy_discounts: '',
 }
 
 function toFormValues(policy: InsurancePolicy): InsurancePolicyFormValues {
@@ -48,6 +52,8 @@ function toFormValues(policy: InsurancePolicy): InsurancePolicyFormValues {
     representative_name: policy.representative_name ?? '',
     representative_phone: policy.representative_phone ?? '',
     representative_email: policy.representative_email ?? '',
+    payment_plan: policy.payment_plan ?? '',
+    policy_discounts: policy.policy_discounts ?? '',
   }
 }
 
@@ -124,6 +130,8 @@ export function useInsuranceLedger(propertyId: string) {
       representative_name: values.representative_name || null,
       representative_phone: values.representative_phone || null,
       representative_email: values.representative_email || null,
+      payment_plan: values.payment_plan || null,
+      policy_discounts: values.policy_discounts || null,
     }
 
     // Roadmap 9.5's pattern — the policy row itself carries no document

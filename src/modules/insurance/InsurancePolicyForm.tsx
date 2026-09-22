@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { PickListSelect } from '../../shared/pickLists/PickListSelect'
 import type { InsurancePolicyDocument } from './insuranceQueries'
 import type { InsurancePolicyFormValues } from './useInsuranceLedger'
 
@@ -141,6 +142,23 @@ export function InsurancePolicyForm({
         type="email"
         value={values.representative_email}
         onChange={(e) => setValues((prev) => ({ ...prev, representative_email: e.target.value }))}
+      />
+
+      <label htmlFor="insurance_payment_plan">Payment plan</label>
+      <PickListSelect
+        id="insurance_payment_plan"
+        listName="insurance_payment_plan"
+        title="Payment plan"
+        placeholder="Select a payment plan…"
+        value={values.payment_plan}
+        onChange={(payment_plan) => setValues((prev) => ({ ...prev, payment_plan }))}
+      />
+
+      <label htmlFor="insurance_policy_discounts">Policy discounts</label>
+      <input
+        id="insurance_policy_discounts"
+        value={values.policy_discounts}
+        onChange={(e) => setValues((prev) => ({ ...prev, policy_discounts: e.target.value }))}
       />
 
       <label htmlFor="insurance_documents">Documents</label>

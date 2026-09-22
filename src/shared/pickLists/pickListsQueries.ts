@@ -64,6 +64,11 @@ import { supabase } from '../supabaseClient'
 // seeded with common MLS-style values — no specific taxonomy was given
 // by that item beyond "common values", unlike basement_type/
 // street_parking's explicitly-specified lists above.
+// insurance_payment_plan was added by
+// 20260922130000_insurance_payment_plan_discounts.sql (additional scope
+// on the 7.33 (5) Insurance ledger expansion), seeded with the two
+// explicitly given values (Annual/Monthly) — same precedent as
+// basement_type/street_parking above.
 export type PickListName =
   | 'subcategory'
   | 'payment_method'
@@ -87,6 +92,7 @@ export type PickListName =
   | 'ac_type'
   | 'heating_type'
   | 'exterior_wall_material'
+  | 'insurance_payment_plan'
 
 export interface PickListOption {
   id: string
