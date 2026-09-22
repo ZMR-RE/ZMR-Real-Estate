@@ -987,12 +987,18 @@ dd {
 }
 
 /* Turns a stack of label/value or label/input pairs into a responsive
-   multi-column layout — used by PropertySummary's <dl> and PropertyForm's
-   fields. Each field is its own grid item (a wrapper div around its
-   dt/dd or label/input pair) so columns align field-to-field rather than
-   interleaving labels and values across columns. Stepped (rather than
-   auto-fit) so it reads as a deliberate 3/2/1 reflow as the window
-   narrows, down to the existing mobile single-column breakpoint. */
+   multi-column layout — used by PropertySummary's read-only <dl> (and
+   any other read-only field display). Each field is its own grid item
+   (a wrapper div around its dt/dd or label/input pair) so columns align
+   field-to-field rather than interleaving labels and values across
+   columns. Stepped (rather than auto-fit) so it reads as a deliberate
+   3/2/1 reflow as the window narrows, down to the existing mobile
+   single-column breakpoint. Roadmap 7.31 — PropertyForm (an actual
+   input form, not a read-only display) no longer uses this: NN/g and
+   Baymard's single-column form research (78% one-try success vs. 42%
+   multi-column) applies to forms being filled out, not to reading
+   already-entered data back, so Edit mode gets its own single-column
+   layout below instead. */
 .field-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1013,6 +1019,42 @@ dd {
 @media (max-width: 600px) {
   .field-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Roadmap 7.31 — Property Information Edit mode: single column, one
+   field per row (the form-usability research this item cites). Reused
+   anywhere else an editable form wants the same treatment, not just
+   PropertyForm — a plain flex stack, so a field's own width is exactly
+   the form's width rather than a grid track. */
+.field-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.field-column .field label {
+  margin-top: 0;
+}
+
+/* A tight row for fields that are genuinely one logical unit
+   (City/State/Zip, County/Township, Bedrooms/Bathrooms) — the item's
+   own stated exceptions to single-column. Still stacks to one column
+   at mobile widths, same breakpoint as every other field-row pattern in
+   this file. */
+.field-row {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.field-row .field {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .field-row {
+    flex-direction: column;
   }
 }
 
@@ -1065,6 +1107,16 @@ dd {
    dashes.
    ============================================================ */
 .property-field-group + .property-field-group {
+  margin-top: var(--space-6);
+}
+
+/* Roadmap 7.31 — PropertyForm (Edit mode) reuses this same group/title
+   styling for its own subsection headers (Purchase & valuation,
+   Physical facts), but its first group follows a plain identity-field
+   block rather than another .property-field-group, so the adjacent-
+   sibling rule above never triggers for it. Scoped to <form> only —
+   View mode's PropertySummary isn't a form, so this never touches it. */
+form > .property-field-group:first-of-type {
   margin-top: var(--space-6);
 }
 

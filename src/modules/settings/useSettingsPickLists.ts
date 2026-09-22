@@ -14,7 +14,10 @@ export function useSettingsPickLists() {
   const listingPlatform = usePickListOptions('listing_platform')
   const propertyType = usePickListOptions('property_type')
   const purchaseMethod = usePickListOptions('purchase_method')
-  const zoningUseCode = usePickListOptions('zoning_use_code')
+  const municipalZoningCode = usePickListOptions('municipal_zoning_code')
+  const countyAssessorUseCode = usePickListOptions('county_assessor_use_code')
+  const basementType = usePickListOptions('basement_type')
+  const streetParking = usePickListOptions('street_parking')
   const contactMethod = usePickListOptions('contact_method')
   const visitType = usePickListOptions('visit_type')
   const paymentHow = usePickListOptions('payment_how')
@@ -31,7 +34,10 @@ export function useSettingsPickLists() {
     { title: 'Listing platforms', ...listingPlatform },
     { title: 'Property types', ...propertyType },
     { title: 'Purchase methods', ...purchaseMethod },
-    { title: 'Zoning/use codes', ...zoningUseCode },
+    { title: 'Municipal zoning codes', ...municipalZoningCode },
+    { title: 'County assessor use codes', ...countyAssessorUseCode },
+    { title: 'Basement types', ...basementType },
+    { title: 'Street parking', ...streetParking },
     { title: 'Contact methods', ...contactMethod },
     { title: 'Visit types', ...visitType },
     { title: 'Vendor relationships', ...vendorRelationship },

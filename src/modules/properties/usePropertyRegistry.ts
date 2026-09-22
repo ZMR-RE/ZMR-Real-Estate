@@ -30,11 +30,14 @@ const BLANK_PROPERTY: PropertyInput = {
   township: null,
   square_footage: null,
   lot_size: null,
-  zoning_use_code: null,
+  municipal_zoning_code: null,
+  county_assessor_use_code: null,
   bedroom_count: null,
   bathroom_count: null,
   basement: null,
-  garage_parking_spaces: null,
+  garage_spaces: null,
+  street_parking: null,
+  parking_notes: null,
 }
 
 export function usePropertyRegistry() {

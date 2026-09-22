@@ -24,7 +24,13 @@ export interface Property {
   township: string | null
   square_footage: string | null
   lot_size: string | null
-  zoning_use_code: string | null
+  // Roadmap 7.31 — zoning_use_code split into two real fields. The old
+  // column (and its pick list's rows) stay in the DB, unused, never
+  // dropped, per CLAUDE.md's no-drop-without-approval rule; no property
+  // had a value set, confirmed live before the split, so there's
+  // nothing to carry forward.
+  municipal_zoning_code: string | null
+  county_assessor_use_code: string | null
   // Roadmap 7.21 — whole-building totals (distinct from 7.11's per-unit
   // bed/bath count). Numeric columns come back from Postgres as strings
   // via PostgREST, same as purchase_price/square_footage above — cast
@@ -32,14 +38,23 @@ export interface Property {
   // here.
   bedroom_count: string | null
   bathroom_count: string | null
+  // Roadmap 7.31 — Basement's value is now constrained to a pick list
+  // (Finished/Unfinished/Partially finished/None) at the UI layer; the
+  // column itself is unchanged (already plain text, same as
+  // property_type/purchase_method).
   basement: string | null
-  garage_parking_spaces: string | null
+  // Roadmap 7.31 — garage_parking_spaces split into three fields. Same
+  // keep-the-old-column treatment as zoning_use_code above; also
+  // confirmed empty before the split.
+  garage_spaces: string | null
+  street_parking: string | null
+  parking_notes: string | null
 }
 
 export type PropertyInput = Omit<Property, 'id' | 'account_id'>
 
 const PROPERTY_COLUMNS =
-  'id, account_id, name, llc_id, address, city, state, zip, insurance_provider, insurance_policy_number, contact_email, purchase_price, status, purchase_date, property_type, purchase_method, property_tax_id, county, township, square_footage, lot_size, zoning_use_code, bedroom_count, bathroom_count, basement, garage_parking_spaces'
+  'id, account_id, name, llc_id, address, city, state, zip, insurance_provider, insurance_policy_number, contact_email, purchase_price, status, purchase_date, property_type, purchase_method, property_tax_id, county, township, square_footage, lot_size, municipal_zoning_code, county_assessor_use_code, bedroom_count, bathroom_count, basement, garage_spaces, street_parking, parking_notes'
 
 export async function listProperties(accountId: string) {
   return supabase.from('properties').select(PROPERTY_COLUMNS).eq('account_id', accountId).order('address')

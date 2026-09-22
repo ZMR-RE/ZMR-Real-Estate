@@ -52,6 +52,13 @@ import { supabase } from '../supabaseClient'
 // 20260922010000_property_specs_area_consolidation.sql (roadmap 7.4
 // revision), seeded with Kitchen/Bathroom/Bedroom/Exterior/Other — an
 // explicitly given taxonomy, same precedent as vendor_type's seed.
+// zoning_use_code is NOT one of these anymore — roadmap 7.31 split it
+// into municipal_zoning_code/county_assessor_use_code below; the old
+// list's pick_list_options rows are kept, unused, never dropped, same
+// as the properties.zoning_use_code column itself. basement_type and
+// street_parking (also 7.31) were seeded with the exact values that
+// item specified — explicitly given, not a guess, same precedent as
+// contact_method/visit_type.
 export type PickListName =
   | 'subcategory'
   | 'payment_method'
@@ -63,7 +70,10 @@ export type PickListName =
   | 'utility_type'
   | 'property_type'
   | 'purchase_method'
-  | 'zoning_use_code'
+  | 'municipal_zoning_code'
+  | 'county_assessor_use_code'
+  | 'basement_type'
+  | 'street_parking'
   | 'contact_method'
   | 'visit_type'
   | 'vendor_relationship'
