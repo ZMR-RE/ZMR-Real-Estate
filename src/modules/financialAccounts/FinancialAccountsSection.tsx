@@ -1,7 +1,7 @@
 import { useFinancialAccounts } from './useFinancialAccounts'
 import { FinancialAccountForm } from './FinancialAccountForm'
 import { FinancialAccountList } from './FinancialAccountList'
-import { CollapsibleSection } from '../../shared/CollapsibleSection'
+import { EditableSection } from '../../shared/EditableSection'
 
 interface FinancialAccountsSectionProps {
   propertyId: string
@@ -12,11 +12,13 @@ interface FinancialAccountsSectionProps {
 // never a full account/card number — enforced both here (useFinancialAccounts'
 // validation) and at the DB level (the last_four check constraint).
 //
-// Owns its own CollapsibleSection (rather than being wrapped by the
-// caller, like most Overview-tab sections) so the 7.23 "Show archived"
-// toggle can sit in the box's header row via headerActions — inline with
-// the title, not a row inside the body that only shows once expanded and
-// extends the box vertically.
+// Roadmap 7.25 — converted to the Box interaction standard's
+// EditableSection: view state shows a read-only list (no per-row
+// actions); clicking the box's own Edit reveals the interactive list
+// (Edit/Archive per row) plus "+ Add financial account", replacing the
+// old always-visible Add button below the list. "Show archived" stays
+// a secondaryAction — always visible regardless of view/edit state,
+// same as before this conversion (7.23).
 export function FinancialAccountsSection({ propertyId }: FinancialAccountsSectionProps) {
   const {
     accounts,
@@ -37,9 +39,10 @@ export function FinancialAccountsSection({ propertyId }: FinancialAccountsSectio
   } = useFinancialAccounts(propertyId)
 
   return (
-    <CollapsibleSection
+    <EditableSection
       title="Financial accounts"
-      headerActions={
+      onEditStart={cancelForm}
+      secondaryActions={
         archivedCount > 0 && (
           <label htmlFor="financial_accounts_show_archived">
             <input
@@ -52,30 +55,43 @@ export function FinancialAccountsSection({ propertyId }: FinancialAccountsSectio
           </label>
         )
       }
-    >
-      {error && <p role="alert">{error}</p>}
+      view={
+        <>
+          {error && <p role="alert">{error}</p>}
+          {loading ? <p>Loading…</p> : <FinancialAccountList accounts={accounts} readOnly />}
+        </>
+      }
+      edit={(exitEditing) => (
+        <>
+          {error && <p role="alert">{error}</p>}
 
-      {loading ? (
-        <p>Loading…</p>
-      ) : (
-        <FinancialAccountList
-          accounts={accounts}
-          editingId={editingId}
-          saving={saving}
-          onStartEditing={startEditing}
-          onSave={save}
-          onCancel={cancelForm}
-          onToggleArchived={toggleArchived}
-        />
-      )}
+          {loading ? (
+            <p>Loading…</p>
+          ) : (
+            <FinancialAccountList
+              accounts={accounts}
+              editingId={editingId}
+              saving={saving}
+              onStartEditing={startEditing}
+              onSave={save}
+              onCancel={cancelForm}
+              onToggleArchived={toggleArchived}
+            />
+          )}
 
-      {isAdding ? (
-        <FinancialAccountForm saving={saving} onSave={add} onCancel={cancelForm} />
-      ) : (
-        <button type="button" onClick={startAdding}>
-          + Add financial account
-        </button>
+          {isAdding ? (
+            <FinancialAccountForm saving={saving} onSave={add} onCancel={cancelForm} />
+          ) : (
+            <button type="button" onClick={startAdding}>
+              + Add financial account
+            </button>
+          )}
+
+          <button type="button" onClick={exitEditing}>
+            Done
+          </button>
+        </>
       )}
-    </CollapsibleSection>
+    />
   )
 }

@@ -768,6 +768,27 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       property" button remains in the page header. Checked dark mode and
       mobile width (380px).
 
+      Financial accounts: DONE. FinancialAccountList gained a `readOnly`
+      prop (used for the box's view state: plain labels, no Edit/Archive
+      column) reused for the edit state's full interactive list too,
+      rather than a separate duplicate table. The old always-visible
+      "+ Add financial account" button below the list now only renders
+      inside Edit state, alongside a "Done" button that returns to view
+      (list-management boxes have no single "save," so Done just closes
+      the management view — same role Cancel plays for a single-record
+      form). "Show archived" stays a secondaryAction, visible regardless
+      of view/edit state, unchanged from 7.23. Verified live on 2169 Ash
+      St: view state shows the 1 active account with no action buttons;
+      Edit reveals Edit/Archive per row plus "+ Add"/Done; added a real
+      test account ("ZMR-TEST-Account"), confirmed it round-tripped
+      (appeared in both edit and view lists), archived it via the UI,
+      then hard-deleted the row directly (no hard-delete UI exists for
+      this table) since archiving alone didn't match the exact pre-test
+      state (1 active, 0 archived) — re-queried the DB afterward and
+      confirmed it matches exactly, per the Cleanup self-verification
+      rule. Checked dark mode and mobile width (380px, real iframe
+      viewport, not just a cropped screenshot).
+
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
 - [x] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field) — the llcs table, properties.llc_id, and the real-list-plus-"+ Add new LLC" picker already existed (Phase 1); this pass added the missing formation_date field

@@ -3,12 +3,18 @@ import type { FinancialAccount, FinancialAccountInput } from './financialAccount
 
 interface FinancialAccountListProps {
   accounts: FinancialAccount[]
-  editingId: string | null
-  saving: boolean
-  onStartEditing: (id: string) => void
-  onSave: (id: string, input: FinancialAccountInput) => void
-  onCancel: () => void
-  onToggleArchived: (financialAccount: FinancialAccount) => void
+  // Roadmap 7.25 — Box interaction standard: the box's default view
+  // state shows plain read-only labels, no per-row actions. Edit/Archive
+  // (and the inline edit form) only render once the box's own Edit
+  // action has been clicked, so all of those props are only required
+  // when readOnly is false/omitted.
+  readOnly?: boolean
+  editingId?: string | null
+  saving?: boolean
+  onStartEditing?: (id: string) => void
+  onSave?: (id: string, input: FinancialAccountInput) => void
+  onCancel?: () => void
+  onToggleArchived?: (financialAccount: FinancialAccount) => void
 }
 
 const TYPE_LABELS: Record<FinancialAccount['account_type'], string> = {
@@ -18,6 +24,7 @@ const TYPE_LABELS: Record<FinancialAccount['account_type'], string> = {
 
 export function FinancialAccountList({
   accounts,
+  readOnly = false,
   editingId,
   saving,
   onStartEditing,
@@ -37,19 +44,19 @@ export function FinancialAccountList({
           <th>Type</th>
           <th>Last 4</th>
           <th>Status</th>
-          <th></th>
+          {!readOnly && <th></th>}
         </tr>
       </thead>
       <tbody>
         {accounts.map((financialAccount) =>
-          editingId === financialAccount.id ? (
+          !readOnly && editingId === financialAccount.id ? (
             <tr key={financialAccount.id}>
               <td colSpan={5}>
                 <FinancialAccountForm
                   initialValues={financialAccount}
-                  saving={saving}
-                  onSave={(input) => onSave(financialAccount.id, input)}
-                  onCancel={onCancel}
+                  saving={saving ?? false}
+                  onSave={(input) => onSave?.(financialAccount.id, input)}
+                  onCancel={() => onCancel?.()}
                 />
               </td>
             </tr>
@@ -63,14 +70,16 @@ export function FinancialAccountList({
                   {financialAccount.archived ? 'Archived' : 'Active'}
                 </span>
               </td>
-              <td>
-                <button type="button" onClick={() => onStartEditing(financialAccount.id)}>
-                  Edit
-                </button>
-                <button type="button" onClick={() => onToggleArchived(financialAccount)}>
-                  {financialAccount.archived ? 'Restore' : 'Archive'}
-                </button>
-              </td>
+              {!readOnly && (
+                <td>
+                  <button type="button" onClick={() => onStartEditing?.(financialAccount.id)}>
+                    Edit
+                  </button>
+                  <button type="button" onClick={() => onToggleArchived?.(financialAccount)}>
+                    {financialAccount.archived ? 'Restore' : 'Archive'}
+                  </button>
+                </td>
+              )}
             </tr>
           ),
         )}
