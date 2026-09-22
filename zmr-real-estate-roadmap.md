@@ -1205,6 +1205,38 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       render correctly in the existing stacked Coverage-cell block and
       the edit form, no layout issues.
 
+- [x] 7.34 Property Information hero photo banner: replace the small
+      square photo with a full-width banner (~200-220px tall), address/
+      city/state/zip overlaid on the image (white text, dark gradient
+      for legibility), Organization type/$/sq ft/Status/Edit in a row
+      just below the image. Empty state shows a neutral placeholder +
+      "Add photo" prompt when no photo has been uploaded yet.
+
+      No mockup image was ever actually transmitted for this item
+      (asked twice; the user confirmed there was no separate file and to
+      build from the written spec directly) — built from the text spec
+      alone. Edit is NOT duplicated/relocated into the row below the
+      image — CLAUDE.md's Box interaction standard fixes it at the box's
+      own top-right corner, and the row below the image only holds
+      Organization type/$/sq ft/Status; flagging this interpretation
+      explicitly since the instruction listed Edit as part of that row.
+      PropertyPhoto.tsx rewritten (overlay text now lives on the image
+      itself, not a separate block beside a thumbnail); the small inline
+      preview PropertyPhotoUploadField renders in Edit mode is
+      unrelated and unchanged in behavior (just resized 96px → 64px now
+      that its old "-preview" modifier class folded into the base
+      .property-photo rule). Loading state renders blank rather than the
+      empty-state prompt, so a property that does have a photo never
+      flashes "Add photo" first.
+
+      `npm run build` clean. Verified live on 2169 Ash St (has a real
+      uploaded photo) and 5336 W Foster Ave (no photo — empty state) on
+      desktop, a 390px iframe-simulated mobile width, and dark mode:
+      hero banner renders full-width at the correct height, address
+      text stays legible over both a real photo and the empty-state
+      placeholder background, Edit stays in its standard top-right
+      position, no layout issues at mobile width.
+
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
 - [x] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field) — the llcs table, properties.llc_id, and the real-list-plus-"+ Add new LLC" picker already existed (Phase 1); this pass added the missing formation_date field
