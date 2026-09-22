@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { SearchableSelect } from '../../shared/SearchableSelect'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
@@ -18,10 +18,6 @@ interface PropertyFormProps {
   saving: boolean
   onSave: (input: PropertyInput) => void
   onCancel: () => void
-  // Roadmap 7.22 — set when edit mode was entered via a field group's
-  // "+ Add …" prompt on the read view, so this form can jump straight to
-  // the specific field the user asked to fill in.
-  autoFocusFieldId?: string | null
 }
 
 export function PropertyForm({
@@ -33,24 +29,11 @@ export function PropertyForm({
   saving,
   onSave,
   onCancel,
-  autoFocusFieldId,
 }: PropertyFormProps) {
   const [values, setValues] = useState<PropertyInput>(initialValues)
   const [isAddingLlc, setIsAddingLlc] = useState(false)
   const [creatingLlc, setCreatingLlc] = useState(false)
   const [createLlcError, setCreateLlcError] = useState<string | null>(null)
-  const formRef = useRef<HTMLFormElement>(null)
-
-  useEffect(() => {
-    if (!autoFocusFieldId) return
-    const target = formRef.current?.querySelector<HTMLElement>(`#${autoFocusFieldId}`)
-    target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    target?.focus()
-    // Runs once per form mount (PropertyProfileOverviewTab keys this form
-    // by property.id and clears autoFocusFieldId on cancel), not on every
-    // keystroke — deliberately omits autoFocusFieldId/values from deps.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const handleCreateLlc = async (input: LlcInput) => {
     setCreatingLlc(true)
@@ -84,7 +67,7 @@ export function PropertyForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} ref={formRef}>
+    <form onSubmit={handleSubmit}>
       <div className="field-grid">
         <div className="field">
           <label htmlFor="name">

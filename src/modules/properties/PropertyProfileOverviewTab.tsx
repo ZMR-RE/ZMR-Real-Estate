@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
+import { EditableSection } from '../../shared/EditableSection'
 import type { LlcInput } from '../llcs/llcsQueries'
 import type { HoldingCompanyInput } from '../holdingCompanies/holdingCompaniesQueries'
 import { PropertyTaxLedger } from '../propertyTax/PropertyTaxLedger'
@@ -18,9 +18,6 @@ import type { Property, PropertyInput } from './propertiesQueries'
 
 interface PropertyProfileOverviewTabProps {
   property: Property
-  isEditing: boolean
-  onStartEditing: () => void
-  onCancelEdit: () => void
   llcOptions: SearchableSelectOption[]
   onCreateLlc: (input: LlcInput) => Promise<{ id: string } | { error: string }>
   holdingCompanyOptions: SearchableSelectOption[]
@@ -30,19 +27,18 @@ interface PropertyProfileOverviewTabProps {
   onSave: (input: PropertyInput) => Promise<boolean>
 }
 
-// Roadmap 7.10 — every section on this tab (including core property
-// fields, view-by-default per 7.7 via defaultOpen) uses the same
-// CollapsibleSection box so the tab reads as one consistent set of
-// sections rather than a mix of collapsible and non-collapsible boxes.
-// Units stays last per the roadmap item's own "near the bottom,
-// reference-only" note — full unit CRUD (plus each unit's nested
-// specs/leasing/tenants/utilities) stays exactly as 7.2 built it, just
-// relocated into a box rather than rebuilt.
+// Roadmap 7.10 — every section on this tab uses a consistent box
+// pattern. Property information uses the Box interaction standard's
+// EditableSection (self-contained view/edit toggle, single top-right
+// Edit action) rather than CollapsibleSection + externally-owned
+// isEditing — that external state (and the page-header "Edit property"
+// button that used to control it) is gone; the box owns its own edit
+// state now. Units stays last per the roadmap item's own "near the
+// bottom, reference-only" note — full unit CRUD (plus each unit's
+// nested specs/leasing/tenants/utilities) stays exactly as 7.2 built
+// it, just relocated into a box rather than rebuilt.
 export function PropertyProfileOverviewTab({
   property,
-  isEditing,
-  onStartEditing,
-  onCancelEdit,
   llcOptions,
   onCreateLlc,
   holdingCompanyOptions,
@@ -51,31 +47,12 @@ export function PropertyProfileOverviewTab({
   saving,
   onSave,
 }: PropertyProfileOverviewTabProps) {
-  // Roadmap 7.22 — a field group's "+ Add …" prompt jumps straight into
-  // edit mode with that group's first missing field scrolled into view
-  // and focused, rather than dropping the user into the top of a long
-  // flat form to hunt for it themselves.
-  const [autoFocusFieldId, setAutoFocusFieldId] = useState<string | null>(null)
-
-  // Resets on any exit from edit mode — Cancel and a successful save
-  // both flip isEditing false, and a successful save does it via the
-  // parent hook directly rather than through a handler this component
-  // owns, so there's no single call site to reset it from instead.
-  // Without this, a later plain "Edit property" click could still carry
-  // a stale focus target left over from an earlier "+ Add …" click.
-  useEffect(() => {
-    if (!isEditing) setAutoFocusFieldId(null)
-  }, [isEditing])
-
-  const handleAddFields = (fieldKeys: string[]) => {
-    setAutoFocusFieldId(fieldKeys[0] ?? null)
-    onStartEditing()
-  }
-
   return (
     <div className="property-overview-grid">
-      <CollapsibleSection title="Property information" defaultOpen>
-        {isEditing ? (
+      <EditableSection
+        title="Property information"
+        view={<PropertySummary property={property} llcOptions={llcOptions} />}
+        edit={(exitEditing) => (
           <PropertyForm
             key={property.id}
             initialValues={property}
@@ -84,14 +61,14 @@ export function PropertyProfileOverviewTab({
             holdingCompanyOptions={holdingCompanyOptions}
             onCreateHoldingCompany={onCreateHoldingCompany}
             saving={saving}
-            onSave={onSave}
-            onCancel={onCancelEdit}
-            autoFocusFieldId={autoFocusFieldId}
+            onSave={async (input) => {
+              const ok = await onSave(input)
+              if (ok) exitEditing()
+            }}
+            onCancel={exitEditing}
           />
-        ) : (
-          <PropertySummary property={property} llcOptions={llcOptions} onAddFields={handleAddFields} />
         )}
-      </CollapsibleSection>
+      />
 
       <FinancialAccountsSection propertyId={property.id} />
 
@@ -123,9 +100,7 @@ export function PropertyProfileOverviewTab({
         <PropertyTenantsOverview propertyId={property.id} />
       </CollapsibleSection>
 
-      <CollapsibleSection title="Units">
-        <UnitsSection propertyId={property.id} />
-      </CollapsibleSection>
+      <UnitsSection propertyId={property.id} />
     </div>
   )
 }

@@ -9,7 +9,6 @@ import { PropertyIdentityHeader } from './PropertyIdentityHeader'
 interface PropertySummaryProps {
   property: Property
   llcOptions: SearchableSelectOption[]
-  onAddFields: (fieldKeys: string[]) => void
 }
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -41,7 +40,7 @@ function renderFieldValue(property: Property, key: keyof Property): ReactNode {
 // showing "—". Insurance used to be one of these groups (with its own
 // documents special case) before it became its own historical ledger
 // (InsuranceLedger.tsx) — removed from here entirely, not just emptied.
-export function PropertySummary({ property, llcOptions, onAddFields }: PropertySummaryProps) {
+export function PropertySummary({ property, llcOptions }: PropertySummaryProps) {
   return (
     <div className="property-summary">
       <PropertyIdentityHeader property={property} llcOptions={llcOptions} />
@@ -60,7 +59,6 @@ export function PropertySummary({ property, llcOptions, onAddFields }: PropertyS
             title={group.title}
             presentFields={presentFields}
             missingFields={missingFields}
-            onAddFields={onAddFields}
           />
         )
       })}

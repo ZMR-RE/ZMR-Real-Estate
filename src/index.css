@@ -941,19 +941,11 @@ dd {
 
 .property-field-group-add-prompt {
   display: inline-block;
-  margin-top: var(--space-2);
-  padding: 0;
-  border: none;
-  background: none;
+  margin: var(--space-2) 0 0;
   font-size: var(--text-sm);
   color: var(--text);
-  cursor: pointer;
   text-decoration: underline dashed;
   text-underline-offset: 3px;
-}
-
-.property-field-group-add-prompt:hover {
-  color: var(--accent);
 }
 
 /* ============================================================

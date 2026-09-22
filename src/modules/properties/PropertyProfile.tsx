@@ -34,8 +34,6 @@ export function PropertyProfile() {
     setTab,
     saving,
     saveProperty,
-    editingProperty,
-    setEditingProperty,
     refresh,
     latestMarketValue,
   } = usePropertyProfile(id!)
@@ -59,11 +57,6 @@ export function PropertyProfile() {
       <Link to="/properties">&larr; Property registry</Link>
       <div className="page-header-row">
         <h1>{propertyLabel(property)}</h1>
-        {tab === 'overview' && !editingProperty && (
-          <button type="button" onClick={() => setEditingProperty(true)}>
-            Edit property
-          </button>
-        )}
       </div>
       {error && <p role="alert">{error}</p>}
 
@@ -84,9 +77,6 @@ export function PropertyProfile() {
       {tab === 'overview' && (
         <PropertyProfileOverviewTab
           property={property}
-          isEditing={editingProperty}
-          onStartEditing={() => setEditingProperty(true)}
-          onCancelEdit={() => setEditingProperty(false)}
           llcOptions={llcOptions}
           onCreateLlc={createLlc}
           holdingCompanyOptions={holdingCompanyOptions}

@@ -733,6 +733,34 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       2025's -$2,305.09/-45% drop reflecting its still-unrecorded 2nd
       installment) — no test data needed for this one, real data already
       existed.
+- [ ] 7.25 Convert Property Overview's boxes to the Box interaction
+      standard's shared EditableSection component (src/shared/
+      EditableSection.tsx, built by T2): Property information, Financial
+      accounts, Insurance, Market & rent value history — one box at a
+      time, each verified live before the next. Adding a new item
+      (financial account, insurance policy, value entry) happens from
+      inside Edit state, not a separate always-visible button.
+
+      Property information: DONE. Removed the page-header "Edit
+      property" button and the editingProperty state that used to live
+      in usePropertyProfile.ts/PropertyProfile.tsx — the box now owns
+      its own edit state via EditableSection, the only entry point into
+      editing. Casualty of this, flagged rather than silently dropped:
+      7.22's "+ Add …" field-group prompts used to jump straight into
+      edit mode with that field focused (a second entry point into
+      editing); PropertyFieldGroup's prompt is now plain inert text
+      (still tells the user what's missing, no longer clickable) since
+      EditableSection's `view` is a static ReactNode with no way to
+      trigger its internal edit state from outside — the Box standard's
+      "single Edit action, no exception" rule and EditableSection's
+      deliberately closed API both point the same direction.
+      PropertyForm's autoFocusFieldId plumbing removed as dead code
+      alongside it. Verified live on 2169 Ash St: Edit opens the form,
+      Cancel returns to view with original data intact, Save (tried with
+      no changes, to exercise the round trip without touching real data)
+      returns to view and re-renders correctly; confirmed no "Edit
+      property" button remains in the page header. Checked dark mode and
+      mobile width (380px).
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
