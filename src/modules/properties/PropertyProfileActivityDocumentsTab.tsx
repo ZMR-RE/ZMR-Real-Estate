@@ -39,14 +39,15 @@ export function PropertyProfileActivityDocumentsTab({
         <PropertyProfileHistoryTab property={property} llcOptions={llcOptions} />
       </CollapsibleSection>
 
-      <CollapsibleSection title="Documents">
-        <PropertyProfileDocumentsTab
-          propertyId={property.id}
-          documents={documents}
-          onView={onViewDocument}
-          onDocumentsChanged={onDocumentsChanged}
-        />
-      </CollapsibleSection>
+      {/* Roadmap 2.7 — PropertyProfileDocumentsTab now owns its own
+          CollapsibleSection (not wrapped here) so its "+ Add document or
+          link" button can sit in the box's own header via headerActions. */}
+      <PropertyProfileDocumentsTab
+        propertyId={property.id}
+        documents={documents}
+        onView={onViewDocument}
+        onDocumentsChanged={onDocumentsChanged}
+      />
     </>
   )
 }

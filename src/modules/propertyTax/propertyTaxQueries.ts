@@ -87,10 +87,19 @@ export async function updateTaxInstallment(id: string, input: PropertyTaxInstall
 // Requires a real installment id, so the installment row must already
 // exist (created first, with no documents, if this is a brand-new one)
 // before any document upload for it can happen.
+// Roadmap 2.7 — auto-generated label so these documents read clearly in
+// the shared Documents section (Activity & Documents) instead of
+// falling back to "—" there; a manually uploaded document elsewhere
+// keeps whatever label/filename it already has, untouched.
+function taxInstallmentDocumentLabel(taxYear: number, installmentNumber: 1 | 2): string {
+  return `Property tax ${taxYear} — ${installmentNumber === 1 ? '1st' : '2nd'} installment`
+}
+
 export async function uploadTaxInstallmentDocument(
   accountId: string,
   propertyId: string,
   propertyTaxInstallmentId: string,
+  taxYear: number,
   installmentNumber: 1 | 2,
   uploadedBy: string,
   file: File,
@@ -108,6 +117,7 @@ export async function uploadTaxInstallmentDocument(
       account_id: accountId,
       property_id: propertyId,
       category: TAX_DOCUMENT_CATEGORY,
+      label: taxInstallmentDocumentLabel(taxYear, installmentNumber),
       property_tax_installment_id: propertyTaxInstallmentId,
       tax_installment_number: installmentNumber,
       uploaded_by: uploadedBy,
