@@ -850,6 +850,75 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 7.26 Split Activity & Documents back into two separate tabs,
       Activity and Documents — reverses 7.9/7.14's earlier merge. User
       has explicitly confirmed this reversal.
+- [x] 7.27 Dashboard-wide completion of the Box interaction standard on
+      Property Overview (per the Standard rollout completeness rule —
+      7.25 had converted 4 of the tab's boxes, leaving 6 unconverted and
+      unlogged).
+
+      1. Fixed EditableSection: collapse and edit had been built as
+      separable (a plain div header, "this box is never collapsed"),
+      which silently dropped every 7.25 box's chevron. Rewrote it to
+      reuse CollapsibleSection's exact <details>/<summary> markup, so
+      both work together — verified live that collapsing mid-edit
+      preserves edit state (native <details> hides content without
+      unmounting React children) on all 4 already-converted boxes.
+
+      2. Converted the remaining 5 old-pattern boxes: Property tax
+      installments, Specs & measurements, Utility records, Security
+      deposits, Units — same readOnly-list-prop pattern as 7.25, "+ Add"
+      folded into Edit state, chevron restored. Specs & measurements'
+      Scope/Area filter bar moved to secondaryActions (a view concern,
+      stays visible in both states, same treatment as "Show archived").
+      UtilityRecordsSection now owns its own EditableSection box instead
+      of being wrapped by its caller (same fix as Property tax
+      installments), so its per-unit instance inside Units also got
+      Edit/collapse for free without double-boxing. Units: "Show
+      archived" stays secondaryActions; view state hides per-unit Edit/
+      Archive and the standing "+ Add unit"; Edit reveals both plus each
+      unit's inline edit form — nested Leasing/Tenants/Utility records
+      subsections are unaffected, each already owns its own gate.
+
+      3. Tenants box: since tenant assignment happens per-unit by
+      design, it's no longer a dead end — always shows a "Manage tenants
+      in Units ↓" link (empty/error/populated states alike) that
+      auto-expands and scrolls to the Units box. EditableSection gained
+      an optional `id` prop for this.
+
+      4. Responsive 2-column box layout at desktop widths: Property
+      information/Financial accounts/Insurance in one column, Market &
+      rent value history/Property tax installments/Tenants in the other
+      — each an independent vertical flex/grid stack, not a shared-row
+      grid, so unequal heights between columns never force blank space
+      into a box's own row (the problem the original full-width-only
+      redesign existed to avoid). Specs & measurements, Utility records,
+      Security deposits, and Units stay full-width below both columns.
+      Single column under 900px (matches the existing .field-grid mobile
+      breakpoint elsewhere on this tab).
+
+      5. Verified every one of the 10 boxes on the tab individually
+      (collapse/expand toggle, Edit reveals the correct interactive
+      content, Cancel/Done returns to view-only) after all of the above
+      landed together, not just at each box's own conversion time — this
+      caught nothing broken, but was run specifically because two other
+      terminals landed unrelated concurrent changes to shared files
+      (index.css sticky-headers/overflow:clip, several *List.tsx table
+      wrappers) during this work. Test data (a spec, a utility record, a
+      security deposit + its transaction, a unit) created per box during
+      verification was hard-deleted afterward (no delete UI exists for
+      any of these); re-queried each table afterward and confirmed zero
+      ZMR-TEST- rows remain anywhere touched.
+- [ ] 7.28 Remaining old-pattern boxes found while completing 7.27, out
+      of that item's scope (Property Overview only) — logged per the
+      Standard rollout completeness rule rather than left unconverted
+      and unlogged: LeasingListingSection ("Leasing / listing history",
+      nested per-unit inside Units — standing "+ Add listing" button),
+      TenantAssignmentsSection ("Tenants", nested per-unit inside Units —
+      standing "+ Assign tenant" button), and
+      PropertyProfileDocumentsTab.tsx (Documents tab — standing "+ Add
+      document or link" button). PropertyProfileActivityHistoryTab.tsx
+      and PropertyProfileKpiTab.tsx also use CollapsibleSection but have
+      no add/edit action to gate (pure display/reporting), so they don't
+      need this standard.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
