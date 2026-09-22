@@ -858,9 +858,20 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       match for "restore the exact pre-test state") — re-queried the DB
       and confirmed zero entries remain, matching the pre-test state
       exactly. Checked dark mode and mobile width (380px).
-- [ ] 7.26 Split Activity & Documents back into two separate tabs,
+- [x] 7.26 Split Activity & Documents back into two separate tabs,
       Activity and Documents — reverses 7.9/7.14's earlier merge. User
-      has explicitly confirmed this reversal.
+      has explicitly confirmed this reversal. Renamed/trimmed the old
+      merged wrapper (PropertyProfileActivityDocumentsTab) to
+      PropertyProfileActivityHistoryTab, now holding just Activity log +
+      History (7.8). Documents (2.5) is its own tab, rendering
+      PropertyProfileDocumentsTab directly since it already owns its own
+      CollapsibleSection (2.7) and needs no wrapper. Verified live:
+      "Activity" and "Documents" both render as separate tabs with the
+      right content, nothing duplicated or dropped. (Note: this
+      checkbox/verification note was itself lost once already to a
+      shared-working-tree collision with another terminal's concurrent
+      roadmap.md commit — re-added here after noticing the regression;
+      the underlying code was never affected, only this documentation.)
 - [x] 7.27 Dashboard-wide completion of the Box interaction standard on
       Property Overview (per the Standard rollout completeness rule —
       7.25 had converted 4 of the tab's boxes, leaving 6 unconverted and
