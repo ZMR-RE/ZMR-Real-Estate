@@ -778,6 +778,33 @@ dd {
   margin-top: 0;
 }
 
+/* Unit cards (roadmap 7.2) — previously unstyled divs, which left each
+   unit's nested sub-sections (below) cramped directly under the header/
+   action buttons with no visual separation. A plain card treatment
+   (same tokens as .collapsible-section) gives them room to breathe. */
+.unit-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin-top: var(--space-3);
+}
+
+/* A unit's nested Specs/Leasing/Tenants/Utility records sections
+   (roadmap 7.2) never received the 7.22 full-width-CollapsibleSection
+   treatment the property-level Overview tab got — same layout here,
+   scoped to one unit's card instead of the whole tab. */
+.unit-subsections-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.unit-subsections-grid > .collapsible-section {
+  margin-top: 0;
+}
+
 /* Turns a stack of label/value or label/input pairs into a responsive
    multi-column layout — used by PropertySummary's <dl> and PropertyForm's
    fields. Each field is its own grid item (a wrapper div around its

@@ -15,10 +15,15 @@ const BLANK_LISTING = { platform: '', date_posted: new Date().toISOString().slic
 // date posted, days live (calculated), prospective tenant notes. Nested
 // inside a Unit card on the Overview tab, same composition 7.4's
 // PropertySpecsSection already uses there, scoped to that unit's id.
+//
+// title/headingLevel work exactly like PropertySpecsSection's: omit
+// title when this is already wrapped in its own titled CollapsibleSection
+// (roadmap 7.22 treatment applied to each unit's nested sections) to
+// avoid a redundant repeated heading.
 export function LeasingListingSection({
   propertyId,
   unitId,
-  title = 'Leasing / listing history',
+  title,
   headingLevel = 'h4',
 }: LeasingListingSectionProps) {
   const { listings, loading, error, isAdding, editingId, saving, startAdding, startEditing, cancelForm, add, save } =
@@ -27,7 +32,7 @@ export function LeasingListingSection({
 
   return (
     <section>
-      <Heading>{title}</Heading>
+      {title && <Heading>{title}</Heading>}
       {error && <p role="alert">{error}</p>}
 
       {loading ? (

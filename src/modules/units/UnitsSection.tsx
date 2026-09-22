@@ -1,5 +1,6 @@
 import { useUnits } from './useUnits'
 import { UnitForm } from './UnitForm'
+import { CollapsibleSection } from '../../shared/CollapsibleSection'
 import { PropertySpecsSection } from '../propertySpecs/PropertySpecsSection'
 import { LeasingListingSection } from '../leasingListings/LeasingListingSection'
 import { TenantAssignmentsSection } from '../tenants/TenantAssignmentsSection'
@@ -66,24 +67,23 @@ export function UnitsSection({ propertyId }: UnitsSectionProps) {
                 {unit.archived ? 'Restore' : 'Archive'}
               </button>
 
-              <PropertySpecsSection
-                propertyId={propertyId}
-                unitId={unit.id}
-                title={`Specs & measurements — ${unit.unit_label}`}
-                headingLevel="h4"
-              />
+              <div className="unit-subsections-grid">
+                <CollapsibleSection title="Specs & measurements">
+                  <PropertySpecsSection propertyId={propertyId} unitId={unit.id} />
+                </CollapsibleSection>
 
-              <LeasingListingSection
-                propertyId={propertyId}
-                unitId={unit.id}
-                title={`Leasing / listing history — ${unit.unit_label}`}
-                headingLevel="h4"
-              />
+                <CollapsibleSection title="Leasing / listing history">
+                  <LeasingListingSection propertyId={propertyId} unitId={unit.id} />
+                </CollapsibleSection>
 
-              <TenantAssignmentsSection unitId={unit.id} title={`Tenants — ${unit.unit_label}`} />
+                <CollapsibleSection title="Tenants">
+                  <TenantAssignmentsSection unitId={unit.id} />
+                </CollapsibleSection>
 
-              <h4>Utility records — {unit.unit_label}</h4>
-              <UtilityRecordsSection propertyId={propertyId} unitId={unit.id} />
+                <CollapsibleSection title="Utility records">
+                  <UtilityRecordsSection propertyId={propertyId} unitId={unit.id} />
+                </CollapsibleSection>
+              </div>
             </div>
           ),
         )

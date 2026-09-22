@@ -4,7 +4,7 @@ import { TenantAssignmentList } from './TenantAssignmentList'
 
 interface TenantAssignmentsSectionProps {
   unitId: string
-  title: string
+  title?: string
 }
 
 // Roadmap 8.4 — tenant history for one unit. Deliberately not a single
@@ -12,6 +12,11 @@ interface TenantAssignmentsSectionProps {
 // unit's tenant history survives turnover instead of being overwritten,
 // and a tenant record (tenants table) persists independent of any
 // current unit assignment.
+//
+// title is optional, same pattern as PropertySpecsSection/
+// LeasingListingSection: omit it when this is already wrapped in its own
+// titled CollapsibleSection (roadmap 7.22 treatment) to avoid a
+// redundant repeated heading.
 export function TenantAssignmentsSection({ unitId, title }: TenantAssignmentsSectionProps) {
   const {
     assignments,
@@ -30,7 +35,7 @@ export function TenantAssignmentsSection({ unitId, title }: TenantAssignmentsSec
 
   return (
     <section>
-      <h4>{title}</h4>
+      {title && <h4>{title}</h4>}
       {error && <p role="alert">{error}</p>}
 
       {loading ? (

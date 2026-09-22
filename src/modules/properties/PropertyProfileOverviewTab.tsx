@@ -117,7 +117,7 @@ export function PropertyProfileOverviewTab({
         <PropertyValueHistorySection propertyId={property.id} onChanged={onValueHistoryChanged} />
       </CollapsibleSection>
 
-      <CollapsibleSection title="Specs & measurements">
+      <CollapsibleSection title="Specs & measurements (building-wide)">
         <PropertySpecsSection propertyId={property.id} />
       </CollapsibleSection>
 

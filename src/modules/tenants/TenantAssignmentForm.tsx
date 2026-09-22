@@ -56,12 +56,22 @@ export function TenantAssignmentForm({
     })
   }
 
-  return (
-    <div className="inline-form">
-      <label htmlFor="assignment_tenant">
-        Tenant<span className="required-marker">*</span>
-      </label>
-      {isAddingTenant ? (
+  // Cross-module data freshness / UX clarity — when adding a brand-new
+  // tenant inline (via "+ Add new tenant"), the rest of this form (Start
+  // date onward, plus its own "Assign tenant" button) used to stay
+  // rendered underneath TenantForm the whole time: two save-shaped
+  // buttons ("Add tenant" and a simultaneously-visible, disabled "Assign
+  // tenant") on screen at once, with no explanation of why the second
+  // one was disabled. Now clearly sequential: step one (pick or create a
+  // tenant) is the only thing shown until it resolves; step two (the
+  // assignment's own fields) only appears once a tenant is actually
+  // selected.
+  if (isAddingTenant) {
+    return (
+      <div className="inline-form">
+        <label htmlFor="assignment_tenant">
+          Tenant<span className="required-marker">*</span>
+        </label>
         <TenantForm
           saving={creatingTenant}
           error={createTenantError}
@@ -71,56 +81,67 @@ export function TenantAssignmentForm({
             setCreateTenantError(null)
           }}
         />
-      ) : (
-        <SearchableSelect
-          options={tenantOptions}
-          value={tenantId}
-          onChange={setTenantId}
-          placeholder="Select a tenant…"
-          onAddNew={() => setIsAddingTenant(true)}
-          addNewLabel="+ Add new tenant"
-        />
-      )}
+      </div>
+    )
+  }
 
-      <label htmlFor="assignment_start">
-        Start date<span className="required-marker">*</span>
+  return (
+    <div className="inline-form">
+      <label htmlFor="assignment_tenant">
+        Tenant<span className="required-marker">*</span>
       </label>
-      <input
-        id="assignment_start"
-        type="date"
-        value={startDate}
-        onChange={(e) => setStartDate(e.target.value)}
-        required
+      <SearchableSelect
+        options={tenantOptions}
+        value={tenantId}
+        onChange={setTenantId}
+        placeholder="Select a tenant…"
+        onAddNew={() => setIsAddingTenant(true)}
+        addNewLabel="+ Add new tenant"
       />
 
-      <label htmlFor="assignment_end">End date (leave blank if current)</label>
-      <input id="assignment_end" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+      {tenantId && (
+        <>
+          <label htmlFor="assignment_start">
+            Start date<span className="required-marker">*</span>
+          </label>
+          <input
+            id="assignment_start"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            required
+          />
 
-      <label htmlFor="assignment_rent">Rent amount ($)</label>
-      <input
-        id="assignment_rent"
-        type="number"
-        min="0"
-        step="0.01"
-        inputMode="decimal"
-        value={rentAmount}
-        onChange={(e) => setRentAmount(e.target.value)}
-      />
+          <label htmlFor="assignment_end">End date (leave blank if current)</label>
+          <input id="assignment_end" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
 
-      <label htmlFor="assignment_late_fee">Late fee ($)</label>
-      <input
-        id="assignment_late_fee"
-        type="number"
-        min="0"
-        step="0.01"
-        inputMode="decimal"
-        value={lateFee}
-        onChange={(e) => setLateFee(e.target.value)}
-      />
+          <label htmlFor="assignment_rent">Rent amount ($)</label>
+          <input
+            id="assignment_rent"
+            type="number"
+            min="0"
+            step="0.01"
+            inputMode="decimal"
+            value={rentAmount}
+            onChange={(e) => setRentAmount(e.target.value)}
+          />
 
-      <button type="button" disabled={saving || !tenantId || !startDate} onClick={handleSave}>
-        {saving ? 'Saving…' : 'Assign tenant'}
-      </button>
+          <label htmlFor="assignment_late_fee">Late fee ($)</label>
+          <input
+            id="assignment_late_fee"
+            type="number"
+            min="0"
+            step="0.01"
+            inputMode="decimal"
+            value={lateFee}
+            onChange={(e) => setLateFee(e.target.value)}
+          />
+
+          <button type="button" disabled={saving || !startDate} onClick={handleSave}>
+            {saving ? 'Saving…' : 'Assign tenant'}
+          </button>
+        </>
+      )}
       <button type="button" onClick={onCancel} disabled={saving}>
         Cancel
       </button>
