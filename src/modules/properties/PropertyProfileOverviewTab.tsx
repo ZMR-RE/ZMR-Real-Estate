@@ -105,9 +105,7 @@ export function PropertyProfileOverviewTab({
         )}
       </CollapsibleSection>
 
-      <CollapsibleSection title="Financial accounts">
-        <FinancialAccountsSection propertyId={property.id} />
-      </CollapsibleSection>
+      <FinancialAccountsSection propertyId={property.id} />
 
       <CollapsibleSection title="Property tax installments">
         <PropertyTaxLedger propertyId={property.id} />

@@ -730,6 +730,13 @@ dd {
   gap: var(--space-2);
 }
 
+.collapsible-section-header-actions {
+  margin-left: auto;
+  font-size: var(--text-sm);
+  font-weight: 400;
+  cursor: auto;
+}
+
 .collapsible-section > summary::-webkit-details-marker {
   display: none;
 }
