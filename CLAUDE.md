@@ -180,6 +180,15 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   future, without exception unless a specific deviation is explicitly
   approved and noted here.
 
+## Sticky/frozen headers
+- Every property-profile tab bar, and any long, column-headered
+  list/table in the app, uses `position: sticky` (or equivalent) so
+  headers and tab navigation stay visible while scrolling — the same
+  "frozen rows" pattern as a spreadsheet.
+- Applied globally (shared CSS/components), not per-screen — a new
+  screen with a tab bar or a column-headered table inherits this
+  automatically rather than needing its own opt-in.
+
 ## Standard rollout completeness
 - When a new UI/interaction standard (a shared component, a layout
   pattern) is introduced, the task must explicitly state one of two
