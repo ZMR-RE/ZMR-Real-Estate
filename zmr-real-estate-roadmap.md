@@ -942,6 +942,23 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       interaction standard, editing has exactly one entry point — the
       box's own top-right Edit action) — restyled as a dashed-border
       pill/chip so it reads as a hint, not a broken link.
+- [x] 7.30 Two fixes: (1) `.app-main`'s global content max-width was
+      1180px, noticeably too narrow at normal laptop widths (leaves
+      hundreds of px of unused gray space on a 1440-1920px viewport,
+      once the 232px sidebar is accounted for) — widened to 1440px,
+      the root-cause fix since every page shares this one cap, not a
+      patch scoped to Overview alone; Property Overview specifically
+      also gains a new slim right-side "Snapshot" panel (estimated
+      equity from the existing KPI equity calc, the next open Action
+      Queue item due for this property if any, and the most recent
+      Activity log entry) alongside its existing two-column box layout,
+      stacking below it at mobile widths; (2) Property information's
+      purchase-price helper text ("Used for cost basis / depreciation…")
+      was always-visible paragraph text — no info-icon/tooltip pattern
+      existed anywhere in the app yet to "match", so this introduces
+      the first one (`src/shared/InfoTooltip.tsx`, a small "?" icon
+      with a hover/focus-shown bubble) and moves that field's helper
+      text behind it.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
