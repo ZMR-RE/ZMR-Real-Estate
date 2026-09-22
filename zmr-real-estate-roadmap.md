@@ -629,6 +629,8 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       (iframe-based, since this session's resize_window tool doesn't
       affect this environment's viewport) — header wraps to a stacked
       layout, fields go single-column, no horizontal overflow.
+- [ ] 7.23 Financial accounts: archived accounts hidden by default,
+      behind a "Show archived" toggle in the section header.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
@@ -722,7 +724,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 9.2 Balance Sheet report (property value + cash − mortgage balance = equity), portfolio-wide or per-property — cash is a cash-basis running balance since inception (all-time income − expense − mortgage principal paid); no opening-balance data exists yet (see 9.18), so this assumes $0 at time zero, same simplification the rest of today's reporting makes
 - [x] 9.3 Profit & Loss report (Schedule E format), portfolio-wide or per-property — every standard line shown even at $0; line labels come from each category's Chart of Accounts (9.1) mapping
 - [x] 9.4 Cash Flow report — net income adjusted for non-cash depreciation (added back) and mortgage principal paid (a real cash outflow that isn't a P&L expense)
-- [x] 9.5 Property Tax Installment ledger (year, 1st/2nd installment + date paid, attached document per bill) — feeds KPI tax-trend card
+- [x] 9.5 Property Tax Installment ledger (year, 1st/2nd installment + date paid, attached document per bill) — feeds KPI tax-trend card. REVISED: "attached document per bill" widened to support multiple documents per installment slot (e.g. the original bill AND a separate payment confirmation), not one. property_tax_installments no longer holds document references itself — documents now point back at which installment/slot they belong to (documents.property_tax_installment_id/tax_installment_number), the same way documents already point at transaction_id/mortgage_id, so a slot can carry any number of them. The old installment_1_document_id/installment_2_document_id columns are kept, unused, never dropped. Confirmed tax documents correctly surface in Activity & Documents (2.5's shared architecture, no code change needed there — listDocuments already reads every document row for a property regardless of category, and uploadTaxInstallmentDocument already writes category='Tax Documents' + property_id correctly).
 - [x] 9.6 Per-transaction document attachment field — upload, stored via the 2.5 document architecture
 - [ ] 9.7 Monthly reconciliation checklist (recurring template in Action Queue): bank/CC statement reconciliation, rent received vs. invoiced, invoices sent, mortgage payment posted, security deposits reconciled, lease renewals approaching, insurance renewal approaching, tax installment due, year-end 1099 prep
 - [ ] 9.8 Manual bank/credit card statement import (CSV upload + parsing + categorization) as the near-term alternative to live bank-feed sync
@@ -738,6 +740,9 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 9.18 Historical Data Backfill (2.4) must establish real opening balances per Chart of Accounts account as of the backfill date, so the Balance Sheet (9.2) is accurate for periods before backfill
 - [x] 9.19 Year-end closing/lock: ability to lock a financial period after it's been handed to an accountant; reopening a locked period is an explicit action, logged in the audit trail (9.17)
 - [x] 9.20 Add soft-delete/void support to Mortgage records, matching the existing pattern used for financial transactions and Chart of Accounts entries — currently mortgage records can only be hard-deleted, which conflicts with CLAUDE.md's data-safety rule
+- [ ] 9.21 Property tax installment display: restructure each installment
+      from one run-on inline line into a stacked block (Amount / Paid
+      date / Documents), reducing visual clutter.
 
 ## 10. Phase 10 — Navigation & Action Consolidation
 - [x] 10.1 Rename left nav to: Properties, Log It, Action Queue, Financials & Tax, Command Center, Automations, Portfolio KPIs
@@ -779,6 +784,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - AI agent to automatically pull property market value and rent value from external sources (Zillow, Redfin, etc.) instead of manual entry — depends on 7.19 (the value history log) existing first
 - Sale/Disposition report — computed automatically at time of property sale from existing purchase price, capital improvements, and depreciation data; capital gain is a sale-time calculation, not a Quick Capture category
 - Real address autocomplete for Mileage's start/end fields (e.g. Google Places) — deferred to a future paid tier due to per-request API cost, same category as live bank-feed sync
+- Document export/backup — let the user download all stored documents (e.g. as a zip) for their own backup, separate from 12.3's live Drive-routing option. Extends the existing data-export principle (11.2's Multi-tenant discipline rule: "every account must have a functioning data export path for its own data") to raw files, not just structured reports/CSVs
 
 ## Ongoing — Q&A / SOP Log
 - [ ] A living reference section (in-app or a maintained doc) answering recurring "how do I do X" questions as they come up during real use (e.g. "how do I add past mortgage information"). Updated whenever a new section is built out or a real question arises — not a one-time deliverable, an evolving document.
