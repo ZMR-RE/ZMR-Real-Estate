@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from 'react'
-import type { PropertyTaxInstallment } from './propertyTaxQueries'
+import type { TaxInstallmentDocument } from './propertyTaxQueries'
 import type { TaxInstallmentFiles, TaxInstallmentFormValues } from './usePropertyTaxLedger'
 
 interface PropertyTaxInstallmentFormProps {
   initialValues: TaxInstallmentFormValues
-  existingInstallment1Document: PropertyTaxInstallment['installment_1_document']
-  existingInstallment2Document: PropertyTaxInstallment['installment_2_document']
+  existingInstallment1Documents: TaxInstallmentDocument[]
+  existingInstallment2Documents: TaxInstallmentDocument[]
   saving: boolean
   error: string | null
   onSave: (values: TaxInstallmentFormValues, files: TaxInstallmentFiles) => void
@@ -13,10 +13,36 @@ interface PropertyTaxInstallmentFormProps {
   onViewDocument: (path: string) => void
 }
 
+// Roadmap 9.5 revision — each installment can already have any number of
+// documents attached (existingInstallmentNDocuments); the file input here
+// only ever ADDS more on top, never replaces — "the original bill AND a
+// separate payment confirmation" is the explicit case this exists for.
+function InstallmentDocuments({
+  documents,
+  onViewDocument,
+}: {
+  documents: TaxInstallmentDocument[]
+  onViewDocument: (path: string) => void
+}) {
+  if (documents.length === 0) return null
+
+  return (
+    <ul className="property-tax-installment-documents">
+      {documents.map((doc) => (
+        <li key={doc.id}>
+          <button type="button" onClick={() => onViewDocument(doc.storage_path)}>
+            View document ({new Date(doc.uploaded_at).toLocaleDateString()})
+          </button>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 export function PropertyTaxInstallmentForm({
   initialValues,
-  existingInstallment1Document,
-  existingInstallment2Document,
+  existingInstallment1Documents,
+  existingInstallment2Documents,
   saving,
   error,
   onSave,
@@ -24,12 +50,12 @@ export function PropertyTaxInstallmentForm({
   onViewDocument,
 }: PropertyTaxInstallmentFormProps) {
   const [values, setValues] = useState<TaxInstallmentFormValues>(initialValues)
-  const [installment1File, setInstallment1File] = useState<File | null>(null)
-  const [installment2File, setInstallment2File] = useState<File | null>(null)
+  const [installment1Files, setInstallment1Files] = useState<File[]>([])
+  const [installment2Files, setInstallment2Files] = useState<File[]>([])
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
-    onSave(values, { installment1File, installment2File })
+    onSave(values, { installment1Files, installment2Files })
   }
 
   return (
@@ -69,21 +95,13 @@ export function PropertyTaxInstallmentForm({
           onChange={(e) => setValues((prev) => ({ ...prev, installment_1_paid_date: e.target.value }))}
         />
 
-        <label htmlFor="installment_1_document">Attached document</label>
-        {existingInstallment1Document && (
-          <p>
-            <button
-              type="button"
-              onClick={() => onViewDocument(existingInstallment1Document.storage_path)}
-            >
-              View current document
-            </button>
-          </p>
-        )}
+        <label htmlFor="installment_1_document">Documents</label>
+        <InstallmentDocuments documents={existingInstallment1Documents} onViewDocument={onViewDocument} />
         <input
           id="installment_1_document"
           type="file"
-          onChange={(e) => setInstallment1File(e.target.files?.[0] ?? null)}
+          multiple
+          onChange={(e) => setInstallment1Files(Array.from(e.target.files ?? []))}
         />
       </fieldset>
 
@@ -109,21 +127,13 @@ export function PropertyTaxInstallmentForm({
           onChange={(e) => setValues((prev) => ({ ...prev, installment_2_paid_date: e.target.value }))}
         />
 
-        <label htmlFor="installment_2_document">Attached document</label>
-        {existingInstallment2Document && (
-          <p>
-            <button
-              type="button"
-              onClick={() => onViewDocument(existingInstallment2Document.storage_path)}
-            >
-              View current document
-            </button>
-          </p>
-        )}
+        <label htmlFor="installment_2_document">Documents</label>
+        <InstallmentDocuments documents={existingInstallment2Documents} onViewDocument={onViewDocument} />
         <input
           id="installment_2_document"
           type="file"
-          onChange={(e) => setInstallment2File(e.target.files?.[0] ?? null)}
+          multiple
+          onChange={(e) => setInstallment2Files(Array.from(e.target.files ?? []))}
         />
       </fieldset>
 

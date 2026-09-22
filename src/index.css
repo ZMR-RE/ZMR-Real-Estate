@@ -1158,6 +1158,40 @@ th {
 }
 
 /* ============================================================
+   Property tax installment cells — restructured from one run-on inline
+   line (amount · paid date · View document) into a stacked labeled
+   block, since a second/third document made the inline version read as
+   visual clutter. `white-space: normal` overrides the table's default
+   nowrap so the stacked rows actually wrap/stack instead of forcing the
+   cell wide.
+   ============================================================ */
+.property-tax-installment-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  white-space: normal;
+}
+
+.property-tax-installment-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.property-tax-installment-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text);
+  min-width: 70px;
+}
+
+.property-tax-installment-documents-inline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* ============================================================
    Capture History filter bar (roadmap 1.24) — Type and Show used to be
    two bare label/select pairs with no shared container (each select at
    the global 100% width, so they stacked full-row with nothing to keep

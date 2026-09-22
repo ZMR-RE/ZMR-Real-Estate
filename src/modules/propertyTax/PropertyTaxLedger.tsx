@@ -36,8 +36,8 @@ export function PropertyTaxLedger({ propertyId }: PropertyTaxLedgerProps) {
         <PropertyTaxInstallmentForm
           key={editingId}
           initialValues={formInitialValues}
-          existingInstallment1Document={editingInstallment?.installment_1_document ?? null}
-          existingInstallment2Document={editingInstallment?.installment_2_document ?? null}
+          existingInstallment1Documents={editingInstallment?.documents.filter((d) => d.tax_installment_number === 1) ?? []}
+          existingInstallment2Documents={editingInstallment?.documents.filter((d) => d.tax_installment_number === 2) ?? []}
           saving={saving}
           error={error}
           onSave={save}

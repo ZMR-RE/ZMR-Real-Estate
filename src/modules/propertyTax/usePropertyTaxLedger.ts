@@ -18,9 +18,13 @@ export interface TaxInstallmentFormValues {
   installment_2_paid_date: string
 }
 
+// Roadmap 9.5 revision — an array per slot (not a single File | null), so
+// one save can add more than one new document to the same installment
+// (e.g. the bill AND a payment confirmation at once, or added later on
+// top of what's already attached).
 export interface TaxInstallmentFiles {
-  installment1File: File | null
-  installment2File: File | null
+  installment1Files: File[]
+  installment2Files: File[]
 }
 
 const BLANK_FORM_VALUES: TaxInstallmentFormValues = {
@@ -102,60 +106,62 @@ export function usePropertyTaxLedger(propertyId: string) {
 
     setSaving(true)
 
-    let installment1DocumentId = editingInstallment?.installment_1_document?.id ?? null
-    let installment2DocumentId = editingInstallment?.installment_2_document?.id ?? null
-
-    if (files.installment1File) {
-      const { data, error: uploadError } = await uploadTaxInstallmentDocument(
-        accountId,
-        propertyId,
-        session.user.id,
-        files.installment1File,
-      )
-      if (uploadError || !data) {
-        setSaving(false)
-        setError(uploadError?.message ?? 'Could not upload the 1st installment document.')
-        return
-      }
-      installment1DocumentId = data.id
-    }
-
-    if (files.installment2File) {
-      const { data, error: uploadError } = await uploadTaxInstallmentDocument(
-        accountId,
-        propertyId,
-        session.user.id,
-        files.installment2File,
-      )
-      if (uploadError || !data) {
-        setSaving(false)
-        setError(uploadError?.message ?? 'Could not upload the 2nd installment document.')
-        return
-      }
-      installment2DocumentId = data.id
-    }
-
     const payload: PropertyTaxInstallmentInput = {
       tax_year: parsedYear,
       installment_1_amount: values.installment_1_amount || null,
       installment_1_paid_date: values.installment_1_paid_date || null,
-      installment_1_document_id: installment1DocumentId,
       installment_2_amount: values.installment_2_amount || null,
       installment_2_paid_date: values.installment_2_paid_date || null,
-      installment_2_document_id: installment2DocumentId,
     }
 
-    const { error: saveError } = editingInstallment
+    // Roadmap 9.5 revision — the installment row itself carries no
+    // document references anymore, so it's saved first (documents attach
+    // afterward via their own property_tax_installment_id, which needs a
+    // real installment id to point at — one a brand-new installment
+    // doesn't have until this insert returns it).
+    const { data: savedInstallment, error: saveError } = editingInstallment
       ? await updateTaxInstallment(editingInstallment.id, payload)
       : await createTaxInstallment(accountId, propertyId, payload)
 
-    setSaving(false)
-
-    if (saveError) {
-      setError(saveError.message)
+    if (saveError || !savedInstallment) {
+      setSaving(false)
+      setError(saveError?.message ?? 'Could not save the tax installment.')
       return
     }
 
+    for (const file of files.installment1Files) {
+      const { error: uploadError } = await uploadTaxInstallmentDocument(
+        accountId,
+        propertyId,
+        savedInstallment.id,
+        1,
+        session.user.id,
+        file,
+      )
+      if (uploadError) {
+        setSaving(false)
+        setError(uploadError.message)
+        return
+      }
+    }
+
+    for (const file of files.installment2Files) {
+      const { error: uploadError } = await uploadTaxInstallmentDocument(
+        accountId,
+        propertyId,
+        savedInstallment.id,
+        2,
+        session.user.id,
+        file,
+      )
+      if (uploadError) {
+        setSaving(false)
+        setError(uploadError.message)
+        return
+      }
+    }
+
+    setSaving(false)
     setError(null)
     setEditingId(null)
     await refresh()
