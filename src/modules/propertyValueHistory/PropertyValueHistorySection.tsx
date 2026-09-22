@@ -1,4 +1,5 @@
 import { PropertyValueLedger } from './PropertyValueLedger'
+import { EditableSection } from '../../shared/EditableSection'
 
 interface PropertyValueHistorySectionProps {
   propertyId: string
@@ -13,23 +14,59 @@ interface PropertyValueHistorySectionProps {
 // contracted lease rent — this is tracked "even while occupied," per the
 // roadmap item's own wording. Feeds the KPI tab's Market & Financial
 // Snapshot card (7.13).
+//
+// Roadmap 7.25 — converted to the Box interaction standard's
+// EditableSection: view state shows both ledgers' lists read-only (no
+// per-row Void, no always-visible "log a new entry" form — that form
+// used to render unconditionally below each list, a "raw editable
+// inputs shown by default" violation of the standard); clicking the
+// box's own Edit reveals both ledgers' full interactive lists plus
+// their log-entry forms.
 export function PropertyValueHistorySection({ propertyId, onChanged }: PropertyValueHistorySectionProps) {
   return (
-    <>
-      <PropertyValueLedger
-        propertyId={propertyId}
-        metric="market_value"
-        title="Market value"
-        emptyMessage="No market value logged yet."
-        onChanged={onChanged}
-      />
-      <PropertyValueLedger
-        propertyId={propertyId}
-        metric="rent_value"
-        title="Market rent estimate"
-        emptyMessage="No rent value logged yet."
-        onChanged={onChanged}
-      />
-    </>
+    <EditableSection
+      title="Market & rent value history"
+      view={
+        <>
+          <PropertyValueLedger
+            propertyId={propertyId}
+            metric="market_value"
+            title="Market value"
+            emptyMessage="No market value logged yet."
+            onChanged={onChanged}
+            readOnly
+          />
+          <PropertyValueLedger
+            propertyId={propertyId}
+            metric="rent_value"
+            title="Market rent estimate"
+            emptyMessage="No rent value logged yet."
+            onChanged={onChanged}
+            readOnly
+          />
+        </>
+      }
+      edit={(exitEditing) => (
+        <>
+          <PropertyValueLedger
+            propertyId={propertyId}
+            metric="market_value"
+            title="Market value"
+            emptyMessage="No market value logged yet."
+            onChanged={onChanged}
+          />
+          <PropertyValueLedger
+            propertyId={propertyId}
+            metric="rent_value"
+            title="Market rent estimate"
+            emptyMessage="No rent value logged yet."
+            onChanged={onChanged}
+          />
+          <button type="button" onClick={exitEditing}>
+            Done
+          </button>
+        </>
+      )}
+    />
   )
 }

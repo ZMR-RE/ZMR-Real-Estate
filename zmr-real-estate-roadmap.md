@@ -739,7 +739,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       2025's -$2,305.09/-45% drop reflecting its still-unrecorded 2nd
       installment) — no test data needed for this one, real data already
       existed.
-- [ ] 7.25 Convert Property Overview's boxes to the Box interaction
+- [x] 7.25 Convert Property Overview's boxes to the Box interaction
       standard's shared EditableSection component (src/shared/
       EditableSection.tsx, built by T2): Property information, Financial
       accounts, Insurance, Market & rent value history — one box at a
@@ -804,6 +804,49 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       — re-queried the DB afterward and confirmed an exact match to the
       pre-test state (1 policy, the real one). Checked dark mode and
       mobile width (380px).
+
+      Market & rent value history: DONE — all 4 boxes now converted.
+      Same readOnly-prop pattern as the previous two, but at the
+      PropertyValueHistorySection level rather than inside a single
+      ledger — this box actually renders two independent logs (Market
+      value, Market rent estimate) inside one EditableSection, both
+      switching readOnly together. The old design was the worst
+      violator of "view-only by default": each log's entry form
+      rendered unconditionally, with no toggle at all, directly
+      contradicting "never raw editable inputs shown by default" — now
+      gone from view state entirely, only appearing inside Edit.
+
+      Found and root-cause-fixed a real bug while verifying this live:
+      saving a log entry (or voiding one) calls the parent's onChanged,
+      wired all the way up to usePropertyProfile's refresh() — which
+      used to set the page's shared `loading` flag on every call, not
+      just the initial one. PropertyProfile.tsx's `if (loading) return
+      <p>Loading…</p>` unconditionally swapped out the entire tree on
+      any refresh, unmounting every EditableSection on the page and
+      silently resetting all of them back to view state — so logging
+      one entry, or voiding one, kicked the box straight out of Edit,
+      discarding whatever was mid-typed in the other log's form.
+      Root-cause fixed by gating that guard on `loading && !property`
+      instead of `loading` alone — only the true first load (no
+      property fetched yet) blocks the page now; a background refresh
+      updates data in place. This bug wasn't new (the old design had no
+      edit state to lose, so it was invisible before), but this
+      conversion is what surfaced it, so it's fixed here rather than
+      shipped alongside a regression.
+
+      Verified live on 2169 Ash St: view state shows both logs
+      read-only with no forms; Edit reveals both logs' full lists plus
+      their "Log entry" forms and a "Done" button; logged a real test
+      market-value entry, confirmed the box correctly stayed in Edit
+      state afterward (the bug above, pre-fix, kicked it back to view
+      here); logged a second test rent-value entry, same result;
+      regression-checked Property information's Edit/Save round trip
+      still works correctly after the shared loading-guard change; both
+      test entries hard-deleted directly afterward (only "Void" exists
+      in the UI, an intentional permanent audit-trail action, not a
+      match for "restore the exact pre-test state") — re-queried the DB
+      and confirmed zero entries remain, matching the pre-test state
+      exactly. Checked dark mode and mobile width (380px).
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type

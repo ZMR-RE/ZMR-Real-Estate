@@ -9,6 +9,10 @@ interface PropertyValueLedgerProps {
   title: string
   emptyMessage: string
   onChanged: () => Promise<void>
+  // Roadmap 7.25 — Box interaction standard: the box's default view
+  // state shows plain read-only labels, no per-row Void and no
+  // always-visible "log a new entry" form.
+  readOnly?: boolean
 }
 
 // One metric's dated log (roadmap 7.19) — wires the hook to its List/Form,
@@ -17,7 +21,14 @@ interface PropertyValueLedgerProps {
 // onChanged notifies the parent property profile (Mortgage tab's equity/
 // LTV reads the latest market_value entry) so a new/voided entry here is
 // reflected there immediately, per the Single source of truth rule.
-export function PropertyValueLedger({ propertyId, metric, title, emptyMessage, onChanged }: PropertyValueLedgerProps) {
+export function PropertyValueLedger({
+  propertyId,
+  metric,
+  title,
+  emptyMessage,
+  onChanged,
+  readOnly = false,
+}: PropertyValueLedgerProps) {
   const { entries, loading, error, saving, formInitialValues, addEntry, voidEntry } = usePropertyValueHistory(
     propertyId,
     metric,
@@ -41,14 +52,22 @@ export function PropertyValueLedger({ propertyId, metric, title, emptyMessage, o
       {loading ? (
         <p>Loading…</p>
       ) : (
-        <PropertyValueHistoryList entries={entries} onVoid={handleVoid} voiding={saving} emptyMessage={emptyMessage} />
+        <PropertyValueHistoryList
+          entries={entries}
+          readOnly={readOnly}
+          onVoid={handleVoid}
+          voiding={saving}
+          emptyMessage={emptyMessage}
+        />
       )}
-      <PropertyValueHistoryForm
-        idPrefix={`${metric}_${propertyId}`}
-        initialValues={formInitialValues}
-        saving={saving}
-        onSave={handleSave}
-      />
+      {!readOnly && (
+        <PropertyValueHistoryForm
+          idPrefix={`${metric}_${propertyId}`}
+          initialValues={formInitialValues}
+          saving={saving}
+          onSave={handleSave}
+        />
+      )}
     </div>
   )
 }

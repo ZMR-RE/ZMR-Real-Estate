@@ -38,7 +38,16 @@ export function PropertyProfile() {
     latestMarketValue,
   } = usePropertyProfile(id!)
 
-  if (loading) {
+  // Root-cause fix: `loading` used to gate the whole page unconditionally,
+  // so every refresh() call (not just the initial one) — including the
+  // "just tell the Mortgage tab about a new market value entry" refreshes
+  // fired from inside an EditableSection's Edit state (Market & rent
+  // value history, roadmap 7.25) — unmounted this entire tree and
+  // remounted it once data came back, silently resetting every box's own
+  // isEditing state back to view. Only the true first load (no property
+  // fetched yet) should block the page; a background refresh after that
+  // updates data in place without tearing anything down.
+  if (loading && !property) {
     return <p>Loading…</p>
   }
 

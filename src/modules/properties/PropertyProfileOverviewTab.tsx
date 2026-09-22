@@ -78,9 +78,7 @@ export function PropertyProfileOverviewTab({
         <PropertyTaxLedger propertyId={property.id} />
       </CollapsibleSection>
 
-      <CollapsibleSection title="Market & rent value history">
-        <PropertyValueHistorySection propertyId={property.id} onChanged={onValueHistoryChanged} />
-      </CollapsibleSection>
+      <PropertyValueHistorySection propertyId={property.id} onChanged={onValueHistoryChanged} />
 
       <CollapsibleSection title="Specs & measurements">
         <PropertySpecsSection propertyId={property.id} />
