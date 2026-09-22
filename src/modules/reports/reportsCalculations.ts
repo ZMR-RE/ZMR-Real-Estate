@@ -51,8 +51,19 @@ export function computeProfitAndLoss(
   const accountsById = new Map(chartOfAccounts.map((a) => [a.id, a]))
   const chartAccountIdByCategory = new Map(categoryMappings.map((m) => [m.category, m.chart_account_id]))
 
+  // Bug fix (URGENT) — an expense transaction flagged
+  // repair_or_improvement = 'improvement' is a capital expenditure: it
+  // already feeds depreciation/cost basis directly from
+  // financial_transactions (depreciationQueries.ts's
+  // listCapitalImprovementAmounts, independent of this function). Also
+  // counting its full amount as an immediate expense line here was
+  // double-counting it — once as a same-year expense, again as
+  // depreciated basis over 27.5 years. Filtered out here, not in the
+  // shared listTransactions query, so other consumers (the raw
+  // transaction list) keep showing Improvement-flagged transactions.
   const totalByCategory = new Map<Category, number>()
   for (const tx of transactions) {
+    if (tx.repair_or_improvement === 'improvement') continue
     totalByCategory.set(tx.category, (totalByCategory.get(tx.category) ?? 0) + tx.amount)
   }
 
@@ -84,6 +95,15 @@ export interface CashFlow {
 // being a P&L expense (subtracted as a financing use of cash) — so a
 // property can show a paper loss and still be cash-flow positive, or the
 // reverse.
+//
+// Checked for the same Improvement double-count bug computeProfitAndLoss
+// just fixed: this function takes an already-computed ProfitAndLoss, not
+// raw transactions, and derives both netIncome and depreciationAddBack
+// from it (profitAndLoss.netIncome / .expenseLines) — no separate pass
+// over transactions here. principalPaid is sourced independently from
+// mortgage payment records, unrelated to repair_or_improvement. So the
+// fix upstream in computeProfitAndLoss is sufficient; there's no second
+// place to apply it.
 export function computeCashFlow(profitAndLoss: ProfitAndLoss, principalPaid: number): CashFlow {
   const depreciationAddBack = profitAndLoss.expenseLines.find((line) => line.category === 'depreciation')?.amount ?? 0
   const cashFromOperations = profitAndLoss.netIncome + depreciationAddBack
