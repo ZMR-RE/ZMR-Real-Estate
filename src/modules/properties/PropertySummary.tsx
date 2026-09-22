@@ -75,7 +75,7 @@ export function PropertySummary({ property, llcOptions, marketValue }: PropertyS
 
         if (presentFields.length === 0) return null
 
-        return <PropertyFieldGroup key={group.id} title={group.title} presentFields={presentFields} />
+        return <PropertyFieldGroup key={group.id} title={group.title} Icon={group.Icon} presentFields={presentFields} />
       })}
     </div>
   )

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { usePropertyPhoto } from './usePropertyPhoto'
 
 interface PropertyPhotoProps {
@@ -19,6 +20,30 @@ function PlaceholderIcon() {
   )
 }
 
+// Roadmap 7.35 (2) — clicking the hero photo opens it larger in a
+// lightbox. Plain local state + CSS, no library — the only lightbox in
+// this app so far, not worth a shared component yet. Escape and a
+// backdrop click both close it; clicking the image itself doesn't
+// (stopPropagation), matching the standard lightbox convention.
+function PhotoLightbox({ photoUrl, onClose }: { photoUrl: string; onClose: () => void }) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
+  return (
+    <div className="property-hero-lightbox" onClick={onClose}>
+      <button type="button" className="property-hero-lightbox-close" onClick={onClose}>
+        Close
+      </button>
+      <img src={photoUrl} alt="" className="property-hero-lightbox-image" onClick={(e) => e.stopPropagation()} />
+    </div>
+  )
+}
+
 // Roadmap 7.34 — full-width hero banner replacing the small square
 // thumbnail: the photo spans the box's full width, address/city-state-
 // zip overlaid directly on it (white text, dark gradient underneath for
@@ -29,24 +54,30 @@ function PlaceholderIcon() {
 // inline preview, unchanged, via the .property-photo class).
 export function PropertyPhoto({ propertyId, address, cityStateZip }: PropertyPhotoProps) {
   const { photoUrl, loading } = usePropertyPhoto(propertyId)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
 
   // Blank (no placeholder text yet) while the signed URL is still being
   // fetched, so a property that DOES have a photo never flashes "Add
   // photo" first — only a genuinely absent photo shows that prompt.
   return (
-    <div className="property-hero">
-      {loading ? null : photoUrl ? (
-        <img src={photoUrl} alt="" className="property-hero-image" />
-      ) : (
-        <div className="property-hero-empty" aria-hidden="true">
-          <PlaceholderIcon />
-          <span>Add photo</span>
+    <>
+      <div className="property-hero">
+        {loading ? null : photoUrl ? (
+          <button type="button" className="property-hero-clickable" onClick={() => setLightboxOpen(true)}>
+            <img src={photoUrl} alt="" className="property-hero-image" />
+          </button>
+        ) : (
+          <div className="property-hero-empty" aria-hidden="true">
+            <PlaceholderIcon />
+            <span>Add photo</span>
+          </div>
+        )}
+        <div className="property-hero-overlay">
+          <h3 className="property-hero-address">{address ?? 'No address on file'}</h3>
+          {cityStateZip && <p className="property-hero-subline">{cityStateZip}</p>}
         </div>
-      )}
-      <div className="property-hero-overlay">
-        <h3 className="property-hero-address">{address ?? 'No address on file'}</h3>
-        {cityStateZip && <p className="property-hero-subline">{cityStateZip}</p>}
       </div>
-    </div>
+      {lightboxOpen && photoUrl && <PhotoLightbox photoUrl={photoUrl} onClose={() => setLightboxOpen(false)} />}
+    </>
   )
 }

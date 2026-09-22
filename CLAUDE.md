@@ -200,10 +200,28 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 - Edit mode is the only place empty fields are shown, and it always
   shows every field regardless of whether it currently has a value.
 
+## Content-width symmetry
+- The main content area's left and right margins (sidebar-to-content
+  gap, content-to-window-edge gap) must always be equal, and must
+  scale together as the viewport widens — never a fixed one-sided gap
+  or a fixed pixel max-width with no margin to distribute the leftover
+  space evenly.
+- This is a global layout rule (the shared app-shell content wrapper),
+  not a per-page or per-box setting.
+
 ## Expand-to-full-width
 - In any multi-column box layout, a collapsed box may share a row with
   another, but an expanded box always spans the full available width
   for as long as it stays open.
+
+## Section hierarchy contrast
+- Inside any box, three visually distinct tiers: a section title (the
+  boldest/largest/accent-colored), a field label (smaller, muted), and
+  a field value (clearly darker/larger than its label, but subordinate
+  to the section title above it).
+- This is a shared, reusable contrast pattern (shared CSS classes/
+  tokens) applied everywhere a box has section titles and field label/
+  value pairs — not a one-off tweak on a single box.
 
 ## Interaction feedback
 - Every interactive card, box, or row must show a visible hover state

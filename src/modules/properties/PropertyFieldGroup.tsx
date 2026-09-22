@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 
 interface PresentField {
   label: string
@@ -7,6 +7,7 @@ interface PresentField {
 
 interface PropertyFieldGroupProps {
   title: string
+  Icon: ComponentType
   presentFields: PresentField[]
 }
 
@@ -20,10 +21,15 @@ interface PropertyFieldGroupProps {
 // with zero present fields renders nothing at all (see PropertySummary,
 // which filters those out before this component is reached) rather than
 // a bare title over an empty body.
-export function PropertyFieldGroup({ title, presentFields }: PropertyFieldGroupProps) {
+// Roadmap 7.35 (5) — small icon next to the title, currentColor so it
+// follows the title's own accent color automatically.
+export function PropertyFieldGroup({ title, Icon, presentFields }: PropertyFieldGroupProps) {
   return (
     <section className="property-field-group">
-      <h3 className="property-field-group-title">{title}</h3>
+      <h3 className="property-field-group-title">
+        <Icon />
+        {title}
+      </h3>
       <dl className="field-grid">
         {presentFields.map((field) => (
           <div className="field" key={field.label}>

@@ -11,6 +11,7 @@ import { NO_LLC_ID } from '../llcs/useLlcs'
 import type { HoldingCompanyInput } from '../holdingCompanies/holdingCompaniesQueries'
 import type { PropertyInput } from './propertiesQueries'
 import { PropertyPhotoUploadField } from './PropertyPhotoUploadField'
+import { ExteriorInformationIcon, PhysicalFactsIcon, PurchaseValuationIcon } from './propertyFieldGroupIcons'
 
 interface PropertyFormProps {
   // Roadmap 7.32 (6) — null when creating a brand-new property (no row
@@ -182,7 +183,10 @@ export function PropertyForm({
           mode's PROPERTY_FIELD_GROUPS (propertyFieldGroups.ts) exactly:
           same titles, same field order. */}
       <div className="property-field-group">
-        <h3 className="property-field-group-title">Purchase &amp; valuation</h3>
+        <h3 className="property-field-group-title">
+          <PurchaseValuationIcon />
+          Purchase &amp; valuation
+        </h3>
         <div className="field-column">
           <div className="field">
             <label htmlFor="purchase_price">
@@ -207,7 +211,10 @@ export function PropertyForm({
       </div>
 
       <div className="property-field-group">
-        <h3 className="property-field-group-title">Physical facts</h3>
+        <h3 className="property-field-group-title">
+          <PhysicalFactsIcon />
+          Physical facts
+        </h3>
         <div className="field-column">
           <div className="field">
             <label htmlFor="square_footage">Living area (sq ft)</label>
@@ -390,7 +397,10 @@ export function PropertyForm({
 
       {/* Roadmap 7.32 (5) / 7.33 (4) — multi-select checklist. */}
       <div className="property-field-group">
-        <h3 className="property-field-group-title">Exterior information</h3>
+        <h3 className="property-field-group-title">
+          <ExteriorInformationIcon />
+          Exterior information
+        </h3>
         <div className="field-column">
           <div className="field">
             <label>Exterior wall material</label>

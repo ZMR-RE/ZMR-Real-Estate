@@ -24,6 +24,23 @@ export async function listAuditLogEntries(accountId: string, tableName: AuditedT
     .returns<AuditLogEntry[]>()
 }
 
+// Roadmap 7.35 (4) — Property Information's "Last updated" note. Just
+// the single most recent field-change timestamp, not the full history
+// listAuditLogEntries above returns — a dedicated `.limit(1)` query
+// rather than fetching every row and taking the first, since this is
+// the only thing the caller needs.
+export async function getLastAuditChange(accountId: string, tableName: AuditedTable, recordId: string) {
+  return supabase
+    .from('audit_log')
+    .select('changed_at')
+    .eq('account_id', accountId)
+    .eq('table_name', tableName)
+    .eq('record_id', recordId)
+    .order('changed_at', { ascending: false })
+    .limit(1)
+    .maybeSingle<{ changed_at: string }>()
+}
+
 export interface AccountMemberDirectoryEntry {
   user_id: string
   email: string

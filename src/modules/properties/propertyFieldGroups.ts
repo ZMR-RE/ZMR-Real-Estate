@@ -1,4 +1,6 @@
+import type { ComponentType } from 'react'
 import type { Property } from './propertiesQueries'
+import { ExteriorInformationIcon, PhysicalFactsIcon, PurchaseValuationIcon } from './propertyFieldGroupIcons'
 
 export interface PropertyFieldMeta {
   key: keyof Property
@@ -8,6 +10,10 @@ export interface PropertyFieldMeta {
 export interface PropertyFieldGroupDef {
   id: string
   title: string
+  // Roadmap 7.35 (5) — a component reference rather than a rendered
+  // icon, so this file can stay plain .ts (JSX needs .tsx); consumers
+  // render it as <group.Icon />.
+  Icon: ComponentType
   fields: PropertyFieldMeta[]
 }
 
@@ -35,6 +41,7 @@ export const PROPERTY_FIELD_GROUPS: PropertyFieldGroupDef[] = [
   {
     id: 'purchase-valuation',
     title: 'Purchase & valuation',
+    Icon: PurchaseValuationIcon,
     fields: [
       { key: 'purchase_price', label: 'Purchase price' },
       { key: 'purchase_date', label: 'Purchase date' },
@@ -43,6 +50,7 @@ export const PROPERTY_FIELD_GROUPS: PropertyFieldGroupDef[] = [
   {
     id: 'physical-facts',
     title: 'Physical facts',
+    Icon: PhysicalFactsIcon,
     fields: [
       // Roadmap 7.32 (2) — relabeled from "Square footage"; column name
       // (square_footage) unchanged.
@@ -70,6 +78,7 @@ export const PROPERTY_FIELD_GROUPS: PropertyFieldGroupDef[] = [
   {
     id: 'exterior-information',
     title: 'Exterior information',
+    Icon: ExteriorInformationIcon,
     fields: [{ key: 'exterior_wall_materials', label: 'Exterior wall material' }],
   },
 ]

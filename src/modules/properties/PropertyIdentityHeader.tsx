@@ -3,6 +3,7 @@ import { NO_LLC_ID } from '../llcs/useLlcs'
 import type { Property } from './propertiesQueries'
 import { PropertyPhoto } from './PropertyPhoto'
 import { PropertyPricePerSqft } from './PropertyPricePerSqft'
+import { PropertyLastUpdated } from './PropertyLastUpdated'
 
 interface PropertyIdentityHeaderProps {
   property: Property
@@ -71,6 +72,8 @@ export function PropertyIdentityHeader({ property, llcOptions, marketValue }: Pr
           {STATUS_LABELS[property.status]}
         </span>
       </div>
+      {/* Roadmap 7.35 (4) */}
+      <PropertyLastUpdated propertyId={property.id} />
     </div>
   )
 }

@@ -1236,6 +1236,97 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       text stays legible over both a real photo and the empty-state
       placeholder background, Edit stays in its standard top-right
       position, no layout issues at mobile width.
+- [x] 7.35 Property Information final visual pass:
+      1. Fix content-area margins to be symmetric (right margin matches
+         left margin, scaling with viewport width) — new global
+         content-width rule, not scoped to this box.
+      2. Hero photo: clickable (lightbox), height +~25%.
+      3. Strengthen the three-tier visual hierarchy (section title vs.
+         field label vs. field value) — new shared rule, not a local
+         tweak.
+      4. "Last updated [date]" note, sourced from the 7.8 audit trail.
+      5. Small icons next to each section title.
+
+      New CLAUDE.md rules: Content-width symmetry, Section hierarchy
+      contrast.
+
+      Item 1: `.app-main`'s existing `max-width: 1440px` (7.30) had no
+      margin to distribute the leftover space once a viewport exceeded
+      it, so content sat flush against the sidebar while every extra
+      pixel piled up as one lopsided gap on the right. Added
+      `margin-inline: auto` — same max-width still caps line length on
+      very wide monitors, it just no longer dictates where the content
+      sits. Verified the fix directly: temporarily forced
+      max-width:900px in the live console and measured the two gaps —
+      185.67px vs. 185.33px (equal within sub-pixel/scrollbar rounding).
+      Applies globally (`.app-main` is the one shared content wrapper
+      every page renders inside, per AppShell.tsx) — not a per-page
+      change.
+
+      Item 2: hero height 210px -> 263px (~25%, 7.34's own banner).
+      Clicking the photo (only when a real photo exists — the empty
+      "Add photo" state has nothing to zoom into, stays inert) opens a
+      plain local lightbox (PropertyPhoto.tsx's own PhotoLightbox) — no
+      library, the only lightbox in this app so far. Backdrop click,
+      Escape, and a Close button all dismiss it; clicking the image
+      itself doesn't (stopPropagation), the standard convention.
+
+      Item 3: `.property-field-group-title` (top tier) goes from
+      text-sm/700/--text (nearly identical to a field label's own
+      text-xs/600/--text — the actual problem this item names) to
+      text-md/800/--accent. Base `dd` (bottom tier, field value) gains
+      font-weight: 600 on top of its existing larger size/--text-h
+      color. Both are plain base-element/shared-class rules already
+      reused across modules (PropertyForm's Edit-mode headers reuse
+      `.property-field-group-title`; every dl-based field display reuses
+      dt/dd), so this reaches beyond just Property Information without
+      extra wiring — anything using custom non-dt/dd markup instead
+      (Insurance/Tax ledgers' own stacked-row cells) isn't covered by
+      this selector; logged as a remaining-instance gap, not silently
+      skipped, per Standard rollout completeness.
+
+      Item 4: new `getLastAuditChange()` query (auditLogQueries.ts,
+      `.limit(1)` rather than fetching the full history
+      listAuditLogEntries already returns) reads the existing 7.8
+      audit_log — no new column. Renders nothing for a property with no
+      edits logged yet (a brand-new property has zero audit_log rows),
+      not a guessed placeholder.
+
+      Item 5: three small hand-rolled inline SVGs
+      (propertyFieldGroupIcons.tsx, same stroke/currentColor convention
+      PropertyPhoto.tsx's PlaceholderIcon already established — no icon
+      library exists in this app), one per group (Purchase & valuation/
+      Physical facts/Exterior information), rendered via a component
+      reference on each PROPERTY_FIELD_GROUPS entry so both View
+      (PropertyFieldGroup.tsx) and Edit (PropertyForm.tsx's own manual
+      headers) show the same icon. currentColor means each icon follows
+      the title's new --accent color automatically.
+
+      `npm run build` clean. Verified live on 2169 Ash St (real photo)
+      and 5336 W Foster Ave (no photo): symmetric margins confirmed by
+      direct measurement; lightbox opens/closes (click, backdrop,
+      Escape) only when a photo exists; hierarchy contrast visibly
+      distinct (bold accent-navy section titles vs. small muted labels
+      vs. bold dark values); "Last updated" shows each property's own
+      real, different date; icons render in both View and Edit mode.
+      Checked dark mode (lightbox scrim stays fixed-dark regardless of
+      theme, by design, same as the hero's own overlay gradient).
+
+      GAP found during mobile verification, unrelated to any of this
+      item's 5 changes: the property-profile tab bar (Overview/
+      Financials/Mortgage/KPI/Activity/Documents) has `flex-wrap:
+      nowrap` and doesn't fit in 390px, forcing the whole page ~580px
+      wide with real horizontal scroll on every property profile page —
+      confirmed via `document.documentElement.scrollWidth` (610 vs. a
+      390 viewport) and reproduced on a totally clean navigation, not
+      just the iframe simulation. This is a real CLAUDE.md Mobile
+      responsiveness violation, but predates this task (this task never
+      touched .tab-bar) and wasn't in scope to fix here — flagging
+      rather than silently leaving unmentioned or silently fixing
+      unscoped. Every individual item above WAS confirmed correctly
+      responsive on its own (field-grid still collapses to 1 column,
+      hero/header/icons all stack correctly) once this pre-existing
+      issue is accounted for.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
