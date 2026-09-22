@@ -4,13 +4,13 @@ import { CollapsibleSection } from '../../shared/CollapsibleSection'
 import type { LlcInput } from '../llcs/llcsQueries'
 import type { HoldingCompanyInput } from '../holdingCompanies/holdingCompaniesQueries'
 import { PropertyTaxLedger } from '../propertyTax/PropertyTaxLedger'
+import { InsuranceLedger } from '../insurance/InsuranceLedger'
 import { PropertyValueHistorySection } from '../propertyValueHistory/PropertyValueHistorySection'
 import { UnitsSection } from '../units/UnitsSection'
 import { PropertySpecsSection } from '../propertySpecs/PropertySpecsSection'
 import { UtilityRecordsSection } from '../utilities/UtilityRecordsSection'
 import { SecurityDepositsSection } from '../securityDeposits/SecurityDepositsSection'
 import { PropertyTenantsOverview } from '../tenants/PropertyTenantsOverview'
-import type { DocumentRecord } from '../documents/documentsQueries'
 import { FinancialAccountsSection } from '../financialAccounts/FinancialAccountsSection'
 import { PropertyForm } from './PropertyForm'
 import { PropertySummary } from './PropertySummary'
@@ -25,8 +25,6 @@ interface PropertyProfileOverviewTabProps {
   onCreateLlc: (input: LlcInput) => Promise<{ id: string } | { error: string }>
   holdingCompanyOptions: SearchableSelectOption[]
   onCreateHoldingCompany: (input: HoldingCompanyInput) => Promise<{ id: string } | { error: string }>
-  documents: DocumentRecord[]
-  onViewDocument: (path: string) => void
   onValueHistoryChanged: () => Promise<void>
   saving: boolean
   onSave: (input: PropertyInput) => Promise<boolean>
@@ -49,14 +47,10 @@ export function PropertyProfileOverviewTab({
   onCreateLlc,
   holdingCompanyOptions,
   onCreateHoldingCompany,
-  documents,
-  onViewDocument,
   onValueHistoryChanged,
   saving,
   onSave,
 }: PropertyProfileOverviewTabProps) {
-  const insuranceDocuments = documents.filter((doc) => doc.category === 'Insurance')
-
   // Roadmap 7.22 — a field group's "+ Add …" prompt jumps straight into
   // edit mode with that group's first missing field scrolled into view
   // and focused, rather than dropping the user into the top of a long
@@ -95,17 +89,15 @@ export function PropertyProfileOverviewTab({
             autoFocusFieldId={autoFocusFieldId}
           />
         ) : (
-          <PropertySummary
-            property={property}
-            llcOptions={llcOptions}
-            insuranceDocuments={insuranceDocuments}
-            onViewDocument={onViewDocument}
-            onAddFields={handleAddFields}
-          />
+          <PropertySummary property={property} llcOptions={llcOptions} onAddFields={handleAddFields} />
         )}
       </CollapsibleSection>
 
       <FinancialAccountsSection propertyId={property.id} />
+
+      <CollapsibleSection title="Insurance">
+        <InsuranceLedger propertyId={property.id} />
+      </CollapsibleSection>
 
       <CollapsibleSection title="Property tax installments">
         <PropertyTaxLedger propertyId={property.id} />
@@ -115,7 +107,7 @@ export function PropertyProfileOverviewTab({
         <PropertyValueHistorySection propertyId={property.id} onChanged={onValueHistoryChanged} />
       </CollapsibleSection>
 
-      <CollapsibleSection title="Specs & measurements (building-wide)">
+      <CollapsibleSection title="Specs & measurements">
         <PropertySpecsSection propertyId={property.id} />
       </CollapsibleSection>
 

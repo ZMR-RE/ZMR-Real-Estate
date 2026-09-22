@@ -13,17 +13,17 @@ export interface PropertyFieldGroupDef {
 
 // Roadmap 7.22 — Overview tab declutter. Every field other than the
 // identity-header ones (address, city/state/zip, contact email,
-// organization type, status) lives in one of these three groups. Order
+// organization type, status) lives in one of these groups. Order
 // within "Physical facts" follows the task's own listed order.
+//
+// The Insurance group that used to live here (insurance_provider/
+// insurance_policy_number) was removed when Insurance became its own
+// historical ledger (new build item, InsuranceLedger.tsx) — those two
+// columns are kept on the properties table, unused, never dropped, per
+// CLAUDE.md's no-drop-without-approval rule; their real existing values
+// were carried forward as each property's first ledger entry
+// (20260922020000_property_insurance_policies.sql).
 export const PROPERTY_FIELD_GROUPS: PropertyFieldGroupDef[] = [
-  {
-    id: 'insurance',
-    title: 'Insurance',
-    fields: [
-      { key: 'insurance_provider', label: 'Insurance provider' },
-      { key: 'insurance_policy_number', label: 'Insurance policy number' },
-    ],
-  },
   {
     id: 'purchase-valuation',
     title: 'Purchase & valuation',

@@ -91,8 +91,6 @@ export function PropertyProfile() {
           onCreateLlc={createLlc}
           holdingCompanyOptions={holdingCompanyOptions}
           onCreateHoldingCompany={createHoldingCompany}
-          documents={documents}
-          onViewDocument={viewDocument}
           onValueHistoryChanged={refresh}
           saving={saving}
           onSave={saveProperty}

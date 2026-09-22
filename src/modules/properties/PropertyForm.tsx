@@ -176,17 +176,6 @@ export function PropertyForm({
           </select>
         </div>
 
-        {/* Roadmap 7.22 — Insurance group, matching the read view's grouping */}
-        <div className="field">
-          <label htmlFor="insurance_provider">Insurance provider</label>
-          <input id="insurance_provider" {...field('insurance_provider')} />
-        </div>
-
-        <div className="field">
-          <label htmlFor="insurance_policy_number">Insurance policy number</label>
-          <input id="insurance_policy_number" {...field('insurance_policy_number')} />
-        </div>
-
         {/* Purchase & valuation group */}
         <div className="field">
           <label htmlFor="purchase_price">Purchase price ($)</label>

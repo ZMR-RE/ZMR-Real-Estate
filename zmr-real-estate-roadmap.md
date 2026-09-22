@@ -616,7 +616,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 
 ## 7. Phase 7 — Entity Depth (Property & Mortgage Profiles)
 - [x] 7.1 Property Profile page — tabbed detail view per property: Overview, Transactions, Activity Log, Documents
-- [x] 7.2 Units as a real entity — a property can have multiple units, each with its own record (replaces the current free-text unit field)
+- [x] 7.2 Units as a real entity — a property can have multiple units, each with its own record (replaces the current free-text unit field). FIX: a unit's Tenants box's "+ Assign tenant" flow rendered the inline "+ Add new tenant" sub-form (its own "Add tenant" button) alongside the rest of the assignment form (Start date onward, a simultaneously-visible disabled "Assign tenant" button) — confusing, looked like two save actions with no explanation. Now clearly sequential: only the Tenant step shows until resolved. Also confirmed live (not a bug) that "Assign tenant" always correctly persisted to tenant_units — the "possibly not saving" report was explained by the UI confusion, not a data bug. Each unit's nested Leasing/Tenants/Utility-records sections (Specs moved to the consolidated property-level section, 7.4 revision) also got the 7.22 full-width-CollapsibleSection treatment, previously narrow/cramped unstyled divs.
 - [x] 7.3 Leasing/Listing Tracker — per unit: platform posted to, date posted, days live, prospective tenant notes
 - [x] 7.4 Property Specs/Measurements Log — key-value specs per unit (e.g. door dimensions) with last-updated timestamp — property-level scope built and verified live (per task scope, since 7.2 units don't exist yet); schema has a ready-but-unused unit_id column for per-unit scoping once 7.2 lands
 - [x] 7.5 Move the existing per-property mortgage details, payment logging, and scenario calculator out of the standalone Mortgage Payoff screen and into a new "Mortgage" tab on the Property Profile (alongside Overview, Transactions, Activity Log, Documents) — reuse the existing mortgage_details/mortgage_payments logic and components rather than rebuilding them, same as how the Transactions tab reused Financials' query
@@ -651,7 +651,11 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       associated with a property — nickname + last 4 digits only, NEVER
       a full account/card number (hard rule, no exceptions) — enforced
       both in the form and by a DB check constraint on last_four; no
-      column exists anywhere capable of holding a full number
+      column exists anywhere capable of holding a full number. FIX: 7.23's
+      "Show archived" toggle moved from its own row inside the box body
+      into the box's header row (right-aligned next to the title), so it
+      no longer extends the box vertically just to be visible.
+      CollapsibleSection gained an optional headerActions slot for this.
 - [x] 7.19 Property value & rent value history: dated log entries per
       property (source, value, date) for market value — sources like
       Zillow/Redfin/other — replacing the single static market_value
@@ -841,6 +845,35 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 9.21 Property tax installment display: restructure each installment
       from one run-on inline line into a stacked block (Amount / Paid
       date / Documents), reducing visual clutter.
+- [x] 9.22 Insurance as a historical ledger, replacing the single static
+      Insurance block on the property record (properties.insurance_provider/
+      insurance_policy_number, no dates, no coverage period, no premium,
+      no multiple documents). New property_insurance_policies table:
+      dated entries with provider, policy #, contact info, coverage
+      start/end, premium amount, and multiple documents per entry — exact
+      pattern of Property Tax Installments (9.5), including its
+      multi-document design (documents point back at which policy entry
+      they belong to via documents.property_insurance_policy_id, same as
+      documents already point at property_tax_installment_id/
+      transaction_id/mortgage_id). Unlike tax's two fixed slots per year,
+      an insurance entry has just one set of documents, so no slot-number
+      column was needed. properties.insurance_provider/
+      insurance_policy_number are kept, unused, never dropped, per
+      CLAUDE.md's no-drop-without-approval rule; each property's real
+      existing values were carried forward as its first ledger entry
+      (20260922020000_property_insurance_policies.sql) — not a guess,
+      the account's own already-entered data relocated to its new home.
+      Coverage dates/premium/contact info left blank on that carried-
+      forward entry since this app never tracked them before.
+
+      Verified live: 2169 Ash St's existing "Country Financial" /
+      "P010766214" values correctly appeared as its first ledger entry
+      after the migration ran. Added a test policy with a document
+      upload, confirmed it saved and the document round-tripped (View
+      document worked, correct storage path/category), confirmed editing
+      an existing entry loads its values and existing documents
+      correctly. Test policy, its document (DB row and storage file),
+      hard-deleted afterward (own session's data, no real-world meaning).
 
 ## 10. Phase 10 — Navigation & Action Consolidation
 - [x] 10.1 Rename left nav to: Properties, Log It, Action Queue, Financials & Tax, Command Center, Automations, Portfolio KPIs
