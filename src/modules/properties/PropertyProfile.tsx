@@ -4,16 +4,19 @@ import { usePropertyProfile, type ProfileTab } from './usePropertyProfile'
 import { PropertyProfileOverviewTab } from './PropertyProfileOverviewTab'
 import { PropertyProfileTransactionsTab } from './PropertyProfileTransactionsTab'
 import { PropertyProfileMortgageTab } from './PropertyProfileMortgageTab'
-import { PropertyProfileActivityDocumentsTab } from './PropertyProfileActivityDocumentsTab'
+import { PropertyProfileActivityHistoryTab } from './PropertyProfileActivityHistoryTab'
+import { PropertyProfileDocumentsTab } from './PropertyProfileDocumentsTab'
 import { PropertyProfileKpiTab } from '../propertyKpi/PropertyProfileKpiTab'
 
-// Roadmap 7.9 — revised tab set.
+// Roadmap 7.9 — revised tab set. Roadmap 7.26 reverses the Activity &
+// Documents merge back into two tabs.
 const TABS: { key: ProfileTab; label: string }[] = [
   { key: 'overview', label: 'Overview' },
   { key: 'financials', label: 'Financials' },
   { key: 'mortgage', label: 'Mortgage' },
   { key: 'kpi', label: 'KPI' },
-  { key: 'activityDocuments', label: 'Activity & Documents' },
+  { key: 'activity', label: 'Activity' },
+  { key: 'documents', label: 'Documents' },
 ]
 
 export function PropertyProfile() {
@@ -100,13 +103,14 @@ export function PropertyProfile() {
         <PropertyProfileMortgageTab property={property} marketValue={latestMarketValue?.value ?? null} />
       )}
       {tab === 'kpi' && <PropertyProfileKpiTab propertyId={property.id} transactions={transactions} />}
-      {tab === 'activityDocuments' && (
-        <PropertyProfileActivityDocumentsTab
-          property={property}
-          llcOptions={llcOptions}
-          activity={activity}
+      {tab === 'activity' && (
+        <PropertyProfileActivityHistoryTab property={property} llcOptions={llcOptions} activity={activity} />
+      )}
+      {tab === 'documents' && (
+        <PropertyProfileDocumentsTab
+          propertyId={property.id}
           documents={documents}
-          onViewDocument={viewDocument}
+          onView={viewDocument}
           onDocumentsChanged={refresh}
         />
       )}

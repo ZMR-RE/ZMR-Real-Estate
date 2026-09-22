@@ -10,10 +10,11 @@ import { getLatestValue, type LatestPropertyValue } from '../propertyValueHistor
 
 // Roadmap 7.9 — revised tab set: Overview, Financials, Mortgage, KPI,
 // Activity & Documents (merged). 'financials' reuses the existing
-// per-property transactions view under its new tab label; 'activityDocuments'
-// merges what were three separate tabs (Activity Log, History/7.8,
-// Documents/2.5) into collapsible boxes on one tab (7.14).
-export type ProfileTab = 'overview' | 'financials' | 'mortgage' | 'kpi' | 'activityDocuments'
+// per-property transactions view under its new tab label. Roadmap 7.26
+// reverses the Activity & Documents merge — 'activityDocuments' split
+// back into 'activity' (Activity Log + History/7.8) and 'documents'
+// (2.5), per explicit user confirmation.
+export type ProfileTab = 'overview' | 'financials' | 'mortgage' | 'kpi' | 'activity' | 'documents'
 
 export function usePropertyProfile(propertyId: string) {
   const { accountId } = useAuth()
