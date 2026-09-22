@@ -609,6 +609,10 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 5.6 Terms of Service / Privacy Policy (legal requirement before handling other customers' financial and personal data)
 - [ ] 5.7 Guided onboarding flow for a new blank-dashboard account (e.g. "add your first property" walkthrough)
 - [ ] 5.8 Basic uptime/error monitoring
+- [ ] 5.9 Internal admin console — view/manage all customer accounts,
+      issue temporary passwords, CRM-style outreach tracking, ability to
+      open/inspect a customer's dashboard for support purposes. Deferred
+      until real customers exist.
 
 ## 6. Phase 6 — Analysis & Growth Tools
 - [ ] 6.1 Research/prospecting tool — analyze properties not yet owned
