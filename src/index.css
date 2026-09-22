@@ -1732,22 +1732,58 @@ th {
 }
 
 /* ============================================================
-   Insurance policy cells — new build item, exact same stacked-block
-   treatment as Property Tax installment cells above (same reasoning:
-   a run-on inline line reads as clutter once coverage dates/premium/
-   documents are all present at once).
+   Insurance ledger — one card per policy (Insurance box overhaul,
+   item 2), replacing the old 3-column table that crammed every field
+   into a single Coverage cell. Each card groups into the same three
+   named sections as the Edit form (Policy identification/Coverage &
+   cost/Contact & extras), reusing Property Information's own
+   `.property-field-group` classes so View and Edit read as the same
+   underlying structure. Info rows reuse the stacked-label-row
+   treatment Property Tax installment cells pioneered (a run-on inline
+   line reads as clutter once coverage dates/premium/documents are all
+   present at once) — just no longer inside a <td>.
    ============================================================ */
-.insurance-policy-block {
+.insurance-policy-cards {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  white-space: normal;
+  gap: var(--space-4);
+}
+
+.insurance-policy-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.insurance-policy-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.insurance-policy-provider {
+  font-weight: 700;
+  font-size: var(--text-md);
+  margin-right: auto;
+}
+
+/* Tighter than Property Information's own .property-field-group +
+   .property-field-group spacing (--space-6) — that's sized for a
+   full-width page section; inside this compact card it read as too
+   much air between three short subsections. */
+.insurance-policy-card .property-field-group + .property-field-group {
+  margin-top: var(--space-4);
 }
 
 .insurance-policy-row {
   display: flex;
   gap: var(--space-2);
   align-items: baseline;
+}
+
+.insurance-policy-row + .insurance-policy-row {
+  margin-top: var(--space-1);
 }
 
 .insurance-policy-label {
