@@ -2,7 +2,10 @@ import type { PropertyTaxInstallment, TaxInstallmentDocument } from './propertyT
 
 interface PropertyTaxLedgerListProps {
   installments: PropertyTaxInstallment[]
-  onEdit: (id: string) => void
+  // Roadmap 7.25 — Box interaction standard: the box's default view
+  // state shows plain read-only labels, no per-row Edit.
+  readOnly?: boolean
+  onEdit?: (id: string) => void
   onViewDocument: (path: string) => void
 }
 
@@ -58,7 +61,12 @@ function InstallmentCell({
   )
 }
 
-export function PropertyTaxLedgerList({ installments, onEdit, onViewDocument }: PropertyTaxLedgerListProps) {
+export function PropertyTaxLedgerList({
+  installments,
+  readOnly = false,
+  onEdit,
+  onViewDocument,
+}: PropertyTaxLedgerListProps) {
   if (installments.length === 0) {
     return <p className="empty-state">No tax years recorded yet.</p>
   }
@@ -70,7 +78,7 @@ export function PropertyTaxLedgerList({ installments, onEdit, onViewDocument }: 
           <th>Year</th>
           <th>1st installment</th>
           <th>2nd installment</th>
-          <th></th>
+          {!readOnly && <th></th>}
         </tr>
       </thead>
       <tbody>
@@ -89,11 +97,13 @@ export function PropertyTaxLedgerList({ installments, onEdit, onViewDocument }: 
               documents={installment.documents.filter((d) => d.tax_installment_number === 2)}
               onViewDocument={onViewDocument}
             />
-            <td>
-              <button type="button" onClick={() => onEdit(installment.id)}>
-                Edit
-              </button>
-            </td>
+            {!readOnly && (
+              <td>
+                <button type="button" onClick={() => onEdit?.(installment.id)}>
+                  Edit
+                </button>
+              </td>
+            )}
           </tr>
         ))}
       </tbody>

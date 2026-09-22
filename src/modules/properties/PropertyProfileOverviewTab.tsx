@@ -75,9 +75,7 @@ export function PropertyProfileOverviewTab({
 
       <InsuranceLedger propertyId={property.id} />
 
-      <CollapsibleSection title="Property tax installments">
-        <PropertyTaxLedger propertyId={property.id} />
-      </CollapsibleSection>
+      <PropertyTaxLedger propertyId={property.id} />
 
       <PropertyValueHistorySection propertyId={property.id} onChanged={onValueHistoryChanged} />
 
