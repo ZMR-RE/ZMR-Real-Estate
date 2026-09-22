@@ -180,6 +180,15 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   future, without exception unless a specific deviation is explicitly
   approved and noted here.
 
+## Standard rollout completeness
+- When a new UI/interaction standard (a shared component, a layout
+  pattern) is introduced, the task must explicitly state one of two
+  things: (a) it applies to a named subset now, with every remaining
+  instance logged as its own roadmap item in the same commit, or (b) it
+  must be applied to every existing instance immediately, dashboard-
+  wide. A standard is never reported as "done" while instances of the
+  old pattern remain unconverted and unlogged.
+
 ## Required-field convention
 - Fields are unmarked by default. Only genuinely required fields get a
   red asterisk (*) next to the label — never "(optional)" text on the
