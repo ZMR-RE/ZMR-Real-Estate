@@ -5,6 +5,8 @@ import { useOccupancySnapshot } from './useOccupancySnapshot'
 import { OccupancySnapshotCard } from './OccupancySnapshotCard'
 import { useActionQueue } from '../actionQueue/useActionQueue'
 import { FollowUpsCard } from './FollowUpsCard'
+import { usePropertyTaxTrend } from './usePropertyTaxTrend'
+import { PropertyTaxTrendCard } from './PropertyTaxTrendCard'
 import type { Transaction } from '../financials/financialsQueries'
 
 interface PropertyProfileKpiTabProps {
@@ -12,7 +14,9 @@ interface PropertyProfileKpiTabProps {
   transactions: Transaction[]
 }
 
-// Roadmap 7.13 — KPI tab, three collapsible cards.
+// Roadmap 7.13 — KPI tab, collapsible cards. Roadmap 7.24 added the 4th
+// (Property taxes), the "tax-trend card" 9.5 originally named as this
+// data's destination.
 export function PropertyProfileKpiTab({ propertyId, transactions }: PropertyProfileKpiTabProps) {
   const { snapshot: marketFinancialSnapshot, loading: marketLoading, error: marketError } =
     useMarketFinancialSnapshot(propertyId, transactions)
@@ -25,6 +29,7 @@ export function PropertyProfileKpiTab({ propertyId, transactions }: PropertyProf
     processingId: followUpsProcessingId,
     complete: completeFollowUp,
   } = useActionQueue(propertyId)
+  const { years: taxTrendYears, loading: taxTrendLoading, error: taxTrendError } = usePropertyTaxTrend(propertyId)
 
   return (
     <>
@@ -44,6 +49,10 @@ export function PropertyProfileKpiTab({ propertyId, transactions }: PropertyProf
           processingId={followUpsProcessingId}
           onComplete={completeFollowUp}
         />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Property taxes" defaultOpen>
+        <PropertyTaxTrendCard loading={taxTrendLoading} error={taxTrendError} years={taxTrendYears} />
       </CollapsibleSection>
     </>
   )

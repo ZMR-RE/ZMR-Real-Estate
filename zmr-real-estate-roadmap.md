@@ -538,6 +538,54 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 2.4 Historical Data Backfill — import past bookkeeping/purchase dates for both properties — PARTIAL: purchase_date column added and backfilled via migration only, no UI ever displays or edits it; bookkeeping backfill not started
 - [x] 2.5 Document Storage Architecture — native Supabase Storage: a `documents` table plus a private `documents` bucket, path convention `{account_id}/{property_id}/{category}/{filename}`, linked from each property's Documents tab
 - [x] 2.6 Reconcile-to-Documents move action — on reconciliation, move the staged file from Quick Capture's staging bucket into its permanent Documents path above, and create its documents table record at that point — not before
+- [x] 2.7 Documents section (Activity & Documents, applies uniformly to
+      every property via the shared 2.5 architecture):
+      1. Auto-generate the label for documents attached through the
+         Property Tax Installment flow (9.5) — format: "Property tax
+         [year] — [1st/2nd] installment". Manually uploaded documents
+         elsewhere keep their own label/filename, unaffected.
+      2. Add a search bar to filter the document list.
+      3. Add pagination: view 25 or 50 documents at a time.
+      4. Move the "Add document/link" button to the upper-right corner
+         of the Documents box header.
+
+      Item 1: `uploadTaxInstallmentDocument` (propertyTaxQueries.ts) now
+      takes the installment's tax_year and writes
+      `Property tax [year] — [1st/2nd] installment` as the document's
+      label at insert time; a manual upload/link elsewhere
+      (uploadPropertyDocument/createPropertyLink) is untouched, so its
+      own label or blank "—" is unaffected. Not retroactive — the 4
+      pre-existing tax documents on 2169 Ash St keep showing "—", by
+      design (no backfill was asked for).
+
+      Items 2-4: `PropertyProfileDocumentsTab` now owns its own
+      CollapsibleSection (same refactor 7.23 did for Financial accounts)
+      so "+ Add document or link" sits in the box's own header via the
+      existing headerActions prop — upper-right, inline with the title,
+      never a separate row. Search filters the already-fetched documents
+      list client-side by label or category (no new query — matches how
+      the rest of this list already works); pagination (25/50 per page,
+      client-side slice) only renders its Previous/Next/Page-count
+      controls when there's more than one page.
+
+      Verified live on 2169 Ash St: uploaded a real file through the Add
+      tax year form for a test year, confirmed the new Documents row
+      read exactly "Property tax 1900 — 1st installment" while the 4
+      pre-existing tax documents stayed "—"; searched "1900" and
+      confirmed the list filtered to that one row; confirmed the
+      "+ Add document or link" button renders in the Documents box's
+      header row, not the body. Page-size selector (25/50) confirmed
+      functional; the multi-page Previous/Next transition itself wasn't
+      exercised live — this property only has 5 documents, and forcing a
+      second page would have meant creating an excessive volume of
+      throwaway test documents disproportionate to what's being checked
+      (simple slice/ceil math already correctly gated on
+      `pageCount > 1`, confirmed via the single-page case correctly
+      hiding the controls). Test tax year/document removed afterward
+      (own session's test data, storage file + documents row + the
+      property_tax_installments row itself all deleted directly since
+      this table has no delete/archive UI yet — same precedent as other
+      tables in this position).
 
 ## 3. Phase 3 — Reuse & Integrations
 - [ ] 3.1 Port Communication Hub from My Earth Market dashboard — adapt existing Gmail management code for per-property email accounts
@@ -665,6 +713,22 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       layout, fields go single-column, no horizontal overflow.
 - [x] 7.23 Financial accounts: archived accounts hidden by default,
       behind a "Show archived" toggle in the section header.
+- [x] 7.24 KPI tab: add a "Property taxes" card showing the
+      tax-installment trend over time (year-over-year amounts), per
+      9.5's original intent, now that real tax data exists in the
+      account. New `usePropertyTaxTrend` hook reads the same
+      property_tax_installments rows the Overview tab's ledger (9.5)
+      already manages (no new table) — summed per year (installment 1 +
+      installment 2) and compared to the prior year on file, both a
+      dollar and percent change. Added as a 4th card on the per-property
+      KPI tab (7.13's established home for this data — 9.5 named this
+      exact destination, "feeds KPI tax-trend card", when it was first
+      built). Verified live on 2169 Ash St, which has real multi-year
+      tax data (2017-2025): card rendered all 9 years with correct
+      year-over-year $ and % deltas (e.g. 2022's $785.48/+19.1% jump,
+      2025's -$2,305.09/-45% drop reflecting its still-unrecorded 2nd
+      installment) — no test data needed for this one, real data already
+      existed.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
