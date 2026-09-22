@@ -250,8 +250,13 @@ export function PropertyForm({
         </div>
 
         <div className="field">
-          <label htmlFor="county_township">County/Township</label>
-          <input id="county_township" {...field('county_township')} />
+          <label htmlFor="county">County</label>
+          <input id="county" {...field('county')} />
+        </div>
+
+        <div className="field">
+          <label htmlFor="township">Township</label>
+          <input id="township" {...field('township')} />
         </div>
 
         <div className="field">

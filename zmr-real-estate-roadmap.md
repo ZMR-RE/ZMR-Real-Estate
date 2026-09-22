@@ -681,7 +681,14 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 7.20 Property Facts fields (structured): property type, purchase
       date, purchase method, property tax ID/PIN, county/township,
       square footage, lot size, zoning/use code — also finally gives
-      purchase_date (added back in 2.4, never had a UI) its first field
+      purchase_date (added back in 2.4, never had a UI) its first field.
+      FIX: county/township was one combined free-text field, but County
+      and Township are different real-world values that shouldn't be
+      forced into one — split into two distinct fields (`county`,
+      `township`). Migration renamed the existing column to `county`
+      (carrying every existing value forward as-is rather than guessing
+      which of the two it represented) and added a new, separate
+      `township` column.
 - [x] 7.21 Structured fields for bedroom count, bathroom count, basement
       (yes/no or description), garage/parking spaces — building-level
       totals; per-unit bed/bath already covered by 7.11, this is the

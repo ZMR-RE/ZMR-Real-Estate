@@ -20,7 +20,8 @@ export interface Property {
   property_type: string | null
   purchase_method: string | null
   property_tax_id: string | null
-  county_township: string | null
+  county: string | null
+  township: string | null
   square_footage: string | null
   lot_size: string | null
   zoning_use_code: string | null
@@ -38,7 +39,7 @@ export interface Property {
 export type PropertyInput = Omit<Property, 'id' | 'account_id'>
 
 const PROPERTY_COLUMNS =
-  'id, account_id, name, llc_id, address, city, state, zip, insurance_provider, insurance_policy_number, contact_email, purchase_price, status, purchase_date, property_type, purchase_method, property_tax_id, county_township, square_footage, lot_size, zoning_use_code, bedroom_count, bathroom_count, basement, garage_parking_spaces'
+  'id, account_id, name, llc_id, address, city, state, zip, insurance_provider, insurance_policy_number, contact_email, purchase_price, status, purchase_date, property_type, purchase_method, property_tax_id, county, township, square_footage, lot_size, zoning_use_code, bedroom_count, bathroom_count, basement, garage_parking_spaces'
 
 export async function listProperties(accountId: string) {
   return supabase.from('properties').select(PROPERTY_COLUMNS).eq('account_id', accountId).order('address')
