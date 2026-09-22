@@ -4,49 +4,63 @@ export interface PropertySpec {
   id: string
   property_id: string
   unit_id: string | null
+  area: string | null
   label: string
   value: string
   updated_at: string
 }
 
 export interface PropertySpecInput {
+  unitId: string | null
+  area: string
   label: string
   value: string
 }
 
-// unitId null means property-level specs; a real id scopes to that unit
-// only — the two never mix in one listing (roadmap 7.2).
-export async function listPropertySpecs(accountId: string, propertyId: string, unitId: string | null) {
-  let query = supabase
+const PROPERTY_SPEC_COLUMNS = 'id, property_id, unit_id, area, label, value, updated_at'
+
+// Roadmap 7.4 revision — one property-level list (Scope, i.e. whole
+// building vs a specific unit, is encoded by unit_id as it always was),
+// replacing the previous split of a property-wide fetch plus a separate
+// per-unit-scoped fetch nested inside each unit's card. Everything for
+// the property comes back in one call; Scope/Area filtering happens
+// client-side (same pattern as Quick Capture History's Complete/Type
+// filters, useCaptureHistory.ts).
+export async function listPropertySpecs(accountId: string, propertyId: string) {
+  return supabase
     .from('property_specs')
-    .select('id, property_id, unit_id, label, value, updated_at')
+    .select(PROPERTY_SPEC_COLUMNS)
     .eq('account_id', accountId)
     .eq('property_id', propertyId)
     .order('label')
-
-  query = unitId ? query.eq('unit_id', unitId) : query.is('unit_id', null)
-
-  return query.returns<PropertySpec[]>()
+    .returns<PropertySpec[]>()
 }
 
-export async function createPropertySpec(
-  accountId: string,
-  propertyId: string,
-  unitId: string | null,
-  input: PropertySpecInput,
-) {
+export async function createPropertySpec(accountId: string, propertyId: string, input: PropertySpecInput) {
   return supabase
     .from('property_specs')
-    .insert({ account_id: accountId, property_id: propertyId, unit_id: unitId, ...input })
-    .select('id, property_id, unit_id, label, value, updated_at')
-    .single()
+    .insert({
+      account_id: accountId,
+      property_id: propertyId,
+      unit_id: input.unitId,
+      area: input.area || null,
+      label: input.label,
+      value: input.value,
+    })
+    .select(PROPERTY_SPEC_COLUMNS)
+    .single<PropertySpec>()
 }
 
 export async function updatePropertySpec(id: string, input: PropertySpecInput) {
   return supabase
     .from('property_specs')
-    .update(input)
+    .update({
+      unit_id: input.unitId,
+      area: input.area || null,
+      label: input.label,
+      value: input.value,
+    })
     .eq('id', id)
-    .select('id, property_id, unit_id, label, value, updated_at')
-    .single()
+    .select(PROPERTY_SPEC_COLUMNS)
+    .single<PropertySpec>()
 }

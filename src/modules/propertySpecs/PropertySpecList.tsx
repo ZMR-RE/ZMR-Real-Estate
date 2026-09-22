@@ -1,8 +1,11 @@
 import { PropertySpecForm } from './PropertySpecForm'
+import type { Unit } from '../units/unitsQueries'
 import type { PropertySpec, PropertySpecInput } from './propertySpecsQueries'
 
 interface PropertySpecListProps {
   specs: PropertySpec[]
+  unitOptions: Unit[]
+  onRefreshUnitOptions: () => void
   editingId: string | null
   saving: boolean
   onStartEditing: (id: string) => void
@@ -10,8 +13,22 @@ interface PropertySpecListProps {
   onCancel: () => void
 }
 
+// A spec's unit_id can point at a unit that's since been archived (still
+// resolvable here — archive is a soft-delete, per CLAUDE.md, so the row
+// stays in unitOptions) or, in principle, one that no longer resolves at
+// all (unit_id's FK is ON DELETE SET NULL, not currently reachable from
+// any UI action, but guarded against here rather than assumed away).
+function scopeLabel(spec: PropertySpec, unitOptions: Unit[]): string {
+  if (!spec.unit_id) return 'Whole building'
+  const unit = unitOptions.find((u) => u.id === spec.unit_id)
+  if (!unit) return 'Unit removed'
+  return unit.archived ? `${unit.unit_label} (archived)` : unit.unit_label
+}
+
 export function PropertySpecList({
   specs,
+  unitOptions,
+  onRefreshUnitOptions,
   editingId,
   saving,
   onStartEditing,
@@ -26,6 +43,8 @@ export function PropertySpecList({
     <table>
       <thead>
         <tr>
+          <th>Scope</th>
+          <th>Area</th>
           <th>Label</th>
           <th>Value</th>
           <th>Last updated</th>
@@ -36,9 +55,16 @@ export function PropertySpecList({
         {specs.map((spec) =>
           editingId === spec.id ? (
             <tr key={spec.id}>
-              <td colSpan={4}>
+              <td colSpan={6}>
                 <PropertySpecForm
-                  initialValues={{ label: spec.label, value: spec.value }}
+                  initialValues={{
+                    unitId: spec.unit_id,
+                    area: spec.area ?? '',
+                    label: spec.label,
+                    value: spec.value,
+                  }}
+                  unitOptions={unitOptions}
+                  onRefreshUnitOptions={onRefreshUnitOptions}
                   saving={saving}
                   onSave={(input) => onSave(spec.id, input)}
                   onCancel={onCancel}
@@ -47,6 +73,8 @@ export function PropertySpecList({
             </tr>
           ) : (
             <tr key={spec.id}>
+              <td>{scopeLabel(spec, unitOptions)}</td>
+              <td>{spec.area ?? '—'}</td>
               <td>{spec.label}</td>
               <td>{spec.value}</td>
               <td>{new Date(spec.updated_at).toLocaleString()}</td>

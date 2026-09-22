@@ -48,6 +48,10 @@ import { supabase } from '../supabaseClient'
 // 1.33; renamed from entry_direction and widened to a 3rd value,
 // Refund/Return, by 20260922000000) is deliberately NOT one of these: a
 // fixed enum, same reasoning as repair_or_improvement below.
+// property_spec_area was added by
+// 20260922010000_property_specs_area_consolidation.sql (roadmap 7.4
+// revision), seeded with Kitchen/Bathroom/Bedroom/Exterior/Other — an
+// explicitly given taxonomy, same precedent as vendor_type's seed.
 export type PickListName =
   | 'subcategory'
   | 'payment_method'
@@ -64,6 +68,7 @@ export type PickListName =
   | 'visit_type'
   | 'vendor_relationship'
   | 'vendor_type'
+  | 'property_spec_area'
 
 export interface PickListOption {
   id: string

@@ -1,7 +1,6 @@
 import { useUnits } from './useUnits'
 import { UnitForm } from './UnitForm'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
-import { PropertySpecsSection } from '../propertySpecs/PropertySpecsSection'
 import { LeasingListingSection } from '../leasingListings/LeasingListingSection'
 import { TenantAssignmentsSection } from '../tenants/TenantAssignmentsSection'
 import { UtilityRecordsSection } from '../utilities/UtilityRecordsSection'
@@ -14,10 +13,11 @@ const BLANK_UNIT = { unit_label: '', status: '' }
 
 // Roadmap 7.2 — units as a real entity, replacing the free-text
 // properties.unit_config field. Embedded on the Overview tab for now,
-// same as Specs/Security Deposits, until 7.9's tab restructure lands.
-// Each unit gets its own nested Specs & measurements section scoped to
-// that unit's id (7.4's unit_id wired through) — separate from the
-// property-level specs section elsewhere on this page.
+// same as Security Deposits, until 7.9's tab restructure lands.
+// Roadmap 7.4 revision — Specs & measurements no longer gets its own
+// nested box per unit here; it's one consolidated section on the
+// Overview tab (PropertySpecsSection) with a Scope field/filter that
+// covers per-unit specs instead.
 export function UnitsSection({ propertyId }: UnitsSectionProps) {
   const {
     units,
@@ -68,10 +68,6 @@ export function UnitsSection({ propertyId }: UnitsSectionProps) {
               </button>
 
               <div className="unit-subsections-grid">
-                <CollapsibleSection title="Specs & measurements">
-                  <PropertySpecsSection propertyId={propertyId} unitId={unit.id} />
-                </CollapsibleSection>
-
                 <CollapsibleSection title="Leasing / listing history">
                   <LeasingListingSection propertyId={propertyId} unitId={unit.id} />
                 </CollapsibleSection>

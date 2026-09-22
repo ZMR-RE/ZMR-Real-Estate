@@ -1,49 +1,87 @@
+import { usePickListOptions } from '../../shared/pickLists/usePickListOptions'
 import { usePropertySpecs } from './usePropertySpecs'
 import { PropertySpecForm } from './PropertySpecForm'
 import { PropertySpecList } from './PropertySpecList'
 
 interface PropertySpecsSectionProps {
   propertyId: string
-  unitId?: string | null
-  title?: string
-  headingLevel?: 'h2' | 'h4'
 }
 
-const BLANK_SPEC = { label: '', value: '' }
+const BLANK_SPEC = { unitId: null, area: '', label: '', value: '' }
 
-// Roadmap 7.4 — free-form key-value specs/measurements log, embedded on
-// the Overview tab for now since 7.9's dedicated tab restructure (which
-// would give this its own collapsible box) hasn't landed yet. Roadmap 7.2
-// wired unit_id through: pass unitId to scope this instance to one unit
-// instead of the property as a whole (used nested inside a Unit card).
-//
-// title/headingLevel are only passed by the per-unit usage inside
-// UnitsSection.tsx, which isn't wrapped in its own CollapsibleSection and
-// so needs its own heading to identify which unit it belongs to. The
-// property-level usage on the Overview tab is already wrapped in a
-// CollapsibleSection titled "Specs & measurements" — rendering a second,
-// identical heading right below it would just repeat the label, so no
-// title means no heading at all.
-export function PropertySpecsSection({
-  propertyId,
-  unitId = null,
-  title,
-  headingLevel = 'h2',
-}: PropertySpecsSectionProps) {
-  const { specs, loading, error, isAdding, editingId, saving, startAdding, startEditing, cancelForm, add, save } =
-    usePropertySpecs(propertyId, unitId)
-  const Heading = headingLevel
+// Roadmap 7.4 revision — consolidated into one property-level section,
+// replacing the previous split of a property-wide instance here plus a
+// separate instance nested inside each unit's card in UnitsSection.tsx.
+// Scope (Whole building vs a specific unit) and Area are now per-row
+// fields instead of being implied by which instance of the component you
+// were looking at, with filter controls (mirroring Quick Capture
+// History's filter bar, roadmap 1.24) to narrow the one combined list.
+export function PropertySpecsSection({ propertyId }: PropertySpecsSectionProps) {
+  const {
+    specs,
+    units,
+    loading,
+    error,
+    isAdding,
+    editingId,
+    saving,
+    scopeFilter,
+    setScopeFilter,
+    areaFilter,
+    setAreaFilter,
+    startAdding,
+    startEditing,
+    cancelForm,
+    add,
+    save,
+    refreshUnitOptions,
+  } = usePropertySpecs(propertyId)
+  const { activeOptions: areaOptions } = usePickListOptions('property_spec_area')
 
   return (
     <section>
-      {title && <Heading>{title}</Heading>}
       {error && <p role="alert">{error}</p>}
+
+      <div className="property-specs-filter-bar">
+        <div className="property-specs-filter">
+          <label htmlFor="specs_scope_filter">Scope</label>
+          <select
+            id="specs_scope_filter"
+            value={scopeFilter}
+            onFocus={refreshUnitOptions}
+            onChange={(e) => setScopeFilter(e.target.value)}
+          >
+            <option value="all">All scopes</option>
+            <option value="whole_building">Whole building</option>
+            {units.map((unit) => (
+              <option key={unit.id} value={unit.id}>
+                {unit.unit_label}
+                {unit.archived ? ' (archived)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="property-specs-filter">
+          <label htmlFor="specs_area_filter">Area</label>
+          <select id="specs_area_filter" value={areaFilter} onChange={(e) => setAreaFilter(e.target.value)}>
+            <option value="all">All areas</option>
+            {areaOptions.map((option) => (
+              <option key={option.id} value={option.value}>
+                {option.value}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {loading ? (
         <p>Loading…</p>
       ) : (
         <PropertySpecList
           specs={specs}
+          unitOptions={units}
+          onRefreshUnitOptions={refreshUnitOptions}
           editingId={editingId}
           saving={saving}
           onStartEditing={startEditing}
@@ -53,7 +91,14 @@ export function PropertySpecsSection({
       )}
 
       {isAdding ? (
-        <PropertySpecForm initialValues={BLANK_SPEC} saving={saving} onSave={add} onCancel={cancelForm} />
+        <PropertySpecForm
+          initialValues={BLANK_SPEC}
+          unitOptions={units}
+          onRefreshUnitOptions={refreshUnitOptions}
+          saving={saving}
+          onSave={add}
+          onCancel={cancelForm}
+        />
       ) : (
         <button type="button" onClick={startAdding}>
           + Add spec
