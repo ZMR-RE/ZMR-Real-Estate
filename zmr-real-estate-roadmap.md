@@ -1328,6 +1328,61 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       hero/header/icons all stack correctly) once this pre-existing
       issue is accounted for.
 
+- [x] 7.36 Insurance box overhaul:
+      1. Convert Insurance's Edit mode from a flat single-column list to
+         the same grouped, paired-field layout already used on Property
+         Information: Policy identification (Provider, Policy #, Named
+         insured), Coverage & cost (Effective date, Expiration date,
+         Premium, Deductible), Contact & extras (Representative
+         name/phone/email, Payment plan, Discounts, Documents).
+      2. Replace the current 3-column table structure (Provider/Status/
+         Coverage, with every field crammed into one Coverage cell)
+         with a dedicated card per policy — matching Property
+         Information's grouped-section pattern, not a table trying to
+         hold 10 field types in one column.
+      3. Verify explicitly that "+ Add insurance policy" creates a
+         genuinely separate, new dated policy entry, not an overwrite
+         of the existing active one.
+      4. Verify live in both light/dark mode and mobile width.
+
+      Item 1: InsurancePolicyForm.tsx restructured with the same
+      `.property-field-group`/`.field-column`/`.field-row` classes
+      Property Information's Edit mode uses (roadmap 7.31) — three
+      named groups, paired rows for Effective/Expiration date,
+      Premium/Deductible, Representative phone/email, and Payment
+      plan/Discounts.
+
+      Item 2: Property Tax Installments turned out to still be a table
+      under the hood (distributed across dedicated columns, not a
+      literal card component) — no existing "card" pattern to copy
+      verbatim, so built InsuranceLedgerList.tsx as a plain list of
+      `.insurance-policy-card` divs instead, each grouped into the same
+      three named sections as the Edit form (reusing
+      `.property-field-group` so View and Edit read as the same
+      underlying structure), with a per-row Edit button and the
+      Active/Expired badge in the card header. `.insurance-policy-row`/
+      `-label`/`-documents-inline` kept from the old table-cell version;
+      `.insurance-policy-block` (the old <td>-scoped wrapper) removed as
+      dead.
+
+      Item 3: verified live by adding a ZMR-TEST-Insurance-Co test
+      policy alongside the existing real Country Financial one —
+      confirmed both display as independent cards with correct
+      Active/Expired badges, then positively re-queried
+      property_insurance_policies directly: two distinct row ids, the
+      real policy's every field (provider/policy #/coverage dates/
+      premium/etc.) byte-for-byte unchanged. Deleted the test row
+      directly afterward (own-session data, no UI delete path exists
+      for insurance policies) and re-confirmed only the real policy
+      remains.
+
+      `npm run build` clean. Verified live on 2169 Ash St: desktop, a
+      390px iframe-simulated mobile width (paired field-rows correctly
+      stack to single column under 600px, same breakpoint Property
+      Information's own tight rows use), and dark mode (card border,
+      subsection headers, and every field row render with correct
+      contrast).
+
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
 - [x] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field) — the llcs table, properties.llc_id, and the real-list-plus-"+ Add new LLC" picker already existed (Phase 1); this pass added the missing formation_date field
