@@ -911,14 +911,21 @@ dd {
    Property Overview layout — Standard rollout completeness: two
    curated columns at desktop widths (Property information/Financial
    accounts/Insurance; Market & rent value history/Property tax
-   installments/Tenants), each its own independent vertical stack rather
-   than a shared-row grid — that's what avoids the earlier "large empty
-   gaps when adjacent boxes had different heights" problem (a shared-row
-   grid stretches every cell in a row to the tallest one; two
-   independent flex columns just end at their own natural height
-   instead). Specs & measurements, Utility records, Security deposits,
-   and Units stay full-width below both columns, unaffected by any of
-   this. Single column at mobile widths.
+   installments/Tenants). Specs & measurements, Utility records,
+   Security deposits, and Units stay full-width below both columns,
+   unaffected by any of this. Single column at mobile widths.
+
+   Expand-to-full-width (dashboard-wide rule) — all 6 boxes are direct
+   siblings of this one shared grid (not two independent flex columns),
+   so a collapsed box takes one column slot (span 1, the grid default)
+   while an expanded one spans both via [open] below, pushing every
+   later box down to reflow beneath it. Two independent columns could
+   never do this — nothing can reflow across a boundary that doesn't
+   exist in the DOM. This is safe against the old "shared-row grid
+   stretches every cell to the tallest one" problem because that only
+   bit when two *open* boxes of different heights shared a row; an open
+   box never shares a row with anything under this rule, so only
+   same-height collapsed boxes ever sit side by side.
    ============================================================ */
 .property-overview-grid {
   display: flex;
@@ -937,21 +944,19 @@ dd {
   gap: var(--space-4);
 }
 
+.property-overview-columns > .collapsible-section {
+  margin-top: 0;
+  grid-column: span 1;
+}
+
+.property-overview-columns > .collapsible-section[open] {
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 900px) {
   .property-overview-columns {
     grid-template-columns: 1fr;
   }
-}
-
-.property-overview-column {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  min-width: 0;
-}
-
-.property-overview-column > .collapsible-section {
-  margin-top: 0;
 }
 
 /* Unit cards (roadmap 7.2) — previously unstyled divs, which left each

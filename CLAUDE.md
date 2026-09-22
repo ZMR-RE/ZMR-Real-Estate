@@ -194,6 +194,15 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   future, without exception unless a specific deviation is explicitly
   approved and noted here.
 
+## Expand-to-full-width
+- In any multi-column box layout, a collapsed box may share a row with
+  another, but an expanded box always spans the full available width
+  for as long as it stays open.
+
+## Interaction feedback
+- Every interactive card, box, or row must show a visible hover state
+  — a usability signal, not decoration — dashboard-wide.
+
 ## Sticky/frozen headers
 - Every property-profile tab bar, and any long, column-headered
   list/table in the app, uses `position: sticky` (or equivalent) so
@@ -211,15 +220,6 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   must be applied to every existing instance immediately, dashboard-
   wide. A standard is never reported as "done" while instances of the
   old pattern remain unconverted and unlogged.
-
-## Universal-pattern audit checkpoint
-- Before moving from one tab/screen to the next in the build sequence,
-  explicitly review what was just built or fixed and identify anything
-  that should apply dashboard-wide (a component, a layout rule, an
-  interaction pattern). Log each as its own roadmap item and dispatch
-  before considering the current tab closed — never assume a fix
-  scoped to one screen was "obviously" meant to be universal, and never
-  silently leave it screen-local without at least logging the decision.
 
 ## Required-field convention
 - Fields are unmarked by default. Only genuinely required fields get a
