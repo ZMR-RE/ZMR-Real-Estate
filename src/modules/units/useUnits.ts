@@ -10,6 +10,12 @@ export function useUnits(propertyId: string) {
   const [isAdding, setIsAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  // Roadmap 7.23 revision (T1) — archived units hidden by default, same
+  // "Show archived" toggle pattern as Financial accounts. UI-only filter,
+  // not a refetch: `units` always holds everything (an archived unit must
+  // still resolve wherever it's historically referenced), this just
+  // decides what the list renders.
+  const [showArchived, setShowArchived] = useState(false)
 
   const refresh = useCallback(async () => {
     if (!accountId) return
@@ -87,7 +93,10 @@ export function useUnits(propertyId: string) {
   }
 
   return {
-    units,
+    units: showArchived ? units : units.filter((u) => !u.archived),
+    archivedCount: units.filter((u) => u.archived).length,
+    showArchived,
+    setShowArchived,
     loading,
     error,
     isAdding,

@@ -18,9 +18,18 @@ const BLANK_UNIT = { unit_label: '', status: '' }
 // nested box per unit here; it's one consolidated section on the
 // Overview tab (PropertySpecsSection) with a Scope field/filter that
 // covers per-unit specs instead.
+//
+// Roadmap 7.23 revision (T1) — owns its own CollapsibleSection (rather
+// than being wrapped by the caller, as it was before) so the "Show
+// archived" toggle can sit in the box's header row via headerActions,
+// same pattern as FinancialAccountsSection: inline with the title, not a
+// row inside the body that only shows once expanded.
 export function UnitsSection({ propertyId }: UnitsSectionProps) {
   const {
     units,
+    archivedCount,
+    showArchived,
+    setShowArchived,
     loading,
     error,
     isAdding,
@@ -35,7 +44,22 @@ export function UnitsSection({ propertyId }: UnitsSectionProps) {
   } = useUnits(propertyId)
 
   return (
-    <section>
+    <CollapsibleSection
+      title="Units"
+      headerActions={
+        archivedCount > 0 && (
+          <label htmlFor="units_show_archived">
+            <input
+              id="units_show_archived"
+              type="checkbox"
+              checked={showArchived}
+              onChange={(e) => setShowArchived(e.target.checked)}
+            />
+            Show archived ({archivedCount})
+          </label>
+        )
+      }
+    >
       {error && <p role="alert">{error}</p>}
 
       {loading ? (
@@ -92,6 +116,6 @@ export function UnitsSection({ propertyId }: UnitsSectionProps) {
           + Add unit
         </button>
       )}
-    </section>
+    </CollapsibleSection>
   )
 }

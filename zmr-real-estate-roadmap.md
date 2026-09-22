@@ -716,7 +716,13 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       affect this environment's viewport) — header wraps to a stacked
       layout, fields go single-column, no horizontal overflow.
 - [x] 7.23 Financial accounts: archived accounts hidden by default,
-      behind a "Show archived" toggle in the section header.
+      behind a "Show archived" toggle in the section header. EXTENDED —
+      same toggle added to the Units box (gap T1 flagged: archived units
+      previously rendered indefinitely with no way to hide them, part of
+      why 3 stray test units went unnoticed earlier). UnitsSection now
+      owns its own CollapsibleSection (was caller-wrapped before) so the
+      toggle can sit in the header row, same pattern as
+      FinancialAccountsSection.
 - [x] 7.24 KPI tab: add a "Property taxes" card showing the
       tax-installment trend over time (year-over-year amounts), per
       9.5's original intent, now that real tax data exists in the
