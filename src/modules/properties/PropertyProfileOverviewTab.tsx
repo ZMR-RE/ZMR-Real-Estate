@@ -51,6 +51,7 @@ export function PropertyProfileOverviewTab({
     <div className="property-overview-grid">
       <EditableSection
         title="Property information"
+        defaultOpen
         view={<PropertySummary property={property} llcOptions={llcOptions} />}
         edit={(exitEditing) => (
           <PropertyForm

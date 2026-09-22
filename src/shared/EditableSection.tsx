@@ -2,6 +2,8 @@ import { useState, type ReactNode } from 'react'
 
 interface EditableSectionProps {
   title: string
+  // Same default-collapsed convention as CollapsibleSection.
+  defaultOpen?: boolean
   // Box-level secondary actions (Archive, Show archived, Restore,
   // export) — rendered top-right alongside Edit, per the standard's
   // explicit "never causing the box to grow taller" rule. Always
@@ -36,13 +38,29 @@ interface EditableSectionProps {
 // own persistent "+ Add [X]" button below the list, the pattern several
 // modules used before this standard existed, is what this replaces.
 //
-// Deliberately its own box shell (border/radius/background matching
-// CollapsibleSection's, reusing those same classes) rather than nesting
-// inside CollapsibleSection — the standard describes a self-contained
-// box, and compounding two header chromes (collapse toggle + edit
-// toggle) into one title row wasn't asked for here. A box that needs
-// both stays a future extension, not guessed at now.
-export function EditableSection({ title, secondaryActions, view, edit, onEditStart }: EditableSectionProps) {
+// Standard rollout completeness fix — collapse and edit were built as
+// if they were separable (a plain div header, "this box is never
+// collapsed"), which quietly dropped every converted box's chevron.
+// They're not separable: every box needs both. Reuses
+// CollapsibleSection's exact <details>/<summary> mechanics (the
+// `collapsible-section`/`collapsible-section-body` classes, so it's the
+// same visual family and gets the chevron/open-state CSS for free) plus
+// its header-actions stopPropagation technique, applied to both
+// secondaryActions and the Edit button — without it, clicking Edit (or
+// a secondary action) while the box is collapsed would also toggle the
+// native <details> open state, since both live inside <summary>.
+// Collapsing mid-edit does not discard edit state: <details> hides its
+// body natively without unmounting React children, so isEditing (and
+// whatever the caller's own edit form holds) survives a collapse/
+// re-expand cycle.
+export function EditableSection({
+  title,
+  defaultOpen = false,
+  secondaryActions,
+  view,
+  edit,
+  onEditStart,
+}: EditableSectionProps) {
   const [isEditing, setIsEditing] = useState(false)
 
   const startEditing = () => {
@@ -53,19 +71,23 @@ export function EditableSection({ title, secondaryActions, view, edit, onEditSta
   const exitEditing = () => setIsEditing(false)
 
   return (
-    <section className="collapsible-section editable-section">
-      <div className="editable-section-header">
-        <h3 className="editable-section-title">{title}</h3>
-        <div className="editable-section-actions">
+    <details className="collapsible-section editable-section" open={defaultOpen}>
+      <summary>
+        <span className="collapsible-section-title">{title}</span>
+        <span
+          className="collapsible-section-header-actions"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
           {secondaryActions}
           {!isEditing && (
             <button type="button" className="editable-section-edit" onClick={startEditing}>
               Edit
             </button>
           )}
-        </div>
-      </div>
+        </span>
+      </summary>
       <div className="collapsible-section-body">{isEditing ? edit(exitEditing) : view}</div>
-    </section>
+    </details>
   )
 }
