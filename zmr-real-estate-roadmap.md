@@ -533,7 +533,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 
 ## 2. Phase 2 — Parallelized Build (5 terminals, once Phase 1 schema is locked and stable)
 - [x] 2.1 Rent Ops — invoicing, receipts, on-time payment tracking
-- [x] 2.2 Task Engine — per-property to-do lists, recurring items, "coming up" view across the portfolio
+- [x] 2.2 Task Engine — per-property to-do lists, recurring items, "coming up" view across the portfolio. SUPERSEDED — migrated into the unified `action_items` table (10.2) and the standalone `tasks` table/Task Engine module dropped entirely (20260918100000/20260918100100); this item's functionality now lives at Action Queue (10.2/10.5), not a separate screen.
 - [x] 2.3 Financials & Tax Readiness — income/expense by property and category, tax-ready export
 - [ ] 2.4 Historical Data Backfill — import past bookkeeping/purchase dates for both properties — PARTIAL: purchase_date column added and backfilled via migration only, no UI ever displays or edits it; bookkeeping backfill not started
 - [x] 2.5 Document Storage Architecture — native Supabase Storage: a `documents` table plus a private `documents` bucket, path convention `{account_id}/{property_id}/{category}/{filename}`, linked from each property's Documents tab
@@ -623,12 +623,12 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 7.6 Repurpose the now-former standalone Mortgage Payoff nav item into a portfolio-wide view: total mortgage balance, total equity, and overall loan-to-value across all properties combined — a rollup, not a per-property editor
 - [x] 7.7 Convert Property Profile's Overview tab (and the Mortgage tab's terms section) from always-editable to view-by-default with an explicit Edit action, per the new Data integrity rule
 - [x] 7.8 Basic audit trail — track who changed a field and when, on Property, LLC, and Mortgage records. Directly useful once other people (or your future customers) are editing shared data, not just you
-- [x] 7.9 Revise Property Profile tabs to: Overview, Financials, Mortgage, KPI, Activity & Documents (merged)
+- [x] 7.9 Revise Property Profile tabs to: Overview, Financials, Mortgage, KPI, Activity & Documents (merged). REVERSED by 7.26 — Activity & Documents split back into two separate tabs.
 - [x] 7.10 Overview tab: core fields always visible (address, LLC, status, market value, property facts, insurance section with coverage dates + attached document, contact email with "+ Add email" for multiple), plus collapsible boxes below: Tenants, Units (near bottom, reference-only). SEQUENCING NOTE: build the Units box first — it only depends on existing 7.2. Do NOT build the Tenants box until 8.4 (Tenant as a real linked entity) exists; building it against a placeholder first means rebuilding it once 8.4 lands. Interleave Phase 7 and Phase 8 execution accordingly even though item numbering stays as written. — PARTIAL GAPS: insurance is document-linked only (no coverage-date fields — not an existing schema field, not guessed at); contact email stays the single existing property field (no multi-email "+ Add email" array yet). Also relocated Property tax installments (9.5), Specs & measurements (7.4), and Security deposits into their own collapsible boxes on this tab, beyond the two boxes named in this item, since they were previously flat on Overview and had nowhere else to live.
 - [x] 7.11 Units: building-level exterior specs (year built, roof, foundation, construction, # units) shown once; per-unit specs (floor, rooms, bed/bath, appliances) and per-unit status (rented/vacant-ready/renovating/listed); unit field labeled "Unit #" — verified existing 7.2/7.4 structure and adjusted (label wording) rather than rebuilding; now nested inside Overview's Units collapsible box per 7.10. REVISED per 7.4's consolidation — per-unit specs are no longer their own nested box under each unit card; they're rows in the one consolidated Specs & measurements section (Overview tab), scoped to that unit via the Scope field/filter.
 - [x] 7.12 Utility records: linked to Property (building-level) or Unit (unit-level), each with type + responsibility (Owner/Tenant/Split) + notes — net-new module (utility_records table + utilities module); available at property level on Overview and per-unit inside each unit card.
 - [x] 7.13 KPI tab: collapsible cards — Market & Financial Snapshot (Redfin/Zillow value + date, current loan balance, net equity, LTV, annual rent, YTD net cash flow, cash-on-cash ROI), Occupancy Snapshot, Follow-ups (pulls from Action Queue) — cash-on-cash ROI and market-value-as-of-date not shown (no field tracks total cash invested or a value-as-of date; card states "Not enough data yet" rather than guessing). Follow-ups is an explicit placeholder pending 10.2 (Action Queue unified data model), per this item's own "pulls from Action Queue" dependency.
-- [x] 7.14 Activity & Documents tab: merged, collapsible boxes per category
+- [x] 7.14 Activity & Documents tab: merged, collapsible boxes per category. REVERSED by 7.26 — split back into two separate tabs (Activity, Documents).
 - [x] 7.15 Action Queue priority color system: red = overdue OR property status = Sold; yellow = due soon; default = normal. When a property's status changes to Sold, all of its open Action Queue items automatically turn red rather than requiring per-transaction-type logic. — built now that 10.2 (Action Queue unified data model) and 89e32bf ('sold' as a valid properties.status) are both live. Pure `actionItemPriority()` helper reads `item.property.status` straight off the item's live-joined property on every render — a real-time check, not a snapshot — so flipping a property to Sold turns all its open items red immediately, no per-item write or special-case trigger. "Due soon" = within 7 days (inclusive), a threshold chosen for this item since none was specified. Coloring applied once in the shared `ActionItemList` component, so both surfaces that render it (portfolio-wide Action Queue board and each property's KPI → Follow-ups card) pick it up automatically. Verified live: overdue item red, 10+ day-out item default, property flipped to Sold turned its open item red on both surfaces with no additional edit. This closes out Phase 7 (7.1–7.15), all complete.
 - [x] 7.16 Move "Edit" action to the upper-right of the screen header,
       standard placement (was bottom of form)
@@ -847,6 +847,9 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       match for "restore the exact pre-test state") — re-queried the DB
       and confirmed zero entries remain, matching the pre-test state
       exactly. Checked dark mode and mobile width (380px).
+- [ ] 7.26 Split Activity & Documents back into two separate tabs,
+      Activity and Documents — reverses 7.9/7.14's earlier merge. User
+      has explicitly confirmed this reversal.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
@@ -1073,9 +1076,26 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 
 ## 10. Phase 10 — Navigation & Action Consolidation
 - [x] 10.1 Rename left nav to: Properties, Log It, Action Queue, Financials & Tax, Command Center, Automations, Portfolio KPIs
-- [x] 10.2 Action Queue: single task/action data model (property/unit/type/assignee/due date/recurring), collapsible boxes by type; same records surface filtered on each property's own Overview — no duplicate entry between portfolio-wide and per-property views — new `action_items` table (property_id/unit_id nullable, type reuses 8.1's task_type pick list, assignee is a plain user FK for now). Surfaces on the KPI tab's Follow-ups card (7.13's named candidate), not Overview — 7.13 built Follow-ups there specifically as this item's landing spot, and Overview has no equivalent placeholder; verified live, one row read by both the portfolio Action Queue and the property's own Follow-ups, no duplication. Mounted at the existing "Action Queue" nav destination (/reconciliation, ReconciliationQueue.tsx) rather than a new route, since wiring a new one would've required touching App.tsx/AppShell.tsx (both out of scope here) — that page now carries two distinct sections (Action Queue, Reconciliation) under one URL as a result. Existing Tasks (2.2) is NOT consolidated into this table: doing so would mean migrating live task rows, rewriting Task Engine's 6 files, and dropping the old `tasks` table afterward (a destructive step needing its own explicit sign-off per CLAUDE.md) — deferred rather than guessed at; Tasks (2.2) continues to run entirely unchanged on its own table.
+- [x] 10.2 Action Queue: single task/action data model (property/unit/type/assignee/due date/recurring), collapsible boxes by type; same records surface filtered on each property's own Overview — no duplicate entry between portfolio-wide and per-property views — new `action_items` table (property_id/unit_id nullable, type reuses 8.1's task_type pick list, assignee is a plain user FK for now). Surfaces on the KPI tab's Follow-ups card (7.13's named candidate), not Overview — 7.13 built Follow-ups there specifically as this item's landing spot, and Overview has no equivalent placeholder; verified live, one row read by both the portfolio Action Queue and the property's own Follow-ups, no duplication. Mounted at the existing "Action Queue" nav destination (/reconciliation, ReconciliationQueue.tsx) rather than a new route, since wiring a new one would've required touching App.tsx/AppShell.tsx (both out of scope here) — that page now carries two distinct sections (Action Queue, Reconciliation) under one URL as a result. Existing Tasks (2.2) was NOT consolidated into this table as of this item's original completion — that migration (live task rows + dropping the old `tasks` table) needed its own explicit sign-off per CLAUDE.md and was deferred. STATUS UPDATE: that consolidation has since happened (20260918100000/20260918100100) — Tasks (2.2) is fully superseded, the `tasks` table and Task Engine module no longer exist.
 - [ ] 10.3 Portfolio KPIs (nav item): portfolio-wide rollup — mortgage/equity/LTV (existing 7.6), performance vs. market (existing 4.2) — collapsible cards
 - [ ] 10.4 Command Center: implement existing Phase 3 (3.1–3.4); elevate to a visible nav item as soon as Phase 3 is built, rather than remaining a designed-but-invisible phase
+- [ ] 10.5 Full Action Queue build (overhaul of 10.2's initial cut):
+      two tabs ("To resolve" — all action items; "Automations" —
+      placeholder for Phase 11's agent roster, not built yet); top
+      summary strip (overdue / due this week / upcoming / automated
+      counts, automated static at 0 for now); one filter row (Property,
+      Type, Status open/completed, Assignee, search); flat list
+      sortable/filterable by due date instead of collapsible boxes
+      grouped by type (7.15's color-coded priority carries the
+      urgency signal instead); completed items hidden by default behind
+      the Status filter; clicking an item opens full detail
+      (description, due date, property/unit, type, assignee, linked
+      source if any, links, file attachments); recurring tasks gain a
+      user-set "custom" interval option alongside the existing weekly/
+      monthly/quarterly/yearly (still purely user-defined at creation
+      time, no auto-generation from other modules); "+ New action"
+      button top-right matching the established create-flow pattern
+      (Property Registry's "+ Add property").
 
 ## 11. Phase 11 — Automations / Agent Roster
 - [ ] 11.1 Automations nav section: agent-roster pattern adapted from My Earth Market's Operations Hub (named agent profiles, health-state, training/active/paused status, dependency on which module, audit log) — adapted for ZMR's multi-tenant/RLS model, not a direct copy-paste
