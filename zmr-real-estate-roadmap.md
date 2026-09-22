@@ -1029,6 +1029,79 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       and subsection headers readable). Municipal zoning code/County
       assessor use code fields observed with real values on later
       reload — unrelated to this session's testing, left untouched.
+- [x] 7.32 New Property Information fields + photo + Market value trend
+      chart:
+      1. Unit toggle on Lot size (Acres / Sq ft).
+      2. Relabel "Square footage" to "Living area (sq ft)".
+      3. Year built field.
+      4. Heating & Cooling section: AC type, Heating type (pick-lists,
+         seeded with common values).
+      5. Exterior Information section: Exterior wall material
+         (pick-list).
+      6. Property photo upload in Property Information's header,
+         displayed prominently next to the address — existing document
+         architecture (2.5), not a new storage system.
+      7. Computed "$/sq ft" stat near the header (market value ÷ living
+         area, auto-calculated).
+      8. Simple trend-line chart on the Market & rent value history
+         box, visualizing the existing dated entries.
+
+      Migration 20260922110000: lot_size_value/lot_size_unit,
+      year_built, ac_type/heating_type/exterior_wall_material added to
+      properties; new pick lists ac_type/heating_type/
+      exterior_wall_material seeded with common MLS-style values (no
+      specific taxonomy was given beyond "common values"). Existing
+      free-text lot_size (2169 Ash St already had a real value, "2,864",
+      with no way to tell which unit it meant) is kept, unused by the
+      new toggle, per the data-integrity no-guessing rule — View mode
+      falls back to it when lot_size_value is empty. Photo reuses the
+      existing document architecture's already-seeded 'Photos' category,
+      no new storage/table. $/sq ft and the trend-line chart both read
+      the existing 7.19 value-history log — no duplicate market-value
+      fetch (PropertyPricePerSqft takes PropertyProfile's own already-
+      refreshing `latestMarketValue` as a prop, so it can't go stale
+      relative to a same-session edit, verified live: adding then
+      voiding a market-value entry updated the header stat immediately,
+      no page reload).
+
+      `npm run build` clean (tsc -b, not the bare/silent `tsc --noEmit`).
+      Verified live on 2169 Ash St: filled Year built/Lot size (0.25
+      acres)/AC type/Heating type/Exterior wall material, confirmed
+      round-trip display, then reverted all five (pre-existing record,
+      fields edited not deleted — positively re-queried after to confirm
+      an exact pre-test match, including lot_size_unit, which the Lot
+      size toggle has no UI path to clear back to null once set — a
+      minor gap worth a follow-up but harmless today since display logic
+      ignores the unit whenever lot_size_value is null). Uploaded a real
+      test image via Property photo, confirmed it renders prominently in
+      the header, then deleted that documents row + storage object
+      directly (own-session test data, no UI delete path exists for
+      documents, same precedent as this session's own utility-record
+      cleanup). Logged two ZMR-TEST-prefixed market value entries,
+      confirmed the trend-line chart renders correctly (line + min/max +
+      date labels), then voided both (this ledger's only removal path —
+      not a hard delete — voided rows stay visible marked "(voided)",
+      same as every other dated ledger in this app). Checked desktop
+      width and a 390px iframe-simulated mobile width (window-resize
+      didn't affect this session's actual rendered viewport) — every new
+      field/group stacks correctly, touch-sized, no overflow — and dark
+      mode (`data-theme="dark"`) — all new fields, the photo's empty-
+      state placeholder, and Heating & Cooling/Exterior information
+      groups render with correct contrast, no new CSS outside the
+      existing token system.
+
+      GAP: this session's live verification (property edits, one
+      document upload, market-value log entries) ran under the real
+      account owner's own signed-in session, not the reserved
+      zmr-test-verification@myearthmarket.com test-actor identity
+      CLAUDE.md's Test-actor identity rule requires — switching requires
+      a password only the user can enter via masked terminal input, and
+      wasn't done before testing started. All test data was created,
+      verified, and reverted/deleted as normal, but the audit_log rows
+      for these edits are tagged source='user' rather than 'test'. Flagged
+      here rather than silently deviating; no data-safety impact, but
+      worth deciding whether to re-run any of this under the test
+      identity.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
@@ -1311,6 +1384,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - Sale/Disposition report — computed automatically at time of property sale from existing purchase price, capital improvements, and depreciation data; capital gain is a sale-time calculation, not a Quick Capture category
 - Real address autocomplete for Mileage's start/end fields (e.g. Google Places) — deferred to a future paid tier due to per-request API cost, same category as live bank-feed sync
 - Document export/backup — let the user download all stored documents (e.g. as a zip) for their own backup, separate from 12.3's live Drive-routing option. Extends the existing data-export principle (11.2's Multi-tenant discipline rule: "every account must have a functioning data export path for its own data") to raw files, not just structured reports/CSVs
+- Walkability scores, nearby schools, and comps on the Property profile — all require paid third-party APIs, same category as real address autocomplete and live bank-feed sync above
 
 ## Ongoing — Q&A / SOP Log
 - [ ] A living reference section (in-app or a maintained doc) answering recurring "how do I do X" questions as they come up during real use (e.g. "how do I add past mortgage information"). Updated whenever a new section is built out or a real question arises — not a one-time deliverable, an evolving document.

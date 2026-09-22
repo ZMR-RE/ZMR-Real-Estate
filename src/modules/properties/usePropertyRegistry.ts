@@ -38,6 +38,12 @@ const BLANK_PROPERTY: PropertyInput = {
   garage_spaces: null,
   street_parking: null,
   parking_notes: null,
+  lot_size_value: null,
+  lot_size_unit: null,
+  year_built: null,
+  ac_type: null,
+  heating_type: null,
+  exterior_wall_material: null,
 }
 
 export function usePropertyRegistry() {
@@ -115,6 +121,10 @@ export function usePropertyRegistry() {
     error,
     isFormOpen: isCreating || selectedProperty !== null,
     formKey: selectedProperty?.id ?? 'new',
+    // Roadmap 7.32 (6) — null while creating a brand-new property (no
+    // row exists yet to attach a photo document to); PropertyForm hides
+    // the photo upload field entirely in that case rather than erroring.
+    formPropertyId: selectedProperty?.id ?? null,
     formInitialValues,
     saving,
     startCreating,

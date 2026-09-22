@@ -9,6 +9,7 @@ import { PropertyIdentityHeader } from './PropertyIdentityHeader'
 interface PropertySummaryProps {
   property: Property
   llcOptions: SearchableSelectOption[]
+  marketValue: number | null
 }
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -16,6 +17,11 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
   maximumFractionDigits: 0,
 })
+
+const LOT_SIZE_UNIT_LABELS: Record<'acres' | 'sqft', string> = {
+  acres: 'acres',
+  sqft: 'sq ft',
+}
 
 // Field-specific display formatting. Every other field in
 // PROPERTY_FIELD_GROUPS is a plain string column, shown as-is.
@@ -26,7 +32,16 @@ function renderFieldValue(property: Property, key: keyof Property): ReactNode {
     case 'purchase_date':
       return formatDateOnly(property.purchase_date!)
     case 'square_footage':
-      return `${Number(property.square_footage).toLocaleString()} sqft`
+      return `${Number(property.square_footage).toLocaleString()} sq ft`
+    case 'lot_size':
+      // Roadmap 7.32 (1) — structured value takes priority; the legacy
+      // free-text column (kept, never guessed at) is only a fallback
+      // for a value entered before this toggle existed.
+      return property.lot_size_value !== null
+        ? `${Number(property.lot_size_value).toLocaleString()} ${LOT_SIZE_UNIT_LABELS[property.lot_size_unit ?? 'sqft']}`
+        : property.lot_size
+    case 'year_built':
+      return property.year_built
     default:
       return property[key] as string
   }
@@ -40,10 +55,10 @@ function renderFieldValue(property: Property, key: keyof Property): ReactNode {
 // showing "—". Insurance used to be one of these groups (with its own
 // documents special case) before it became its own historical ledger
 // (InsuranceLedger.tsx) — removed from here entirely, not just emptied.
-export function PropertySummary({ property, llcOptions }: PropertySummaryProps) {
+export function PropertySummary({ property, llcOptions, marketValue }: PropertySummaryProps) {
   return (
     <div className="property-summary">
-      <PropertyIdentityHeader property={property} llcOptions={llcOptions} />
+      <PropertyIdentityHeader property={property} llcOptions={llcOptions} marketValue={marketValue} />
 
       {PROPERTY_FIELD_GROUPS.map((group) => {
         const presentFields = group.fields

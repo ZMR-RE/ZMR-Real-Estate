@@ -54,8 +54,36 @@ export async function listDocumentsForActionItem(accountId: string, actionItemId
     .returns<DocumentRecord[]>()
 }
 
-export async function getDocumentSignedUrl(path: string) {
-  return supabase.storage.from('documents').createSignedUrl(path, 60)
+// Default 60s suits the existing "click to view, opens immediately"
+// callers. Roadmap 7.32's property photo renders as a persistent <img>
+// while the page stays open, so it passes a longer expiry explicitly
+// rather than needing a second function.
+export async function getDocumentSignedUrl(path: string, expiresIn = 60) {
+  return supabase.storage.from('documents').createSignedUrl(path, expiresIn)
+}
+
+// Roadmap 7.32 (6) — property photo, reusing the existing documents
+// architecture instead of a new storage system: "the property photo" is
+// simply the most recent 'Photos'-category document that's an actual
+// file (not a reference link — documents_file_or_link_check allows
+// category 'Photos' rows with only a link_url, e.g. via the Activity &
+// Documents tab's freeform link entry, 7.17). Fetches a few and picks
+// the first real file client-side rather than relying on a `.not(...
+// is null)` filter, since this is the only place in the app that needs
+// one.
+export async function getLatestPropertyPhoto(accountId: string, propertyId: string) {
+  const { data, error } = await supabase
+    .from('documents')
+    .select(DOCUMENT_COLUMNS)
+    .eq('account_id', accountId)
+    .eq('property_id', propertyId)
+    .eq('category', 'Photos')
+    .order('uploaded_at', { ascending: false })
+    .limit(5)
+    .returns<DocumentRecord[]>()
+
+  if (error) return { data: null, error }
+  return { data: data?.find((doc) => doc.storage_path !== null) ?? null, error: null }
 }
 
 interface UploadTransactionDocumentInput {

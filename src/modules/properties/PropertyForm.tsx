@@ -9,8 +9,13 @@ import type { LlcInput } from '../llcs/llcsQueries'
 import { NO_LLC_ID } from '../llcs/useLlcs'
 import type { HoldingCompanyInput } from '../holdingCompanies/holdingCompaniesQueries'
 import type { PropertyInput } from './propertiesQueries'
+import { PropertyPhotoUploadField } from './PropertyPhotoUploadField'
 
 interface PropertyFormProps {
+  // Roadmap 7.32 (6) — null when creating a brand-new property (no row
+  // exists yet to attach a photo document to); the photo upload field
+  // is hidden entirely in that case rather than erroring.
+  propertyId: string | null
   initialValues: PropertyInput
   llcOptions: SearchableSelectOption[]
   onCreateLlc: (input: LlcInput) => Promise<{ id: string } | { error: string }>
@@ -22,6 +27,7 @@ interface PropertyFormProps {
 }
 
 export function PropertyForm({
+  propertyId,
   initialValues,
   llcOptions,
   onCreateLlc,
@@ -74,6 +80,10 @@ export function PropertyForm({
           column throughout except City/State/Zip, the item's own stated
           exception since the three are genuinely one logical unit. */}
       <div className="field-column">
+        {/* Roadmap 7.32 (6) — uploads immediately, independent of this
+            form's own Save (see PropertyPhotoUploadField's own comment). */}
+        {propertyId && <PropertyPhotoUploadField propertyId={propertyId} />}
+
         <div className="field">
           <label htmlFor="name">
             Name<span className="required-marker">*</span>
@@ -199,7 +209,7 @@ export function PropertyForm({
         <h3 className="property-field-group-title">Physical facts</h3>
         <div className="field-column">
           <div className="field">
-            <label htmlFor="square_footage">Square footage</label>
+            <label htmlFor="square_footage">Living area (sq ft)</label>
             <input
               id="square_footage"
               type="number"
@@ -210,9 +220,38 @@ export function PropertyForm({
             />
           </div>
 
+          {/* Roadmap 7.32 (1) — Lot size gets a real unit toggle instead
+              of the old free-text field. Existing free-text values (see
+              propertiesQueries.ts's Property.lot_size comment) aren't
+              carried into lot_size_value — View mode falls back to
+              showing that raw text until the user re-enters it here. */}
           <div className="field">
-            <label htmlFor="lot_size">Lot size</label>
-            <input id="lot_size" {...field('lot_size')} placeholder="e.g. 0.25 acres, 5,000 sqft" />
+            <label htmlFor="lot_size_value">Lot size</label>
+            <div className="field-row">
+              <input
+                id="lot_size_value"
+                type="number"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                {...field('lot_size_value')}
+              />
+              <select
+                id="lot_size_unit"
+                value={values.lot_size_unit ?? 'sqft'}
+                onChange={(e) =>
+                  setValues((prev) => ({ ...prev, lot_size_unit: e.target.value as 'acres' | 'sqft' }))
+                }
+              >
+                <option value="sqft">Sq ft</option>
+                <option value="acres">Acres</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="year_built">Year built</label>
+            <input id="year_built" type="number" min="0" step="1" inputMode="numeric" {...field('year_built')} />
           </div>
 
           {/* Roadmap 7.31 — Bedrooms/Bathrooms, the item's other stated
@@ -340,6 +379,51 @@ export function PropertyForm({
               title="Property type"
               placeholder="Select a property type…"
               {...pickListField('property_type')}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Roadmap 7.32 (4) */}
+      <div className="property-field-group">
+        <h3 className="property-field-group-title">Heating &amp; cooling</h3>
+        <div className="field-column">
+          <div className="field">
+            <label htmlFor="ac_type">AC type</label>
+            <PickListSelect
+              id="ac_type"
+              listName="ac_type"
+              title="AC types"
+              placeholder="Select an AC type…"
+              {...pickListField('ac_type')}
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="heating_type">Heating type</label>
+            <PickListSelect
+              id="heating_type"
+              listName="heating_type"
+              title="Heating types"
+              placeholder="Select a heating type…"
+              {...pickListField('heating_type')}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Roadmap 7.32 (5) */}
+      <div className="property-field-group">
+        <h3 className="property-field-group-title">Exterior information</h3>
+        <div className="field-column">
+          <div className="field">
+            <label htmlFor="exterior_wall_material">Exterior wall material</label>
+            <PickListSelect
+              id="exterior_wall_material"
+              listName="exterior_wall_material"
+              title="Exterior wall materials"
+              placeholder="Select an exterior wall material…"
+              {...pickListField('exterior_wall_material')}
             />
           </div>
         </div>

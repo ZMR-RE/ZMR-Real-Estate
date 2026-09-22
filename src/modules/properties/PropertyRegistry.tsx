@@ -13,6 +13,7 @@ export function PropertyRegistry() {
     error,
     isFormOpen,
     formKey,
+    formPropertyId,
     formInitialValues,
     saving,
     startCreating,
@@ -32,6 +33,7 @@ export function PropertyRegistry() {
       {isFormOpen ? (
         <PropertyForm
           key={formKey}
+          propertyId={formPropertyId}
           initialValues={formInitialValues}
           llcOptions={llcOptions}
           onCreateLlc={createLlc}

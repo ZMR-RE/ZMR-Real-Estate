@@ -1,6 +1,7 @@
 import { usePropertyValueHistory } from './usePropertyValueHistory'
 import { PropertyValueHistoryList } from './PropertyValueHistoryList'
 import { PropertyValueHistoryForm } from './PropertyValueHistoryForm'
+import { ValueTrendChart } from './ValueTrendChart'
 import type { ValueMetric } from './propertyValueHistoryQueries'
 
 interface PropertyValueLedgerProps {
@@ -52,13 +53,17 @@ export function PropertyValueLedger({
       {loading ? (
         <p>Loading…</p>
       ) : (
-        <PropertyValueHistoryList
-          entries={entries}
-          readOnly={readOnly}
-          onVoid={handleVoid}
-          voiding={saving}
-          emptyMessage={emptyMessage}
-        />
+        <>
+          {/* Roadmap 7.32 (8) */}
+          <ValueTrendChart entries={entries} />
+          <PropertyValueHistoryList
+            entries={entries}
+            readOnly={readOnly}
+            onVoid={handleVoid}
+            voiding={saving}
+            emptyMessage={emptyMessage}
+          />
+        </>
       )}
       {!readOnly && (
         <PropertyValueHistoryForm

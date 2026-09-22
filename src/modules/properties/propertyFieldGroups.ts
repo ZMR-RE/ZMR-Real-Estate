@@ -36,8 +36,11 @@ export const PROPERTY_FIELD_GROUPS: PropertyFieldGroupDef[] = [
     id: 'physical-facts',
     title: 'Physical facts',
     fields: [
-      { key: 'square_footage', label: 'Square footage' },
+      // Roadmap 7.32 (2) — relabeled from "Square footage"; column name
+      // (square_footage) unchanged.
+      { key: 'square_footage', label: 'Living area (sq ft)' },
       { key: 'lot_size', label: 'Lot size' },
+      { key: 'year_built', label: 'Year built' },
       { key: 'bedroom_count', label: 'Bedrooms (whole building)' },
       { key: 'bathroom_count', label: 'Bathrooms (whole building)' },
       { key: 'basement', label: 'Basement' },
@@ -53,12 +56,35 @@ export const PROPERTY_FIELD_GROUPS: PropertyFieldGroupDef[] = [
       { key: 'property_type', label: 'Property type' },
     ],
   },
+  // Roadmap 7.32 (4) — new group, two pick-list fields.
+  {
+    id: 'heating-cooling',
+    title: 'Heating & cooling',
+    fields: [
+      { key: 'ac_type', label: 'AC type' },
+      { key: 'heating_type', label: 'Heating type' },
+    ],
+  },
+  // Roadmap 7.32 (5) — new group, one pick-list field.
+  {
+    id: 'exterior-information',
+    title: 'Exterior information',
+    fields: [{ key: 'exterior_wall_material', label: 'Exterior wall material' }],
+  },
 ]
 
 // Every field in these groups is a `string | null` column (numeric
 // columns come back from PostgREST as strings too, per propertiesQueries.ts),
-// so a single null/empty-string check covers all of them uniformly.
+// so a single null/empty-string check covers all of them uniformly —
+// except 'lot_size' (roadmap 7.32), a synthetic key covering two real
+// columns (lot_size_value/lot_size_unit) plus a legacy free-text
+// fallback (lot_size itself, see propertiesQueries.ts's Property.lot_size
+// comment) — present if either the structured value or the legacy text
+// has something.
 export function hasFieldValue(property: Property, key: keyof Property): boolean {
+  if (key === 'lot_size') {
+    return property.lot_size_value !== null || (property.lot_size !== null && property.lot_size !== '')
+  }
   const value = property[key]
   return value !== null && value !== ''
 }

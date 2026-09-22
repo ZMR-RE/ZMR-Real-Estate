@@ -59,6 +59,11 @@ import { supabase } from '../supabaseClient'
 // street_parking (also 7.31) were seeded with the exact values that
 // item specified — explicitly given, not a guess, same precedent as
 // contact_method/visit_type.
+// ac_type, heating_type, and exterior_wall_material were added by
+// 20260922110000_property_facts_expansion.sql (roadmap 7.32, items 4-5),
+// seeded with common MLS-style values — no specific taxonomy was given
+// by that item beyond "common values", unlike basement_type/
+// street_parking's explicitly-specified lists above.
 export type PickListName =
   | 'subcategory'
   | 'payment_method'
@@ -79,6 +84,9 @@ export type PickListName =
   | 'vendor_relationship'
   | 'vendor_type'
   | 'property_spec_area'
+  | 'ac_type'
+  | 'heating_type'
+  | 'exterior_wall_material'
 
 export interface PickListOption {
   id: string

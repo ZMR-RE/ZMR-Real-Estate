@@ -23,6 +23,10 @@ interface PropertyProfileOverviewTabProps {
   holdingCompanyOptions: SearchableSelectOption[]
   onCreateHoldingCompany: (input: HoldingCompanyInput) => Promise<{ id: string } | { error: string }>
   onValueHistoryChanged: () => Promise<void>
+  // Roadmap 7.32 (7) — passed straight through to PropertySummary for
+  // the $/sq ft stat; see PropertyPricePerSqft's own comment for why
+  // this lives at PropertyProfile level instead of being fetched here.
+  marketValue: number | null
   saving: boolean
   onSave: (input: PropertyInput) => Promise<boolean>
 }
@@ -68,6 +72,7 @@ export function PropertyProfileOverviewTab({
   holdingCompanyOptions,
   onCreateHoldingCompany,
   onValueHistoryChanged,
+  marketValue,
   saving,
   onSave,
 }: PropertyProfileOverviewTabProps) {
@@ -77,10 +82,11 @@ export function PropertyProfileOverviewTab({
         <EditableSection
           title="Property information"
           defaultOpen
-          view={<PropertySummary property={property} llcOptions={llcOptions} />}
+          view={<PropertySummary property={property} llcOptions={llcOptions} marketValue={marketValue} />}
           edit={(exitEditing) => (
             <PropertyForm
               key={property.id}
+              propertyId={property.id}
               initialValues={property}
               llcOptions={llcOptions}
               onCreateLlc={onCreateLlc}

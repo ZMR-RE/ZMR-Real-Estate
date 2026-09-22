@@ -94,6 +94,7 @@ export function PropertyProfile() {
           holdingCompanyOptions={holdingCompanyOptions}
           onCreateHoldingCompany={createHoldingCompany}
           onValueHistoryChanged={refresh}
+          marketValue={latestMarketValue ? Number(latestMarketValue.value) : null}
           saving={saving}
           onSave={saveProperty}
         />
