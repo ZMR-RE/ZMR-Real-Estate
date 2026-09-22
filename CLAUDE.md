@@ -189,6 +189,15 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   wide. A standard is never reported as "done" while instances of the
   old pattern remain unconverted and unlogged.
 
+## Universal-pattern audit checkpoint
+- Before moving from one tab/screen to the next in the build sequence,
+  explicitly review what was just built or fixed and identify anything
+  that should apply dashboard-wide (a component, a layout rule, an
+  interaction pattern). Log each as its own roadmap item and dispatch
+  before considering the current tab closed — never assume a fix
+  scoped to one screen was "obviously" meant to be universal, and never
+  silently leave it screen-local without at least logging the decision.
+
 ## Required-field convention
 - Fields are unmarked by default. Only genuinely required fields get a
   red asterisk (*) next to the label — never "(optional)" text on the
