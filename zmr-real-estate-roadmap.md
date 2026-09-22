@@ -980,6 +980,27 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       and its CSS deleted); the widened content area and the tooltip
       fix above are unaffected and stay.
 
+- [ ] 7.31 Property Information Edit-mode overhaul, grounded in NN/g and
+      Baymard single-column form research (single-column forms: 78%
+      one-try success vs. 42% for multi-column, 15.4s faster
+      completion):
+      1. Convert Edit mode from a 3-column grid to single-column, one
+         field per row. Only exceptions (genuinely one logical unit):
+         City/State/Zip, County/Township, Bedrooms/Bathrooms — each may
+         stay as a tight row.
+      2. Restore subsection headers inside Edit mode, matching View
+         mode's existing groups (Purchase & Valuation, Physical Facts).
+      3. Split "Zoning/use code" into two real fields: Municipal zoning
+         code, County assessor use code.
+      4. Convert Basement from free-text to a pick-list: Finished /
+         Unfinished / Partially finished / None.
+      5. Split parking into three fields: Garage spaces (number), Street
+         parking (pick-list: Unrestricted/Permit required/
+         Time-restricted/Not available), Parking notes (free text).
+      6. Add Provider name and Provider contact fields to each Utility
+         records entry (extends the existing box, not a new section).
+         Add a new Utility records entry type option: "Garbage/Trash."
+
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
 - [x] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field) — the llcs table, properties.llc_id, and the real-list-plus-"+ Add new LLC" picker already existed (Phase 1); this pass added the missing formation_date field
