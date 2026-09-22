@@ -161,6 +161,14 @@ interface MoveToDocumentsInput {
   sourceBucket: string
   sourcePath: string
   fileName: string
+  // Roadmap 9.9 bridge fix (found by T5) — the financial_transactions row
+  // this attachment belongs to, when reconciling a Receipt. Optional
+  // because not every moveToDocuments call originates from a reconcile
+  // (and non-Receipt capture types never produce a transaction), but the
+  // caller must pass it whenever the transaction already exists — this is
+  // the only place that ever links a moved document back to the
+  // transaction the Documents panel (9.6) reads by.
+  transactionId?: string | null
 }
 
 // Moves a staged file (e.g. a Quick Capture attachment) into its permanent
@@ -170,7 +178,7 @@ interface MoveToDocumentsInput {
 // the original once both the upload and the table insert succeed — a
 // failure partway through never leaves the file missing entirely.
 export async function moveToDocuments(input: MoveToDocumentsInput) {
-  const { accountId, propertyId, category, uploadedBy, sourceBucket, sourcePath, fileName } = input
+  const { accountId, propertyId, category, uploadedBy, sourceBucket, sourcePath, fileName, transactionId } = input
 
   const { data: downloaded, error: downloadError } = await supabase.storage
     .from(sourceBucket)
@@ -190,6 +198,7 @@ export async function moveToDocuments(input: MoveToDocumentsInput) {
     .insert({
       account_id: accountId,
       property_id: propertyId,
+      transaction_id: transactionId ?? null,
       category,
       uploaded_by: uploadedBy,
       storage_path: destinationPath,

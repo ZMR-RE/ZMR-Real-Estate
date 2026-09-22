@@ -60,18 +60,19 @@ export function useReconciliationQueue() {
     setCategoryByEntry((prev) => ({ ...prev, [id]: category }))
   }
 
-  // Moves every staged attachment into its permanent Documents path and
-  // records each in the documents table (roadmap 2.6), then — for a
-  // Receipt (roadmap 9.9, Receipt-only per confirmed scope) — creates
-  // the real financial_transactions row this entry's fields describe,
-  // then marks the capture_log entry reconciled and links it to that
-  // transaction. In that order, so an entry never gets marked reconciled
-  // with an attachment still stuck in staging, or without the real
-  // transaction its Reconciled status implies now exists. A document
-  // category is only required when there's actually something to move
-  // (roadmap 1.7 made attachments optional, so a mileage or notes-only
-  // entry can have zero). Roadmap 1.11 — blocked entirely while the
-  // entry still Needs details, unless manually_completed overrides it
+  // For a Receipt (roadmap 9.9, Receipt-only per confirmed scope), creates
+  // the real financial_transactions row this entry's fields describe
+  // FIRST, then moves every staged attachment into its permanent Documents
+  // path (roadmap 2.6), passing that transaction's id through so the moved
+  // document is actually linked to it — the Documents panel (9.6) reads
+  // documents by transaction_id, so moving attachments before the
+  // transaction existed (the original order here) left every reconciled
+  // Receipt's attachment unlinked (found by T5). Finally marks the
+  // capture_log entry reconciled and links it to that transaction. A
+  // document category is only required when there's actually something to
+  // move (roadmap 1.7 made attachments optional, so a mileage or
+  // notes-only entry can have zero). Roadmap 1.11 — blocked entirely while
+  // the entry still Needs details, unless manually_completed overrides it
   // (isCaptureEntryComplete already accounts for that).
   const reconcile = async (entry: QueueEntry) => {
     if (!isCaptureEntryComplete(entry)) {
@@ -109,36 +110,6 @@ export function useReconciliationQueue() {
     if (!accountId || !session) return
 
     setProcessingId(entry.id)
-
-    for (const attachment of entry.attachments) {
-      const fileName = attachment.storage_path.split('/').pop() ?? attachment.storage_path
-      const { error: moveError } = await moveToDocuments({
-        accountId,
-        propertyId: entry.property.id,
-        category: category as DocumentCategory,
-        uploadedBy: session.user.id,
-        sourceBucket: 'capture-attachments',
-        sourcePath: attachment.storage_path,
-        fileName,
-      })
-
-      if (moveError) {
-        setProcessingId(null)
-        setError(moveError.message ?? 'Could not move file to Documents')
-        return
-      }
-
-      // The file no longer lives at this capture-attachments path — it's
-      // in Documents now — so the capture_attachments row pointing at it
-      // has to go too, or "Recently logged" would offer a broken "View"
-      // link for this now-reconciled entry.
-      const { error: deleteAttachmentError } = await deleteCaptureAttachment(attachment.id)
-      if (deleteAttachmentError) {
-        setProcessingId(null)
-        setError(deleteAttachmentError.message)
-        return
-      }
-    }
 
     let financialTransactionId: string | null = null
 
@@ -181,6 +152,37 @@ export function useReconciliationQueue() {
       }
 
       financialTransactionId = transaction.id
+    }
+
+    for (const attachment of entry.attachments) {
+      const fileName = attachment.storage_path.split('/').pop() ?? attachment.storage_path
+      const { error: moveError } = await moveToDocuments({
+        accountId,
+        propertyId: entry.property.id,
+        category: category as DocumentCategory,
+        uploadedBy: session.user.id,
+        sourceBucket: 'capture-attachments',
+        sourcePath: attachment.storage_path,
+        fileName,
+        transactionId: financialTransactionId,
+      })
+
+      if (moveError) {
+        setProcessingId(null)
+        setError(moveError.message ?? 'Could not move file to Documents')
+        return
+      }
+
+      // The file no longer lives at this capture-attachments path — it's
+      // in Documents now — so the capture_attachments row pointing at it
+      // has to go too, or "Recently logged" would offer a broken "View"
+      // link for this now-reconciled entry.
+      const { error: deleteAttachmentError } = await deleteCaptureAttachment(attachment.id)
+      if (deleteAttachmentError) {
+        setProcessingId(null)
+        setError(deleteAttachmentError.message)
+        return
+      }
     }
 
     const { error: reconcileError } = await markReconciled(
