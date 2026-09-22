@@ -789,6 +789,22 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       rule. Checked dark mode and mobile width (380px, real iframe
       viewport, not just a cropped screenshot).
 
+      Insurance: DONE. Same readOnly-prop pattern as Financial accounts
+      — InsuranceLedgerList's per-row Edit column only renders when not
+      readOnly. InsuranceLedger no longer wraps itself in a caller-owned
+      CollapsibleSection (PropertyProfileOverviewTab.tsx dropped that
+      wrapper, same as Financial accounts) since it now owns its own
+      EditableSection box directly. "+ Add insurance policy" moved
+      inside Edit state alongside "Done". Verified live on 2169 Ash St:
+      view state shows the 1 real migrated policy ("Country Financial")
+      read-only; Edit reveals per-row Edit plus "+ Add"/Done; added a
+      real test policy ("ZMR-TEST-Insurance-Co"), confirmed it
+      round-tripped in both edit and view lists, then hard-deleted it
+      directly (same no-hard-delete-UI reasoning as Financial accounts)
+      — re-queried the DB afterward and confirmed an exact match to the
+      pre-test state (1 policy, the real one). Checked dark mode and
+      mobile width (380px).
+
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
 - [x] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field) — the llcs table, properties.llc_id, and the real-list-plus-"+ Add new LLC" picker already existed (Phase 1); this pass added the missing formation_date field

@@ -2,7 +2,11 @@ import type { InsurancePolicy } from './insuranceQueries'
 
 interface InsuranceLedgerListProps {
   policies: InsurancePolicy[]
-  onEdit: (id: string) => void
+  // Roadmap 7.25 — Box interaction standard: the box's default view
+  // state shows plain read-only labels, no per-row Edit. Same pattern
+  // as FinancialAccountList's readOnly prop.
+  readOnly?: boolean
+  onEdit?: (id: string) => void
   onViewDocument: (path: string) => void
 }
 
@@ -56,7 +60,7 @@ function CoverageCell({ policy, onViewDocument }: { policy: InsurancePolicy; onV
   )
 }
 
-export function InsuranceLedgerList({ policies, onEdit, onViewDocument }: InsuranceLedgerListProps) {
+export function InsuranceLedgerList({ policies, readOnly = false, onEdit, onViewDocument }: InsuranceLedgerListProps) {
   if (policies.length === 0) {
     return <p className="empty-state">No insurance policies recorded yet.</p>
   }
@@ -67,7 +71,7 @@ export function InsuranceLedgerList({ policies, onEdit, onViewDocument }: Insura
         <tr>
           <th>Provider</th>
           <th>Coverage</th>
-          <th></th>
+          {!readOnly && <th></th>}
         </tr>
       </thead>
       <tbody>
@@ -75,11 +79,13 @@ export function InsuranceLedgerList({ policies, onEdit, onViewDocument }: Insura
           <tr key={policy.id}>
             <td>{policy.provider}</td>
             <CoverageCell policy={policy} onViewDocument={onViewDocument} />
-            <td>
-              <button type="button" onClick={() => onEdit(policy.id)}>
-                Edit
-              </button>
-            </td>
+            {!readOnly && (
+              <td>
+                <button type="button" onClick={() => onEdit?.(policy.id)}>
+                  Edit
+                </button>
+              </td>
+            )}
           </tr>
         ))}
       </tbody>
