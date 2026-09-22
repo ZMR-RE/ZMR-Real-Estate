@@ -54,6 +54,20 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   was "removed," but that nothing else was altered, added, or left
   behind anywhere it wasn't before.
 
+## Test-actor identity for live-dashboard verification
+- A reserved Supabase Auth login exists specifically for terminal-driven
+  live-dashboard verification (email: zmr-test-verification@
+  myearthmarket.com), marked via `account_members.is_test_actor`. Any
+  terminal doing live-dashboard testing (per the Data integrity rule
+  requiring real UI verification) must sign in as this identity, never
+  the account owner's own session — this is what lets the audit trail
+  (7.8, `audit_log.source`) distinguish terminal-driven test edits from
+  the user's own real edits. Signing in as it requires signing out of
+  whatever session is currently active in that browser; sign back out
+  (or hand control back to the user to sign back in as themselves) when
+  verification is done — never leave a shared browser profile
+  authenticated as the test identity by default.
+
 ## Cleanup self-verification
 - A terminal's own claim that test data was "cleaned up" is not
   sufficient. Before reporting cleanup as complete, re-query the
