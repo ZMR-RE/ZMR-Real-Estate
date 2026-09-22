@@ -6,6 +6,9 @@ interface PropertySpecListProps {
   specs: PropertySpec[]
   unitOptions: Unit[]
   onRefreshUnitOptions: () => void
+  // Box interaction standard: the box's default view state shows plain
+  // read-only rows, no per-row Edit.
+  readOnly?: boolean
   editingId: string | null
   saving: boolean
   onStartEditing: (id: string) => void
@@ -29,6 +32,7 @@ export function PropertySpecList({
   specs,
   unitOptions,
   onRefreshUnitOptions,
+  readOnly = false,
   editingId,
   saving,
   onStartEditing,
@@ -48,12 +52,12 @@ export function PropertySpecList({
           <th>Label</th>
           <th>Value</th>
           <th>Last updated</th>
-          <th></th>
+          {!readOnly && <th></th>}
         </tr>
       </thead>
       <tbody>
         {specs.map((spec) =>
-          editingId === spec.id ? (
+          !readOnly && editingId === spec.id ? (
             <tr key={spec.id}>
               <td colSpan={6}>
                 <PropertySpecForm
@@ -78,11 +82,13 @@ export function PropertySpecList({
               <td>{spec.label}</td>
               <td>{spec.value}</td>
               <td>{new Date(spec.updated_at).toLocaleString()}</td>
-              <td>
-                <button type="button" onClick={() => onStartEditing(spec.id)}>
-                  Edit
-                </button>
-              </td>
+              {!readOnly && (
+                <td>
+                  <button type="button" onClick={() => onStartEditing(spec.id)}>
+                    Edit
+                  </button>
+                </td>
+              )}
             </tr>
           ),
         )}
