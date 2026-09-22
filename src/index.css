@@ -437,6 +437,15 @@ code {
   margin: var(--space-3) 0;
 }
 
+/* Tenants box (Property Overview) — tenant assignment happens per-unit
+   by design, so this always points to where that actually happens
+   instead of leaving the box a dead end. */
+.manage-tenants-link {
+  display: inline-block;
+  margin-top: var(--space-2);
+  font-weight: 600;
+}
+
 /* ============================================================
    Status badges
    ============================================================ */

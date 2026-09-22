@@ -108,6 +108,7 @@ export function UnitsSection({ propertyId }: UnitsSectionProps) {
   return (
     <EditableSection
       title="Units"
+      id="units-section"
       secondaryActions={showArchivedToggle}
       onEditStart={cancelForm}
       view={

@@ -2,6 +2,9 @@ import { useState, type ReactNode } from 'react'
 
 interface EditableSectionProps {
   title: string
+  // Lets another box link/scroll directly to this one (e.g. Tenants'
+  // "Manage tenants in Units" link) via a plain #id anchor.
+  id?: string
   // Same default-collapsed convention as CollapsibleSection.
   defaultOpen?: boolean
   // Box-level secondary actions (Archive, Show archived, Restore,
@@ -55,6 +58,7 @@ interface EditableSectionProps {
 // re-expand cycle.
 export function EditableSection({
   title,
+  id,
   defaultOpen = false,
   secondaryActions,
   view,
@@ -71,7 +75,7 @@ export function EditableSection({
   const exitEditing = () => setIsEditing(false)
 
   return (
-    <details className="collapsible-section editable-section" open={defaultOpen}>
+    <details id={id} className="collapsible-section editable-section" open={defaultOpen}>
       <summary>
         <span className="collapsible-section-title">{title}</span>
         <span
