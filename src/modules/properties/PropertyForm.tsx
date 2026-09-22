@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { SearchableSelect } from '../../shared/SearchableSelect'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
+import { InfoTooltip } from '../../shared/InfoTooltip'
 import { US_STATES } from '../../shared/usStates'
 import { LlcForm } from '../llcs/LlcForm'
 import type { LlcInput } from '../llcs/llcsQueries'
@@ -161,7 +162,10 @@ export function PropertyForm({
 
         {/* Purchase & valuation group */}
         <div className="field">
-          <label htmlFor="purchase_price">Purchase price ($)</label>
+          <label htmlFor="purchase_price">
+            Purchase price ($)
+            <InfoTooltip text="Used for cost basis / depreciation on the Mortgage tab — capital improvements are pulled from transactions automatically." />
+          </label>
           <input
             id="purchase_price"
             type="number"
@@ -170,10 +174,6 @@ export function PropertyForm({
             inputMode="decimal"
             {...field('purchase_price')}
           />
-          <p>
-            Used for cost basis / depreciation on the Mortgage tab — capital improvements are pulled from
-            transactions automatically.
-          </p>
         </div>
 
         <div className="field">

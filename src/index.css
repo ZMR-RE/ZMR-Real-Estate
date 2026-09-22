@@ -348,11 +348,15 @@ code {
   color: var(--nav-text-h);
 }
 
+/* Roadmap 7.30 — 1180px left hundreds of px of unused gray space on a
+   normal 1440-1920px laptop viewport once the 232px sidebar is
+   accounted for. Widened, not removed — still capped well short of
+   ultra-wide monitor widths. */
 .app-main {
   flex: 1;
   min-width: 0;
   padding: var(--space-6) var(--space-7);
-  max-width: 1180px;
+  max-width: 1440px;
 }
 
 .page-loading {
@@ -519,6 +523,61 @@ code {
 .required-marker {
   color: var(--danger);
   margin-left: 2px;
+}
+
+/* Roadmap 7.30 — first tooltip pattern in the app (none existed to
+   reuse): a small "?" icon next to a label reveals helper text on
+   hover/focus instead of that text sitting always-visible on the page.
+   Pure CSS (:hover/:focus-within), no JS state or positioning library.
+   The bubble's background/text intentionally invert text-h/bg rather
+   than introducing a new color pair — that inversion reads as "a
+   tooltip" in both light and dark mode without a dedicated token. */
+.info-tooltip {
+  position: relative;
+  display: inline-flex;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.info-tooltip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: help;
+  user-select: none;
+}
+
+.info-tooltip-bubble {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--text-h);
+  color: var(--bg);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  line-height: 1.4;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s ease;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.info-tooltip:hover .info-tooltip-bubble,
+.info-tooltip:focus-within .info-tooltip-bubble {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* ============================================================
@@ -893,6 +952,74 @@ dd {
 
 .property-overview-column > .collapsible-section {
   margin-top: 0;
+}
+
+/* Roadmap 7.30 — Overview's outer layout: the existing box grid plus a
+   slim right-side Snapshot panel. Same single-column-at-900px breakpoint
+   as .property-overview-columns above, so both collapse together rather
+   than at two different widths. */
+.property-overview-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-5);
+}
+
+.property-overview-layout > .property-overview-grid {
+  flex: 1;
+  min-width: 0;
+}
+
+.property-snapshot-panel {
+  flex: 0 0 260px;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.property-snapshot-title {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.property-snapshot-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.property-snapshot-label {
+  font-size: var(--text-xs);
+  color: var(--text);
+}
+
+.property-snapshot-value {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.property-snapshot-empty {
+  font-weight: 400;
+  color: var(--text);
+}
+
+@media (max-width: 900px) {
+  .property-overview-layout {
+    flex-direction: column;
+  }
+
+  .property-snapshot-panel {
+    width: auto;
+  }
 }
 
 /* Unit cards (roadmap 7.2) — previously unstyled divs, which left each
