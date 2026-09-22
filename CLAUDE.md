@@ -43,6 +43,17 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   real record must be touched to verify a fix, revert only the specific
   field changed, never delete or rename the record itself.
 
+## Test data reversibility (extends Test data isolation)
+- Test data must never be created on a record other than the one
+  explicitly being tested. If verifying a Property-level feature
+  requires a test unit/tenant/transaction, it must be created on that
+  exact property — never left on, or accidentally created on, a
+  different real property.
+- After any test, the terminal must positively confirm the affected
+  record(s) match their exact pre-test state — not just that test data
+  was "removed," but that nothing else was altered, added, or left
+  behind anywhere it wasn't before.
+
 ## Credential safety in testing
 - Never test password-reset, login, or credential flows using the real account's actual credentials in a way that changes them without asking first. If verifying a flow requires changing a real credential, stop and ask before proceeding, or use a disposable/test account instead. If a real credential is changed as part of testing, hand control back to the user immediately with the new value — never treat that as routine cleanup.
 
@@ -141,6 +152,24 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
   exceptions: State (fixed 50 values, not user-extensible) and the
   top-level expense Category (governed directly by Chart of Accounts,
   9.1 — user-editable at the Subcategory level, not Category itself).
+
+## Box interaction standard
+- Every box/section on any screen defaults to view-only, displaying
+  existing data as plain text/labels — never raw editable inputs shown
+  by default.
+- A single "Edit" action, placed in the box's top-right corner, is the
+  ONLY way to enter an editable state. There is no separate always-
+  visible "Add new [X]" button sitting below or beside a box's content
+  — adding a new item is done from inside that same Edit state.
+- Any secondary action on a box (Archive, Show archived, Restore,
+  export) is placed in the box's top-right corner alongside or near
+  Edit — never causing the box to grow taller to accommodate it.
+- Saving from Edit state returns the box to view-only, showing the
+  updated data. Canceling discards changes and returns to view-only
+  with original data intact.
+- This standard applies to every box on every screen, present and
+  future, without exception unless a specific deviation is explicitly
+  approved and noted here.
 
 ## Required-field convention
 - Fields are unmarked by default. Only genuinely required fields get a
