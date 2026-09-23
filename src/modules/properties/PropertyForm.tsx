@@ -12,7 +12,7 @@ import type { HoldingCompanyInput } from '../holdingCompanies/holdingCompaniesQu
 import type { PropertyInput } from './propertiesQueries'
 import { PropertyPhotoUploadField } from './PropertyPhotoUploadField'
 import { PropertyDeedUploadField } from './PropertyDeedUploadField'
-import { ExteriorInformationIcon, PhysicalFactsIcon, PurchaseValuationIcon } from './propertyFieldGroupIcons'
+import { ExteriorInformationIcon, OwnershipIcon, PhysicalFactsIcon, PurchaseValuationIcon } from './propertyFieldGroupIcons'
 
 interface PropertyFormProps {
   // Roadmap 7.32 (6) — null when creating a brand-new property (no row
@@ -222,17 +222,22 @@ export function PropertyForm({
 
         {/* Roadmap 7.39 (3) — Ownership sub-list: Owner name, Contact
             email (moved here from the identity fields block above),
-            Contact phone (new field), Deed document. Same "Details"-
-            style sub-heading treatment as Physical facts' own
-            sub-list, just reused for a different group.
+            Contact phone (new field), Deed document.
             Roadmap 7.42 (2) — the 3 short text fields re-paired into
             one field-row, mirroring City/State/Zip's own 3-wide row
             above (all short single-line fields, genuinely one logical
             unit: who to contact about this property). Deed document
             stays standalone below, same reasoning as Photo above — an
             upload widget, not a text field, so it isn't a pairing
-            candidate. */}
-        <h4 className="property-details-title">Ownership</h4>
+            candidate.
+            Roadmap 7.45 (1) — heading upgraded to the same bold/accent
+            .property-field-group-title + icon treatment as its sibling
+            subsections (Physical facts, Exterior information), matching
+            View mode's own PropertyOwnershipSection.tsx change. */}
+        <h4 className="property-field-group-title">
+          <OwnershipIcon />
+          Ownership
+        </h4>
         <div className="field-column">
           <div className="field-row">
             <div className="field">

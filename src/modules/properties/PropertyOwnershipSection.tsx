@@ -1,22 +1,29 @@
 import type { Property } from './propertiesQueries'
 import { usePropertyDeedDocument } from './usePropertyDeedDocument'
+import { OwnershipIcon } from './propertyFieldGroupIcons'
 
 interface PropertyOwnershipSectionProps {
   property: Property
 }
 
 // Roadmap 7.39 (3) — Ownership sub-list inside Purchase & valuation's
-// View mode (same visual treatment as Physical facts' "Details"
-// sub-list, PropertySummary.tsx): Owner name, Contact email (moved
-// here from the identity header, where it used to ride along as a lone
-// line — now sits alongside the new Contact phone rather than
-// separately), Contact phone, Deed document. The deed's own presence
-// is only knowable after its async fetch resolves, unlike the 3 plain
-// text fields (synchronously known from `property`), so this whole
-// section waits for that fetch before deciding whether to render at
-// all — a "deed uploaded but no owner name on file yet" property must
-// still show its deed link, not just properties with text fields
-// filled in.
+// View mode: Owner name, Contact email (moved here from the identity
+// header, where it used to ride along as a lone line — now sits
+// alongside the new Contact phone rather than separately), Contact
+// phone, Deed document. The deed's own presence is only knowable after
+// its async fetch resolves, unlike the 3 plain text fields
+// (synchronously known from `property`), so this whole section waits
+// for that fetch before deciding whether to render at all — a "deed
+// uploaded but no owner name on file yet" property must still show its
+// deed link, not just properties with text fields filled in.
+//
+// Roadmap 7.45 (1) — heading upgraded from the quiet, icon-less
+// .property-details-title (originally borrowed from Physical facts'
+// "Details" sub-list) to the same bold/accent .property-field-group-
+// title + icon treatment as its sibling subsections (Physical facts,
+// Exterior information) — it was reading as visually subordinate to
+// them despite being an equal-weight subsection of Property
+// Information, not a quieter footnote the way "Details" genuinely is.
 export function PropertyOwnershipSection({ property }: PropertyOwnershipSectionProps) {
   const { document, loading, view } = usePropertyDeedDocument(property.id)
 
@@ -27,7 +34,10 @@ export function PropertyOwnershipSection({ property }: PropertyOwnershipSectionP
 
   return (
     <div className="property-details">
-      <h4 className="property-details-title">Ownership</h4>
+      <h4 className="property-field-group-title">
+        <OwnershipIcon />
+        Ownership
+      </h4>
       <dl className="field-grid">
         {property.owner_name !== null && (
           <div className="field">

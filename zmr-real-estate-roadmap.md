@@ -1900,6 +1900,41 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       leaves, and confirmed it stays hover-only even while a box is
       `[open]` and not actively hovered — no persistent state
       reintroduced.
+- [x] 7.45 Two fixes:
+      1. Give "Ownership" the same bold text + icon treatment as
+         "Physical facts" and "Exterior information" (was plain gray
+         text, no icon — inconsistent with its sibling subsections).
+      2. Replace "Purchase & valuation"'s info-circle icon with a
+         dollar-sign or receipt-style icon, more representative of its
+         content.
+
+      Item 1 — "Ownership" (PropertyOwnershipSection.tsx for View mode,
+      PropertyForm.tsx for Edit mode) previously shared
+      `.property-details-title` with Physical facts' "Details" sub-list
+      — deliberately the quieter, icon-less tier (7.38's own comment:
+      "not a peer of 'Physical facts' itself"). This item overrides that
+      for Ownership specifically: it now uses the same bold/accent
+      `.property-field-group-title` class plus a new `OwnershipIcon`
+      (person silhouette, propertyFieldGroupIcons.tsx) that Physical
+      facts and Exterior information use, on the explicit basis that
+      Ownership reads to the user as an equal-weight subsection, not a
+      footnote. "Details" itself is untouched — still quiet/icon-less,
+      since this item only asked about Ownership.
+
+      Item 2 — `PurchaseValuationIcon` redrawn from a circle+squiggle
+      (which rendered as a generic info-circle at actual size — the
+      squiggle read as noise, not a "$") to a receipt silhouette
+      (zigzag bottom edge + 3 itemized lines). Chose receipt over a
+      literal dollar sign since the box already shows a literal "$" in
+      the Purchase price value right below the icon — a receipt reads
+      as "purchase record" without repeating that glyph.
+
+      `npm run build` clean. Live-verified on 2169 Ash St, View and Edit
+      mode, light and dark: Ownership now renders bold navy with a
+      person icon, matching Physical facts' weight/color exactly in
+      both themes; Purchase & valuation's icon reads clearly as a
+      receipt (not confusable with a plain circle) at its actual
+      16x16px render size in both themes.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type

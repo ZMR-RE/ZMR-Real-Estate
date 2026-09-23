@@ -6,11 +6,17 @@
 // icon automatically follows .property-field-group-title's own accent
 // color (Section hierarchy contrast rule) rather than needing its own
 // color rule.
+// Roadmap 7.45 (2) — replaces the original circle-plus-squiggle icon,
+// which read as a generic info-circle at this render size (the $-curve
+// inside it was too subtle to land as a dollar sign in practice).
+// Receipt silhouette (zigzag bottom edge + itemized lines) instead —
+// unambiguous at a glance and doesn't duplicate the literal "$" already
+// shown in the Purchase price value right below it.
 export function PurchaseValuationIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v10M14.5 9.5c0-1.1-1.1-2-2.5-2s-2.5.7-2.5 1.8c0 1.1.9 1.5 2.5 2s2.5.9 2.5 2c0 1.1-1.1 1.7-2.5 1.7S9 15.6 9 14.5" />
+      <path d="M4 3h16v14l-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5V3Z" />
+      <path d="M7 7.5h10M7 11h10M7 14.5h6" />
     </svg>
   )
 }
@@ -20,6 +26,24 @@ export function PhysicalFactsIcon() {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
       <path d="M3 11l9-7 9 7" />
       <path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" />
+    </svg>
+  )
+}
+
+// Roadmap 7.45 (1) — Ownership sub-list (PropertySummary.tsx/
+// PropertyForm.tsx's own "Ownership" heading, roadmap 7.39 (3)) gets
+// this icon alongside the same .property-field-group-title bold/accent
+// treatment as Physical facts/Exterior information, matching its
+// sibling subsections instead of the quieter, icon-less
+// .property-details-title it previously shared with Physical facts'
+// "Details" sub-list. Simple person silhouette — the content below it
+// (Owner name, Contact phone/email, Deed document) is about who owns
+// and can be reached about the property.
+export function OwnershipIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" />
     </svg>
   )
 }
