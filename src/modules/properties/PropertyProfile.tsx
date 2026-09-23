@@ -10,11 +10,15 @@ import { PropertyProfileKpiTab } from '../propertyKpi/PropertyProfileKpiTab'
 
 // Roadmap 7.9 — revised tab set. Roadmap 7.26 reverses the Activity &
 // Documents merge back into two tabs.
+// Roadmap 7.38 — KPI moved first: it's now the tab carrying the
+// property's headline summary (KpiHeadline), quick stats, and the
+// combined value/tax trend chart — the natural landing view, not a
+// secondary analysis tab buried after Mortgage.
 const TABS: { key: ProfileTab; label: string }[] = [
+  { key: 'kpi', label: 'KPI' },
   { key: 'overview', label: 'Overview' },
   { key: 'financials', label: 'Financials' },
   { key: 'mortgage', label: 'Mortgage' },
-  { key: 'kpi', label: 'KPI' },
   { key: 'activity', label: 'Activity' },
   { key: 'documents', label: 'Documents' },
 ]

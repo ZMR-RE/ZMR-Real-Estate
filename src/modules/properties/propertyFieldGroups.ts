@@ -51,14 +51,13 @@ export const PROPERTY_FIELD_GROUPS: PropertyFieldGroupDef[] = [
     id: 'physical-facts',
     title: 'Physical facts',
     Icon: PhysicalFactsIcon,
+    // Roadmap 7.38 (1) — Bedrooms/Bathrooms/Living area/Year built
+    // pulled out into headline stat cards (PropertyPhysicalFactsStats,
+    // rendered by PropertySummary above this group's own field-grid,
+    // which now renders as a quieter "Details" sub-list) — no longer
+    // listed here.
     fields: [
-      // Roadmap 7.32 (2) — relabeled from "Square footage"; column name
-      // (square_footage) unchanged.
-      { key: 'square_footage', label: 'Living area (sq ft)' },
       { key: 'lot_size', label: 'Lot size' },
-      { key: 'year_built', label: 'Year built' },
-      { key: 'bedroom_count', label: 'Bedrooms (whole building)' },
-      { key: 'bathroom_count', label: 'Bathrooms (whole building)' },
       { key: 'basement', label: 'Basement' },
       { key: 'garage_spaces', label: 'Garage spaces' },
       { key: 'street_parking', label: 'Street parking' },

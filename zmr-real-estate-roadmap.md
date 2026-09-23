@@ -1417,6 +1417,27 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       the viewport; confirmed unchanged by this task (not a regression)
       via table-scroll's own scrollWidth === clientWidth check — out of
       scope to fix here, same as 7.35's finding.
+- [ ] 7.38 Property Information / KPI redesign, in progress:
+      1. Physical facts: pull Bedrooms/Bathrooms/Living area/Year built
+         into 4 headline stat cards; everything else moves into a
+         quieter "Details" sub-list below.
+      2. Multi-series KPI chart: Market value, Rent estimate, and
+         Property tax paid on one shared time axis, per-series toggle.
+      3. Reorder Property Profile tabs (KPI first).
+      4. Move to KPI: a quick-stats strip (equity, years owned,
+         cash-on-cash return), a one-line auto-generated headline
+         ("Owned N years · $X equity gained"), and a mortgage payoff
+         progress bar next to the existing equity/LTV figures.
+
+      DONE SO FAR (items 1 and 3): headline stat cards
+      (PropertyPhysicalFactsStats.tsx, 4 hand-rolled icons in
+      propertyFieldGroupIcons.tsx) + "Details" sub-list
+      (PropertySummary.tsx special-cases the physical-facts group);
+      tab order changed to KPI/Overview/Financials/Mortgage/Activity/
+      Documents. `npm run build` clean; verified live on 2169 Ash St,
+      desktop, dark mode. Items 2 and 4 not started yet — this entry
+      stays unchecked until the whole task is done, per Definition of
+      done.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type

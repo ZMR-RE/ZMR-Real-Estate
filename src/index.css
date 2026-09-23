@@ -1337,6 +1337,72 @@ form > .property-field-group:first-of-type {
   flex-shrink: 0;
 }
 
+/* Roadmap 7.38 (1) — Physical facts headline stat cards. 4 across on
+   desktop, stepping down same as .field-grid's own 3/2/1 breakpoints
+   below so the two patterns feel like one family rather than two
+   different responsive behaviors on the same box. */
+.property-stat-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+@media (max-width: 900px) {
+  .property-stat-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .property-stat-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.property-stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-3);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-md);
+}
+
+.property-stat-card svg {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+}
+
+.property-stat-card-value {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  color: var(--text-h);
+  line-height: 1.1;
+}
+
+.property-stat-card-label {
+  font-size: var(--text-xs);
+  color: var(--text);
+}
+
+/* Roadmap 7.38 (1) — the "Details" sub-list below the stat cards:
+   deliberately quieter than a normal .property-field-group-title (no
+   icon, no accent color, smaller) since it's a second-tier heading
+   inside an already-titled section, not a peer of "Physical facts"
+   itself. Sentence case, same reasoning as the Section hierarchy
+   contrast rule's own fix elsewhere in this file — no all-caps. */
+.property-details-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
 /* ============================================================
    SearchableSelect
    ============================================================ */
