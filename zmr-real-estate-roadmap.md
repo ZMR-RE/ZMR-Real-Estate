@@ -1639,6 +1639,36 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       which is the currently-live, intended behavior, not what item 2's
       own original wording says. Recorded here for transparency rather
       than silently marking item 2 "done as originally written."
+- [x] 7.41 Revert 7.39 (5)'s persistent expanded-box tint: it reused
+      shared/cardTint.ts's 4-color hash palette (built to distinguish
+      different PROPERTIES on the Registry list) to mean "this box is
+      open" — wrong tool for the job, scrapped entirely. Replaced with
+      a single, uniform, hover-only navy tint on the whole box — reuses
+      var(--accent-bg) (already the established light-accent hover
+      token elsewhere, e.g. .searchable-select-menu li button:hover),
+      not a new color. `cardTintClass` import/usage removed from
+      CollapsibleSection.tsx and EditableSection.tsx (both details
+      elements go back to a plain className, no per-box hash); the old
+      `.collapsible-section > summary:hover` (surface-sunken, summary-
+      row-only) and the `.collapsible-section[open].card-tint-1..4`
+      rules are both replaced by one `.collapsible-section:hover {
+      background: var(--accent-bg); }` covering the whole box, not just
+      the header. `shared/cardTint.ts` itself and its real use on
+      Property Registry cards (PropertyList.tsx) are untouched.
+
+      `npm run build` clean. Live-verified on 2169 Ash St: confirmed via
+      getComputedStyle while genuinely hovering (real mouse hover, not
+      a CSS guess) that both an EditableSection box (Property
+      information) and a plain CollapsibleSection box (Utility records)
+      resolve to the exact same `rgba(18, 52, 86, 0.08)` in light mode
+      and `rgba(111, 168, 220, 0.14)` in dark mode — one consistent
+      navy tint, no per-box variation, no purple/orange/gray. Confirmed
+      the tint disappears (`matches(':hover')` false, background back
+      to plain `rgb(255, 255, 255)`) the instant the cursor moves off
+      the box — no persistent state, expanded or not. Confirmed no box
+      carries a `card-tint-N` class any more. Property Registry cards'
+      own tinting (PropertyList.tsx, unrelated to this item) re-checked
+      unchanged.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
