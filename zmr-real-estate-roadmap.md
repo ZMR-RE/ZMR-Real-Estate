@@ -2227,6 +2227,46 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       (`supabase.from('units').select('status')`) to confirm the exact
       pre-test state, followed by a final UI reload confirming "3 of 3"
       green again.
+- [x] 7.53 Personality — color-coded "story" numbers, extended beyond
+      occupancy: apply the same green/amber/red logic (7.15's Action
+      Queue priority, 7.52's Units-occupied stat card) to Insurance's
+      coverage-expiration date and the Mortgage payoff progress bar.
+      Occupancy itself already has this treatment (7.52, concurrent
+      work) and was explicitly out of this item's scope.
+
+      Insurance — coverage_end_date now shows a colored "expires in N
+      days" / "expired N days ago" phrase alongside the date, not just a
+      plain date: danger (expired or within a week), warning (within a
+      month), success (further out, or no end date set). New
+      daysUntilExpiration()/insuranceExpirationUrgency() helpers in
+      insuranceQueries.ts, same "real-time check, not a snapshot"
+      approach as the existing getInsuranceStatus().
+
+      Mortgage payoff progress bar — the fill and percent label now vary
+      by how far along payoff is, replacing the old always-success fill.
+      danger is reserved for no progress or a balance that's grown (e.g.
+      a HELOC draw), not ordinary early-stage payoff on a normal
+      mortgage — that would be a false alarm on every fresh loan.
+      warning covers "still short of halfway"; success is a real
+      milestone (halfway or better) — a deliberate interpretation of
+      "color by how far along," not a strict 3-way percentage split,
+      since red would misrepresent a completely normal early mortgage
+      as something wrong.
+
+      `npm run build` clean. Verified live in light and dark mode, all
+      three tiers each: Insurance — temporarily edited the one real
+      policy on file (2169 Ash St, Country Financial) through far/soon/
+      expired coverage_end_date values via the live dashboard form,
+      confirmed each color via getComputedStyle, restored the exact
+      original date afterward and re-queried the DB to confirm every
+      field matches its pre-test state. Mortgage — created a real
+      ZMR-TEST-Lender mortgage record via the dashboard's own
+      Add-mortgage form (no active mortgage existed on either test
+      property to exercise this against), stepped current_balance
+      through 5%/60%/negative payoff, confirmed each color, then
+      hard-deleted the test record afterward and re-queried
+      mortgage_details to confirm the table's 3 pre-existing (voided)
+      rows are unaffected.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
