@@ -820,11 +820,25 @@ dd {
    opt-in needed. --sticky-tab-bar-height is reused below so a sticky
    table header on the same page knows how far down to sit, rather than
    sticking underneath (hidden behind) the tab bar. */
+/* Roadmap 7.49 — tightened top margin: on pages where the heading
+   above sits inside .page-header-row (a flex container — Property
+   Profile's <h1>, wrapped there for the breadcrumb/badge row), a flex
+   item's own margin never collapses with this element's margin-top the
+   way two plain block siblings' margins would. That meant h1's own
+   margin-bottom (--space-5, global h1 rule) and this margin-top
+   (also --space-5) stacked to a full 48px gap instead of the 24px a
+   normal collapse would give — visibly looser than every other
+   heading-to-content transition in the app. Reduced to --space-2: on
+   pages where the heading precedes this as a plain sibling (Settings,
+   Quick capture — no .page-header-row wrapper), normal margin
+   collapsing already caps the visible gap at the larger of the two
+   margins regardless of this value, so those pages are unaffected;
+   only the flex-wrapped, non-collapsing case actually tightens. */
 .tab-bar {
   display: flex;
   gap: 4px;
   border-bottom: 1px solid var(--border);
-  margin: var(--space-5) 0 var(--space-6);
+  margin: var(--space-2) 0 var(--space-6);
   position: sticky;
   top: 0;
   z-index: 10;
