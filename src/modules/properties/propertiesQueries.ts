@@ -69,12 +69,15 @@ export interface Property {
   // dropped from this interface/select rather than kept as a fallback,
   // since (unlike lot_size) no property ever had a value in it.
   exterior_wall_materials: string[]
+  // Roadmap 7.39 (3) — Ownership subsection, inside Purchase & valuation.
+  owner_name: string | null
+  contact_phone: string | null
 }
 
 export type PropertyInput = Omit<Property, 'id' | 'account_id'>
 
 const PROPERTY_COLUMNS =
-  'id, account_id, name, llc_id, address, city, state, zip, insurance_provider, insurance_policy_number, contact_email, purchase_price, status, purchase_date, property_type, purchase_method, property_tax_id, county, township, square_footage, lot_size, municipal_zoning_code, county_assessor_use_code, bedroom_count, bathroom_count, basement, garage_spaces, street_parking, parking_notes, lot_size_value, lot_size_unit, year_built, exterior_wall_materials'
+  'id, account_id, name, llc_id, address, city, state, zip, insurance_provider, insurance_policy_number, contact_email, purchase_price, status, purchase_date, property_type, purchase_method, property_tax_id, county, township, square_footage, lot_size, municipal_zoning_code, county_assessor_use_code, bedroom_count, bathroom_count, basement, garage_spaces, street_parking, parking_notes, lot_size_value, lot_size_unit, year_built, exterior_wall_materials, owner_name, contact_phone'
 
 export async function listProperties(accountId: string) {
   return supabase.from('properties').select(PROPERTY_COLUMNS).eq('account_id', accountId).order('address')

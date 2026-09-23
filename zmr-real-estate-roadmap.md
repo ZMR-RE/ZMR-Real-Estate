@@ -1505,7 +1505,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       not a regression from this item; the new elements' own responsive
       breakpoints, e.g. .kpi-quick-stats' 3/2/1 grid, all applied
       correctly against the true 390px viewport regardless).
-- [ ] 7.39 Five fixes, in progress:
+- [x] 7.39 Five fixes:
       1. Style "← Property registry" as a proper breadcrumb element.
       2. Hide the top-of-page property name header on Overview only
          (hero banner already shows it there); keep it on every other
@@ -1559,6 +1559,67 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       checked desktop, dark mode, and a 390px iframe-simulated mobile
       width. Item 3 (Ownership subsection) still the only piece left
       unchecked for this whole item.
+
+      ITEM 3 COMPLETE — Ownership subsection: migration
+      20260922140000_property_ownership_fields.sql adds
+      properties.owner_name (text) and properties.contact_phone (text),
+      and seeds 'Deed' into the document_type pick list for every
+      account (applied via `supabase db push`, confirmed clean).
+      propertiesQueries.ts/usePropertyRegistry.ts carry the two new
+      fields through the Property interface, select columns, and blank-
+      property default. documentsQueries.ts's getLatestPropertyPhoto
+      generalized into getLatestPropertyDocumentByCategory(accountId,
+      propertyId, category) — reused for Deed instead of writing a
+      near-duplicate query (getLatestPropertyPhoto is now a thin
+      category='Photos' wrapper over it, unchanged for every existing
+      caller). New usePropertyDeedDocument.ts (fetch/upload/view hook,
+      same pattern as the property photo hook) and
+      PropertyDeedUploadField.tsx (Edit-mode upload control, immediate-
+      upload-on-select, independent of the surrounding form's own Save)
+      via the existing 2.5 document architecture. New
+      PropertyOwnershipSection.tsx renders the View-mode sub-list (Owner
+      name, Contact email, Contact phone, Deed document link) inside
+      Purchase & valuation, same visual treatment as Physical facts'
+      "Details" sub-list; it waits for the deed fetch's `loading` to
+      resolve before deciding whether to render at all, so a deed-only
+      property (no text fields yet) still shows correctly — a property
+      with neither any Ownership field nor purchase price/date won't
+      show the subsection at all, since the outer group itself still
+      gates on purchase price/date; flagged in-code as an accepted,
+      narrow trade-off rather than added complexity for a very unlikely
+      real property. Contact email moved out of PropertyIdentityHeader
+      (used to ride there as a lone subline) into this new sub-list,
+      alongside the new Contact phone. PropertyForm.tsx gained an
+      "Ownership" sub-heading (property-details-title, not uppercase)
+      inside the Purchase & valuation field group with Owner name,
+      Contact email (moved here from the identity block), Contact phone
+      (type="tel"), and the deed upload field.
+
+      `npm run build` clean. Live-verified on 2169 Ash St: entered
+      ZMR-TEST- owner name/phone, uploaded a real PDF as the Deed
+      document, confirmed the `documents` row and a working signed URL
+      (fetch() returned 200/application-pdf), confirmed the section
+      rendered correctly with all 4 fields plus "View deed document",
+      confirmed a deed-only variant (owner name/phone/email cleared)
+      still rendered the section for the deed link alone. Checked dark
+      mode and a 390px iframe-simulated mobile width (same pre-existing
+      .tab-bar overflow from 7.35/7.37, unchanged, not a regression).
+      Cleaned up via direct storage.remove() + documents row delete,
+      then reverted owner_name/contact_phone to null and contact_email
+      back to its original value through the dashboard UI; positively
+      re-queried after and confirmed the property record now exactly
+      matches its pre-test state
+      ({"owner_name":null,"contact_phone":null,"contact_email":"2169DP@gmail.com"})
+      with zero remaining Deed documents.
+
+      All 5 items now complete and live-verified, desktop/mobile,
+      light/dark. Note on item 2: this task's own original text asked
+      to hide the header on Overview only; that was built, then
+      reversed the same day per direct correction (see the ADDENDUM
+      above) — the header now renders on every tab unconditionally,
+      which is the currently-live, intended behavior, not what item 2's
+      own original wording says. Recorded here for transparency rather
+      than silently marking item 2 "done as originally written."
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type

@@ -42,6 +42,8 @@ const BLANK_PROPERTY: PropertyInput = {
   lot_size_unit: null,
   year_built: null,
   exterior_wall_materials: [],
+  owner_name: null,
+  contact_phone: null,
 }
 
 export function usePropertyRegistry() {

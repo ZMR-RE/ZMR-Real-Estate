@@ -41,8 +41,13 @@ function formatCityStateZip(property: Property): string {
 // renders large and first; the legacy free-text "name" field is dropped
 // from this view entirely (still editable via the edit form, per its
 // required DB column) since showing it here would just duplicate the
-// address. Contact email rides along as a minor secondary line rather
-// than its own field group.
+// address.
+//
+// Roadmap 7.39 (3) — Contact email moved out of this header (it used to
+// ride along here as a lone line) into Purchase & valuation's new
+// Ownership sub-list, alongside the new Contact phone field —
+// consolidated with the rest of the ownership/contact info rather than
+// floating separately.
 //
 // Roadmap 7.34 — restructured around the full-width hero photo: address/
 // city-state-zip moved onto the image itself (PropertyPhoto's own
@@ -62,7 +67,6 @@ export function PropertyIdentityHeader({ property, llcOptions }: PropertyIdentit
   return (
     <div className="property-identity-header">
       <PropertyPhoto propertyId={property.id} address={property.address} cityStateZip={cityStateZip} />
-      {property.contact_email && <p className="property-identity-subline">{property.contact_email}</p>}
       <div className="property-identity-meta">
         <div className="field">
           <dt>Organization type</dt>

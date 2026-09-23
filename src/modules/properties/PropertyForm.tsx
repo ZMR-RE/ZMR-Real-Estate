@@ -11,6 +11,7 @@ import { NO_LLC_ID } from '../llcs/useLlcs'
 import type { HoldingCompanyInput } from '../holdingCompanies/holdingCompaniesQueries'
 import type { PropertyInput } from './propertiesQueries'
 import { PropertyPhotoUploadField } from './PropertyPhotoUploadField'
+import { PropertyDeedUploadField } from './PropertyDeedUploadField'
 import { ExteriorInformationIcon, PhysicalFactsIcon, PurchaseValuationIcon } from './propertyFieldGroupIcons'
 
 interface PropertyFormProps {
@@ -161,11 +162,6 @@ export function PropertyForm({
         </div>
 
         <div className="field">
-          <label htmlFor="contact_email">Contact email</label>
-          <input id="contact_email" type="email" {...field('contact_email')} />
-        </div>
-
-        <div className="field">
           <label htmlFor="status">Status</label>
           <select
             id="status"
@@ -207,6 +203,31 @@ export function PropertyForm({
             <label htmlFor="purchase_date">Purchase date</label>
             <input id="purchase_date" type="date" {...field('purchase_date')} />
           </div>
+        </div>
+
+        {/* Roadmap 7.39 (3) — Ownership sub-list: Owner name, Contact
+            email (moved here from the identity fields block above),
+            Contact phone (new field), Deed document. Same "Details"-
+            style sub-heading treatment as Physical facts' own
+            sub-list, just reused for a different group. */}
+        <h4 className="property-details-title">Ownership</h4>
+        <div className="field-column">
+          <div className="field">
+            <label htmlFor="owner_name">Owner name</label>
+            <input id="owner_name" {...field('owner_name')} />
+          </div>
+
+          <div className="field">
+            <label htmlFor="contact_email">Contact email</label>
+            <input id="contact_email" type="email" {...field('contact_email')} />
+          </div>
+
+          <div className="field">
+            <label htmlFor="contact_phone">Contact phone</label>
+            <input id="contact_phone" type="tel" {...field('contact_phone')} />
+          </div>
+
+          {propertyId && <PropertyDeedUploadField propertyId={propertyId} />}
         </div>
       </div>
 

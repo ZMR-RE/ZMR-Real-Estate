@@ -6,6 +6,7 @@ import { PROPERTY_FIELD_GROUPS, hasFieldValue } from './propertyFieldGroups'
 import { PropertyFieldGroup } from './PropertyFieldGroup'
 import { PropertyIdentityHeader } from './PropertyIdentityHeader'
 import { PropertyPhysicalFactsStats, hasPhysicalFactsStats } from './PropertyPhysicalFactsStats'
+import { PropertyOwnershipSection } from './PropertyOwnershipSection'
 
 interface PropertySummaryProps {
   property: Property
@@ -99,6 +100,41 @@ export function PropertySummary({ property, llcOptions }: PropertySummaryProps) 
                   </dl>
                 </div>
               )}
+            </section>
+          )
+        }
+
+        // Roadmap 7.39 (3) — Purchase & valuation gets an "Ownership"
+        // sub-list appended below its own purchase_price/purchase_date
+        // fields (same "Details"-style treatment as Physical facts
+        // above), rather than a full new top-level group. The group
+        // itself is still skipped if purchase_price/purchase_date are
+        // both empty (same as every other group's Empty field
+        // visibility check) even if Ownership data exists — a property
+        // with a deed on file but no purchase price/date/owner info at
+        // all is an edge case this doesn't specially handle, since
+        // Ownership's own presence can only be confirmed after its
+        // async deed fetch resolves and would otherwise complicate the
+        // group-skip decision for every other property that DOES have
+        // the base fields filled in.
+        if (group.id === 'purchase-valuation') {
+          if (presentFields.length === 0) return null
+
+          return (
+            <section className="property-field-group" key={group.id}>
+              <h3 className="property-field-group-title">
+                <group.Icon />
+                {group.title}
+              </h3>
+              <dl className="field-grid">
+                {presentFields.map((field) => (
+                  <div className="field" key={field.label}>
+                    <dt>{field.label}</dt>
+                    <dd>{field.value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <PropertyOwnershipSection property={property} />
             </section>
           )
         }

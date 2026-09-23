@@ -66,24 +66,34 @@ export async function getDocumentSignedUrl(path: string, expiresIn = 60) {
 // architecture instead of a new storage system: "the property photo" is
 // simply the most recent 'Photos'-category document that's an actual
 // file (not a reference link — documents_file_or_link_check allows
-// category 'Photos' rows with only a link_url, e.g. via the Activity &
+// a category row with only a link_url, e.g. via the Activity &
 // Documents tab's freeform link entry, 7.17). Fetches a few and picks
 // the first real file client-side rather than relying on a `.not(...
 // is null)` filter, since this is the only place in the app that needs
 // one.
-export async function getLatestPropertyPhoto(accountId: string, propertyId: string) {
+//
+// Roadmap 7.39 (3) — generalized from "getLatestPropertyPhoto" (still
+// exported below, now just a thin category='Photos' wrapper so nothing
+// else has to change) so the Deed document field can fetch the latest
+// 'Deed'-category document the exact same way, without a second near-
+// identical query.
+export async function getLatestPropertyDocumentByCategory(accountId: string, propertyId: string, category: DocumentCategory) {
   const { data, error } = await supabase
     .from('documents')
     .select(DOCUMENT_COLUMNS)
     .eq('account_id', accountId)
     .eq('property_id', propertyId)
-    .eq('category', 'Photos')
+    .eq('category', category)
     .order('uploaded_at', { ascending: false })
     .limit(5)
     .returns<DocumentRecord[]>()
 
   if (error) return { data: null, error }
   return { data: data?.find((doc) => doc.storage_path !== null) ?? null, error: null }
+}
+
+export async function getLatestPropertyPhoto(accountId: string, propertyId: string) {
+  return getLatestPropertyDocumentByCategory(accountId, propertyId, 'Photos')
 }
 
 interface UploadTransactionDocumentInput {
