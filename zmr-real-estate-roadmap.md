@@ -1337,6 +1337,25 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       hero/header/icons all stack correctly) once this pre-existing
       issue is accounted for.
 
+      FIXED (separate task): root cause traced to `.app-main`, not
+      `.tab-bar` — below the 860px breakpoint `.app-shell` switches to
+      `flex-direction: column`, and in that column context `.app-main`
+      (no explicit width, relying on `align-items: stretch`) wasn't
+      being reliably stretched to the container's width once a wide-
+      content sticky descendant (`.tab-bar`, which never actually
+      overflowed internally on its own) sat inside it. Confirmed via
+      direct live measurement before fixing: forcing `.app-shell` to
+      `display: block` fixed it, explicitly setting `align-items:
+      stretch` changed nothing, overriding `.tab-bar`'s own position/
+      overflow-x changed nothing — adding `width: 100%` to `.app-main`
+      fixes it in isolation and is harmless at desktop widths (`flex-
+      basis: 0%` from the `flex: 1` shorthand governs that axis there
+      instead, since flex-basis takes precedence over width whenever
+      basis isn't auto). Verified live at a true 390px viewport across
+      all six Property Profile tabs on two properties (with and without
+      a hero photo) — `scrollWidth === clientWidth` on every one — and
+      confirmed desktop unaffected.
+
 - [x] 7.36 Insurance box overhaul:
       1. Convert Insurance's Edit mode from a flat single-column list to
          the same grouped, paired-field layout already used on Property
