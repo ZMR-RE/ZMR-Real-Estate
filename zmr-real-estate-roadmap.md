@@ -1383,6 +1383,41 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       subsection headers, and every field row render with correct
       contrast).
 
+- [x] 7.37 Property Tax Installments: redesign the list into a compact
+      one-line-per-year format — amount + paid date shown together
+      (e.g. "$2,817.34 — 2024-03-31"), no "paid" label text. Unpaid
+      entries show the amount with no date/a dash, distinguishing them
+      without extra wording. Keep "+ Add tax year" only at the top —
+      do not duplicate it at the bottom.
+
+      installmentDisplay() in PropertyTaxLedgerList.tsx: an amount with
+      a paid date renders "$X — DATE"; an amount with no paid date
+      (unpaid) renders just "$X", no trailing punctuation; a slot with
+      no amount at all renders "—", same as the rest of the app's
+      missing-data convention. Document links, when present, still
+      stack below that line. Removed the old 3-row stacked
+      Amount/Paid date/Documents block and its now-dead
+      .property-tax-installment-block/-row/-label CSS. "+ Add tax
+      year" moved from below the list to above it in
+      PropertyTaxLedger.tsx — only one instance exists either way, but
+      this puts it at the top as asked.
+
+      `npm run build` clean. Verified live on 2169 Ash St across 9 real
+      tax years (2017-2025) covering every case: paid installments
+      (amount + date), unpaid ones (amount alone, e.g. 2025's 2nd
+      installment shows "—" since it has no amount at all, 2020's 1st
+      installment shows "$2,230.73" alone since it has an amount but no
+      paid date), and installments with documents (View document
+      button(s) stacking below the line). Checked desktop, dark mode
+      (table border, text, and document buttons all correctly
+      contrasted), and a 390px iframe-simulated mobile width — same
+      pre-existing page-level horizontal overflow already documented in
+      7.35 (610px content vs. ~390px viewport, a dashboard-wide
+      .tab-bar issue) still applies here since this table is wider than
+      the viewport; confirmed unchanged by this task (not a regression)
+      via table-scroll's own scrollWidth === clientWidth check — out of
+      scope to fix here, same as 7.35's finding.
+
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
 - [x] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field) — the llcs table, properties.llc_id, and the real-list-plus-"+ Add new LLC" picker already existed (Phase 1); this pass added the missing formation_date field
