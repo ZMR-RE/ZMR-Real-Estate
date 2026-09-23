@@ -2167,6 +2167,66 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       exact same component/prop path as the confirmed-working Rent
       value one, so treated as verified by that identical code path
       rather than separately reproduced.
+- [x] 7.52 Merged Units + Occupancy card, per approved design: replace
+      the separate "Units" and "Occupied/Vacant" stat cards with one
+      merged card ("{occupied} of {total}", label "Units occupied"),
+      colored green (100% occupied) / amber (partial) / red (0%
+      occupied, only when total > 0) using the same --success/--warning/
+      --danger tokens Action Queue's own tiles/badges already use. A
+      planned 4th "Monthly rent" stat card was scoped in the same item
+      but NOT built — see below.
+
+      Merged card: PropertyPhysicalFactsStats.tsx's separate Units/
+      Occupied stats (7.47) collapsed into one `units-occupied` stat,
+      reusing OccupancyIcon; UnitsIcon retired (no longer referenced
+      anywhere). Suppression rule changed to match the old Occupied
+      card's (0 total units → card omitted entirely) rather than the
+      old Units card's "always show, even 0" — merging into one
+      fraction means "0 of 0" would be the only remaining zero-state,
+      and that's not meaningful either. New `.property-stat-card-
+      value--success/--warning/--danger` CSS modifiers (index.css).
+
+      Monthly rent — scoped, then explicitly held back per direction
+      mid-build: building it surfaced a real, pre-existing data-model
+      gap. tenant_units stores rent per TENANT row, not per lease — no
+      lease_id/grouping construct exists (8.4's own migration comment
+      deferred "rent amount/term structure" to a planned 8.5 Lease
+      entity, but 8.5 shipped as just rent_amount/late_fee columns
+      bolted onto tenant_units; no real Lease entity was ever built).
+      Two co-tenants sharing one unit each get their own row; summing
+      rent_amount naively can double-count if both carry the full
+      shared rent, and a (unit_id, start_date, rent_amount) dedupe
+      would be actively unsafe — it can't distinguish that case from
+      two roommates who legitimately each pay their own separate rent
+      (identical-looking rows, opposite correct totals). Checked live
+      before deciding: zero tenant_units rows in this account hit the
+      ambiguous case today, so a naive sum would have been numerically
+      correct for all real current data — but per explicit direction,
+      held back anyway rather than shipping ahead of the proper fix.
+      Final 3-card layout ships now (Units occupied, Year built, Living
+      area); Monthly rent is deferred to the upcoming Tenants &
+      Occupancy redesign (logged under Future Considerations below),
+      which addresses this same co-tenant/lease structure gap directly.
+      No 4th slot or "Coming soon" placeholder in the meantime — the 4th
+      card is simply absent, same as any other stat with nothing real to
+      show, per this app's existing Empty field visibility convention
+      (no stub UI for a feature that doesn't exist yet). All monthly-
+      rent-specific code (usePropertyMonthlyRent.ts, MonthlyRentIcon)
+      removed rather than left half-wired.
+
+      `npm run build` clean throughout. Live-verified on 2169 Ash St (0
+      units): confirmed only Year built + Living area render, no merged
+      card, no 4th slot, in both light and dark mode. Live-verified on
+      5336 W Foster Ave (3 units, all Rented): confirmed "3 of 3" green
+      (`rgb(63, 122, 69)` light / matching dark). Temporarily changed
+      unit statuses via the live dashboard UI (Units box) to exercise
+      the other two color states — 1 unit to Vacant confirmed "2 of 3"
+      amber (`rgb(154, 100, 32)`); all 3 units to Vacant confirmed "0 of
+      3" red (`rgb(181, 68, 47)` light, `rgb(224, 133, 113)` dark) — then
+      reverted all 3 units back to Rented and positively re-queried
+      (`supabase.from('units').select('status')`) to confirm the exact
+      pre-test state, followed by a final UI reload confirming "3 of 3"
+      green again.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
@@ -2508,6 +2568,16 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] Warm save-confirmation feedback for Property Overview's boxes
       (currently silent on save) — flagged by T4 during 7.51's
       micro-copy pass, not built; scope it properly when picked up.
+- [ ] Tenants & Occupancy redesign — fix the underlying data-model gap
+      7.52 surfaced: tenant_units stores rent per TENANT row, not per
+      lease (no lease_id/grouping construct), so two co-tenants sharing
+      one unit can't be distinguished from two tenants who each
+      legitimately pay their own separate rent when summing
+      rent_amount. Needs a real Lease entity (or an explicit grouping
+      construct on tenant_units) before any feature safely sums rent
+      across co-tenants. Property Overview's planned 4th "Monthly rent"
+      headline stat card (7.52, scoped but held back) is blocked on
+      this and should ship as part of this redesign.
 
 ## Ongoing — Q&A / SOP Log
 - [ ] A living reference section (in-app or a maintained doc) answering recurring "how do I do X" questions as they come up during real use (e.g. "how do I add past mortgage information"). Updated whenever a new section is built out or a real question arises — not a one-time deliverable, an evolving document.

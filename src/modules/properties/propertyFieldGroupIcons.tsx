@@ -113,24 +113,12 @@ export function YearBuiltIcon() {
   )
 }
 
-// Roadmap 7.47 — headline stat cards replaced Bedrooms/Bathrooms with
-// Units and Occupied/Vacant (investor-focused: how many units, how many
-// are rented, not sleeping-room counts). A small building facade with a
-// 2x2 grid of doors/windows reads as "multiple units" the way
-// PhysicalFactsIcon's single-house silhouette above doesn't.
-export function UnitsIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" aria-hidden="true">
-      <rect x="4" y="3" width="16" height="18" rx="1" />
-      <path d="M4 12h16" />
-      <rect x="7" y="6" width="3" height="3" />
-      <rect x="14" y="6" width="3" height="3" />
-      <rect x="7" y="15" width="3" height="3" />
-      <rect x="14" y="15" width="3" height="3" />
-    </svg>
-  )
-}
-
+// Roadmap 7.52 — 7.47's separate Units card is gone (merged into one
+// "Units occupied" card, PropertyPhysicalFactsStats.tsx), so its own
+// building-facade icon (UnitsIcon) is retired along with it — the
+// merged card reuses OccupancyIcon below instead, since the headline
+// number is now about occupancy, not a standalone unit count.
+//
 // A single door with a keyhole — "someone has a key to this one" reads
 // as occupied without reusing OwnershipIcon's person silhouette, which
 // already means something else (who owns the property) elsewhere on

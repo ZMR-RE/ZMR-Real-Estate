@@ -1518,6 +1518,22 @@ form > .property-field-group:first-of-type {
   line-height: 1.1;
 }
 
+/* Roadmap 7.52 — merged Units occupied stat card: colored by occupancy
+   rate using the same semantic --danger/--warning/--success tokens
+   Action Queue's own tiles/badges already use dashboard-wide (not new
+   colors introduced here). Only this one stat ever sets a variant. */
+.property-stat-card-value--success {
+  color: var(--success);
+}
+
+.property-stat-card-value--warning {
+  color: var(--warning);
+}
+
+.property-stat-card-value--danger {
+  color: var(--danger);
+}
+
 .property-stat-card-label {
   font-size: var(--text-xs);
   color: var(--text);
