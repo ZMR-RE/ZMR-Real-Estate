@@ -934,17 +934,34 @@ dd {
    Security deposits, and Units stay full-width below both columns,
    unaffected by any of this. Single column at mobile widths.
 
-   Expand-to-full-width (dashboard-wide rule) — all 6 boxes are direct
-   siblings of this one shared grid (not two independent flex columns),
-   so a collapsed box takes one column slot (span 1, the grid default)
-   while an expanded one spans both via [open] below, pushing every
-   later box down to reflow beneath it. Two independent columns could
-   never do this — nothing can reflow across a boundary that doesn't
-   exist in the DOM. This is safe against the old "shared-row grid
-   stretches every cell to the tallest one" problem because that only
-   bit when two *open* boxes of different heights shared a row; an open
-   box never shares a row with anything under this rule, so only
-   same-height collapsed boxes ever sit side by side.
+   Expand-to-full-width (dashboard-wide rule) — an open box spans the
+   full grid width via [open] below, pushing every later box down to
+   reflow beneath it.
+
+   Explicit-column fix — this grid previously relied on the browser's
+   default row-major auto-placement (each collapsed box taking whichever
+   column slot came next), which paired up whatever two boxes happened
+   to land in the same row regardless of which curated column they
+   belonged to (e.g. Financial accounts next to Insurance, not next to
+   Market & rent value history) — it never actually produced two
+   independent-looking column stacks, just sequential row-pairing of
+   neighbors. Fixed by giving each of the 6 boxes an explicit column via
+   nth-child, matched to their fixed DOM order in
+   PropertyProfileOverviewTab.tsx (1: Property information, full width;
+   2-3: Financial accounts/Insurance, column 1; 4-6: Market & rent value
+   history/Property tax installments/Tenants, column 2) — if that DOM
+   order ever changes, these positions must be updated to match.
+   grid-auto-flow: dense is required alongside this: without it, an
+   item's row is chosen by scanning forward from wherever the previous
+   item landed and never backtracking, which — given column 1 only has 2
+   boxes and column 2 has 3 — leaves column 1 exhausted one row before
+   column 2 and starts pairing column 2's later boxes with whatever
+   empty slot is next in scan order, reintroducing the same
+   wrong-neighbor problem this fix exists to remove. Dense packing
+   instead always places each item in the earliest available cell for
+   its explicit column, so each column simply fills top-down
+   independently of the other's length — the two-column stack the
+   layout is supposed to look like.
    ============================================================ */
 .property-overview-grid {
   display: flex;
@@ -959,17 +976,42 @@ dd {
 .property-overview-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-auto-flow: dense;
   align-items: start;
   gap: var(--space-4);
 }
 
 .property-overview-columns > .collapsible-section {
   margin-top: 0;
-  grid-column: span 1;
 }
 
-.property-overview-columns > .collapsible-section[open] {
-  grid-column: 1 / -1;
+/* Scoped to desktop widths only — grid-template-columns collapses to a
+   single explicit track at <=900px below, and an unconditional
+   `grid-column: 2` here would force the browser to auto-generate an
+   implicit second column to satisfy it even though only one track is
+   defined, silently recreating a 2-column layout on mobile. */
+@media (min-width: 901px) {
+  .property-overview-columns > *:nth-child(1) {
+    grid-column: 1 / -1;
+  }
+
+  .property-overview-columns > *:nth-child(2),
+  .property-overview-columns > *:nth-child(3) {
+    grid-column: 1;
+  }
+
+  .property-overview-columns > *:nth-child(4),
+  .property-overview-columns > *:nth-child(5),
+  .property-overview-columns > *:nth-child(6) {
+    grid-column: 2;
+  }
+
+  /* Must come after the nth-child rules above: equal specificity, so
+     source order is what lets an open box's full-width span win over
+     its fixed column assignment. */
+  .property-overview-columns > .collapsible-section[open] {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 900px) {
