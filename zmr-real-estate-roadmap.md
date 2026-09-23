@@ -929,6 +929,15 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       verification was hard-deleted afterward (no delete UI exists for
       any of these); re-queried each table afterward and confirmed zero
       ZMR-TEST- rows remain anywhere touched.
+
+      ADDENDUM — item 4's 2-column layout (and a follow-up commit that
+      fixed its column-pairing to use explicit grid-column placement)
+      has been reverted per explicit instruction ("Consolidated Overview
+      layout fix — supersedes the just-built column-pairing work"):
+      every secondary box is full-width and single-column again, same
+      as Specs & measurements/Utility records/Security deposits/Units
+      always were. See git history for the column-layout CSS/JSX if it
+      needs revisiting. Items 1, 2, 3, 5 above are unaffected.
 - [ ] 7.28 Remaining old-pattern boxes found while completing 7.27, out
       of that item's scope (Property Overview only) — logged per the
       Standard rollout completeness rule rather than left unconverted
