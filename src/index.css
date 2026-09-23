@@ -1287,6 +1287,103 @@ dd {
   fill: var(--text);
 }
 
+/* Roadmap 7.38 (2) — KPI tab's combined Market value/Rent estimate/
+   Property tax paid chart. Same percentage-sizing approach as
+   .value-trend-chart above, just wider (this one's meant to be the KPI
+   tab's own headline visualization, not a small box-internal trend). */
+.kpi-trend-chart svg {
+  display: block;
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  margin: var(--space-3) 0;
+}
+
+.kpi-trend-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+/* .kpi-trend-chart-legend-item is a <label> wrapping a checkbox — the
+   existing global label:has(input[type='checkbox']) rule already gives
+   it display:flex/gap/font-weight, nothing extra needed here. */
+.kpi-trend-chart-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-pill);
+}
+
+/* Roadmap 7.38 (4) — KPI tab headline + quick stats, sitting above
+   every collapsible card. Headline reuses the identity-subline size (a
+   quiet single line of derived text, not a heading); quick stats reuse
+   .field-grid's own 3-up layout — 3 stats always fits at desktop, and
+   the existing 900px/600px breakpoints already step it down. */
+.kpi-headline {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-md);
+  color: var(--text);
+}
+
+.kpi-quick-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4) var(--space-6);
+  margin: 0 0 var(--space-5);
+}
+
+@media (max-width: 900px) {
+  .kpi-quick-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .kpi-quick-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Roadmap 7.38 (4) — mortgage payoff progress bar, next to the
+   existing equity/LTV figures on the KPI tab's Market & financial
+   snapshot card. --success for the filled (paid-off) portion — paying
+   down principal is unambiguously a positive-financial state, the
+   reserved meaning that token exists for (unlike the 3 chart-line
+   colors above, which are pure differentiators). */
+.mortgage-payoff-progress {
+  margin-top: var(--space-4);
+}
+
+.mortgage-payoff-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-h);
+  margin-bottom: var(--space-1);
+}
+
+.mortgage-payoff-progress-bar {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.mortgage-payoff-progress-fill {
+  height: 100%;
+  background: var(--success);
+  border-radius: var(--radius-pill);
+}
+
+.mortgage-payoff-progress-remaining {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+  color: var(--text);
+}
+
 /* ============================================================
    Property field groups (roadmap 7.22) — labeled sub-sections within
    Property information: Insurance, Purchase & valuation, Physical

@@ -1417,7 +1417,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       the viewport; confirmed unchanged by this task (not a regression)
       via table-scroll's own scrollWidth === clientWidth check — out of
       scope to fix here, same as 7.35's finding.
-- [ ] 7.38 Property Information / KPI redesign, in progress:
+- [x] 7.38 Property Information / KPI redesign:
       1. Physical facts: pull Bedrooms/Bathrooms/Living area/Year built
          into 4 headline stat cards; everything else moves into a
          quieter "Details" sub-list below.
@@ -1429,15 +1429,73 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
          ("Owned N years · $X equity gained"), and a mortgage payoff
          progress bar next to the existing equity/LTV figures.
 
-      DONE SO FAR (items 1 and 3): headline stat cards
-      (PropertyPhysicalFactsStats.tsx, 4 hand-rolled icons in
-      propertyFieldGroupIcons.tsx) + "Details" sub-list
-      (PropertySummary.tsx special-cases the physical-facts group);
-      tab order changed to KPI/Overview/Financials/Mortgage/Activity/
-      Documents. `npm run build` clean; verified live on 2169 Ash St,
-      desktop, dark mode. Items 2 and 4 not started yet — this entry
-      stays unchecked until the whole task is done, per Definition of
-      done.
+      Item 1: headline stat cards (PropertyPhysicalFactsStats.tsx, 4
+      hand-rolled icons in propertyFieldGroupIcons.tsx) + "Details"
+      sub-list (PropertySummary.tsx special-cases the physical-facts
+      group, same Empty field visibility rule as every other box).
+
+      Item 2: useKpiTrendChart.ts combines the 7.19 value-history log
+      (bucketed to latest-entry-per-calendar-year) with 7.37's own
+      usePropertyTaxTrend (reused as-is, not re-queried) onto one
+      shared per-year X axis. Each series independently toggleable
+      (KpiTrendChart.tsx); the X domain (year range) stays fixed
+      across toggles so the timeline never jumps, but the Y domain
+      (dollars) recomputes from only the currently-visible series —
+      otherwise Property tax paid (a few thousand dollars) reads as a
+      flat line pinned near zero next to Market value (hundreds of
+      thousands) on a shared linear axis. Verified live: with all 3
+      visible the tax line was nearly invisible near $0 as expected;
+      toggling off Market value and Rent estimate rescaled the Y axis
+      to $0–$5,122 and the tax trend became clearly readable, X axis
+      (2017–2026) unchanged. 3 line colors (--accent/--success/
+      --warning) are pure differentiators here, not status signals —
+      same exemption index.css's own contextual card tints already
+      carry.
+
+      Item 3: TABS reordered to KPI/Overview/Financials/Mortgage/
+      Activity/Documents in PropertyProfile.tsx (default active tab
+      unchanged — reordering the tab bar isn't the same as changing
+      what loads first).
+
+      Item 4: KpiHeadline.tsx and KpiQuickStats.tsx share
+      kpiHeadlineMath.ts's computeYearsOwned/computeEquityGained —
+      equity gained = current equity (latest market value minus
+      current mortgage balance) minus initial equity (purchase price
+      minus the mortgage's original loan amount; a cash purchase with
+      no mortgage_details row is treated as 0 original loan, i.e. 100%
+      initial equity — "no mortgage record" already means "no
+      mortgage" everywhere else in this app, not a guess). Cash-on-cash
+      return is NOT computed — it isn't computed anywhere in this app
+      (MarketFinancialSnapshotCard's own "Cash-on-cash ROI: Not enough
+      data yet — total cash invested isn't tracked" is the only
+      existing treatment), so KpiQuickStats reuses that exact wording
+      rather than inventing a second calculation with no data behind
+      it. MortgagePayoffProgressBar.tsx (principal paid off vs.
+      remaining balance — distinct from equity, which also moves with
+      market appreciation) placed on the KPI tab next to the existing
+      equity/LTV figures (Market financial snapshot card), not the
+      Mortgage tab, since equity/LTV already surfaces on KPI.
+
+      `npm run build` clean. Verified live on 2169 Ash St: headline/
+      quick-stats/chart all correct with no mortgage on file (equity
+      gained omitted from the headline, progress bar renders nothing);
+      added a real ZMR-TEST-prefixed mortgage (200,000 original /
+      150,000 balance) via the Mortgage tab's own form, confirmed
+      headline became "Owned 8 years · $241K equity gained", quick
+      stats/snapshot equity/LTV all matched ($155,305 / 49.1%), and the
+      progress bar showed "$50,000 paid off · 25%" / "$150,000
+      remaining of $200,000" — all arithmetic checked by hand. Voided
+      that mortgage via the tab's own "Void mortgage" action (the
+      entity's only removal path, non-destructive — matches an
+      already-voided pre-existing "Test Bank" mortgage on the same
+      property untouched by this test), positively re-queried after to
+      confirm both rows' voided state and that the KPI tab reverted to
+      its exact pre-test display. Checked dark mode and a 390px
+      iframe-simulated mobile width (same pre-existing, out-of-scope
+      .tab-bar overflow documented in 7.35/7.37 — confirmed unchanged,
+      not a regression from this item; the new elements' own responsive
+      breakpoints, e.g. .kpi-quick-stats' 3/2/1 grid, all applied
+      correctly against the true 390px viewport regardless).
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type

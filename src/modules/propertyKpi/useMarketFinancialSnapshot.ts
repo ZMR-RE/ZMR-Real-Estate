@@ -12,6 +12,12 @@ export interface MarketFinancialSnapshot {
   rentValue: PropertyValueLogEntry | null
   rentValueHistory: PropertyValueLogEntry[]
   currentBalance: number | null
+  // Roadmap 7.38 (4) — the mortgage payoff progress bar and the
+  // KpiHeadline's equity-gained figure both need the loan's original
+  // principal (fixed at origination, unlike current_balance) alongside
+  // the balance already fetched here — same getMortgageDetails call,
+  // just also keeping this field instead of only current_balance.
+  originalLoanAmount: number | null
   equity: EquitySnapshot | null
   annualRent: number | null
   ytdNetCashFlow: number
@@ -33,6 +39,7 @@ export interface MarketFinancialSnapshot {
 export function useMarketFinancialSnapshot(propertyId: string, transactions: Transaction[]) {
   const { accountId } = useAuth()
   const [currentBalance, setCurrentBalance] = useState<number | null>(null)
+  const [originalLoanAmount, setOriginalLoanAmount] = useState<number | null>(null)
   const [annualRent, setAnnualRent] = useState<number | null>(null)
   const [marketValueHistory, setMarketValueHistory] = useState<PropertyValueLogEntry[]>([])
   const [rentValueHistory, setRentValueHistory] = useState<PropertyValueLogEntry[]>([])
@@ -61,6 +68,7 @@ export function useMarketFinancialSnapshot(propertyId: string, transactions: Tra
       }
       setError(null)
       setCurrentBalance(mortgageRes.data ? Number(mortgageRes.data.current_balance) : null)
+      setOriginalLoanAmount(mortgageRes.data ? Number(mortgageRes.data.original_loan_amount) : null)
 
       const monthlyRent = (tenantsRes.data ?? []).reduce(
         (sum, row) => sum + (row.rent_amount !== null ? Number(row.rent_amount) : 0),
@@ -94,6 +102,7 @@ export function useMarketFinancialSnapshot(propertyId: string, transactions: Tra
     rentValue: latestRentValue,
     rentValueHistory,
     currentBalance,
+    originalLoanAmount,
     equity,
     annualRent,
     ytdNetCashFlow,

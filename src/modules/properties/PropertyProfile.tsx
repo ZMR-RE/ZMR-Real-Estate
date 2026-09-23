@@ -107,7 +107,7 @@ export function PropertyProfile() {
       {tab === 'mortgage' && (
         <PropertyProfileMortgageTab property={property} marketValue={latestMarketValue?.value ?? null} />
       )}
-      {tab === 'kpi' && <PropertyProfileKpiTab propertyId={property.id} transactions={transactions} />}
+      {tab === 'kpi' && <PropertyProfileKpiTab property={property} transactions={transactions} />}
       {tab === 'activity' && (
         <PropertyProfileActivityHistoryTab property={property} llcOptions={llcOptions} activity={activity} />
       )}
