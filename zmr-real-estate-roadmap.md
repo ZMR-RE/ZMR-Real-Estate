@@ -2466,6 +2466,9 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - Real address autocomplete for Mileage's start/end fields (e.g. Google Places) — deferred to a future paid tier due to per-request API cost, same category as live bank-feed sync
 - Document export/backup — let the user download all stored documents (e.g. as a zip) for their own backup, separate from 12.3's live Drive-routing option. Extends the existing data-export principle (11.2's Multi-tenant discipline rule: "every account must have a functioning data export path for its own data") to raw files, not just structured reports/CSVs
 - Walkability scores, nearby schools, and comps on the Property profile — all require paid third-party APIs, same category as real address autocomplete and live bank-feed sync above
+- [ ] Warm save-confirmation feedback for Property Overview's boxes
+      (currently silent on save) — flagged by T4 during 7.51's
+      micro-copy pass, not built; scope it properly when picked up.
 
 ## Ongoing — Q&A / SOP Log
 - [ ] A living reference section (in-app or a maintained doc) answering recurring "how do I do X" questions as they come up during real use (e.g. "how do I add past mortgage information"). Updated whenever a new section is built out or a real question arises — not a one-time deliverable, an evolving document.
