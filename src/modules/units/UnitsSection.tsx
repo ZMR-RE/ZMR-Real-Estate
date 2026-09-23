@@ -1,6 +1,5 @@
 import { useUnits } from './useUnits'
 import { UnitForm } from './UnitForm'
-import { CollapsibleSection } from '../../shared/CollapsibleSection'
 import { EditableSection } from '../../shared/EditableSection'
 import { LeasingListingSection } from '../leasingListings/LeasingListingSection'
 import { TenantAssignmentsSection } from '../tenants/TenantAssignmentsSection'
@@ -29,9 +28,9 @@ const BLANK_UNIT = { unit_label: '', status: '' }
 // standing "+ Add unit" button; Edit reveals both, plus each unit's own
 // inline edit form. The nested Leasing/Tenants/Utility records
 // subsections are unaffected by this box's own edit state — each already
-// owns its own view/edit gate (Utility records via EditableSection,
-// same as this box; Leasing and Tenants stay plain CollapsibleSection
-// since neither has add/edit actions of its own yet).
+// owns its own view/edit gate via EditableSection (roadmap 7.28 brought
+// Leasing/Tenants in line with Utility records here — no more caller-side
+// CollapsibleSection wrapper, each renders its own box directly).
 export function UnitsSection({ propertyId }: UnitsSectionProps) {
   const {
     units,
@@ -92,14 +91,8 @@ export function UnitsSection({ propertyId }: UnitsSectionProps) {
         )}
 
         <div className="unit-subsections-grid">
-          <CollapsibleSection title="Leasing / listing history">
-            <LeasingListingSection propertyId={propertyId} unitId={unit.id} />
-          </CollapsibleSection>
-
-          <CollapsibleSection title="Tenants">
-            <TenantAssignmentsSection unitId={unit.id} />
-          </CollapsibleSection>
-
+          <LeasingListingSection propertyId={propertyId} unitId={unit.id} />
+          <TenantAssignmentsSection unitId={unit.id} />
           <UtilityRecordsSection propertyId={propertyId} unitId={unit.id} />
         </div>
       </div>

@@ -2,6 +2,9 @@ import type { TenantUnitAssignment } from './tenantsQueries'
 
 interface TenantAssignmentListProps {
   assignments: TenantUnitAssignment[]
+  // Roadmap 7.28 — Box interaction standard: the box's default view
+  // state shows plain read-only rows, no Archive/Restore action.
+  readOnly?: boolean
   onToggleArchived: (assignment: TenantUnitAssignment) => void
 }
 
@@ -14,7 +17,7 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 // Roadmap 8.12 — Status/Actions columns added, same Archive/Restore
 // pattern as FinancialAccountList/VendorList (archived rows stay
 // visible, dimmed via the shared .row-voided class, never hard-deleted).
-export function TenantAssignmentList({ assignments, onToggleArchived }: TenantAssignmentListProps) {
+export function TenantAssignmentList({ assignments, readOnly = false, onToggleArchived }: TenantAssignmentListProps) {
   if (assignments.length === 0) {
     return <p className="empty-state">No tenants assigned yet.</p>
   }
@@ -30,7 +33,7 @@ export function TenantAssignmentList({ assignments, onToggleArchived }: TenantAs
             <th>Rent</th>
             <th>Late fee</th>
             <th>Status</th>
-            <th></th>
+            {!readOnly && <th></th>}
           </tr>
         </thead>
         <tbody>
@@ -46,11 +49,13 @@ export function TenantAssignmentList({ assignments, onToggleArchived }: TenantAs
                   {assignment.archived ? 'Archived' : 'Active'}
                 </span>
               </td>
-              <td>
-                <button type="button" onClick={() => onToggleArchived(assignment)}>
-                  {assignment.archived ? 'Restore' : 'Archive'}
-                </button>
-              </td>
+              {!readOnly && (
+                <td>
+                  <button type="button" onClick={() => onToggleArchived(assignment)}>
+                    {assignment.archived ? 'Restore' : 'Archive'}
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

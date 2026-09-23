@@ -3,6 +3,10 @@ import type { LeasingListing, LeasingListingInput } from './leasingListingsQueri
 
 interface LeasingListingListProps {
   listings: LeasingListing[]
+  // Roadmap 7.28 — Box interaction standard: the box's default view
+  // state shows plain read-only labels, no per-row Edit. Same pattern
+  // as UtilityRecordList's readOnly prop.
+  readOnly?: boolean
   editingId: string | null
   saving: boolean
   onStartEditing: (id: string) => void
@@ -21,6 +25,7 @@ function daysLive(datePosted: string): number {
 
 export function LeasingListingList({
   listings,
+  readOnly = false,
   editingId,
   saving,
   onStartEditing,
@@ -40,12 +45,12 @@ export function LeasingListingList({
             <th>Date posted</th>
             <th>Days live</th>
             <th>Notes</th>
-            <th></th>
+            {!readOnly && <th></th>}
           </tr>
         </thead>
         <tbody>
           {listings.map((listing) =>
-            editingId === listing.id ? (
+            !readOnly && editingId === listing.id ? (
               <tr key={listing.id}>
                 <td colSpan={5}>
                   <LeasingListingForm
@@ -62,11 +67,13 @@ export function LeasingListingList({
                 <td>{listing.date_posted}</td>
                 <td>{daysLive(listing.date_posted)}</td>
                 <td>{listing.notes ?? ''}</td>
-                <td>
-                  <button type="button" onClick={() => onStartEditing(listing.id)}>
-                    Edit
-                  </button>
-                </td>
+                {!readOnly && (
+                  <td>
+                    <button type="button" onClick={() => onStartEditing(listing.id)}>
+                      Edit
+                    </button>
+                  </td>
+                )}
               </tr>
             ),
           )}

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CollapsibleSection } from '../../shared/CollapsibleSection'
+import { EditableSection } from '../../shared/EditableSection'
 import type { DocumentRecord } from '../documents/documentsQueries'
 import { useDocumentLinks } from '../documents/useDocumentLinks'
 import { DocumentLinkForm } from '../documents/DocumentLinkForm'
@@ -21,11 +21,15 @@ const PAGE_SIZE_OPTIONS = [25, 50] as const
 // standalone Overview section was removed per the Single source of
 // truth rule: one place to see every document, one place to add one).
 //
-// Roadmap 2.7 — owns its own CollapsibleSection now (same refactor
-// FinancialAccountsSection did for 7.23) so "+ Add document or link" can
-// sit in the box's header via headerActions, plus a search bar and
-// client-side pagination over the already-fetched `documents` prop — no
-// new query, matching how every other field on this list already works.
+// Roadmap 7.28 — converted to the Box interaction standard's
+// EditableSection: "+ Add document or link" used to sit as a standing
+// header action, visible regardless of state — now it only appears once
+// this box's own Edit is clicked, same single-entry-point rule every
+// other converted box follows. The search bar, pagination, and each
+// row's View/Open link action stay visible in both states — those are
+// viewing/filtering concerns, not edit actions (same precedent as
+// Insurance's per-document "View document" buttons, which aren't
+// readOnly-gated either).
 export function PropertyProfileDocumentsTab({ propertyId, documents, onView, onDocumentsChanged }: PropertyProfileDocumentsTabProps) {
   const { isAdding, saving, error, startAdding, cancelAdding, add } = useDocumentLinks(propertyId, onDocumentsChanged)
   const [searchQuery, setSearchQuery] = useState('')
@@ -44,17 +48,8 @@ export function PropertyProfileDocumentsTab({ propertyId, documents, onView, onD
   const currentPage = Math.min(page, pageCount)
   const pagedDocuments = filteredDocuments.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
-  return (
-    <CollapsibleSection
-      title="Documents"
-      headerActions={
-        !isAdding && (
-          <button type="button" onClick={startAdding}>
-            + Add document or link
-          </button>
-        )
-      }
-    >
+  const documentsList = (
+    <>
       {documents.length > 0 && (
         <div className="documents-filter-bar">
           <div className="documents-filter">
@@ -146,9 +141,30 @@ export function PropertyProfileDocumentsTab({ propertyId, documents, onView, onD
           )}
         </>
       )}
+    </>
+  )
 
-      {error && <p role="alert">{error}</p>}
-      {isAdding && <DocumentLinkForm saving={saving} onSave={add} onCancel={cancelAdding} />}
-    </CollapsibleSection>
+  return (
+    <EditableSection
+      title="Documents"
+      onEditStart={cancelAdding}
+      view={documentsList}
+      edit={(exitEditing) => (
+        <>
+          {documentsList}
+          {error && <p role="alert">{error}</p>}
+          {isAdding ? (
+            <DocumentLinkForm saving={saving} onSave={add} onCancel={cancelAdding} />
+          ) : (
+            <button type="button" onClick={startAdding}>
+              + Add document or link
+            </button>
+          )}
+          <button type="button" onClick={exitEditing}>
+            Done
+          </button>
+        </>
+      )}
+    />
   )
 }
