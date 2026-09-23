@@ -360,8 +360,25 @@ code {
    gap and the content-to-window-edge gap are always equal and grow
    together as the viewport widens — max-width still caps line length on
    very wide monitors, it just no longer dictates where the content sits. */
+/* Roadmap 7.35/7.37's documented mobile bug (page forced ~610px wide at
+   a 390px viewport) traced to here, not to .tab-bar itself — confirmed
+   live: .app-shell switches to flex-direction:column under 860px, and
+   in that column context .app-main (no explicit width, relying on
+   align-items:stretch to size its cross axis) was NOT reliably
+   stretched to the container's width once a wide-content sticky
+   descendant (.tab-bar) sat inside it — its rendered width instead
+   matched that descendant's unconstrained content width. Confirmed by
+   direct measurement: forcing .app-shell to display:block (removing
+   flex from the equation) fixed it, explicitly setting align-items:
+   stretch changed nothing, but adding width:100% here fixes it in
+   isolation. Harmless at desktop widths (flex-direction:row there):
+   flex-basis:0% from the `flex: 1` shorthand still governs the main
+   (horizontal) axis size there since flex-basis takes precedence over
+   width whenever basis isn't auto, so this only ever matters in the
+   column-direction (mobile) case where width was actually undefined. */
 .app-main {
   flex: 1;
+  width: 100%;
   min-width: 0;
   padding: var(--space-6) var(--space-7);
   max-width: 1440px;
