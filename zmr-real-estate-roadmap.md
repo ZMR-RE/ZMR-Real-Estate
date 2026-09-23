@@ -1972,6 +1972,39 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       both themes; Purchase & valuation's icon reads clearly as a
       receipt (not confusable with a plain circle) at its actual
       16x16px render size in both themes.
+- [x] 7.47 Replace the 4 headline stat cards (Bedrooms, Bathrooms,
+      Living area, Year built) with the approved real-estate-investor-
+      focused set: Units (total, from the Units box), Occupied/Vacant
+      (e.g. "2 of 3", from Units' status data), Year built, Living area.
+      Bedrooms/Bathrooms move down into the quieter "Details" sub-list —
+      still real data, just not headline-worthy now that per-unit bed/
+      bath is already visible inside the Units section itself.
+
+      Units/Occupied reuse `useOccupancySnapshot` (propertyKpi, 7.13's
+      Occupancy Snapshot KPI card) rather than a second implementation
+      of "what counts as occupied" — occupied is `units.status ===
+      'Rented'` specifically; any other status (Listed/Renovating/
+      Vacant - Ready, or a future custom pick-list value) counts as not
+      occupied for this rollup. Two new icons (UnitsIcon, OccupancyIcon
+      in propertyFieldGroupIcons.tsx), same hand-rolled stroke/
+      currentColor convention as the existing four.
+
+      Empty-state handling, deliberate: Units always renders once the
+      fetch resolves, 0 included — a real, present answer ("no units
+      configured yet"), not missing data the way an empty bedroom_count
+      would be. Occupied is omitted specifically at 0 units, since "0 of
+      0" has nothing meaningful to report. While the units fetch is
+      still in flight, both cards are simply absent (not a premature
+      "0 Units" flash) rather than a loading skeleton.
+
+      Verified live: 5336 W Foster Ave (3 units, all Rented) shows
+      "3 / Units" then "3 of 3 / Occupied", correctly ordered, with no
+      Bedrooms/Bathrooms cards (this property has neither filled in
+      today); 2169 Ash St (0 units) shows "0 / Units" with no Occupied
+      card, Year built/Living area unaffected, and "Bedrooms: 3" /
+      "Bathrooms: 1.5" now appear first in its "Details" sub-list.
+      Typecheck and production build clean; no console errors beyond an
+      unrelated MetaMask extension warning.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type

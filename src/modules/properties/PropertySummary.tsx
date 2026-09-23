@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { formatDateOnly } from '../../shared/dateFormat'
+import { useOccupancySnapshot } from '../propertyKpi/useOccupancySnapshot'
 import type { Property } from './propertiesQueries'
 import { PROPERTY_FIELD_GROUPS, hasFieldValue } from './propertyFieldGroups'
 import { PropertyFieldGroup } from './PropertyFieldGroup'
@@ -61,6 +62,16 @@ function renderFieldValue(property: Property, key: keyof Property): ReactNode {
 // group left with zero present fields is skipped too, rather than
 // rendering a bare title over nothing.
 export function PropertySummary({ property, llcOptions }: PropertySummaryProps) {
+  // Roadmap 7.47 — same hook the KPI tab's Occupancy Snapshot card uses
+  // (useOccupancySnapshot), not a separate fetch/computation. `loading`
+  // gates unitStats to undefined rather than a premature {0, 0} — a
+  // property that genuinely has units shouldn't flash "0 Units" while
+  // the real count is still in flight.
+  const { snapshot, loading: unitStatsLoading } = useOccupancySnapshot(property.id)
+  const unitStats = unitStatsLoading
+    ? undefined
+    : { totalUnits: snapshot.totalUnits, rentedUnits: snapshot.rentedUnits }
+
   return (
     <div className="property-summary">
       <PropertyIdentityHeader property={property} llcOptions={llcOptions} />
@@ -78,7 +89,7 @@ export function PropertySummary({ property, llcOptions }: PropertySummaryProps) 
         // everywhere else) only if there's neither a stat nor a detail
         // to show, not just one or the other.
         if (group.id === 'physical-facts') {
-          if (presentFields.length === 0 && !hasPhysicalFactsStats(property)) return null
+          if (presentFields.length === 0 && !hasPhysicalFactsStats(property, unitStats)) return null
 
           return (
             <section className="property-field-group" key={group.id}>
@@ -86,7 +97,7 @@ export function PropertySummary({ property, llcOptions }: PropertySummaryProps) 
                 <group.Icon />
                 {group.title}
               </h3>
-              <PropertyPhysicalFactsStats property={property} />
+              <PropertyPhysicalFactsStats property={property} unitStats={unitStats} />
               {presentFields.length > 0 && (
                 <div className="property-details">
                   <h4 className="property-details-title">Details</h4>

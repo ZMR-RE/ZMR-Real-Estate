@@ -99,3 +99,35 @@ export function YearBuiltIcon() {
     </svg>
   )
 }
+
+// Roadmap 7.47 — headline stat cards replaced Bedrooms/Bathrooms with
+// Units and Occupied/Vacant (investor-focused: how many units, how many
+// are rented, not sleeping-room counts). A small building facade with a
+// 2x2 grid of doors/windows reads as "multiple units" the way
+// PhysicalFactsIcon's single-house silhouette above doesn't.
+export function UnitsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" aria-hidden="true">
+      <rect x="4" y="3" width="16" height="18" rx="1" />
+      <path d="M4 12h16" />
+      <rect x="7" y="6" width="3" height="3" />
+      <rect x="14" y="6" width="3" height="3" />
+      <rect x="7" y="15" width="3" height="3" />
+      <rect x="14" y="15" width="3" height="3" />
+    </svg>
+  )
+}
+
+// A single door with a keyhole — "someone has a key to this one" reads
+// as occupied without reusing OwnershipIcon's person silhouette, which
+// already means something else (who owns the property) elsewhere on
+// this same screen.
+export function OccupancyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" aria-hidden="true">
+      <path d="M6 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v17" />
+      <path d="M4 21h16" />
+      <circle cx="14" cy="12" r="1.25" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
