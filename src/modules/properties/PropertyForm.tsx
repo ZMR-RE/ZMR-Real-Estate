@@ -445,9 +445,18 @@ export function PropertyForm({
       {/* Roadmap 7.33 (3) — Heating & cooling group removed; HVAC is now
           an Area option in Specs & measurements instead. */}
 
-      {/* Roadmap 7.32 (5) / 7.33 (4) — multi-select checklist. */}
+      {/* Roadmap 7.32 (5) / 7.33 (4) — multi-select checklist.
+          Roadmap 7.44/7.46 — nested visual hierarchy (View mode's
+          PropertySummary.tsx got this in 7.44; Edit mode was left as a
+          flagged gap since another terminal was mid-editing this file
+          at the time). Reads as a child of Physical facts, not a fresh
+          peer — smaller/regular-weight title via
+          .property-field-group-title--nested, icon and accent color
+          kept. Structurally still its own sibling .property-field-group
+          section, same as before: only the title's visual weight
+          changes, not the DOM nesting. */}
       <div className="property-field-group">
-        <h3 className="property-field-group-title">
+        <h3 className="property-field-group-title property-field-group-title--nested">
           <ExteriorInformationIcon />
           Exterior information
         </h3>

@@ -1972,6 +1972,26 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       both themes; Purchase & valuation's icon reads clearly as a
       receipt (not confusable with a plain circle) at its actual
       16x16px render size in both themes.
+- [x] 7.46 Apply the same nested visual treatment (13px/regular weight,
+      `.property-field-group-title--nested`) to "Exterior information"
+      in Edit mode (PropertyForm.tsx) — 7.44 only reached View mode
+      (PropertySummary.tsx), flagged there as a gap since another
+      terminal was mid-editing PropertyForm.tsx at the time. Purely a
+      title className change (`property-field-group-title` →
+      `property-field-group-title property-field-group-title--nested`)
+      — Exterior information stays its own sibling `.property-field-
+      group` section under `<form>`, same as every other group; only
+      the title's font-size/weight changes, no structural DOM nesting
+      into Physical facts.
+
+      `npm run build` clean. Live-verified on 2169 Ash St, Edit mode,
+      light and dark: confirmed via getComputedStyle that "Exterior
+      information" now renders 13px/400 weight (vs. "Physical facts"'
+      14px/800) in both light (`rgb(18, 52, 86)`) and dark
+      (`rgb(111, 168, 220)`) accent color — matching View mode exactly.
+      Confirmed `form > .property-field-group` still lists Purchase &
+      valuation/Physical facts/Exterior information as three siblings,
+      not nested.
 - [x] 7.47 Replace the 4 headline stat cards (Bedrooms, Bathrooms,
       Living area, Year built) with the approved real-estate-investor-
       focused set: Units (total, from the Units box), Occupied/Vacant
