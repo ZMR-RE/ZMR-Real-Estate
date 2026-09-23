@@ -17,6 +17,9 @@ export interface Vendor {
   // Store/Contractor/Service provider/Other).
   vendor_type: string | null
   notes: string | null
+  // Roadmap 8.11(a) — fixed 1-5 scale, deliberately not pick-list-backed
+  // (see the migration's own comment: same class of exception as State).
+  reliability_rating: number | null
   split_percentage: number | null
   split_description: string | null
   archived: boolean
@@ -30,7 +33,7 @@ export interface VendorSplitRuleInput {
 }
 
 const VENDOR_COLUMNS =
-  'id, account_id, name, contact_email, contact_phone, has_w9, has_insurance, relationship, vendor_type, notes, split_percentage, split_description, archived'
+  'id, account_id, name, contact_email, contact_phone, has_w9, has_insurance, relationship, vendor_type, notes, reliability_rating, split_percentage, split_description, archived'
 
 export async function listVendors(accountId: string) {
   return supabase.from('vendors').select(VENDOR_COLUMNS).eq('account_id', accountId).order('name').returns<Vendor[]>()

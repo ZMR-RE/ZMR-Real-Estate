@@ -47,6 +47,7 @@ export function VendorList({
             <th>Insurance</th>
             <th>Relationship</th>
             <th>Notes</th>
+            <th>Reliability</th>
             <th>Status</th>
             <th></th>
           </tr>
@@ -55,7 +56,7 @@ export function VendorList({
           {vendors.map((vendor) =>
             editingId === vendor.id ? (
               <tr key={vendor.id}>
-                <td colSpan={10}>
+                <td colSpan={11}>
                   <VendorForm
                     initialValues={{
                       name: vendor.name,
@@ -66,6 +67,7 @@ export function VendorList({
                       relationship: vendor.relationship,
                       vendor_type: vendor.vendor_type,
                       notes: vendor.notes,
+                      reliability_rating: vendor.reliability_rating,
                     }}
                     saving={saving}
                     error={error}
@@ -85,6 +87,7 @@ export function VendorList({
                   <td>{vendor.has_insurance ? 'On file' : '—'}</td>
                   <td>{vendor.relationship ?? '—'}</td>
                   <td>{vendor.notes ?? '—'}</td>
+                  <td>{vendor.reliability_rating !== null ? `${vendor.reliability_rating} / 5` : '—'}</td>
                   <td>
                     <span className={`status-badge ${vendor.archived ? 'status-badge-neutral' : 'status-badge-success'}`}>
                       {vendor.archived ? 'Archived' : 'Active'}

@@ -19,6 +19,7 @@ const BLANK_VENDOR: VendorInput = {
   relationship: null,
   vendor_type: null,
   notes: null,
+  reliability_rating: null,
 }
 
 // A plain div, not a <form> — this renders inside TransactionForm's own
@@ -107,6 +108,28 @@ export function VendorForm({ initialValues, saving, error, onSave, onCancel }: V
         value={values.notes ?? ''}
         onChange={(e) => setValues((prev) => ({ ...prev, notes: e.target.value || null }))}
       />
+
+      {/* Roadmap 8.11(a) — fixed 1-5 scale, not a pick list; see
+          vendorsQueries.ts's own comment on why this one field is a
+          deliberate exception to the pick-list-first convention. */}
+      <label htmlFor="vendor_form_reliability_rating">Reliability</label>
+      <select
+        id="vendor_form_reliability_rating"
+        value={values.reliability_rating ?? ''}
+        onChange={(e) =>
+          setValues((prev) => ({
+            ...prev,
+            reliability_rating: e.target.value === '' ? null : Number(e.target.value),
+          }))
+        }
+      >
+        <option value="">Not yet rated</option>
+        <option value="1">1 — Poor</option>
+        <option value="2">2 — Below average</option>
+        <option value="3">3 — Average</option>
+        <option value="4">4 — Good</option>
+        <option value="5">5 — Excellent</option>
+      </select>
 
       <button type="button" disabled={saving || !values.name.trim()} onClick={() => onSave(values)}>
         {saving ? 'Saving…' : isEditing ? 'Save' : 'Add vendor'}

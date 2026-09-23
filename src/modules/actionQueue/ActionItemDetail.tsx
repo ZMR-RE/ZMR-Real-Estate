@@ -3,6 +3,7 @@ import { propertyLabel } from '../../shared/propertyLabel'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { ActionItemForm } from './ActionItemForm'
 import { ActionItemDocuments } from './ActionItemDocuments'
+import { ActionItemVendorEstimates } from '../vendorEstimates/ActionItemVendorEstimates'
 import type { ActionItem, ActionItemInput } from './actionItemsQueries'
 
 interface ActionItemDetailProps {
@@ -123,6 +124,7 @@ export function ActionItemDetail({
       </dl>
 
       <ActionItemDocuments actionItemId={item.id} propertyId={item.property_id} />
+      <ActionItemVendorEstimates actionItemId={item.id} />
     </div>
   )
 }

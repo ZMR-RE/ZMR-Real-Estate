@@ -12,6 +12,7 @@ import { UtilityRecordsSection } from '../utilities/UtilityRecordsSection'
 import { SecurityDepositsSection } from '../securityDeposits/SecurityDepositsSection'
 import { PropertyTenantsOverview } from '../tenants/PropertyTenantsOverview'
 import { FinancialAccountsSection } from '../financialAccounts/FinancialAccountsSection'
+import { VendorEstimatesSection } from '../vendorEstimates/VendorEstimatesSection'
 import { PropertyForm } from './PropertyForm'
 import { PropertySummary } from './PropertySummary'
 import type { Property, PropertyInput } from './propertiesQueries'
@@ -102,6 +103,8 @@ export function PropertyProfileOverviewTab({
       <UtilityRecordsSection propertyId={property.id} />
 
       <SecurityDepositsSection propertyId={property.id} />
+
+      <VendorEstimatesSection propertyId={property.id} />
 
       <UnitsSection propertyId={property.id} />
     </div>

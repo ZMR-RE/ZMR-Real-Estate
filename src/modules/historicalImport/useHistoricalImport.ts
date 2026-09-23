@@ -249,6 +249,7 @@ export function useHistoricalImport() {
         relationship: null,
         vendor_type: null,
         notes: null,
+        reliability_rating: null,
       })
       if ('error' in created) {
         setSaving(false)

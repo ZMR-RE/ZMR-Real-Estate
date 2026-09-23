@@ -2100,11 +2100,47 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 8.8 Vendor-level Split Rule: saved reimbursement percentage per vendor (e.g. pest control, 50/50); user must manually apply it per transaction every time — never auto-applied, no setting to change this
 - [x] 8.9 Multi-user role-based access per account: architecture (users-to-account many-to-many with a role field) reserved now; permission UI and enforcement built later — satisfied by the existing `account_members` table (account_id/user_id/role, from Phase 0's initial schema); no new schema needed, role isn't read by any permission check yet
 - [x] 8.10 Account `tier` field + per-feature tier-requirement flag reserved now on all accounts/modules; tier enforcement and tier definitions built in Phase 5
-- [ ] 8.11 Contacts (extends Vendor, 8.3): notes and a reliability
-      score/rating per vendor. Also brainstormed, to be finalized in
-      full when this is actually built: (a) a comparison/estimate-
-      tracking workflow — log multiple quotes for one job (e.g. 3 roof
-      estimates), which one was chosen and why, tracked by date/job; (b)
+- [x] 8.11 Contacts (extends Vendor, 8.3): notes and a reliability
+      score/rating per vendor, plus (b) the estimate-tracking workflow —
+      log multiple quotes for one job, which one was chosen and why,
+      tracked by date/job. (a) `vendors.reliability_rating` (integer,
+      1-5, nullable check constraint) — a fixed ordinal scale, not
+      pick-list-backed (same exception class as State), with a "Not yet
+      rated" default; added to VendorForm.tsx and VendorList.tsx (new
+      Reliability column). (b) two new tables — `estimate_jobs`
+      (property_id required, unit_id/action_item_id optional,
+      chosen_estimate_id nullable FK to vendor_estimates set after the
+      fact, decision_notes/decided_at) and `vendor_estimates` (job_id FK
+      on delete cascade, vendor_id FK on delete restrict, amount, date,
+      notes) — plus `documents.vendor_estimate_id` for future document
+      attachment. Status (Open/Decided) is derived from
+      chosen_estimate_id being set, never stored. New
+      `src/modules/vendorEstimates/` module (queries/hook/forms/cards)
+      following the standard module shape; `VendorEstimatesSection` on
+      Property Overview uses the same EditableSection box pattern as
+      Financial accounts, with nested per-job "+ Log an estimate"/
+      "Choose winner" actions that stay live regardless of the section's
+      own edit state (mirrors Units' nested-subsections pattern).
+      Bidirectional cross-reference with Action Queue: a job's card shows
+      "Linked task: {title}" when linked, and the linked action item's
+      own detail view shows a new "Vendor estimates for this task" block
+      (ActionItemVendorEstimates.tsx) with a "View on property" link —
+      silently renders nothing when no job links to that task. Fixed a
+      live PostgREST embed-ambiguity bug during verification (two FKs
+      between estimate_jobs and vendor_estimates required
+      `!vendor_estimates_job_id_fkey` disambiguation, same pattern
+      `capture_log` already used). Live-verified end-to-end: created a
+      test job with 2 vendor estimates ($4,500 and $3,800, including
+      inline "+ Add new vendor" creation), chose the $3,800 estimate as
+      winner, confirmed status correctly derived Open → Decided with the
+      Winner badge/decision notes/date rendering, and confirmed the
+      cross-link renders both directions (property-side "Linked task"
+      line and action-item-side "Vendor estimates for this task" block
+      with a working link back to the property). All test data (job,
+      both vendor_estimates, both test vendors, the test action item)
+      deleted after verification. (c) the future paid vendor-
+      verification/marketplace tier remains untouched and speculative —
+      not scoped for build:
       a future paid vendor-verification tier (e.g. a one-time $20-25 fee
       for a vendor to be listed as verified/trusted on the platform,
       for resale customers to draw from) — noted as a speculative future
