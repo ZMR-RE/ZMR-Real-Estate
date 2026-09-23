@@ -1723,16 +1723,46 @@ form > .property-field-group:first-of-type {
   color: var(--text);
 }
 
-/* Settings' pick-list section stacks several ManageOptionsPanel toggles
-   vertically — .manage-options is a plain block div with no width of its
-   own, so without this it stretches to the full page width and its
-   popover's `right: 0` anchors to that far edge instead of the toggle
-   button. flex-start keeps each item sized to its own toggle. */
+/* ============================================================
+   Settings (roadmap 12.6) — Pick lists tab groups toggles by domain
+   (Financial/Property/Operations) instead of one flat column of 17.
+   ============================================================ */
+.settings-pick-list-group {
+  margin-top: var(--space-5);
+}
+
+.settings-pick-list-group h3 {
+  margin-bottom: var(--space-2);
+}
+
+/* Each domain's ManageOptionsPanel toggles wrap across the available
+   width — however many small buttons actually fit per row — rather
+   than stacking one per line (the "flat list of 9+ buttons" 12.6 exists
+   to fix) or forcing a fixed column count that would leave a
+   short-on-items domain with awkward empty cells. .manage-options is a
+   plain block div with no width of its own, so without align-items:
+   flex-start every toggle would stretch to the row's full width and its
+   popover's `right: 0` would anchor to that far edge instead of the
+   toggle button. */
 .settings-pick-lists {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--space-2);
+}
+
+/* Organizations and Appearance & App tabs hold two independent
+   full-height sections that used to stack full-width regardless of
+   screen size, leaving wide screens with a lone narrow column and a
+   large empty gray gutter beside it. auto-fit collapses to one column
+   when a tab only has room (or content) for one, so this doesn't force
+   a second, unwanted column on narrower widths. */
+.settings-tab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  align-items: start;
+  gap: var(--space-5);
 }
 
 /* ============================================================
