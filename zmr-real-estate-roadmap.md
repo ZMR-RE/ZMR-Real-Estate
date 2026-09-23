@@ -2025,6 +2025,49 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       "Bathrooms: 1.5" now appear first in its "Details" sub-list.
       Typecheck and production build clean; no console errors beyond an
       unrelated MetaMask extension warning.
+- [x] 7.48 Sweep the app for remaining bare `<h4>` sub-headings (flagged
+      by T1 in 7.42's own notes) and convert them to
+      `.property-details-title`, per the "Reference the design system
+      before any box work" rule.
+
+      Converted 7 second-tier headings across 6 files, all genuinely
+      nested inside an already-titled box/step/card: ActionItemDocuments.tsx
+      ("Links & attachments", inside ActionItemDetail), TransactionDocuments.tsx
+      ("Documents", inside an expanded transaction row), ImportPreviewStep.tsx
+      ("Rows that will be skipped", inside "Step 5"), ImportResolveStep.tsx
+      ("Income or Expense"/"Category"/"Vendor", inside "Step 4"),
+      LlcFinancialAccountsPanel.tsx ("Financial accounts", inside the
+      Organization Types expandable row), FollowUpsCard.tsx (per-type
+      group heading, inside "Follow-ups"), MarketFinancialSnapshotCard.tsx
+      (per-trend heading, inside "Market & financial snapshot").
+
+      Deliberately excluded: ActionItemDetail.tsx's `<h4>{item.title}</h4>`
+      is the panel's own primary heading, not a second-tier sub-heading —
+      converting it to `.property-details-title`'s small/muted treatment
+      would incorrectly demote it, a different issue than this sweep's
+      scope. InsuranceLedgerList.tsx's three `<h4>` were already correctly
+      classed with the different, appropriate `.property-field-group-title`
+      pattern.
+
+      Also documented `.property-details-title` in DESIGN-SYSTEM.md's
+      Component patterns list — it existed and was reused in 5 places
+      before this sweep but was never actually written up there, a real
+      gap given the rule this task follows.
+
+      `npm run build` clean. Live-verified in light and dark mode:
+      LlcFinancialAccountsPanel (Settings > Organizations > View
+      properties), FollowUpsCard and MarketFinancialSnapshotCard
+      (Property KPI tab — created and cleaned up two ZMR-TEST- action
+      items to populate the Follow-ups group heading), and
+      ActionItemDocuments (via an action item's Edit state) — all
+      confirmed via getComputedStyle exactly matching the established
+      12px/700/0.02em-letter-spacing/`--text` treatment in both themes.
+      TransactionDocuments and the two ImportStep headings verified via
+      code inspection and successful build only — no transactions or a
+      CSV import wizard run existed in this account to exercise live,
+      and re-creating that scaffolding was disproportionate to a
+      one-line static className change already proven correct in the
+      other 5 locations.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
