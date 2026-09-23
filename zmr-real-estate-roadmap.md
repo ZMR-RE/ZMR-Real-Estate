@@ -2666,9 +2666,9 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       one unit couldn't be distinguished from two tenants who each
       legitimately pay their own separate rent when summing rent_amount.
       Built as a real Lease entity (leases + lease_tenants, a genuine
-      many-to-many join) across 9 staged commits following roadmap 7.55
+      many-to-many join) across 10 staged commits following roadmap 7.55
       (see git log "Units/Lease/Tenant rebuild, Stage 1" through "Stage
-      9" for full detail on each): schema + cross-entity FK links
+      10" for full detail on each): schema + cross-entity FK links
       (documents.lease_id retrofit, security_deposits.lease_id,
       action_items.lease_id) + tenant_units backfill (kept, deprecated,
       never dropped) + core Lease CRUD + Units box redesign (unit cards
@@ -2682,7 +2682,24 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       infrastructure) + the Monthly rent stat card, finally safe to ship
       (one rent figure per lease, live-verified: 2 co-tenants sharing a
       $1,200/mo unit plus a separate $800/mo unit correctly summed to
-      $2,000, not $3,200). Amends roadmap 8.5's own note below — that
+      $2,000, not $3,200) + 2169 Ash St's default unit corrected to its
+      real status ('Rented') now that "+ Add lease" exists for the user
+      to attach the real tenant/lease themselves. Stage 10 also closed
+      the last "Unit 1" leak 7.55 had flagged but not yet fixed: the
+      Specs & measurements Scope filter (and its own Add/Edit-spec form)
+      listed every unit including a single-unit property's lone one —
+      both pickers now suppress that lone unit the same way Units box
+      already did, while PropertySpecList's unitOptions stays
+      unfiltered so it can still correctly resolve/display any existing
+      spec's real unit_id. Live-verified end to end on 2169 Ash St
+      (single unit): full-page sweep of every box found zero "Unit 1"
+      occurrences anywhere; a brand-new test property was created
+      through the dashboard UI and confirmed to still auto-get its
+      default unit (7.55's trigger, unchanged by this rebuild) with no
+      label leak, then removed along with its unit (test data, no
+      dashboard-UI delete-property path exists yet — direct-SQL cleanup,
+      positively re-verified: property count back to its pre-test 2,
+      zero orphaned units). Amends roadmap 8.5's own note below — that
       item's "extended tenant_units instead of building a real table"
       decision is what created this gap; a real leases table now exists.
 

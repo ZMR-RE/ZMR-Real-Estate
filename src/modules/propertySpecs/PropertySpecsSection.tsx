@@ -23,6 +23,19 @@ export function PropertySpecsSection({ propertyId }: PropertySpecsSectionProps) 
   } = usePropertySpecs(propertyId)
   const { activeOptions: areaOptions } = usePickListOptions('property_spec_area')
 
+  // Roadmap "Units/Lease/Tenant rebuild" item 5 — a single-unit
+  // property's own unit must never surface as a selectable "Unit 1"
+  // choice (same principle as UnitsSection.tsx hiding its label): with
+  // only one unit, "Whole building" and "that one unit" are the same
+  // physical space, so offering both as distinct Scope choices is just
+  // confusing, redundant UI. Only affects PICKERS (this filter, and
+  // PropertySpecForm's own scope select below) — PropertySpecList still
+  // gets the full, unfiltered `units` so it can correctly resolve/
+  // display any EXISTING spec that already has a real unit_id set
+  // (e.g. from before this property had only one unit).
+  const isSingleUnit = units.filter((u) => !u.archived).length === 1
+  const pickerUnitOptions = isSingleUnit ? [] : units
+
   const filterBar = (
     <div className="property-specs-filter-bar">
       <div className="property-specs-filter">
@@ -35,7 +48,7 @@ export function PropertySpecsSection({ propertyId }: PropertySpecsSectionProps) 
         >
           <option value="all">All scopes</option>
           <option value="whole_building">Whole building</option>
-          {units.map((unit) => (
+          {pickerUnitOptions.map((unit) => (
             <option key={unit.id} value={unit.id}>
               {unit.unit_label}
               {unit.archived ? ' (archived)' : ''}
@@ -102,7 +115,7 @@ export function PropertySpecsSection({ propertyId }: PropertySpecsSectionProps) 
           {isAdding ? (
             <PropertySpecForm
               initialValues={BLANK_SPEC}
-              unitOptions={units}
+              unitOptions={pickerUnitOptions}
               onRefreshUnitOptions={refreshUnitOptions}
               saving={saving}
               onSave={add}
