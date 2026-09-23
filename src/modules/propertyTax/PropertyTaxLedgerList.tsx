@@ -15,11 +15,18 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 })
 
-// Property tax installment display restructure — each installment used
-// to render as one run-on inline line (amount · paid date · View
-// document), which read as visual clutter once a second/third document
-// got added. Stacked into a labeled block instead: Amount / Paid date /
-// Documents, each on its own line.
+// Roadmap 7.37 — compact one-line-per-year redesign: amount and paid
+// date collapse into a single "$2,817.34 — 2024-03-31" string, no
+// "Amount"/"Paid date" label text (replaces the old 3-row stacked
+// block). An amount with no paid date yet (unpaid) shows just the
+// amount, no trailing punctuation; a slot with no amount at all shows
+// "—", same as the rest of the app's missing-data convention.
+function installmentDisplay(amount: string | null, paidDate: string | null): string {
+  if (!amount) return '—'
+  const formatted = currencyFormatter.format(Number(amount))
+  return paidDate ? `${formatted} — ${paidDate}` : formatted
+}
+
 function InstallmentCell({
   amount,
   paidDate,
@@ -33,30 +40,16 @@ function InstallmentCell({
 }) {
   return (
     <td>
-      <div className="property-tax-installment-block">
-        <div className="property-tax-installment-row">
-          <span className="property-tax-installment-label">Amount</span>
-          <span>{amount ? currencyFormatter.format(Number(amount)) : '—'}</span>
-        </div>
-        <div className="property-tax-installment-row">
-          <span className="property-tax-installment-label">Paid date</span>
-          <span>{paidDate ?? '—'}</span>
-        </div>
-        <div className="property-tax-installment-row">
-          <span className="property-tax-installment-label">Documents</span>
-          {documents.length === 0 ? (
-            <span>—</span>
-          ) : (
-            <span className="property-tax-installment-documents-inline">
-              {documents.map((doc, i) => (
-                <button key={doc.id} type="button" onClick={() => onViewDocument(doc.storage_path)}>
-                  {documents.length > 1 ? `View document ${i + 1}` : 'View document'}
-                </button>
-              ))}
-            </span>
-          )}
-        </div>
-      </div>
+      <span>{installmentDisplay(amount, paidDate)}</span>
+      {documents.length > 0 && (
+        <span className="property-tax-installment-documents-inline">
+          {documents.map((doc, i) => (
+            <button key={doc.id} type="button" onClick={() => onViewDocument(doc.storage_path)}>
+              {documents.length > 1 ? `View document ${i + 1}` : 'View document'}
+            </button>
+          ))}
+        </span>
+      )}
     </td>
   )
 }

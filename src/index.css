@@ -1698,37 +1698,17 @@ th {
 }
 
 /* ============================================================
-   Property tax installment cells — restructured from one run-on inline
-   line (amount · paid date · View document) into a stacked labeled
-   block, since a second/third document made the inline version read as
-   visual clutter. `white-space: normal` overrides the table's default
-   nowrap so the stacked rows actually wrap/stack instead of forcing the
-   cell wide.
+   Property tax installment cells (roadmap 7.37) — compact one-line
+   format: amount and paid date collapse into a single "$X — DATE"
+   string (PropertyTaxLedgerList's installmentDisplay), no separate
+   "Amount"/"Paid date" labeled rows. Document links, when present,
+   still stack below that line.
    ============================================================ */
-.property-tax-installment-block {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  white-space: normal;
-}
-
-.property-tax-installment-row {
-  display: flex;
-  gap: var(--space-2);
-  align-items: baseline;
-}
-
-.property-tax-installment-label {
-  font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--text);
-  min-width: 70px;
-}
-
 .property-tax-installment-documents-inline {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  margin-top: var(--space-1);
 }
 
 /* ============================================================

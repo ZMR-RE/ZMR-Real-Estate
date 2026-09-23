@@ -49,12 +49,9 @@ export function PropertyTaxLedger({ propertyId }: PropertyTaxLedgerProps) {
         <>
           {error && <p role="alert">{error}</p>}
 
-          {loading ? (
-            <p>Loading…</p>
-          ) : (
-            <PropertyTaxLedgerList installments={installments} onEdit={startEditing} onViewDocument={viewDocument} />
-          )}
-
+          {/* Roadmap 7.37 — "+ Add tax year" moved to the top, above the
+              list, rather than sitting below it — the button never
+              appears in both places at once. */}
           {editingId ? (
             <PropertyTaxInstallmentForm
               key={editingId}
@@ -75,6 +72,12 @@ export function PropertyTaxLedger({ propertyId }: PropertyTaxLedgerProps) {
             <button type="button" onClick={startAdding}>
               + Add tax year
             </button>
+          )}
+
+          {loading ? (
+            <p>Loading…</p>
+          ) : (
+            <PropertyTaxLedgerList installments={installments} onEdit={startEditing} onViewDocument={viewDocument} />
           )}
 
           <button type="button" onClick={exitEditing}>
