@@ -70,7 +70,7 @@ export function ImportPreviewStep({ rows, saving, error, onConfirm, onBack }: Im
 
       {invalidRows.length > 0 && (
         <div>
-          {/* Roadmap 7.46 — second-tier heading inside this already-titled
+          {/* Roadmap 7.48 — second-tier heading inside this already-titled
               step ("Step 5: Preview and confirm"): .property-details-title. */}
           <h4 className="property-details-title">Rows that will be skipped</h4>
           <ul>

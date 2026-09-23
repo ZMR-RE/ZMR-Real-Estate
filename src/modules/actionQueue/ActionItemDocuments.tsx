@@ -108,7 +108,7 @@ export function ActionItemDocuments({ actionItemId, propertyId }: ActionItemDocu
 
   return (
     <div className="action-item-documents">
-      {/* Roadmap 7.46 — DESIGN-SYSTEM.md's pattern for a second-tier
+      {/* Roadmap 7.48 — DESIGN-SYSTEM.md's pattern for a second-tier
           heading inside an already-titled context (ActionItemDetail's
           own item title) is .property-details-title, not a bare <h4>. */}
       <h4 className="property-details-title">Links &amp; attachments</h4>

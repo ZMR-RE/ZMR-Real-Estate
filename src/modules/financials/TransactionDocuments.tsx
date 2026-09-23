@@ -76,7 +76,7 @@ export function TransactionDocuments({ transactionId, propertyId }: TransactionD
 
   return (
     <div className="transaction-documents">
-      {/* Roadmap 7.46 — second-tier heading inside an already-contextualized
+      {/* Roadmap 7.48 — second-tier heading inside an already-contextualized
           expanded transaction row: .property-details-title, not a bare <h4>. */}
       <h4 className="property-details-title">Documents</h4>
       {error && <p role="alert">{error}</p>}

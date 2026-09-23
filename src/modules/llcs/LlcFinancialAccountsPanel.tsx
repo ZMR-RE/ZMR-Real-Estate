@@ -37,7 +37,7 @@ export function LlcFinancialAccountsPanel({ llcId }: LlcFinancialAccountsPanelPr
 
   return (
     <div>
-      {/* Roadmap 7.46 — second-tier heading inside the Organization Types
+      {/* Roadmap 7.48 — second-tier heading inside the Organization Types
           expandable row (already titled with the LLC's own name):
           .property-details-title, not a bare <h4>. */}
       <h4 className="property-details-title">Financial accounts</h4>

@@ -59,7 +59,7 @@ export function ImportResolveStep({
       <h3>Step 4: Resolve values</h3>
       <p>Your file uses its own wording for these — confirm what each one means before anything is imported.</p>
 
-      {/* Roadmap 7.46 — three second-tier headings inside this already-titled
+      {/* Roadmap 7.48 — three second-tier headings inside this already-titled
           step ("Step 4: Resolve values"): .property-details-title, not bare <h4>. */}
       <h4 className="property-details-title">Income or Expense</h4>
       {entryTypeValues.map((raw) => (
