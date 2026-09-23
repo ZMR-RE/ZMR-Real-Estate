@@ -72,16 +72,14 @@ export function PropertyProfile() {
   return (
     <div>
       <Breadcrumb to="/properties" label="Property registry" />
-      {/* Roadmap 7.39 (2) — the hero photo banner (7.34) already shows
-          the address prominently on Overview, so the plain top-of-page
-          name header would just be a second, redundant copy there;
-          every other tab still needs it since none of them show the
-          hero. */}
-      {tab !== 'overview' && (
-        <div className="page-header-row">
-          <h1>{propertyLabel(property)}</h1>
-        </div>
-      )}
+      {/* Addendum to roadmap 7.39 (2) — reversed: the header stays
+          visible on every tab, Overview included. 7.39 (2) had hidden
+          it there on the theory that the hero photo banner (7.34)
+          already covers the address, but that was a miscommunication —
+          confirmed the header must never be hidden on any tab. */}
+      <div className="page-header-row">
+        <h1>{propertyLabel(property)}</h1>
+      </div>
       {error && <p role="alert">{error}</p>}
 
       <div className="tab-bar" role="tablist">

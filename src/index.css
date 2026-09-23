@@ -1669,10 +1669,12 @@ form > .property-field-group:first-of-type {
   gap: var(--space-3);
 }
 
-/* Roadmap 7.39 (1) — a proper breadcrumb: no underline, muted until
-   hover (darker text, same "hover = higher contrast" convention as the
-   rest of the app rather than a color/background change), small
-   chevron instead of the plain "&larr;" character it replaces. */
+/* Roadmap 7.39 (1) / addendum — a proper breadcrumb: no underline,
+   muted-gray text until hover (darker text, same "hover = higher
+   contrast" convention as the rest of the app rather than a color/
+   background change), small navy chevron (--accent, always on —
+   unaffected by the text's own hover state) instead of the plain
+   "&larr;" character it replaces. */
 .breadcrumb {
   display: inline-flex;
   align-items: center;
@@ -1692,6 +1694,7 @@ form > .property-field-group:first-of-type {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
+  color: var(--accent);
 }
 
 .manage-options {
