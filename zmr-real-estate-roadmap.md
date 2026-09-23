@@ -1000,7 +1000,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       as Specs & measurements/Utility records/Security deposits/Units
       always were. See git history for the column-layout CSS/JSX if it
       needs revisiting. Items 1, 2, 3, 5 above are unaffected.
-- [ ] 7.28 Remaining old-pattern boxes found while completing 7.27, out
+- [x] 7.28 Remaining old-pattern boxes found while completing 7.27, out
       of that item's scope (Property Overview only) — logged per the
       Standard rollout completeness rule rather than left unconverted
       and unlogged: LeasingListingSection ("Leasing / listing history",
@@ -1012,6 +1012,32 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       and PropertyProfileKpiTab.tsx also use CollapsibleSection but have
       no add/edit action to gate (pure display/reporting), so they don't
       need this standard.
+
+      All three converted to EditableSection: Leasing/Tenants each now
+      own their own box (title, chevron, top-right Edit) instead of
+      being wrapped by UnitsSection.tsx's own CollapsibleSection with
+      an always-visible add button inside — same double-boxing fix
+      Utility records already had. LeasingListingList/
+      TenantAssignmentList both gained a readOnly prop (same pattern as
+      UtilityRecordList/InsuranceLedgerList) gating their per-row
+      Edit/Archive column. PropertyProfileDocumentsTab.tsx converted
+      from a standing header-action "+ Add document or link" to the
+      same pattern — search, pagination, and each row's View/Open link
+      action stay visible in both states (viewing/filtering, not
+      editing), only the add button and Done are edit-gated.
+
+      `npm run build` clean. Verified live on 5336 W Foster Ave (has
+      real Units/Leasing/Tenants data) and 2169 Ash St (Documents, with
+      6 real documents): all three boxes show plain read-only content
+      and no add action by default, reveal it only after the box's own
+      Edit is clicked, and preserve collapse state through it. Checked
+      desktop, dark mode, and a 390px iframe-simulated mobile width —
+      confirmed via both visual screenshots and direct DOM state
+      assertions (readOnly correctly omits the action-column header;
+      edit state shows the expected add/Done buttons) since this
+      session's screenshot tool intermittently rendered stale content
+      for a few of the intermediate clicks — cross-checked against
+      live DOM state each time rather than trusting a single capture.
 - [x] 7.29 Three dashboard-wide UI consistency fixes: (1) left sidebar
       (`.app-nav`) is `position: sticky` at desktop widths so it stays
       pinned in place while the main content area scrolls, extending
