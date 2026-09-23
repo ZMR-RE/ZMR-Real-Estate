@@ -2267,6 +2267,24 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       hard-deleted the test record afterward and re-queried
       mortgage_details to confirm the table's 3 pre-existing (voided)
       rows are unaffected.
+- [x] 7.54 Fix SPA routing on the live Netlify deploy: no
+      `public/_redirects` (or netlify.toml redirect rule) existed, so
+      any direct load or page refresh of a nested route (e.g.
+      /properties) 404'd at Netlify's serving layer — only root "/"
+      worked, since React Router's client-side routing only takes over
+      after index.html has already loaded. Discovered while verifying
+      the live site after pushing 87 local commits: loading
+      https://zmr-real-estate.netlify.app/properties directly returned
+      Netlify's "Page not found," while loading "/" and letting the
+      router navigate client-side to /properties rendered correctly.
+      Added the standard Netlify SPA rewrite (`/*  /index.html  200`)
+      to `public/_redirects`, confirmed it's copied into `dist/` by
+      Vite's build. Pushed; Netlify auto-deployed from the GitHub push
+      (confirmed via `netlify api listSiteDeploys` — a new production
+      deploy matching the pushed commit completed in 14s with no manual
+      trigger needed). Live-verified after that deploy: direct load of
+      /properties, /properties/edc7e8e1-d08d-479f-b3d2-9266e87b45ad,
+      and other nested routes all render correctly instead of 404ing.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
