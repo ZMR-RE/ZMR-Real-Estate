@@ -9,6 +9,9 @@ interface PropertyFieldGroupProps {
   title: string
   Icon: ComponentType
   presentFields: PresentField[]
+  // Roadmap 7.44 — Nested subsection visual hierarchy: a general
+  // modifier any group can opt into, not specific to this one caller.
+  nested?: boolean
 }
 
 // Roadmap 7.22 — a labeled sub-section within Property information.
@@ -23,10 +26,10 @@ interface PropertyFieldGroupProps {
 // a bare title over an empty body.
 // Roadmap 7.35 (5) — small icon next to the title, currentColor so it
 // follows the title's own accent color automatically.
-export function PropertyFieldGroup({ title, Icon, presentFields }: PropertyFieldGroupProps) {
+export function PropertyFieldGroup({ title, Icon, presentFields, nested = false }: PropertyFieldGroupProps) {
   return (
     <section className="property-field-group">
-      <h3 className="property-field-group-title">
+      <h3 className={`property-field-group-title${nested ? ' property-field-group-title--nested' : ''}`}>
         <Icon />
         {title}
       </h3>

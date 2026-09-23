@@ -141,7 +141,15 @@ export function PropertySummary({ property, llcOptions }: PropertySummaryProps) 
 
         if (presentFields.length === 0) return null
 
-        return <PropertyFieldGroup key={group.id} title={group.title} Icon={group.Icon} presentFields={presentFields} />
+        return (
+          <PropertyFieldGroup
+            key={group.id}
+            title={group.title}
+            Icon={group.Icon}
+            presentFields={presentFields}
+            nested={group.nested}
+          />
+        )
       })}
     </div>
   )

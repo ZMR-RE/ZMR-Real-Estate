@@ -1441,6 +1441,22 @@ form > .property-field-group:first-of-type {
   flex-shrink: 0;
 }
 
+/* Roadmap 7.44 — Nested subsection visual hierarchy: a general
+   modifier for any subsection meant to read as a child of the one
+   above it, not a fresh peer subsection (currently: Exterior
+   information, under Physical facts). Smaller and regular weight
+   instead of bold — one step down from the full .property-field-
+   group-title treatment — while keeping the icon and accent color, so
+   it still reads as the same family of heading, just quieter. Not as
+   quiet as .property-details-title (which drops the icon/accent
+   entirely) — that class is for a plain data sub-list like "Details",
+   this one is for a genuine subsection with its own icon that simply
+   isn't a top-level peer. */
+.property-field-group-title--nested {
+  font-size: var(--text-sm);
+  font-weight: 400;
+}
+
 /* Roadmap 7.38 (1) — Physical facts headline stat cards. 4 across on
    desktop, stepping down same as .field-grid's own 3/2/1 breakpoints
    below so the two patterns feel like one family rather than two

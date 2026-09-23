@@ -14,6 +14,14 @@ export interface PropertyFieldGroupDef {
   // icon, so this file can stay plain .ts (JSX needs .tsx); consumers
   // render it as <group.Icon />.
   Icon: ComponentType
+  // Roadmap 7.44 — marks a subsection meant to read as nested under
+  // the one immediately above it (currently: Exterior information,
+  // under Physical facts) rather than a fresh peer subsection of
+  // Property Information. Rendered via .property-field-group-title
+  // --nested (PropertyFieldGroup.tsx): smaller, regular weight instead
+  // of bold, icon kept — a general flag any future group can set, not
+  // a one-off special case scoped to this single instance.
+  nested?: boolean
   fields: PropertyFieldMeta[]
 }
 
@@ -78,6 +86,11 @@ export const PROPERTY_FIELD_GROUPS: PropertyFieldGroupDef[] = [
     id: 'exterior-information',
     title: 'Exterior information',
     Icon: ExteriorInformationIcon,
+    // Roadmap 7.44 — Nested subsection visual hierarchy: reads as a
+    // child of Physical facts (the group directly above it), not an
+    // equal-weight peer, so it gets the quieter --nested title
+    // treatment instead of the full bold/accent one.
+    nested: true,
     fields: [{ key: 'exterior_wall_materials', label: 'Exterior wall material' }],
   },
 ]
