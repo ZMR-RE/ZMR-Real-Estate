@@ -1028,6 +1028,27 @@ dd {
   font-weight: 600;
 }
 
+/* LeaseForm's repeatable co-tenant picker rows (roadmap item 4) — a
+   SearchableSelect next to a Remove button, one row per tenant slot. */
+.lease-form-tenant-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.lease-form-tenant-row .searchable-select {
+  flex: 1;
+}
+
+/* A lease's own "why did it end" note, shown under its status badge in
+   LeaseList — quieter than the badge itself since it's supplementary
+   context, not the primary status signal. */
+.lease-end-reason {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+  color: var(--text);
+}
+
 /* A unit's nested Specs/Leasing/Tenants/Utility records sections
    (roadmap 7.2) never received the 7.22 full-width-CollapsibleSection
    treatment the property-level Overview tab got — same layout here,
