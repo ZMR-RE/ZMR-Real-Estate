@@ -59,7 +59,9 @@ export function ImportResolveStep({
       <h3>Step 4: Resolve values</h3>
       <p>Your file uses its own wording for these — confirm what each one means before anything is imported.</p>
 
-      <h4>Income or Expense</h4>
+      {/* Roadmap 7.46 — three second-tier headings inside this already-titled
+          step ("Step 4: Resolve values"): .property-details-title, not bare <h4>. */}
+      <h4 className="property-details-title">Income or Expense</h4>
       {entryTypeValues.map((raw) => (
         <div key={raw} className="field">
           <label htmlFor={`entry_type_${raw}`}>"{displayValue(raw)}" means</label>
@@ -74,7 +76,7 @@ export function ImportResolveStep({
         </div>
       ))}
 
-      <h4>Category</h4>
+      <h4 className="property-details-title">Category</h4>
       {categoryKeys.map((key) => {
         const [entryType, rawCategory] = key.split('::') as [EntryType, string]
         const list = entryType === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
@@ -98,7 +100,7 @@ export function ImportResolveStep({
         )
       })}
 
-      <h4>Vendor</h4>
+      <h4 className="property-details-title">Vendor</h4>
       {vendorValues.map((raw) => {
         const res = vendorResolution[raw]
         const selectValue = res?.mode === 'existing' ? res.vendorId : res?.mode === 'create' ? VENDOR_CREATE : VENDOR_NONE

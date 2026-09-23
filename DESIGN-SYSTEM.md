@@ -149,6 +149,14 @@ of screens in the app.
 - **`.page-header-row`** — flex row with `justify-content: space-between`,
   the standard "heading + one action control" layout (e.g. a page title
   next to its Manage Options panel).
+- **`.property-details-title`** — the second-tier heading for a plain
+  data sub-list nested inside an already-titled box (e.g. Property
+  Information's "Details"/"Ownership" sub-headings, a KPI card's
+  per-group heading, a "Documents"/"Links & attachments" sub-section).
+  Small, no icon, no accent color — deliberately quieter than
+  `.property-field-group-title` (bold, accent-colored, icon-bearing —
+  for a subsection that's a real peer of the box's other top-level
+  groups). Always this class on any such heading, never a bare `<h4>`.
 
 ## Icons
 

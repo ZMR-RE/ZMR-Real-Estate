@@ -31,7 +31,9 @@ export function FollowUpsCard({ loading, error, groups, processingId, onComplete
     <>
       {groups.map(([type, items]) => (
         <div key={type}>
-          <h4>{type}</h4>
+          {/* Roadmap 7.46 — second-tier heading inside the already-titled
+              "Follow-ups" CollapsibleSection: .property-details-title. */}
+          <h4 className="property-details-title">{type}</h4>
           <ActionItemList items={items} processingId={processingId} onComplete={onComplete} showProperty={false} />
         </div>
       ))}

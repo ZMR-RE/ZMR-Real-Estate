@@ -28,7 +28,9 @@ function ValueTrend({ title, history }: { title: string; history: PropertyValueL
 
   return (
     <>
-      <h4>{title}</h4>
+      {/* Roadmap 7.46 — second-tier heading inside the already-titled
+          "Market & financial snapshot" CollapsibleSection: .property-details-title. */}
+      <h4 className="property-details-title">{title}</h4>
       <div className="table-scroll">
         <table>
           <thead>

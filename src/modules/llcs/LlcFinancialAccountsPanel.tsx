@@ -37,7 +37,10 @@ export function LlcFinancialAccountsPanel({ llcId }: LlcFinancialAccountsPanelPr
 
   return (
     <div>
-      <h4>Financial accounts</h4>
+      {/* Roadmap 7.46 — second-tier heading inside the Organization Types
+          expandable row (already titled with the LLC's own name):
+          .property-details-title, not a bare <h4>. */}
+      <h4 className="property-details-title">Financial accounts</h4>
       {archivedCount > 0 && (
         <label htmlFor={`llc_financial_accounts_show_archived_${llcId}`}>
           <input
