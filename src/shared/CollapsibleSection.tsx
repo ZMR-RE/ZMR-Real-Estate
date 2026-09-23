@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { cardTintClass } from './cardTint'
 
 interface CollapsibleSectionProps {
   title: string
@@ -17,9 +18,18 @@ interface CollapsibleSectionProps {
 // JS-heavy machinery, and is accessible by default. Roadmap 7.10/7.13/7.14
 // all ask for "collapsible boxes"; this is the one shared implementation
 // every one of them uses instead of each rolling its own.
+// Roadmap 7.39 (5) — persistent expanded-state tint, reusing the exact
+// per-record tint system shared/cardTint.ts already established for
+// Property registry cards: same 4-color palette, same deterministic
+// hash, just keyed off this box's title (its closest analog to a
+// record id — a generic box has no id, but always has a stable title)
+// rather than a database id. Only visible while [open] (see index.css),
+// so a collapsed box never shows it — distinct from and layered on top
+// of the pre-existing momentary summary:hover effect, not a replacement
+// for it.
 export function CollapsibleSection({ title, defaultOpen = false, children, headerActions }: CollapsibleSectionProps) {
   return (
-    <details className="collapsible-section" open={defaultOpen}>
+    <details className={`collapsible-section ${cardTintClass(title)}`} open={defaultOpen}>
       <summary>
         <span className="collapsible-section-title">{title}</span>
         {headerActions && (

@@ -10,7 +10,6 @@ import { PropertyPhysicalFactsStats, hasPhysicalFactsStats } from './PropertyPhy
 interface PropertySummaryProps {
   property: Property
   llcOptions: SearchableSelectOption[]
-  marketValue: number | null
 }
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -60,10 +59,10 @@ function renderFieldValue(property: Property, key: keyof Property): ReactNode {
 // without a value is omitted entirely (no "+ Add …" chip, no dash); a
 // group left with zero present fields is skipped too, rather than
 // rendering a bare title over nothing.
-export function PropertySummary({ property, llcOptions, marketValue }: PropertySummaryProps) {
+export function PropertySummary({ property, llcOptions }: PropertySummaryProps) {
   return (
     <div className="property-summary">
-      <PropertyIdentityHeader property={property} llcOptions={llcOptions} marketValue={marketValue} />
+      <PropertyIdentityHeader property={property} llcOptions={llcOptions} />
 
       {PROPERTY_FIELD_GROUPS.map((group) => {
         const presentFields = group.fields

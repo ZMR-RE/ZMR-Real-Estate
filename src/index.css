@@ -900,6 +900,29 @@ dd {
   background: var(--surface-sunken);
 }
 
+/* Roadmap 7.39 (5) — persistent tint while a box is expanded, same 4
+   soft tints/tokens as .card-list .card.card-tint-N above, just scoped
+   to [open] here so a collapsed box never shows it. Higher specificity
+   than the plain .collapsible-section background rule above (2 classes
+   here vs. 1 there), so it wins without !important; summary:hover above
+   still wins over this on the summary row specifically when the two
+   overlap, since a hover is layered on top, not replaced by, the tint. */
+.collapsible-section[open].card-tint-1 {
+  background: var(--tint-1);
+}
+
+.collapsible-section[open].card-tint-2 {
+  background: var(--tint-2);
+}
+
+.collapsible-section[open].card-tint-3 {
+  background: var(--tint-3);
+}
+
+.collapsible-section[open].card-tint-4 {
+  background: var(--tint-4);
+}
+
 .collapsible-section-body {
   padding: 0 var(--space-5) var(--space-5);
 }
@@ -1644,6 +1667,31 @@ form > .property-field-group:first-of-type {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
+}
+
+/* Roadmap 7.39 (1) — a proper breadcrumb: no underline, muted until
+   hover (darker text, same "hover = higher contrast" convention as the
+   rest of the app rather than a color/background change), small
+   chevron instead of the plain "&larr;" character it replaces. */
+.breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.breadcrumb:hover {
+  color: var(--text-h);
+}
+
+.breadcrumb svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 .manage-options {

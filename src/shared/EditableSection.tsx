@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { cardTintClass } from './cardTint'
 
 interface EditableSectionProps {
   title: string
@@ -74,8 +75,10 @@ export function EditableSection({
 
   const exitEditing = () => setIsEditing(false)
 
+  // Roadmap 7.39 (5) — same persistent expanded-state tint as
+  // CollapsibleSection, see its own comment for the reasoning.
   return (
-    <details id={id} className="collapsible-section editable-section" open={defaultOpen}>
+    <details id={id} className={`collapsible-section editable-section ${cardTintClass(title)}`} open={defaultOpen}>
       <summary>
         <span className="collapsible-section-title">{title}</span>
         <span

@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
 import { propertyLabel } from '../../shared/propertyLabel'
+import { Breadcrumb } from '../../shared/Breadcrumb'
 import { usePropertyProfile, type ProfileTab } from './usePropertyProfile'
 import { PropertyProfileOverviewTab } from './PropertyProfileOverviewTab'
 import { PropertyProfileTransactionsTab } from './PropertyProfileTransactionsTab'
@@ -70,10 +71,17 @@ export function PropertyProfile() {
 
   return (
     <div>
-      <Link to="/properties">&larr; Property registry</Link>
-      <div className="page-header-row">
-        <h1>{propertyLabel(property)}</h1>
-      </div>
+      <Breadcrumb to="/properties" label="Property registry" />
+      {/* Roadmap 7.39 (2) — the hero photo banner (7.34) already shows
+          the address prominently on Overview, so the plain top-of-page
+          name header would just be a second, redundant copy there;
+          every other tab still needs it since none of them show the
+          hero. */}
+      {tab !== 'overview' && (
+        <div className="page-header-row">
+          <h1>{propertyLabel(property)}</h1>
+        </div>
+      )}
       {error && <p role="alert">{error}</p>}
 
       <div className="tab-bar" role="tablist">
@@ -98,7 +106,6 @@ export function PropertyProfile() {
           holdingCompanyOptions={holdingCompanyOptions}
           onCreateHoldingCompany={createHoldingCompany}
           onValueHistoryChanged={refresh}
-          marketValue={latestMarketValue ? Number(latestMarketValue.value) : null}
           saving={saving}
           onSave={saveProperty}
         />

@@ -5,6 +5,11 @@ interface MarketFinancialSnapshotCardProps {
   loading: boolean
   error: string | null
   snapshot: MarketFinancialSnapshot
+  // Roadmap 7.39 (4) — $/sq ft moved here from Property Information's
+  // header row (removed there entirely, not duplicated) — living area
+  // is a properties column, not part of MarketFinancialSnapshot, so it
+  // arrives as its own prop rather than through the snapshot object.
+  squareFootage: string | null
 }
 
 const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
@@ -48,7 +53,7 @@ function ValueTrend({ title, history }: { title: string; history: PropertyValueL
   )
 }
 
-export function MarketFinancialSnapshotCard({ loading, error, snapshot }: MarketFinancialSnapshotCardProps) {
+export function MarketFinancialSnapshotCard({ loading, error, snapshot, squareFootage }: MarketFinancialSnapshotCardProps) {
   if (loading) {
     return <p>Loading…</p>
   }
@@ -60,11 +65,18 @@ export function MarketFinancialSnapshotCard({ loading, error, snapshot }: Market
   const { marketValue, marketValueHistory, rentValue, rentValueHistory, currentBalance, equity, annualRent, ytdNetCashFlow } =
     snapshot
 
+  const livingArea = squareFootage ? Number(squareFootage) : null
+  const marketValueNumber = marketValue ? Number(marketValue.value) : null
+  const pricePerSqft = marketValueNumber !== null && livingArea ? marketValueNumber / livingArea : null
+
   return (
     <>
       <dl>
         <dt>Market value</dt>
         <dd>{marketValue ? asOf(marketValue) : 'Not enough data yet'}</dd>
+
+        <dt>$/sq ft</dt>
+        <dd>{pricePerSqft !== null ? `${currencyFormatter.format(pricePerSqft)}/sq ft` : 'Not enough data yet'}</dd>
 
         <dt>Current loan balance</dt>
         <dd>{currentBalance !== null ? currencyFormatter.format(currentBalance) : 'Not enough data yet'}</dd>

@@ -73,7 +73,12 @@ export function PropertyProfileKpiTab({ property, transactions }: PropertyProfil
       </CollapsibleSection>
 
       <CollapsibleSection title="Market & financial snapshot" defaultOpen>
-        <MarketFinancialSnapshotCard loading={marketLoading} error={marketError} snapshot={marketFinancialSnapshot} />
+        <MarketFinancialSnapshotCard
+          loading={marketLoading}
+          error={marketError}
+          snapshot={marketFinancialSnapshot}
+          squareFootage={property.square_footage}
+        />
         <MortgagePayoffProgressBar
           originalLoanAmount={marketFinancialSnapshot.originalLoanAmount}
           currentBalance={marketFinancialSnapshot.currentBalance}

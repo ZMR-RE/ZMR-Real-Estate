@@ -2,13 +2,11 @@ import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { NO_LLC_ID } from '../llcs/useLlcs'
 import type { Property } from './propertiesQueries'
 import { PropertyPhoto } from './PropertyPhoto'
-import { PropertyPricePerSqft } from './PropertyPricePerSqft'
 import { PropertyLastUpdated } from './PropertyLastUpdated'
 
 interface PropertyIdentityHeaderProps {
   property: Property
   llcOptions: SearchableSelectOption[]
-  marketValue: number | null
 }
 
 const STATUS_LABELS: Record<Property['status'], string> = {
@@ -49,12 +47,16 @@ function formatCityStateZip(property: Property): string {
 // Roadmap 7.34 — restructured around the full-width hero photo: address/
 // city-state-zip moved onto the image itself (PropertyPhoto's own
 // overlay) rather than a separate text block beside a small thumbnail.
-// Organization type/$/sq ft/Status now form one row directly below the
-// image. The box's own top-right Edit (EditableSection, the Box
-// interaction standard's single entry point) is unchanged — nothing
-// here duplicates or relocates it, despite the row sitting visually
-// close to where Edit reads on screen.
-export function PropertyIdentityHeader({ property, llcOptions, marketValue }: PropertyIdentityHeaderProps) {
+// Organization type/Status now form one row directly below the image.
+// The box's own top-right Edit (EditableSection, the Box interaction
+// standard's single entry point) is unchanged — nothing here duplicates
+// or relocates it, despite the row sitting visually close to where Edit
+// reads on screen.
+//
+// Roadmap 7.39 (4) — $/sq ft removed from this row entirely (it now
+// lives only on the KPI tab's Market & financial snapshot card,
+// MarketFinancialSnapshotCard.tsx — no duplication between the two).
+export function PropertyIdentityHeader({ property, llcOptions }: PropertyIdentityHeaderProps) {
   const cityStateZip = formatCityStateZip(property)
 
   return (
@@ -66,8 +68,6 @@ export function PropertyIdentityHeader({ property, llcOptions, marketValue }: Pr
           <dt>Organization type</dt>
           <dd>{llcDisplay(property.llc_id, llcOptions)}</dd>
         </div>
-        {/* Roadmap 7.32 (7) */}
-        <PropertyPricePerSqft property={property} marketValue={marketValue} />
         <span className={`status-badge ${STATUS_BADGE_VARIANTS[property.status]}`}>
           {STATUS_LABELS[property.status]}
         </span>

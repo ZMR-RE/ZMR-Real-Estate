@@ -1496,6 +1496,43 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       not a regression from this item; the new elements' own responsive
       breakpoints, e.g. .kpi-quick-stats' 3/2/1 grid, all applied
       correctly against the true 390px viewport regardless).
+- [ ] 7.39 Five fixes, in progress:
+      1. Style "← Property registry" as a proper breadcrumb element.
+      2. Hide the top-of-page property name header on Overview only
+         (hero banner already shows it there); keep it on every other
+         tab.
+      3. Add an "Ownership" subsection to Purchase & valuation: Owner
+         name, Contact phone (new field, alongside existing Contact
+         email), Deed document (2.5 document architecture).
+      4. Remove $/sq ft from Overview's header row entirely — KPI-only,
+         no duplication.
+      5. Persistent background tint on any expanded box, reusing the
+         existing per-record tint token system — distinct from and in
+         addition to the momentary hover effect.
+
+      DONE SO FAR (items 1, 2, 4, 5): Breadcrumb.tsx (small chevron
+      SVG, no underline) replaces the plain "&larr;" link text;
+      PropertyProfile.tsx's top h1 block now conditional on
+      `tab !== 'overview'`; $/sq ft deleted from PropertyIdentityHeader
+      (PropertyPricePerSqft.tsx removed entirely — it had no other
+      caller) and added to MarketFinancialSnapshotCard.tsx (KPI tab)
+      instead, computed the same way (latest market value ÷ living
+      area); CollapsibleSection.tsx/EditableSection.tsx both now apply
+      `cardTintClass(title)` (shared/cardTint.ts, unchanged — same
+      deterministic per-id hash, just keyed off a box's title instead
+      of a database record id) to their root `<details>`, with new
+      `.collapsible-section[open].card-tint-N` CSS rules (higher
+      specificity than the plain background rule, so it wins without
+      `!important`) applying the tint only while `[open]`.
+      `npm run build` clean; verified live on 2169 Ash St, desktop and
+      dark mode — breadcrumb styled correctly, h1 confirmed present on
+      Financials/KPI and absent on Overview, $/sq ft confirmed on the
+      KPI snapshot card, two simultaneously-expanded boxes (Property
+      information/Financial accounts) showed two distinct persistent
+      tints while every collapsed box stayed plain white/dark-surface
+      despite each having its own assigned (but inactive) tint class.
+      Item 3 not started yet — this entry stays unchecked until the
+      whole task is done, per Definition of done.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
