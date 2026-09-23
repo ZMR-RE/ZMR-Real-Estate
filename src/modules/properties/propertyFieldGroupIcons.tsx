@@ -6,6 +6,19 @@
 // icon automatically follows .property-field-group-title's own accent
 // color (Section hierarchy contrast rule) rather than needing its own
 // color rule.
+// Roadmap 7.50 — signature-icon consistency audit across this whole
+// file: confirmed strokeWidth is already deliberately tiered (1.5 at
+// the 16px section-title render size, 1.25 at the 20px stat-card size)
+// so the two tiers render the same physical line weight rather than
+// actually matching in value; confirmed no icon sets strokeLinecap/
+// strokeLinejoin, so every corner/line-end uses the SVG default
+// uniformly. The one real inconsistency found: YearBuiltIcon's rect
+// used rx="2" while every other rect-based icon here (Exterior
+// information, Units, Living area) used rx="1" — fixed to rx="1" so
+// corner rounding matches across the set. Documented as the
+// established convention in DESIGN-SYSTEM.md's Icons section (which
+// still said "no icon set exists" — stale since 7.35 first added
+// this file).
 // Roadmap 7.45 (2) — replaces the original circle-plus-squiggle icon,
 // which read as a generic info-circle at this render size (the $-curve
 // inside it was too subtle to land as a dollar sign in practice).
@@ -94,7 +107,7 @@ export function LivingAreaIcon() {
 export function YearBuiltIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" aria-hidden="true">
-      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <rect x="3" y="5" width="18" height="16" rx="1" />
       <path d="M3 10h18M8 3v4M16 3v4" />
     </svg>
   )

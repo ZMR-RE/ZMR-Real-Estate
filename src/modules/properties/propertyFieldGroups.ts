@@ -57,7 +57,7 @@ export const PROPERTY_FIELD_GROUPS: PropertyFieldGroupDef[] = [
   },
   {
     id: 'physical-facts',
-    title: 'Physical facts',
+    title: 'Property details',
     Icon: PhysicalFactsIcon,
     // Roadmap 7.38 (1) — Living area/Year built pulled out into headline
     // stat cards (PropertyPhysicalFactsStats, rendered by PropertySummary

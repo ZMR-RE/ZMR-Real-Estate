@@ -263,7 +263,7 @@ export function PropertyForm({
       <div className="property-field-group">
         <h3 className="property-field-group-title">
           <PhysicalFactsIcon />
-          Physical facts
+          Property details
         </h3>
         <div className="field-column">
           <div className="field">

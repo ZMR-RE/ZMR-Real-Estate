@@ -160,9 +160,31 @@ of screens in the app.
 
 ## Icons
 
-None. No icon font or SVG icon set anywhere in the app — the only
-decorative glyph is the CSS-drawn chevron on `.collapsible-section`. Any
-future icon need currently has no established pattern to follow.
+No icon font or SVG icon library anywhere in the app — the CSS-drawn
+chevron on `.collapsible-section` is one exception; the other is a set
+of small hand-rolled inline SVGs next to Property Profile section
+titles and stat cards (`propertyFieldGroupIcons.tsx`, roadmap 7.35/
+7.38/7.45/7.47/7.50). Any future icon follows this established
+convention rather than introducing a new one:
+
+- `viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"`
+  — `currentColor` means each icon automatically follows its container's
+  own text color (e.g. `.property-field-group-title`'s accent color)
+  rather than needing a separate color rule.
+- Two size tiers, both calibrated to render the same visual line
+  weight despite the size difference: next to `.property-field-group-title`
+  (16×16px rendered), `strokeWidth="1.5"`; next to `.property-stat-card`
+  (20×20px rendered, a more prominent context beside a large bold
+  number), `strokeWidth="1.25"` — the smaller width at the larger
+  render size keeps the actual on-screen stroke thickness equal
+  (1.5×16/24 ≈ 1.25×20/24) rather than looking heavier.
+- Any rectangle within an icon uses `rx="1"` for corner rounding — the
+  one shared rounding value across every rect-based icon in the set
+  (`ExteriorInformationIcon`, `UnitsIcon`, `LivingAreaIcon`,
+  `YearBuiltIcon`); don't introduce a different radius.
+- No `strokeLinecap`/`strokeLinejoin` overrides — every icon uses the
+  SVG default (butt cap, miter join) uniformly, for sharp, consistent
+  line ends and corners across the whole set.
 
 ## Responsive rules (mobile, roadmap "Mobile responsiveness")
 

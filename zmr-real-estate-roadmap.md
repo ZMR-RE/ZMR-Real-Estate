@@ -2092,6 +2092,45 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       from 48px to 32px in both light and dark mode and at a 390px
       mobile width; re-verified Settings' own header-to-tab-bar gap
       stayed exactly 24px, confirming no regression there.
+- [x] 7.50 Two fixes:
+
+      1. Confirmed "Physical facts" still used its pre-rename label,
+      not the approved "Property details" rename — fixed the one
+      source of truth (`propertyFieldGroups.ts`'s `title` field, which
+      both View mode's `PropertySummary.tsx`/`PropertyFieldGroup.tsx`
+      read from) plus Edit mode's separate hardcoded heading
+      (`PropertyForm.tsx`). The nested "Details" sub-list heading
+      underneath it (`property-details-title`, unrelated CSS class
+      name coincidence) is untouched — still reads "Property details >
+      Details", same nesting relationship as before the rename.
+
+      2. Signature-icon consistency audit across all 8 hand-drawn
+      Property Profile icons (`propertyFieldGroupIcons.tsx`): the 4
+      section-title icons (Purchase & valuation, Property details,
+      Ownership, Exterior information) and the 4 stat-card icons
+      (Units, Occupied, Year built, Living area). Confirmed already
+      consistent: stroke width is deliberately tiered (1.5 at the 16px
+      section-title render size, 1.25 at the 20px stat-card size) so
+      both tiers render the same physical line weight rather than
+      literally matching in value; no icon sets `strokeLinecap`/
+      `strokeLinejoin`, so every corner/line-end already uses the SVG
+      default uniformly. Found and fixed one real inconsistency:
+      `YearBuiltIcon`'s rect used `rx="2"` while every other rect-based
+      icon (Exterior information, Units, Living area) used `rx="1"` —
+      unified to `rx="1"`. Documented this as the established
+      convention in DESIGN-SYSTEM.md's Icons section, which had gone
+      stale (still said "no icon set exists" since before 7.35 first
+      added this file).
+
+      `npx tsc -b` and `npm run build` clean. Verified live on 2169 Ash
+      St in both light and dark mode (toggled via the app's own
+      `data-theme` mechanism, `src/shared/theme.ts`): Property
+      Overview's section header now reads "Property details" (icon
+      unchanged) in both View and Edit mode; the Year built stat
+      card's calendar icon now shows the same subtle corner rounding
+      as its Living area sibling, confirmed via a live DOM query of
+      the rendered `rx` attribute (both now `rx="1"`) plus a visual
+      zoom screenshot, in both themes.
 - [x] 7.51 Personality pass: warmer, more human micro-copy for every
       empty-state message reachable from Property Overview — flat "No
       X logged/recorded yet." replaced with friendlier, more specific
