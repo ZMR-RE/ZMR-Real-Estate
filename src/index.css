@@ -13,6 +13,10 @@
   --accent: #123456;
   --accent-h: #0e2a45;
   --accent-bg: rgba(18, 52, 86, 0.08);
+  /* Roughly double --accent-bg's opacity — same accent color, just a
+     stronger tint for hover states that need more presence than the
+     default (box hover, see .collapsible-section:hover). */
+  --accent-bg-strong: rgba(18, 52, 86, 0.16);
   --accent-border: rgba(18, 52, 86, 0.35);
 
   --danger: #b5442f;
@@ -121,6 +125,7 @@
     --accent: #6fa8dc;
     --accent-h: #8fbde6;
     --accent-bg: rgba(111, 168, 220, 0.14);
+    --accent-bg-strong: rgba(111, 168, 220, 0.28);
     --accent-border: rgba(111, 168, 220, 0.4);
 
     --danger: #e08571;
@@ -160,6 +165,7 @@
   --accent: #6fa8dc;
   --accent-h: #8fbde6;
   --accent-bg: rgba(111, 168, 220, 0.14);
+  --accent-bg-strong: rgba(111, 168, 220, 0.28);
   --accent-border: rgba(111, 168, 220, 0.4);
 
   --danger: #e08571;
@@ -916,14 +922,28 @@ dd {
 /* Roadmap 7.41 — reverts 7.39 (5)'s persistent per-box cardTintClass
    tint (4-color hash palette built for distinguishing different
    PROPERTIES on the Registry list, wrong tool for "this box is open").
-   Replaced with one uniform navy hover tint — var(--accent-bg), the
-   same light-accent token already used for hover elsewhere (e.g.
-   .searchable-select-menu li button:hover) — applied to the whole box
+   Replaced with one uniform navy hover tint, applied to the whole box
    on hover, not just the summary row, and not persistent: it's gone
    the instant the cursor leaves, same behavior on every box, no
-   per-box color variation. */
+   per-box color variation.
+
+   Strengthened further (addendum): the flat tint alone read as dull,
+   not a genuine spotlight. Now: --accent-bg-strong (roughly double
+   --accent-bg's opacity) plus a 4px solid-navy left-border accent and
+   a lift shadow — both via box-shadow (inset for the left accent, plus
+   --shadow-md), not a real `border`/`box-shadow` property swap, so
+   hovering never shifts the box's own layout or its content's position
+   by even a pixel. --accent-h is the same "hover-accent" token already
+   used for button hover states (button[type='submit']:hover) — reused here
+   rather than inventing a new color — so this scales correctly in dark
+   mode with no separate hardcoded logic. No new selectors beyond
+   :hover itself: still momentary, never persists once the box is only
+   [open] and not actively hovered. */
 .collapsible-section:hover {
-  background: var(--accent-bg);
+  background: var(--accent-bg-strong);
+  box-shadow:
+    inset 4px 0 0 0 var(--accent-h),
+    var(--shadow-md);
 }
 
 .collapsible-section-body {
