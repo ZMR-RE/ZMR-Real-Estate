@@ -5,6 +5,7 @@ import { listProperties } from '../properties/propertiesQueries'
 import { listAccountMemberDirectory } from '../auditLog/auditLogQueries'
 import { actionItemPriority } from './actionItemPriority'
 import { useActionQueueFilters } from './useActionQueueFilters'
+import { ensureLeaseRenewalReminders } from '../leases/leaseRenewalReminders'
 import {
   createActionItem,
   listActionItems,
@@ -101,6 +102,11 @@ export function useActionQueue(propertyId?: string) {
   const refresh = useCallback(async () => {
     if (!accountId) return
     setLoading(true)
+    // Roadmap "Units/Lease/Tenant rebuild" item 6 — idempotent check-
+    // and-backfill for leases within 60 days of ending; see
+    // leaseRenewalReminders.ts for why this is page-load-triggered
+    // rather than truly time-scheduled (no cron infra in this app).
+    await ensureLeaseRenewalReminders(accountId)
     const { data, error: fetchError } = await listActionItems(accountId, {
       propertyId: scopedToProperty ? propertyId! : propertyFilter,
     })

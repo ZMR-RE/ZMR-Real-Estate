@@ -10,6 +10,7 @@ import {
   type Lease,
   type LeaseInput,
 } from './leasesQueries'
+import { ensureLeaseRenewalReminders } from './leaseRenewalReminders'
 
 function todayDateString() {
   return new Date().toISOString().slice(0, 10)
@@ -34,6 +35,12 @@ export function useLeases(propertyId: string, unitId: string) {
   const refresh = useCallback(async () => {
     if (!accountId) return
     setLoading(true)
+    // Roadmap "Units/Lease/Tenant rebuild" item 6 — same idempotent
+    // check-and-backfill useActionQueue.ts's own refresh() runs, so a
+    // renewal reminder also appears promptly when someone's looking at
+    // this exact unit's leases, not only when they happen to open
+    // Action Queue directly.
+    await ensureLeaseRenewalReminders(accountId)
     const { data, error: fetchError } = await listLeasesForUnit(accountId, unitId)
     setLoading(false)
 
