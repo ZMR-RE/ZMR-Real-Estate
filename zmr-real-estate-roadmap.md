@@ -651,7 +651,16 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 
 ## 3. Phase 3 — Reuse & Integrations
 - [ ] 3.1 Port Communication Hub from My Earth Market dashboard — adapt existing Gmail management code for per-property email accounts
-- [ ] 3.2 Connect each property's dedicated email account into the hub
+- [ ] 3.2 Connect each property's dedicated email account into the hub —
+      IN PROGRESS, step 1 of the realistic first-build plan: minimal
+      schema only (migration 20260923020000_property_email_connections),
+      committed and verified — property_email_connections
+      (property_id, email_address, status, vault_secret_id reference —
+      the OAuth token pair itself lives only in Supabase Vault, never a
+      plain app table) and oauth_state_tokens (10-minute-expiry CSRF
+      state for the handshake), both account_id RLS-scoped. No Edge
+      Functions or UI yet — both depend on a Google Cloud OAuth app the
+      user still needs to register externally.
 - [ ] 3.3 Command Center — property-scoped email management: add multiple email accounts, tag each to a property, foundation for an AI agent to eventually handle that property's tenant invoicing, receipts, and notifications through its own email
 - [ ] 3.4 Configurable Document Routing Rules — account-level settings: define "this document type → this Drive folder → this naming pattern" (naming pattern supports placeholders like property/date/vendor/doc type). User-configurable per account, not hardcoded, so it works identically for future resale customers as it does for ZMR
 
