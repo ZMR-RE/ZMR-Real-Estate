@@ -110,7 +110,7 @@ function PolicyCard({
 
 export function InsuranceLedgerList({ policies, readOnly = false, onEdit, onViewDocument }: InsuranceLedgerListProps) {
   if (policies.length === 0) {
-    return <p className="empty-state">No insurance policies recorded yet.</p>
+    return <p className="empty-state">No insurance policies yet — add your first one to keep track of coverage.</p>
   }
 
   return (

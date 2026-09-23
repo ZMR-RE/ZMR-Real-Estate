@@ -110,7 +110,7 @@ export function UnitsSection({ propertyId }: UnitsSectionProps) {
           {loading ? (
             <p>Loading…</p>
           ) : units.length === 0 ? (
-            <p className="empty-state">No units logged yet.</p>
+            <p className="empty-state">No units yet — add your first one to get the property set up.</p>
           ) : (
             units.map((unit) => renderUnitCard(unit, false))
           )}
@@ -123,7 +123,7 @@ export function UnitsSection({ propertyId }: UnitsSectionProps) {
           {loading ? (
             <p>Loading…</p>
           ) : units.length === 0 ? (
-            <p className="empty-state">No units logged yet.</p>
+            <p className="empty-state">No units yet — add your first one to get the property set up.</p>
           ) : (
             units.map((unit) => renderUnitCard(unit, true))
           )}

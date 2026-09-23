@@ -61,7 +61,7 @@ export function PropertyTaxLedgerList({
   onViewDocument,
 }: PropertyTaxLedgerListProps) {
   if (installments.length === 0) {
-    return <p className="empty-state">No tax years recorded yet.</p>
+    return <p className="empty-state">No tax years recorded yet — add the first one to start building the history.</p>
   }
 
   return (

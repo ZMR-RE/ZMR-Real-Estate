@@ -19,7 +19,7 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 // visible, dimmed via the shared .row-voided class, never hard-deleted).
 export function TenantAssignmentList({ assignments, readOnly = false, onToggleArchived }: TenantAssignmentListProps) {
   if (assignments.length === 0) {
-    return <p className="empty-state">No tenants assigned yet.</p>
+    return <p className="empty-state">No tenants assigned yet — add the first one whenever they move in.</p>
   }
 
   return (

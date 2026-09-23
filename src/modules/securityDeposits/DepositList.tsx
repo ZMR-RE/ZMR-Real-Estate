@@ -12,7 +12,7 @@ interface DepositListProps {
 
 export function DepositList({ deposits, readOnly = false, onLogTransaction, onVoidTransaction }: DepositListProps) {
   if (deposits.length === 0) {
-    return <p className="empty-state">No security deposits logged yet.</p>
+    return <p className="empty-state">No security deposits yet — log the first one to keep it on record.</p>
   }
 
   return (

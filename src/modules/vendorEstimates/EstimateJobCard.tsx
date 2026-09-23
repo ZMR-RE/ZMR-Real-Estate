@@ -52,7 +52,7 @@ export function EstimateJobCard({
       {job.action_item && <p>Linked task: {job.action_item.title}</p>}
 
       {job.estimates.length === 0 ? (
-        <p className="empty-state">No estimates logged yet.</p>
+        <p className="empty-state">No estimates yet — log one below.</p>
       ) : (
         <table>
           <thead>

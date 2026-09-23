@@ -40,7 +40,7 @@ export function PropertySpecList({
   onCancel,
 }: PropertySpecListProps) {
   if (specs.length === 0) {
-    return <p className="empty-state">No specs logged yet.</p>
+    return <p className="empty-state">No specs logged yet — jot down your first measurement whenever you're ready.</p>
   }
 
   return (

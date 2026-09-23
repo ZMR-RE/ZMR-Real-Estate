@@ -33,7 +33,7 @@ export function FinancialAccountList({
   onToggleArchived,
 }: FinancialAccountListProps) {
   if (accounts.length === 0) {
-    return <p className="empty-state">No financial accounts on file yet.</p>
+    return <p className="empty-state">No financial accounts on file yet — add the first one whenever you're ready.</p>
   }
 
   return (

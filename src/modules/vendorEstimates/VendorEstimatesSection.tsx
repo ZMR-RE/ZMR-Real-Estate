@@ -45,7 +45,7 @@ export function VendorEstimatesSection({ propertyId }: VendorEstimatesSectionPro
       {loading ? (
         <p>Loading…</p>
       ) : jobs.length === 0 ? (
-        <p className="empty-state">No vendor estimates logged yet.</p>
+        <p className="empty-state">No vendor estimates yet — add your first job to start comparing quotes.</p>
       ) : (
         jobs.map((job) => (
           <EstimateJobCard

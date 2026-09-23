@@ -32,7 +32,7 @@ export function PropertyValueHistorySection({ propertyId, onChanged }: PropertyV
             propertyId={propertyId}
             metric="market_value"
             title="Market value"
-            emptyMessage="No market value logged yet."
+            emptyMessage="No market value logged yet — log your first estimate to start tracking it over time."
             onChanged={onChanged}
             readOnly
           />
@@ -40,7 +40,7 @@ export function PropertyValueHistorySection({ propertyId, onChanged }: PropertyV
             propertyId={propertyId}
             metric="rent_value"
             title="Market rent estimate"
-            emptyMessage="No rent value logged yet."
+            emptyMessage="No rent value logged yet — log your first estimate to start tracking it over time."
             onChanged={onChanged}
             readOnly
           />
@@ -52,14 +52,14 @@ export function PropertyValueHistorySection({ propertyId, onChanged }: PropertyV
             propertyId={propertyId}
             metric="market_value"
             title="Market value"
-            emptyMessage="No market value logged yet."
+            emptyMessage="No market value logged yet — log your first estimate to start tracking it over time."
             onChanged={onChanged}
           />
           <PropertyValueLedger
             propertyId={propertyId}
             metric="rent_value"
             title="Market rent estimate"
-            emptyMessage="No rent value logged yet."
+            emptyMessage="No rent value logged yet — log your first estimate to start tracking it over time."
             onChanged={onChanged}
           />
           <button type="button" onClick={exitEditing}>

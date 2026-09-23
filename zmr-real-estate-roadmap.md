@@ -2092,6 +2092,42 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       from 48px to 32px in both light and dark mode and at a 390px
       mobile width; re-verified Settings' own header-to-tab-bar gap
       stayed exactly 24px, confirming no regression there.
+- [x] 7.51 Personality pass: warmer, more human micro-copy for every
+      empty-state message reachable from Property Overview — flat "No
+      X logged/recorded yet." replaced with friendlier, more specific
+      phrasing across all 13 boxes/sub-lists (Financial accounts,
+      Insurance, Market value, Rent value, Property tax installments,
+      Tenants overview, Specs & measurements, Utility records —
+      property- and unit-level, Security deposits, Vendor estimates —
+      both the job list and each job's own nested estimates list,
+      Units, per-unit Tenant assignments, per-unit Leasing/listing
+      history). No confirmation-text pass alongside it: searched the
+      whole app for a "Saved" (or equivalent) message to warm up — none
+      exists anywhere in Property Overview's own boxes (every save is a
+      silent return to view-only, per the Box interaction standard);
+      the only such message in the entire codebase lives in Quick
+      Capture (`CaptureForm.tsx`'s "Saved."), a different tab, out of
+      this item's stated scope — flagging rather than inventing a new
+      toast/banner UI to have something to reword, which would be a
+      feature addition beyond a copy pass.
+
+      `npm run build` clean. Verified live on two real properties (2169
+      Ash St, 5336 W Foster Ave — an empty box on one nearly always had
+      real data on the other, so between them every one of the 12
+      unique strings was confirmed actually rendering, not just present
+      in source): Security deposits, Vendor estimates, Tenants,
+      Specs & measurements, Utility records, and Units confirmed on
+      2169 Ash St; Financial accounts, Insurance, Rent value, Property
+      tax, per-unit Tenant assignments, and per-unit Utility records
+      confirmed on 5336 W Foster Ave. The one remaining case (a vendor
+      estimate job with zero estimates logged under it) needed a
+      throwaway test job to reach — created one, confirmed "No
+      estimates yet — log one below." rendered, then hard-deleted it
+      (own-session data, no UI delete path exists) and positively
+      re-verified zero remaining. Market value's message shares the
+      exact same component/prop path as the confirmed-working Rent
+      value one, so treated as verified by that identical code path
+      rather than separately reproduced.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
