@@ -1369,10 +1369,14 @@ dd {
 
 /* Roadmap 7.38 (4) — mortgage payoff progress bar, next to the
    existing equity/LTV figures on the KPI tab's Market & financial
-   snapshot card. --success for the filled (paid-off) portion — paying
-   down principal is unambiguously a positive-financial state, the
-   reserved meaning that token exists for (unlike the 3 chart-line
-   colors above, which are pure differentiators). */
+   snapshot card.
+
+   Personality pass — color-coded "story" number: the fill and percent
+   label now vary by how far along payoff is (--success/--warning/
+   --danger, same vocabulary as the Units-occupied stat card and Action
+   Queue priority), replacing the old always-`--success` fill. See
+   MortgagePayoffProgressBar.tsx's payoffColorVariant for the threshold
+   reasoning. */
 .mortgage-payoff-progress {
   margin-top: var(--space-4);
 }
@@ -1386,6 +1390,18 @@ dd {
   margin-bottom: var(--space-1);
 }
 
+.mortgage-payoff-progress-percent--success {
+  color: var(--success);
+}
+
+.mortgage-payoff-progress-percent--warning {
+  color: var(--warning);
+}
+
+.mortgage-payoff-progress-percent--danger {
+  color: var(--danger);
+}
+
 .mortgage-payoff-progress-bar {
   height: 10px;
   border-radius: var(--radius-pill);
@@ -1395,8 +1411,19 @@ dd {
 
 .mortgage-payoff-progress-fill {
   height: 100%;
-  background: var(--success);
   border-radius: var(--radius-pill);
+}
+
+.mortgage-payoff-progress-fill--success {
+  background: var(--success);
+}
+
+.mortgage-payoff-progress-fill--warning {
+  background: var(--warning);
+}
+
+.mortgage-payoff-progress-fill--danger {
+  background: var(--danger);
 }
 
 .mortgage-payoff-progress-remaining {
@@ -2045,6 +2072,25 @@ th {
   font-weight: 600;
   color: var(--text);
   min-width: 70px;
+}
+
+/* Personality pass — color-coded "story" number for the Expiration
+   date, same --success/--warning/--danger vocabulary as the
+   Units-occupied stat card (property-stat-card-value--*) and Action
+   Queue priority (7.15) rather than a new palette. */
+.insurance-expiration-value--success {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.insurance-expiration-value--warning {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+.insurance-expiration-value--danger {
+  color: var(--danger);
+  font-weight: 600;
 }
 
 .insurance-policy-documents-inline {

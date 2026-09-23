@@ -67,6 +67,39 @@ export function getInsuranceStatus(policy: Pick<InsurancePolicy, 'coverage_end_d
   return policy.coverage_end_date < new Date().toISOString().slice(0, 10) ? 'expired' : 'active'
 }
 
+// Personality pass — color-coded "story" numbers, extending the same
+// --success/--warning/--danger vocabulary the Units-occupied stat card
+// and Action Queue priority (7.15) already use to Insurance's own
+// coverage-expiration date. Same "real-time check, not a snapshot"
+// approach as getInsuranceStatus above. No end date set means ongoing
+// coverage — success, not a guess at when it might lapse.
+const EXPIRING_VERY_SOON_DAYS = 7
+const EXPIRING_SOON_DAYS = 30
+
+export type InsuranceExpirationUrgency = 'success' | 'warning' | 'danger'
+
+// Whole days until coverage_end_date, negative once past it. Exported
+// separately from the urgency color so the UI can also show a plain
+// "expires in N days" / "expired N days ago" phrase, not just a color.
+export function daysUntilExpiration(policy: Pick<InsurancePolicy, 'coverage_end_date'>): number | null {
+  if (!policy.coverage_end_date) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const end = new Date(`${policy.coverage_end_date}T00:00:00`)
+  return Math.round((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+// danger covers both "already expired" (days <= 0) and "very close"
+// (within a week) — the task's own "red if expired/very close" wording
+// collapses both into one color rather than a 4th visual tier.
+export function insuranceExpirationUrgency(policy: Pick<InsurancePolicy, 'coverage_end_date'>): InsuranceExpirationUrgency {
+  const days = daysUntilExpiration(policy)
+  if (days === null) return 'success'
+  if (days <= EXPIRING_VERY_SOON_DAYS) return 'danger'
+  if (days <= EXPIRING_SOON_DAYS) return 'warning'
+  return 'success'
+}
+
 // New build item — Insurance as a historical ledger, exact pattern of
 // Property Tax Installments (9.5) including its multi-document revision:
 // documents point back at which policy entry they belong to

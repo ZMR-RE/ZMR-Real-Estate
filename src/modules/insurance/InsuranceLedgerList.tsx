@@ -1,4 +1,4 @@
-import { getInsuranceStatus, type InsurancePolicy } from './insuranceQueries'
+import { daysUntilExpiration, getInsuranceStatus, insuranceExpirationUrgency, type InsurancePolicy } from './insuranceQueries'
 
 interface InsuranceLedgerListProps {
   policies: InsurancePolicy[]
@@ -37,6 +37,29 @@ function representativeLine(policy: InsurancePolicy): string {
   return [policy.representative_name, policy.representative_phone, policy.representative_email]
     .filter(Boolean)
     .join(' · ')
+}
+
+function expirationPhrase(days: number): string {
+  if (days < 0) return `expired ${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'} ago`
+  if (days === 0) return 'expires today'
+  return `expires in ${days} day${days === 1 ? '' : 's'}`
+}
+
+// Personality pass — the same colored-"story"-number treatment as the
+// Units-occupied stat card, applied to Insurance's coverage-expiration
+// date: green/amber/red by how far off it is, not just a plain date.
+function ExpirationValue({ policy }: { policy: InsurancePolicy }) {
+  if (!policy.coverage_end_date) return <span>—</span>
+
+  const days = daysUntilExpiration(policy)
+  const urgency = insuranceExpirationUrgency(policy)
+
+  return (
+    <span className={`insurance-expiration-value--${urgency}`}>
+      {policy.coverage_end_date}
+      {days !== null && ` (${expirationPhrase(days)})`}
+    </span>
+  )
 }
 
 // Insurance box overhaul, item 2 — one dedicated card per policy,
@@ -79,7 +102,10 @@ function PolicyCard({
       <div className="property-field-group">
         <h4 className="property-field-group-title">Coverage & cost</h4>
         <InfoRow label="Effective" value={policy.coverage_start_date ?? '—'} />
-        <InfoRow label="Expiration" value={policy.coverage_end_date ?? '—'} />
+        <div className="insurance-policy-row">
+          <span className="insurance-policy-label">Expiration</span>
+          <ExpirationValue policy={policy} />
+        </div>
         <InfoRow label="Premium" value={policy.premium_amount ? currencyFormatter.format(Number(policy.premium_amount)) : '—'} />
         <InfoRow label="Deductible" value={policy.deductible ? currencyFormatter.format(Number(policy.deductible)) : '—'} />
       </div>
