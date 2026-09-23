@@ -1854,6 +1854,53 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       0.02em letter-spacing/`--text` color) in both light
       (`rgb(91, 100, 114)`) and dark (`rgb(147, 161, 177)`) mode.
 
+- [x] 7.43 Strengthen the box hover state — current version (light
+      background tint only) reads as dull, not a genuine spotlight.
+      Replace with: a 3-4px solid navy left-border accent appearing on
+      hover (reuse the same visual pattern as Action Queue's priority
+      border-left coloring), combined with a stronger background tint
+      (roughly double current opacity) and a subtle box-shadow lift.
+      All values pulled from existing --accent/shadow tokens so light
+      and dark mode both scale correctly without separate hardcoded
+      logic.
+
+      No "Action Queue priority border-left" pattern actually exists in
+      the codebase to reuse — checked directly: Action Queue's priority
+      coloring (roadmap 7.15, `.action-item-red`/`.action-item-yellow`)
+      is a row background/text tint only, no border-left anywhere in
+      index.css or any Action Queue component. Built the described
+      treatment directly from this item's own explicit spec instead of
+      copying a pattern that isn't there, and flagging the mismatch
+      here rather than silently proceeding as if it were confirmed.
+
+      New `--accent-bg-strong` token (roughly double `--accent-bg`'s
+      opacity, declared alongside it in all three theme blocks: root,
+      the dark media query, and `:root[data-theme='dark']`) replaces
+      the flat tint. The left-border accent and lift shadow are both
+      applied via `box-shadow` (`inset 4px 0 0 0 var(--accent-h)` plus
+      `var(--shadow-md)`), not a real `border-left`/`box-shadow`
+      property change — box-sizing:border-box only holds a box's
+      *outer* dimensions constant, not its inner content area, so an
+      actual border-left width change on hover would have shifted
+      every box's content a few pixels on hover/unhover; box-shadow
+      never affects layout, so there's no shift at all. `--accent-h` is
+      the same hover-accent token `button[type='submit']:hover` already
+      uses, reused rather than inventing a new color.
+
+      `npm run build` clean. Verified live on 2169 Ash St in both light
+      and dark mode: hovering a box (confirmed via
+      `element.matches(':hover')`, not just visual inspection, since a
+      window-size/zoom mismatch in this session's browser-automation
+      tooling made raw screenshot coordinates unreliable for a few
+      attempts) shows a clearly more prominent spotlight than the old
+      flat-tint version — visible navy left edge, stronger background,
+      subtle lift — against an unhovered neighboring box for direct
+      comparison. Confirmed the effect fully reverts (computed
+      background/box-shadow back to plain) the instant the cursor
+      leaves, and confirmed it stays hover-only even while a box is
+      `[open]` and not actively hovered — no persistent state
+      reintroduced.
+
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
 - [x] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field) — the llcs table, properties.llc_id, and the real-list-plus-"+ Add new LLC" picker already existed (Phase 1); this pass added the missing formation_date field
