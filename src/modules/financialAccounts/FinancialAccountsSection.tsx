@@ -53,7 +53,11 @@ export function FinancialAccountsSection({ propertyId, llcId, llcLabel }: Financ
 
   const sharedAccounts = llcId && (
     <>
-      <h4>Shared — {llcLabel}</h4>
+      {/* Roadmap 7.42 (3) — DESIGN-SYSTEM.md's Property Information
+          pattern for a second-tier heading inside an already-titled box
+          is .property-details-title (see PropertySummary.tsx's own
+          "Details"/"Ownership" sub-headings), not a bare <h4>. */}
+      <h4 className="property-details-title">Shared — {llcLabel}</h4>
       {llcLoading ? <p>Loading…</p> : <FinancialAccountList accounts={llcAccounts} readOnly />}
     </>
   )

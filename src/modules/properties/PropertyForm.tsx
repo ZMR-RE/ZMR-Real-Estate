@@ -79,50 +79,65 @@ export function PropertyForm({
   return (
     <form onSubmit={handleSubmit}>
       {/* Roadmap 7.31 — identity fields (matches View mode's
-          PropertyIdentityHeader: no group title of its own). Single
-          column throughout except City/State/Zip, the item's own stated
-          exception since the three are genuinely one logical unit. */}
+          PropertyIdentityHeader: no group title of its own).
+          Roadmap 7.42 (2) — Name/Organization type re-paired into a
+          field-row, the same tight-row convention already established
+          for City/State/Zip below (and Bedrooms/Bathrooms,
+          County/Township further down): two short, genuinely-adjacent
+          fields side by side instead of each on its own full-width
+          line. Address stays its own full-width row (it already leads
+          directly into the paired City/State/Zip row, and — unlike
+          Name/Organization type — has no equally-short natural partner)
+          and Photo stays standalone above (a media upload, not a text
+          field, so it was never a pairing candidate). When "+ Add
+          organization type" expands LlcForm inline, it renders inside
+          the same half-width column rather than breaking out to full
+          width — narrower but fully usable, an accepted trade-off
+          rather than complicating this row's markup for a rarely-used
+          path. */}
       <div className="field-column">
         {/* Roadmap 7.32 (6) — uploads immediately, independent of this
             form's own Save (see PropertyPhotoUploadField's own comment). */}
         {propertyId && <PropertyPhotoUploadField propertyId={propertyId} />}
 
-        <div className="field">
-          <label htmlFor="name">
-            Name<span className="required-marker">*</span>
-          </label>
-          <input
-            id="name"
-            required
-            value={values.name}
-            onChange={(e) => setValues((prev) => ({ ...prev, name: e.target.value }))}
-          />
-        </div>
+        <div className="field-row">
+          <div className="field">
+            <label htmlFor="name">
+              Name<span className="required-marker">*</span>
+            </label>
+            <input
+              id="name"
+              required
+              value={values.name}
+              onChange={(e) => setValues((prev) => ({ ...prev, name: e.target.value }))}
+            />
+          </div>
 
-        <div className="field">
-          <label htmlFor="llc_id">Organization type</label>
-          {isAddingLlc ? (
-            <LlcForm
-              saving={creatingLlc}
-              error={createLlcError}
-              holdingCompanyOptions={holdingCompanyOptions}
-              onCreateHoldingCompany={onCreateHoldingCompany}
-              onSave={handleCreateLlc}
-              onCancel={() => {
-                setIsAddingLlc(false)
-                setCreateLlcError(null)
-              }}
-            />
-          ) : (
-            <SearchableSelect
-              options={llcOptions}
-              value={values.llc_id ?? NO_LLC_ID}
-              onChange={(id) => setValues((prev) => ({ ...prev, llc_id: id === NO_LLC_ID ? null : id }))}
-              placeholder="Select an organization type"
-              onAddNew={() => setIsAddingLlc(true)}
-              addNewLabel="+ Add organization type"
-            />
-          )}
+          <div className="field">
+            <label htmlFor="llc_id">Organization type</label>
+            {isAddingLlc ? (
+              <LlcForm
+                saving={creatingLlc}
+                error={createLlcError}
+                holdingCompanyOptions={holdingCompanyOptions}
+                onCreateHoldingCompany={onCreateHoldingCompany}
+                onSave={handleCreateLlc}
+                onCancel={() => {
+                  setIsAddingLlc(false)
+                  setCreateLlcError(null)
+                }}
+              />
+            ) : (
+              <SearchableSelect
+                options={llcOptions}
+                value={values.llc_id ?? NO_LLC_ID}
+                onChange={(id) => setValues((prev) => ({ ...prev, llc_id: id === NO_LLC_ID ? null : id }))}
+                placeholder="Select an organization type"
+                onAddNew={() => setIsAddingLlc(true)}
+                addNewLabel="+ Add organization type"
+              />
+            )}
+          </div>
         </div>
 
         <div className="field">
@@ -209,22 +224,31 @@ export function PropertyForm({
             email (moved here from the identity fields block above),
             Contact phone (new field), Deed document. Same "Details"-
             style sub-heading treatment as Physical facts' own
-            sub-list, just reused for a different group. */}
+            sub-list, just reused for a different group.
+            Roadmap 7.42 (2) — the 3 short text fields re-paired into
+            one field-row, mirroring City/State/Zip's own 3-wide row
+            above (all short single-line fields, genuinely one logical
+            unit: who to contact about this property). Deed document
+            stays standalone below, same reasoning as Photo above — an
+            upload widget, not a text field, so it isn't a pairing
+            candidate. */}
         <h4 className="property-details-title">Ownership</h4>
         <div className="field-column">
-          <div className="field">
-            <label htmlFor="owner_name">Owner name</label>
-            <input id="owner_name" {...field('owner_name')} />
-          </div>
+          <div className="field-row">
+            <div className="field">
+              <label htmlFor="owner_name">Owner name</label>
+              <input id="owner_name" {...field('owner_name')} />
+            </div>
 
-          <div className="field">
-            <label htmlFor="contact_email">Contact email</label>
-            <input id="contact_email" type="email" {...field('contact_email')} />
-          </div>
+            <div className="field">
+              <label htmlFor="contact_phone">Contact phone</label>
+              <input id="contact_phone" type="tel" {...field('contact_phone')} />
+            </div>
 
-          <div className="field">
-            <label htmlFor="contact_phone">Contact phone</label>
-            <input id="contact_phone" type="tel" {...field('contact_phone')} />
+            <div className="field">
+              <label htmlFor="contact_email">Contact email</label>
+              <input id="contact_email" type="email" {...field('contact_email')} />
+            </div>
           </div>
 
           {propertyId && <PropertyDeedUploadField propertyId={propertyId} />}

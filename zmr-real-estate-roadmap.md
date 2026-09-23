@@ -1781,6 +1781,78 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       carries a `card-tint-N` class any more. Property Registry cards'
       own tinting (PropertyList.tsx, unrelated to this item) re-checked
       unchanged.
+- [x] 7.42 Three fixes:
+      1. Simplify Exterior wall material options to: Brick, Frame, Vinyl
+         siding, Stucco, Stone, Concrete block, Other (remove standalone
+         "Masonry").
+      2. Re-apply the established grouped/paired Edit-mode layout to
+         Property photo, Name, Organization type, Address (Identity
+         group) and Owner name, Contact phone, Contact email, Deed
+         document (within Purchase & valuation).
+      3. Add "Reference the design system before any box work" to
+         CLAUDE.md; bring Financial accounts' typography/spacing/colors
+         in line with DESIGN-SYSTEM.md's documented Property Information
+         patterns.
+
+      Item 1 — migration 20260923030000_exterior_wall_material_simplify.sql:
+      archives 'Masonry' (added 20260922120000; confirmed live before
+      the change that no property had it selected, so nothing was lost),
+      reactivates 'Stone' (archived by that same earlier migration but
+      back in this item's final 7), and seeds the genuinely-new
+      'Concrete block'. Applied via `supabase db push`. Live-verified:
+      queried pick_list_options directly (active rows for
+      exterior_wall_material are now exactly Brick/Concrete
+      block/Frame/Other/Stone/Stucco/Vinyl siding) and confirmed the
+      Edit-mode checkbox group on 2169 Ash St renders that exact list,
+      no Masonry.
+
+      Item 2 — PropertyForm.tsx: Name + Organization type re-paired into
+      one `.field-row` (the same tight-row convention already
+      established for City/State/Zip/Bedrooms-Bathrooms/County-Township
+      — two short, genuinely-adjacent fields side by side rather than
+      each its own full-width line); Owner name + Contact phone +
+      Contact email re-paired into one 3-wide `.field-row`, mirroring
+      City/State/Zip's own triple. Property photo and Deed document stay
+      standalone (upload widgets, not text fields, never pairing
+      candidates); Address stays standalone (no equally-short natural
+      partner, and already leads directly into the paired City/State/Zip
+      row below it). `npm run build` clean. Live-verified on 2169 Ash
+      St: both rows render paired on desktop, both correctly collapse to
+      single-column at the existing 390px field-row breakpoint (iframe-
+      simulated), both render correctly in dark mode. Confirmed "+ Add
+      organization type" still fully works inside the now-half-width
+      column — narrower but fully usable, an accepted trade-off noted
+      in-code rather than complicating the markup for a rarely-used
+      path.
+
+      Item 3 — new CLAUDE.md rule "Reference the design system before
+      any box work" (placed after Design principle): read
+      DESIGN-SYSTEM.md before writing/editing box CSS; reuse an
+      established class/token instead of a raw unstyled element or a
+      hand-rolled style; add genuinely new needs as a documented
+      token/class, not a one-off. Applied it immediately to
+      FinancialAccountsSection.tsx: the "Shared — {llcLabel}" sub-
+      heading was a bare `<h4>` (no established class) inside an
+      already-titled box — exactly the second-tier-heading case
+      `.property-details-title` exists for (see PropertySummary.tsx's
+      "Details"/"Ownership" sub-headings). Rest of the box (table-based
+      account list, "Show archived" checkbox, "Loading…" text, Edit
+      form) checked against DESIGN-SYSTEM.md and found already
+      consistent — Tables is its own documented pattern (not a dt/dd
+      violation), no hardcoded colors/spacing found in
+      FinancialAccountsSection.tsx/FinancialAccountList.tsx/FinancialAccountForm.tsx.
+      Note: a repo-wide grep found several other bare `<h4>` sub-
+      headings elsewhere (TransactionDocuments.tsx,
+      ActionItemDocuments.tsx, LlcFinancialAccountsPanel.tsx, etc.) —
+      out of scope for this item (scoped explicitly to Financial
+      accounts), left unconverted and flagged here per Standard rollout
+      completeness rather than silently left unmentioned; a future item
+      should sweep them. `npm run build` clean. Live-verified on 5336 W
+      Foster Ave (the one property with an LLC, so the Shared-accounts
+      sub-heading actually renders): confirmed via getComputedStyle the
+      heading now matches `.property-details-title` exactly (12px/700/
+      0.02em letter-spacing/`--text` color) in both light
+      (`rgb(91, 100, 114)`) and dark (`rgb(147, 161, 177)`) mode.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type

@@ -131,6 +131,11 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 ## Design principle
 - Everything on screen must have a clear purpose — no noise, no redundancy. Prefer depth on one entity (e.g. a full property profile) over breadth across many shallow, disconnected screens.
 
+## Reference the design system before any box work
+- Before writing or editing any box/section's CSS — typography, spacing, or color — read `DESIGN-SYSTEM.md` first. It documents the tokens and component patterns as they actually exist in `src/index.css`; almost every visual need already has one.
+- Don't hand-roll a heading, label, or value style that already has an established class (`.property-field-group-title`, `.property-details-title`, `dt`/`dd`, `.field-grid`, etc.) or a raw unstyled element (a bare `<h4>`) where a styled one is the convention. Reuse the token/class; don't invent a new one or fall back to browser defaults.
+- If a genuinely new visual need isn't covered, add it as a token or a reusable class (and document it in `DESIGN-SYSTEM.md`) rather than a one-off inline style or a hardcoded color/size.
+
 ## Definition of done
 - A section is not marked complete on the roadmap until it runs error-free and follows every rule above.
 - Any commit that integrates multiple terminals' work must be verified with a clean clone build (git clone to a fresh directory, npm install, npm run build) before pushing — not just a local build in the shared working directory, which can pass even when the real deploy would fail.
