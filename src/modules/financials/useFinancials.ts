@@ -204,6 +204,12 @@ export function useFinancials() {
     propertyOptions,
     vendorOptions,
     createVendor: addVendor,
+    // Roadmap 2.4a — HistoricalImportWizard writes transactions directly
+    // via financialsQueries.bulkCreateTransactions, bypassing this
+    // hook's own save/create paths entirely (a bulk multi-row insert
+    // has no use for per-row form state) — it calls this afterward so
+    // Financials' own list picks up the newly-imported rows.
+    refreshTransactions: refresh,
     propertyFilter,
     setPropertyFilter,
     year,

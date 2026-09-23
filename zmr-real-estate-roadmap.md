@@ -535,7 +535,69 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [x] 2.1 Rent Ops — invoicing, receipts, on-time payment tracking
 - [x] 2.2 Task Engine — per-property to-do lists, recurring items, "coming up" view across the portfolio. SUPERSEDED — migrated into the unified `action_items` table (10.2) and the standalone `tasks` table/Task Engine module dropped entirely (20260918100000/20260918100100); this item's functionality now lives at Action Queue (10.2/10.5), not a separate screen.
 - [x] 2.3 Financials & Tax Readiness — income/expense by property and category, tax-ready export
-- [ ] 2.4 Historical Data Backfill — import past bookkeeping/purchase dates for both properties — PARTIAL: purchase_date column added and backfilled via migration only, no UI ever displays or edits it; bookkeeping backfill not started
+- [ ] 2.4 Historical Data Backfill — import past bookkeeping/purchase dates for both properties — PARTIAL: purchase_date column added and backfilled via migration only, no UI ever displays or edits it; bookkeeping backfill now covered by 2.4a
+- [x] 2.4a Historical bookkeeping backfill — intelligent-mapping CSV
+      import (the approach previously approved for this item): from
+      Financials, upload a CSV export from any existing spreadsheet, the
+      tool guesses which of its columns map to Date/Amount/Income or
+      Expense/Category/Subcategory/Vendor/Payment method/Description/
+      Repair or Improvement (simple header-text heuristics — e.g. a
+      header containing "date" or exactly matching "total"), and the
+      user reviews and can override every single mapping before
+      anything is touched. New module `src/modules/historicalImport/`:
+      `csvParsing.ts` (pure parsing/heuristics, no Supabase calls —
+      handles quoted fields, escaped quotes, CRLF/LF, a leading BOM,
+      "$1,234.56"/"(45.00)" amount formats, and M/D/YYYY or ISO dates),
+      `useHistoricalImport.ts` (the wizard's state machine), and one
+      step component per screen.
+
+      Two deliberate scope simplifications, stated here rather than
+      silently assumed: the whole file imports against one property
+      chosen up front (a historical spreadsheet is virtually always
+      kept per-property already) rather than a per-row property column;
+      and Subcategory/Description are stored as plain pass-through text
+      from the file rather than forced through the Subcategory pick-list
+      system (8.1) — nullable, non-authoritative fields, not worth a
+      third resolution dimension in a first build.
+
+      The real "never silently guess and commit" mechanism is a second
+      screen after mapping: every *distinct* raw value found in the
+      mapped Income/Expense, Category, and Vendor columns (not every
+      row — a 200-row file with 6 vendors asks 6 questions, not 200) is
+      resolved explicitly, pre-filled with a best guess the user can
+      override (unrecognized category text safely defaults to "Other
+      expense/income" rather than a wrong specific category; an
+      unrecognized vendor name defaults to "create new vendor" rather
+      than silently attaching to an unrelated existing one). A final
+      preview screen shows the exact rows as they will be written —
+      including which rows will be skipped and why (unparseable date/
+      amount) — before the explicit Confirm & import action; nothing
+      reaches `financial_transactions` before that click.
+      `financialsQueries.bulkCreateTransactions` writes the whole batch
+      as one multi-row insert (one SQL statement, all-or-nothing) via a
+      new `BulkTransactionInput` shape — kept separate from
+      TransactionInput/createTransaction because a backfilled row's
+      vendor is optional the way TransactionForm's manual entry still
+      isn't (same nullable-vendor_id reasoning as 9.9's bridge).
+
+      Verified live: a real 6-row test CSV with deliberately mismatched
+      headers (e.g. "Txn Date", "Total", "In/Out", "Type" for Category —
+      chosen specifically so the heuristic would guess some fields
+      correctly and miss others), covering both Income and Expense,
+      repeated and blank vendor values, one unrecognized category value,
+      and one unparseable date. Confirmed the auto-mapping correctly
+      matched 6 of 7 fields and correctly left the ambiguous one (Type)
+      unmapped rather than guessing wrong; manually mapped it via the
+      override control; confirmed the resolve screen correctly grouped
+      distinct values (not rows) and pre-filled a safe fallback for the
+      one unrecognized category; overrode it to the correct category;
+      confirmed the preview showed the exact 5 valid rows plus the 1
+      skipped row with its specific error; confirmed after import that
+      Financials' P&L math was exactly correct ($3000 income − $465.49
+      expense = $2534.51 net) and the two new vendors were each created
+      exactly once despite one being referenced by two rows. Test
+      transactions and test vendors deleted afterward (own session's
+      data, confirmed zero remaining rows after cleanup).
 - [x] 2.5 Document Storage Architecture — native Supabase Storage: a `documents` table plus a private `documents` bucket, path convention `{account_id}/{property_id}/{category}/{filename}`, linked from each property's Documents tab
 - [x] 2.6 Reconcile-to-Documents move action — on reconciliation, move the staged file from Quick Capture's staging bucket into its permanent Documents path above, and create its documents table record at that point — not before
 - [x] 2.7 Documents section (Activity & Documents, applies uniformly to

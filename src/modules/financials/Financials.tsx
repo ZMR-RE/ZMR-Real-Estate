@@ -5,6 +5,7 @@ import { MileageRollup } from '../mileage/MileageRollup'
 import { BankReconciliation } from '../bankReconciliation/BankReconciliation'
 import { FinancialPeriodLockControl } from '../financialPeriods/FinancialPeriodLockControl'
 import { VendorSplitRules } from '../vendors/VendorSplitRules'
+import { HistoricalImportWizard } from '../historicalImport/HistoricalImportWizard'
 import { useFinancials } from './useFinancials'
 import { TransactionForm } from './TransactionForm'
 import { TransactionList } from './TransactionList'
@@ -18,6 +19,7 @@ const YEAR_OPTIONS = Array.from({ length: 6 }, (_, i) => new Date().getFullYear(
 export function Financials() {
   const [isReconciling, setIsReconciling] = useState(false)
   const [isManagingSplitRules, setIsManagingSplitRules] = useState(false)
+  const [isImportingHistorical, setIsImportingHistorical] = useState(false)
   const {
     transactions,
     propertyOptions,
@@ -44,6 +46,7 @@ export function Financials() {
     summaryByPropertyAndCategory,
     summaryByProperty,
     exportTaxCsv,
+    refreshTransactions,
   } = useFinancials()
 
   return (
@@ -96,6 +99,18 @@ export function Financials() {
         {isManagingSplitRules ? 'Hide vendor split rules' : 'Manage vendor split rules'}
       </button>
       {isManagingSplitRules && <VendorSplitRules />}
+
+      <button type="button" onClick={() => setIsImportingHistorical((v) => !v)}>
+        {isImportingHistorical ? 'Hide historical data import' : 'Import historical data'}
+      </button>
+      {isImportingHistorical && (
+        <HistoricalImportWizard
+          onClose={() => {
+            setIsImportingHistorical(false)
+            refreshTransactions()
+          }}
+        />
+      )}
 
       {isFormOpen ? (
         <TransactionForm

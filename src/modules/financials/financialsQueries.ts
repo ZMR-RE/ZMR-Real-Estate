@@ -156,6 +156,59 @@ export async function createTransaction(accountId: string, recordedBy: string, i
     .single()
 }
 
+// Roadmap 2.4a — Historical Data Backfill's bulk CSV import. Separate
+// from TransactionInput/createTransaction because a backfilled row's
+// vendor is optional (unlike TransactionForm's manual entry, which
+// still requires one) — mirrors 9.9's bridge reasoning for the same
+// nullable-vendor_id column. A single multi-row insert (one SQL
+// statement, all rows in one array) rather than a loop of single
+// inserts, so an import is all-or-nothing: if any row fails validation
+// server-side, nothing from this batch is written, matching the "review
+// before anything saves" requirement — the useHistoricalImport hook
+// itself is the thing responsible for not calling this until every row
+// has already been reviewed/resolved client-side.
+export interface BulkTransactionInput {
+  propertyId: string
+  entryType: EntryType
+  category: Category
+  subcategory: string | null
+  vendorId: string | null
+  unit: string | null
+  paymentMethod: string
+  repairOrImprovement: RepairOrImprovement | null
+  amount: number
+  transactionDate: string
+  description: string | null
+}
+
+export async function bulkCreateTransactions(
+  accountId: string,
+  recordedBy: string,
+  inputs: BulkTransactionInput[],
+) {
+  return supabase
+    .from('financial_transactions')
+    .insert(
+      inputs.map((input) => ({
+        account_id: accountId,
+        property_id: input.propertyId,
+        entry_type: input.entryType,
+        category: input.category,
+        subcategory: input.subcategory,
+        vendor_id: input.vendorId,
+        unit: input.unit,
+        payment_method: input.paymentMethod,
+        repair_or_improvement: input.repairOrImprovement,
+        amount: input.amount,
+        transaction_date: input.transactionDate,
+        description: input.description,
+        statement_reconciled: false,
+        recorded_by: recordedBy,
+      })),
+    )
+    .select('id')
+}
+
 // Roadmap 9.9 — the Quick Capture → Financials bridge's own insert path,
 // deliberately separate from TransactionInput/createTransaction rather
 // than reusing them: a bridged transaction's payer is tri-state (vendor
