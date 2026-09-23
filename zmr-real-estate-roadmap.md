@@ -2068,6 +2068,30 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       and re-creating that scaffolding was disproportionate to a
       one-line static className change already proven correct in the
       other 5 locations.
+- [x] 7.49 Tighten header spacing — reduce the vertical gap between the
+      property address block and the tab bar below it.
+
+      Root cause: Property Profile's `<h1>` sits inside
+      `.page-header-row` (a flex container, wrapping it for the
+      breadcrumb/badge row). A flex item's own margin never collapses
+      with an adjacent sibling's margin the way two plain block
+      elements' margins would — so h1's global margin-bottom
+      (`--space-5`/24px) and `.tab-bar`'s margin-top (also
+      `--space-5`/24px) stacked to a full 48px gap instead of the 24px
+      a normal collapse would give, visibly looser than every other
+      heading-to-content transition in the app. Reduced `.tab-bar`'s
+      margin-top to `--space-2` (8px). Pages where the heading precedes
+      `.tab-bar` as a plain sibling (Settings, Quick capture — no
+      `.page-header-row` wrapper) are unaffected: normal margin
+      collapsing already caps their visible gap at the larger of the
+      two margins regardless of this value; only the flex-wrapped,
+      non-collapsing case (Property Profile) actually tightens.
+
+      `npm run build` clean. Verified live on 2169 Ash St: gap measured
+      via `getBoundingClientRect` (not just visual inspection) went
+      from 48px to 32px in both light and dark mode and at a 390px
+      mobile width; re-verified Settings' own header-to-tab-bar gap
+      stayed exactly 24px, confirming no regression there.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
