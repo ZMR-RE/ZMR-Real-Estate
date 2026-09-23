@@ -38,29 +38,12 @@ interface PropertyProfileOverviewTabProps {
 // nested specs/leasing/tenants/utilities) stays exactly as 7.2 built
 // it, just relocated into a box rather than rebuilt.
 //
-// Standard rollout completeness — two curated columns at desktop widths
-// (Property information/Financial accounts/Insurance; Market & rent
-// value history/Property tax installments/Tenants). Specs & measurements,
-// Utility records, Security deposits, and Units stay full-width below
-// both columns — Specs & measurements and Units per the task's own
-// "given their size" call-out; Utility records and Security deposits
-// weren't named for a column, so they stay put rather than guessing a
-// placement. Single column on mobile (.property-overview-columns in
-// index.css).
-//
-// Expand-to-full-width — all 6 curated boxes are now direct siblings of
-// one shared CSS grid (.property-overview-columns), not two independent
-// flex columns: only that lets .collapsible-section[open] span both
-// columns via grid-column, with every later box naturally reflowing
-// below it (pure CSS, keyed off <details>'s native open attribute — no
-// React state). This previously used two independent flex columns
-// specifically to avoid a shared grid row stretching to its tallest
-// item and leaving blank space under a shorter neighbor — but that
-// could only happen when two *open* boxes of different heights shared a
-// row, which this rule makes impossible (an open box never shares a row
-// with anything). Two collapsed boxes sharing a row are always the same
-// height (just their summary bar), so the original concern doesn't
-// apply once this rule is in place.
+// Consolidated Overview layout fix — reverts the two-column grouping:
+// every secondary box is full-width, single-column, stacked, same
+// treatment as Specs & measurements/Utility records/Security deposits/
+// Units already had. The 2-column grid (and its later explicit-column-
+// placement fix) is gone along with it; see git history if that layout
+// needs revisiting.
 export function PropertyProfileOverviewTab({
   property,
   llcOptions,
@@ -73,42 +56,40 @@ export function PropertyProfileOverviewTab({
 }: PropertyProfileOverviewTabProps) {
   return (
     <div className="property-overview-grid">
-      <div className="property-overview-columns">
-        <EditableSection
-          title="Property information"
-          defaultOpen
-          view={<PropertySummary property={property} llcOptions={llcOptions} />}
-          edit={(exitEditing) => (
-            <PropertyForm
-              key={property.id}
-              propertyId={property.id}
-              initialValues={property}
-              llcOptions={llcOptions}
-              onCreateLlc={onCreateLlc}
-              holdingCompanyOptions={holdingCompanyOptions}
-              onCreateHoldingCompany={onCreateHoldingCompany}
-              saving={saving}
-              onSave={async (input) => {
-                const ok = await onSave(input)
-                if (ok) exitEditing()
-              }}
-              onCancel={exitEditing}
-            />
-          )}
-        />
+      <EditableSection
+        title="Property information"
+        defaultOpen
+        view={<PropertySummary property={property} llcOptions={llcOptions} />}
+        edit={(exitEditing) => (
+          <PropertyForm
+            key={property.id}
+            propertyId={property.id}
+            initialValues={property}
+            llcOptions={llcOptions}
+            onCreateLlc={onCreateLlc}
+            holdingCompanyOptions={holdingCompanyOptions}
+            onCreateHoldingCompany={onCreateHoldingCompany}
+            saving={saving}
+            onSave={async (input) => {
+              const ok = await onSave(input)
+              if (ok) exitEditing()
+            }}
+            onCancel={exitEditing}
+          />
+        )}
+      />
 
-        <FinancialAccountsSection propertyId={property.id} />
+      <FinancialAccountsSection propertyId={property.id} />
 
-        <InsuranceLedger propertyId={property.id} />
+      <InsuranceLedger propertyId={property.id} />
 
-        <PropertyValueHistorySection propertyId={property.id} onChanged={onValueHistoryChanged} />
+      <PropertyValueHistorySection propertyId={property.id} onChanged={onValueHistoryChanged} />
 
-        <PropertyTaxLedger propertyId={property.id} />
+      <PropertyTaxLedger propertyId={property.id} />
 
-        <CollapsibleSection title="Tenants">
-          <PropertyTenantsOverview propertyId={property.id} />
-        </CollapsibleSection>
-      </div>
+      <CollapsibleSection title="Tenants">
+        <PropertyTenantsOverview propertyId={property.id} />
+      </CollapsibleSection>
 
       <PropertySpecsSection propertyId={property.id} />
 
