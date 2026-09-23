@@ -2285,6 +2285,32 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       trigger needed). Live-verified after that deploy: direct load of
       /properties, /properties/edc7e8e1-d08d-479f-b3d2-9266e87b45ad,
       and other nested routes all render correctly instead of 404ing.
+- [x] 7.55 Auto-create a default Unit for every property (foundational
+      groundwork for the Units/Lease/Tenant rebuild below): a new
+      `AFTER INSERT ON properties` trigger creates exactly one `units`
+      row per new property (`unit_label = 'Unit 1'`, `status = ''` — an
+      empty-string "not actually set" sentinel, since the manual "+ Add
+      unit" flow has no real default to copy and inventing a status
+      value would violate the data integrity rule). One-time backfill
+      for 2169 Ash St (the one pre-existing property with zero units),
+      same '' sentinel. The merged Units-occupied stat card (7.52) now
+      renders for every property, including single-unit ones. A
+      single-unit property's Units box hides its own unit_label
+      entirely (no "Unit 1" shown) — the address alone identifies it;
+      the label reappears automatically the moment a real second unit
+      is added. Live-verified: 2169 Ash St's stat card now shows "0 of
+      1" (red, since status is unset), no "Unit 1" text renders in its
+      own Units box.
+
+      Superseded/extended immediately by the Units/Lease/Tenant rebuild
+      (see the dedicated stage-by-stage entries following this one):
+      building this out surfaced that "Unit 1" also leaked through
+      several other unit-pickers (Specs scope filter, Quick Capture,
+      Action Items, Vendor Estimates) and that a real per-unit "Rent"
+      display required confronting the same per-tenant-row double-
+      counting gap 7.52 already flagged — rather than patching each
+      leak individually, that full redesign was approved and is being
+      built as the next several roadmap items.
 
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type

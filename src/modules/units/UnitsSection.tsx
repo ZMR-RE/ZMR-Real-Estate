@@ -1,16 +1,21 @@
-import { useUnits } from './useUnits'
+import { useUnits, type UnitWithRent } from './useUnits'
 import { UnitForm } from './UnitForm'
 import { EditableSection } from '../../shared/EditableSection'
 import { LeasingListingSection } from '../leasingListings/LeasingListingSection'
 import { TenantAssignmentsSection } from '../tenants/TenantAssignmentsSection'
 import { UtilityRecordsSection } from '../utilities/UtilityRecordsSection'
-import type { Unit } from './unitsQueries'
 
 interface UnitsSectionProps {
   propertyId: string
 }
 
 const BLANK_UNIT = { unit_label: '', status: '' }
+
+const rentFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+})
 
 // Roadmap 7.2 — units as a real entity, replacing the free-text
 // properties.unit_config field. Embedded on the Overview tab for now,
@@ -62,7 +67,19 @@ export function UnitsSection({ propertyId }: UnitsSectionProps) {
     </label>
   )
 
-  const renderUnitCard = (unit: Unit, interactive: boolean) =>
+  // Roadmap 7.55 (5) — a single-unit property's own default Unit (7.55
+  // (1)/(2): auto-created invisibly, never user-facing) must never show
+  // "Unit 1" or any label — the address alone already identifies it, and
+  // a lone unlabeled record would just read as internal plumbing leaking
+  // into the UI. `units` here is already the currently-visible list
+  // (archived filtered out unless the toggle is on), matching the same
+  // basis the merged Units-occupied stat card uses for "how many units
+  // does this property have." The moment a user adds a real second unit,
+  // both labels reappear automatically — this is a live render
+  // condition, not a stored flag.
+  const isSingleUnit = units.length === 1
+
+  const renderUnitCard = (unit: UnitWithRent, interactive: boolean) =>
     interactive && editingId === unit.id ? (
       <div key={unit.id} className="unit-card">
         <UnitForm
@@ -74,11 +91,31 @@ export function UnitsSection({ propertyId }: UnitsSectionProps) {
       </div>
     ) : (
       <div key={unit.id} className={`unit-card${unit.archived ? ' row-voided' : ''}`}>
-        <h3>{unit.unit_label}</h3>
-        <p>Status: {unit.status}</p>
+        {!isSingleUnit && <h3>{unit.unit_label}</h3>}
+        {/* Roadmap 7.55 (2) — the auto-created default unit (this
+            property's own or the one-time 2169 Ash St backfill) starts
+            with status '' rather than a guessed pick-list value (no
+            default exists in the manual "+ Add unit" flow to copy, and
+            inventing one would violate the data integrity rule) — shown
+            plainly as "Not set" rather than an empty "Status: " line. */}
+        <p>Status: {unit.status || 'Not set'}</p>
         <span className={`status-badge ${unit.archived ? 'status-badge-neutral' : 'status-badge-success'}`}>
           {unit.archived ? 'Archived' : 'Active'}
         </span>
+        {/* Roadmap 7.55 (4) — "$0 — Not set up" rather than a blank/
+            missing line when this unit has no current rent on file
+            (either no current tenant assignment, or one exists with no
+            rent_amount entered) — CLAUDE.md's Empty field visibility
+            rule normally omits a field entirely when it has nothing to
+            show, but rent is explicitly called out as the one exception
+            here: a property manager scanning this box needs "not set up
+            yet" to read as an actionable gap, not as "no rent, nothing
+            to see." Real, current rent renders in the default text
+            color, same weight as Status — only the not-set-up state
+            gets the warning color. */}
+        <p className={unit.currentRent === null ? 'unit-rent-value--warning' : undefined}>
+          Rent: {unit.currentRent !== null ? `${rentFormatter.format(unit.currentRent)}/mo` : '$0 — Not set up'}
+        </p>
         {interactive && (
           <>
             <button type="button" onClick={() => startEditing(unit.id)}>

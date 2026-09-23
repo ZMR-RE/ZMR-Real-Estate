@@ -1017,6 +1017,17 @@ dd {
   margin-top: var(--space-3);
 }
 
+/* Roadmap 7.55 (4) — a unit's "Rent: $0 — Not set up" line, when no
+   current rent is on file. Same --warning token as every other
+   "story"-colored number in the app (property-stat-card-value--warning,
+   mortgage-payoff-progress-percent--warning, etc.) rather than a new
+   color; font-weight bumped to match those, so the attention-grabbing
+   state actually stands out against the plain-text real-rent case. */
+.unit-rent-value--warning {
+  color: var(--warning);
+  font-weight: 600;
+}
+
 /* A unit's nested Specs/Leasing/Tenants/Utility records sections
    (roadmap 7.2) never received the 7.22 full-width-CollapsibleSection
    treatment the property-level Overview tab got — same layout here,
