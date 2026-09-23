@@ -548,6 +548,15 @@ code {
   opacity: 0.55;
 }
 
+/* Roadmap "Units/Lease/Tenant rebuild" item 3 — a past tenant row in
+   the Overview Tenants directory, shown secondary to current tenants.
+   Same dimming as .row-voided (not reused directly — a past tenant
+   isn't voided data, just historical) so both read as "de-emphasized,
+   still present" at a glance. */
+.property-tenant-row-past {
+  opacity: 0.55;
+}
+
 /* Roadmap 1.25 — Quick Capture's required-field convention: only the
    genuinely required fields (Type/Property/Date) get this marker next
    to their label, instead of every optional field being individually

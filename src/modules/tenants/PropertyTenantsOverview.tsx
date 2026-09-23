@@ -1,19 +1,18 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/AuthContext'
-import { listCurrentTenantsForProperty, type PropertyCurrentTenant } from './propertyTenantsQueries'
+import { listAllTenantsEverAtProperty, type PropertyTenantRow } from '../leases/leasesQueries'
 
 interface PropertyTenantsOverviewProps {
   propertyId: string
 }
 
-const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
-
-// Roadmap 7.10's Overview-tab Tenants box — a read-only, property-wide
-// list of who's currently in place across every unit. Tenant assignment
-// happens per-unit by design (a tenancy belongs to one unit's own lease),
-// so rather than a dead end this box always links down to Units, where
-// assigning, ending, or viewing history for a specific tenancy actually
-// happens.
+// Roadmap "Units/Lease/Tenant rebuild" item 3 — a full directory of
+// every tenant ever at this property (current highlighted, past shown
+// secondary), each row linking to that tenant's own profile page
+// (Stage 7's /tenants/:id). Tenant assignment itself still happens
+// per-unit (a tenancy belongs to one unit's own lease), so this box
+// always links down to Units for that, same as before.
 function ManageTenantsLink() {
   return (
     <a
@@ -31,21 +30,21 @@ function ManageTenantsLink() {
 
 export function PropertyTenantsOverview({ propertyId }: PropertyTenantsOverviewProps) {
   const { accountId } = useAuth()
-  const [tenants, setTenants] = useState<PropertyCurrentTenant[]>([])
+  const [rows, setRows] = useState<PropertyTenantRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!accountId) return
     setLoading(true)
-    listCurrentTenantsForProperty(accountId, propertyId).then(({ data, error: fetchError }) => {
+    listAllTenantsEverAtProperty(accountId, propertyId).then(({ data, error: fetchError }) => {
       setLoading(false)
       if (fetchError) {
         setError(fetchError.message)
         return
       }
       setError(null)
-      setTenants(data ?? [])
+      setRows(data ?? [])
     })
   }, [accountId, propertyId])
 
@@ -62,7 +61,7 @@ export function PropertyTenantsOverview({ propertyId }: PropertyTenantsOverviewP
     )
   }
 
-  if (tenants.length === 0) {
+  if (rows.length === 0) {
     return (
       <>
         <p className="empty-state">No tenants yet — add your first one in Units below.</p>
@@ -71,25 +70,35 @@ export function PropertyTenantsOverview({ propertyId }: PropertyTenantsOverviewP
     )
   }
 
+  // Current first, then past — each tier keeps its own tenant-name
+  // order (listAllTenantsEverAtProperty already sorts by lease
+  // start_date desc, which reads naturally within each tier).
+  const current = rows.filter((row) => row.isCurrent)
+  const past = rows.filter((row) => !row.isCurrent)
+
   return (
     <>
       <div className="table-scroll">
         <table>
           <thead>
             <tr>
-              <th>Unit</th>
               <th>Tenant</th>
-              <th>Since</th>
-              <th>Rent</th>
+              <th>Unit</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
-            {tenants.map((row) => (
-              <tr key={row.id}>
-                <td>{row.unit?.unit_label ?? '—'}</td>
-                <td>{row.tenant?.name ?? '—'}</td>
-                <td>{row.start_date}</td>
-                <td>{row.rent_amount !== null ? currencyFormatter.format(Number(row.rent_amount)) : '—'}</td>
+            {[...current, ...past].map((row) => (
+              <tr key={`${row.leaseId}:${row.tenant.id}`} className={row.isCurrent ? '' : 'property-tenant-row-past'}>
+                <td>
+                  <Link to={`/tenants/${row.tenant.id}`}>{row.tenant.name}</Link>
+                </td>
+                <td>{row.unitLabel}</td>
+                <td>
+                  <span className={`status-badge ${row.isCurrent ? 'status-badge-success' : 'status-badge-neutral'}`}>
+                    {row.isCurrent ? 'Current' : 'Past'}
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { getMortgageDetails } from '../mortgagePayoff/mortgagePayoffQueries'
 import { computeEquity, type EquitySnapshot } from '../mortgagePayoff/mortgagePayoffMath'
-import { listCurrentTenantsForProperty } from '../tenants/propertyTenantsQueries'
+import { sumActiveLeaseRentForProperty } from '../leases/leasesQueries'
 import { listValueLog, type PropertyValueLogEntry } from '../propertyValueHistory/propertyValueHistoryQueries'
 import type { Transaction } from '../financials/financialsQueries'
 
@@ -52,14 +52,14 @@ export function useMarketFinancialSnapshot(propertyId: string, transactions: Tra
 
     Promise.all([
       getMortgageDetails(propertyId),
-      listCurrentTenantsForProperty(accountId, propertyId),
+      sumActiveLeaseRentForProperty(accountId, propertyId),
       listValueLog(propertyId, 'market_value'),
       listValueLog(propertyId, 'rent_value'),
-    ]).then(([mortgageRes, tenantsRes, marketValueRes, rentValueRes]) => {
+    ]).then(([mortgageRes, rentRes, marketValueRes, rentValueRes]) => {
       setLoading(false)
       const fetchError =
         mortgageRes.error?.message ??
-        tenantsRes.error?.message ??
+        rentRes.error?.message ??
         marketValueRes.error?.message ??
         rentValueRes.error?.message
       if (fetchError) {
@@ -70,11 +70,12 @@ export function useMarketFinancialSnapshot(propertyId: string, transactions: Tra
       setCurrentBalance(mortgageRes.data ? Number(mortgageRes.data.current_balance) : null)
       setOriginalLoanAmount(mortgageRes.data ? Number(mortgageRes.data.original_loan_amount) : null)
 
-      const monthlyRent = (tenantsRes.data ?? []).reduce(
-        (sum, row) => sum + (row.rent_amount !== null ? Number(row.rent_amount) : 0),
-        0,
-      )
-      setAnnualRent(monthlyRent > 0 ? monthlyRent * 12 : null)
+      // Units/Lease/Tenant rebuild — sumActiveLeaseRentForProperty sums
+      // one rent figure per lease (co-tenant-safe), not per tenant row;
+      // this used to sum listCurrentTenantsForProperty's rows directly,
+      // which double-counted rent for any unit with more than one
+      // current tenant.
+      setAnnualRent(rentRes.data !== null ? rentRes.data * 12 : null)
 
       setMarketValueHistory(marketValueRes.data ?? [])
       setRentValueHistory(rentValueRes.data ?? [])
