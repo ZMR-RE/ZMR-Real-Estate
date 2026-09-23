@@ -1900,6 +1900,43 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       leaves, and confirmed it stays hover-only even while a box is
       `[open]` and not actively hovered — no persistent state
       reintroduced.
+- [x] 7.44 Nested subsection visual hierarchy: make "Exterior
+      information" (nested inside Physical facts) visually lighter
+      than its parent — smaller font size, regular weight instead of
+      bold — while keeping its icon. Apply as a general rule for any
+      subsection nested inside another, not just this one instance.
+
+      New `.property-field-group-title--nested` modifier: `--text-sm`
+      (13px) instead of `--text-md` (14px), font-weight 400 instead of
+      800 — one step down from the full top-tier treatment, but not as
+      quiet as `.property-details-title` (which drops the icon/accent
+      color entirely; that class is for a plain data sub-list like
+      "Details", not a genuine subsection with its own icon). Icon and
+      accent color both left untouched, per the item's own "while
+      keeping its icon" — color was never asked to change either.
+      General mechanism, not a one-off: a new optional `nested?:
+      boolean` flag on `PropertyFieldGroupDef`
+      (propertyFieldGroups.ts), set on the 'exterior-information' group
+      and threaded through PropertySummary.tsx's generic
+      PropertyFieldGroup render call — any future group can opt in the
+      same way.
+
+      PropertyForm.tsx's Edit-mode "Exterior information" subsection
+      header was NOT touched — another terminal was actively mid-
+      editing that file at the time (the same 7.45 Ownership/icon work
+      above). Flagging rather than colliding: View and Edit modes don't
+      match on this yet, a follow-up should bring Edit mode in line.
+
+      `npm run build` clean. Verified live on 2169 Ash St in both light
+      and dark mode via computed styles (not just visual inspection):
+      "Physical facts" stayed 14px/800/accent-color, "Exterior
+      information" correctly rendered 13px/400/same-accent-color in
+      both themes (`rgb(18, 52, 86)` light / `rgb(111, 168, 220)`
+      dark), while every other subsection on the page (Purchase &
+      valuation, Ownership, Insurance's own Policy identification/
+      Coverage & cost/Contact & extras groups) stayed at the full
+      bold/large treatment, confirming the modifier only applies where
+      explicitly flagged.
 - [x] 7.45 Two fixes:
       1. Give "Ownership" the same bold text + icon treatment as
          "Physical facts" and "Exterior information" (was plain gray
