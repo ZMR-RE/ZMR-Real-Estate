@@ -1534,6 +1534,23 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       Item 3 not started yet — this entry stays unchecked until the
       whole task is done, per Definition of done.
 
+      ADDENDUM (items 1, 2, 4 re-confirmed): item 2's earlier
+      "Overview only" hiding was a miscommunication — reversed, the
+      header now renders on every tab including Overview, no
+      exceptions. Item 1's chevron got one further fix: it shared the
+      label text's muted-gray color before (both `var(--text)`); now
+      explicitly `var(--accent)` (navy) so the chevron and label read
+      as two distinct, deliberate colors, not one under-styled unit.
+      Item 4 re-verified live, unchanged — $/sq ft still KPI-only, no
+      duplication back on Overview. `npm run build` clean. Verified
+      live on 2169 Ash St: header present on Overview/KPI, breadcrumb
+      chevron computed color `rgb(18, 52, 86)` (light) /
+      `rgb(111, 168, 220)` (dark) vs. label's `rgb(91, 100, 114)` /
+      `rgb(147, 161, 177)` — distinct as intended in both themes;
+      checked desktop, dark mode, and a 390px iframe-simulated mobile
+      width. Item 3 (Ownership subsection) still the only piece left
+      unchecked for this whole item.
+
 ## 8. Phase 8 — Pick-Lists & Linked Records
 - [x] 8.1 Generic configurable pick-list system (account-level add/archive options) — apply to expense category/subcategory, payment method, document type, task type
 - [x] 8.2 LLC / Ownership Entity as a real linked-record table, linked to Property (replaces current field) — the llcs table, properties.llc_id, and the real-list-plus-"+ Add new LLC" picker already existed (Phase 1); this pass added the missing formation_date field
