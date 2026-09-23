@@ -270,6 +270,78 @@ export async function createActionItemLink(input: CreateActionItemLinkInput) {
     .single<DocumentRecord>()
 }
 
+// Roadmap "Units/Lease/Tenant rebuild" item 5 — a Tenant profile's own
+// documents (e.g. a signed application, ID copy) aren't scoped to any
+// one property (a tenant's own history can span several), same
+// account-level shape action-item documents already use when
+// propertyId is null.
+export async function listDocumentsForTenant(accountId: string, tenantId: string) {
+  return supabase
+    .from('documents')
+    .select(DOCUMENT_COLUMNS)
+    .eq('account_id', accountId)
+    .eq('tenant_id', tenantId)
+    .order('uploaded_at', { ascending: false })
+    .returns<DocumentRecord[]>()
+}
+
+interface UploadTenantDocumentInput {
+  accountId: string
+  tenantId: string
+  category: DocumentCategory
+  uploadedBy: string
+  file: File
+}
+
+export async function uploadTenantDocument(input: UploadTenantDocumentInput) {
+  const { accountId, tenantId, category, uploadedBy, file } = input
+
+  const destinationPath = `${accountId}/account-level/${category}/${crypto.randomUUID()}-${file.name}`
+  const { error: uploadError } = await supabase.storage.from('documents').upload(destinationPath, file)
+  if (uploadError) {
+    return { error: uploadError }
+  }
+
+  return supabase
+    .from('documents')
+    .insert({
+      account_id: accountId,
+      tenant_id: tenantId,
+      category,
+      uploaded_by: uploadedBy,
+      storage_path: destinationPath,
+      file_size: file.size,
+    })
+    .select(DOCUMENT_COLUMNS)
+    .single<DocumentRecord>()
+}
+
+interface CreateTenantLinkInput {
+  accountId: string
+  tenantId: string
+  category: DocumentCategory
+  label: string | null
+  uploadedBy: string
+  linkUrl: string
+}
+
+export async function createTenantLink(input: CreateTenantLinkInput) {
+  const { accountId, tenantId, category, label, uploadedBy, linkUrl } = input
+
+  return supabase
+    .from('documents')
+    .insert({
+      account_id: accountId,
+      tenant_id: tenantId,
+      category,
+      label,
+      uploaded_by: uploadedBy,
+      link_url: linkUrl,
+    })
+    .select(DOCUMENT_COLUMNS)
+    .single<DocumentRecord>()
+}
+
 interface MoveToDocumentsInput {
   accountId: string
   propertyId: string

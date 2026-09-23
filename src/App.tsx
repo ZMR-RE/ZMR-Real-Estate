@@ -4,6 +4,7 @@ import { AppShell } from './shared/AppShell'
 import { LoginForm } from './modules/auth/LoginForm'
 import { PropertyRegistry } from './modules/properties/PropertyRegistry'
 import { PropertyProfile } from './modules/properties/PropertyProfile'
+import { TenantProfile } from './modules/tenants/TenantProfile'
 import { CaptureInbox } from './modules/capture/CaptureInbox'
 import { ReconciliationQueue } from './modules/captureTriage/ReconciliationQueue'
 import { RentOps } from './modules/rentOps/RentOps'
@@ -32,6 +33,7 @@ function App() {
           <Route path="/" element={<Navigate to="/properties" replace />} />
           <Route path="/properties" element={<PropertyRegistry />} />
           <Route path="/properties/:id" element={<PropertyProfile />} />
+          <Route path="/tenants/:id" element={<TenantProfile />} />
           <Route path="/capture" element={<CaptureInbox />} />
           <Route path="/reconciliation" element={<ReconciliationQueue />} />
           <Route path="/rent-ops" element={<RentOps />} />
