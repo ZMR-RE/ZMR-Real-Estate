@@ -2028,7 +2028,7 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] 12.3 Optional Drive-backed document storage: account-level Settings toggle (default: platform storage) letting a customer choose to store a given property's documents in their own connected Google Drive instead — only available once that property's email/Drive is OAuth-connected via Command Center (3.2)
 - [ ] 12.4 Consider consolidating Account & Security (12.2) into the Settings area (12.1) now that Settings has a real home — currently two separate menu entries; low priority, not urgent
 - [x] 12.5 Installable web app — web app manifest (name, icons, theme color, start URL) plus an "Install app" section in Settings: a real button on Android/Chrome wired to the native `beforeinstallprompt` flow, and written step-by-step instructions for iPhone/Safari (Apple doesn't allow a triggered prompt). Icons are a plain "ZMR" monogram built from the existing design tokens only (--accent background, --bg glyph) — no new colors invented, and no prior app icon existed to coordinate with (the old public/favicon.svg is an unrelated leftover placeholder, untouched by this or the design-system pass). Verified live: Chrome recognized the manifest as installable (real `beforeinstallprompt` event captured, distinct from the generic-browser fallback message) and the Install app button correctly invoked the native prompt; the final accept/decline step is native OS browser chrome outside the reach of page automation, so that last sub-step relies on the API being correctly wired rather than an observed click-through. iOS instructions verified accurate against current Safari behavior and confirmed to render correctly by simulating an iPhone user agent.
-- [ ] 12.6 Settings reorganization: convert from one long scrolling page
+- [x] 12.6 Settings reorganization: convert from one long scrolling page
       into tabs — Bookkeeping (Chart of Accounts, Category mapping),
       Pick lists (grouped by domain: Financial — subcategories/payment
       methods; Property — property types/zoning/purchase methods/unit
@@ -2039,6 +2039,25 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       responsive multi-column layout within each tab so wide screens
       aren't left with large empty gray space (same fix pattern as
       Property Overview's 7.22 grouping/space-utilization work).
+
+      DONE — 6 tabs (Vendors added as an explicit 6th, confirmed with
+      the user, since it didn't fit any of the five named groups).
+      Pick-list domain assignment for the lists this item didn't name
+      explicitly (Payment how, Municipal zoning codes, County assessor
+      use codes, Basement types, Street parking, Visit types) follows
+      the same domain logic as the named ones; Vendor relationships/
+      Vendor types live on the Vendors tab instead, as Vendor-domain
+      configuration rather than a fit for Financial/Property/Operations.
+      Multi-column applied via .settings-tab-grid (CSS Grid, auto-fit/
+      minmax) for Organizations and Appearance & App's two independent
+      sections; Pick lists' per-domain toggle rows use flex-wrap instead
+      of a fixed column count. Bookkeeping/Account & Security/Vendors
+      each hold one already-full-width component, left single-column.
+      Verified live: all 6 tabs switch and render correctly; a pick-list
+      popover still opens/anchors correctly under the wrapped-row
+      layout; Organizations/Appearance & App confirmed side-by-side on
+      desktop and single-column at mobile width (397px, real iframe
+      viewport); checked dark mode.
 
 ## 13. Phase 13 — External AI Connector
 - [ ] 13.1 Build a remote MCP server exposing scoped, read/write ZMR tools (e.g. get action queue, get portfolio KPIs, log a transaction) — each connecting user authenticated via OAuth 2.0, mapped to their own account_id, so they can only ever access their own data
