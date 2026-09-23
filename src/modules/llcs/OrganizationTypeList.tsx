@@ -3,6 +3,7 @@ import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import type { HoldingCompanyInput } from '../holdingCompanies/holdingCompaniesQueries'
 import { LlcForm } from './LlcForm'
 import { OrganizationTypePropertiesPanel } from './OrganizationTypePropertiesPanel'
+import { LlcFinancialAccountsPanel } from './LlcFinancialAccountsPanel'
 import type { Llc, LlcInput } from './llcsQueries'
 
 interface OrganizationTypeListProps {
@@ -101,6 +102,7 @@ export function OrganizationTypeList({
                   <tr>
                     <td colSpan={4}>
                       <OrganizationTypePropertiesPanel accountId={accountId} llcId={llc.id} llcOptions={llcOptions} />
+                      <LlcFinancialAccountsPanel llcId={llc.id} />
                     </td>
                   </tr>
                 )}

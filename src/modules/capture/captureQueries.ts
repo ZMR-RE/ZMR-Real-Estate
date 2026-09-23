@@ -58,7 +58,7 @@ export interface CaptureEntry {
   reconciled: boolean
   reconciled_at: string | null
   manually_completed: boolean
-  property: { id: string; name: string; address: string | null }
+  property: { id: string; name: string; address: string | null; llc_id: string | null }
   attachments: CaptureAttachment[]
 }
 
@@ -75,7 +75,7 @@ export interface CaptureEntry {
 // and the UI never writes it again (kept in the DB, unused, per
 // CLAUDE.md's no-drop-without-approval rule).
 const CAPTURE_ENTRY_COLUMNS =
-  'id, entry_type, entry_date, notes, miles_driven, start_destination, end_destination, unit_id, unit:units(id, unit_label), amount, category, transaction_category, financial_transaction_id, financial_account_id, financial_account:property_financial_accounts(id, nickname, last_four, account_type), payment_method, repair_or_improvement, receipt_type, paid_to_vendor_id, paid_to_vendor:vendors!capture_log_paid_to_vendor_id_fkey(id, name), paid_to_tenant_id, paid_to_tenant:tenants!capture_log_paid_to_tenant_id_fkey(id, name), paid_to_prospective_tenant_id, paid_to_prospective_tenant:prospective_tenants!capture_log_paid_to_prospective_tenant_id_fkey(id, name), met_with, met_with_vendor_id, met_with_vendor:vendors!capture_log_met_with_vendor_id_fkey(id, name), met_with_tenant_id, met_with_tenant:tenants!capture_log_met_with_tenant_id_fkey(id, name), met_with_prospective_tenant_id, met_with_prospective_tenant:prospective_tenants!capture_log_met_with_prospective_tenant_id_fkey(id, name), visit_type, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address), attachments:capture_attachments(id, storage_path, attachment_type)'
+  'id, entry_type, entry_date, notes, miles_driven, start_destination, end_destination, unit_id, unit:units(id, unit_label), amount, category, transaction_category, financial_transaction_id, financial_account_id, financial_account:property_financial_accounts(id, nickname, last_four, account_type), payment_method, repair_or_improvement, receipt_type, paid_to_vendor_id, paid_to_vendor:vendors!capture_log_paid_to_vendor_id_fkey(id, name), paid_to_tenant_id, paid_to_tenant:tenants!capture_log_paid_to_tenant_id_fkey(id, name), paid_to_prospective_tenant_id, paid_to_prospective_tenant:prospective_tenants!capture_log_paid_to_prospective_tenant_id_fkey(id, name), met_with, met_with_vendor_id, met_with_vendor:vendors!capture_log_met_with_vendor_id_fkey(id, name), met_with_tenant_id, met_with_tenant:tenants!capture_log_met_with_tenant_id_fkey(id, name), met_with_prospective_tenant_id, met_with_prospective_tenant:prospective_tenants!capture_log_met_with_prospective_tenant_id_fkey(id, name), visit_type, contact_name, contact_method, subject, reconciled, reconciled_at, manually_completed, property:properties(id, name, address, llc_id), attachments:capture_attachments(id, storage_path, attachment_type)'
 
 // Root-cause fix for a real bug found while building 1.21: PostgREST
 // doesn't reliably return every numeric(...) column as a JSON string —

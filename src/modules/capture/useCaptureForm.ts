@@ -4,7 +4,7 @@ import { propertyLabel } from '../../shared/propertyLabel'
 import { hasAtMostTwoDecimalPlaces } from '../../shared/currencyInput'
 import { listProperties } from '../properties/propertiesQueries'
 import { listUnits } from '../units/unitsQueries'
-import { listFinancialAccounts } from '../financialAccounts/financialAccountsQueries'
+import { listFinancialAccountsForEntry } from '../financialAccounts/financialAccountsQueries'
 import { listAllTenantsForProperty, type PropertyTenantOption } from '../tenants/propertyTenantsQueries'
 import {
   createProspectiveTenant,
@@ -41,6 +41,11 @@ export function useCaptureForm(onCaptured?: () => void) {
   const { accountId, session } = useAuth()
   const { vendorOptions, addVendor, refreshVendorOptions } = useVendors(accountId)
   const [propertyOptions, setPropertyOptions] = useState<{ id: string; label: string }[]>([])
+  // Roadmap 7.40 — propertyId -> llc_id, so the Financial account picker
+  // knows whether the selected property belongs to an LLC (and can pull
+  // in that LLC's shared accounts) without widening propertyOptions'
+  // own {id, label} shape, which SearchableSelect elsewhere assumes.
+  const [propertyLlcIds, setPropertyLlcIds] = useState<Record<string, string | null>>({})
   const [propertiesLoading, setPropertiesLoading] = useState(true)
   const [entryType, setEntryType] = useState<EntryType | null>(null)
   const [propertyId, setPropertyIdState] = useState<string | null>(null)
@@ -104,6 +109,7 @@ export function useCaptureForm(onCaptured?: () => void) {
     setPropertiesLoading(true)
     listProperties(accountId).then(({ data }) => {
       setPropertyOptions((data ?? []).map((p) => ({ id: p.id, label: propertyLabel(p) })))
+      setPropertyLlcIds(Object.fromEntries((data ?? []).map((p) => [p.id, p.llc_id])))
       setPropertiesLoading(false)
     })
   }, [accountId])
@@ -134,14 +140,21 @@ export function useCaptureForm(onCaptured?: () => void) {
   }, [accountId, propertyId])
 
   // Roadmap 1.16 correction — Financial account, scoped to whichever
-  // property is selected, same pattern as Unit.
+  // property is selected, same pattern as Unit. Roadmap 7.40 — widened
+  // to also include that property's LLC's shared accounts (if any),
+  // grouped separately in the picker.
   const refreshFinancialAccountOptions = () => {
     if (!accountId || !propertyId) return
-    listFinancialAccounts(accountId, propertyId).then(({ data }) => {
+    const llcId = propertyLlcIds[propertyId] ?? null
+    listFinancialAccountsForEntry(accountId, propertyId, llcId).then(({ data }) => {
       setFinancialAccountOptions(
         (data ?? [])
           .filter((a) => !a.archived)
-          .map((a) => ({ id: a.id, label: `${a.nickname} ...${a.last_four}` })),
+          .map((a) => ({
+            id: a.id,
+            label: `${a.nickname} ...${a.last_four}`,
+            group: a.llc_id ? 'Shared accounts' : 'This property',
+          })),
       )
     })
   }
@@ -152,7 +165,7 @@ export function useCaptureForm(onCaptured?: () => void) {
       return
     }
     refreshFinancialAccountOptions()
-  }, [accountId, propertyId])
+  }, [accountId, propertyId, propertyLlcIds])
 
   // Roadmap 1.28 — tenant options are property-scoped, same reasoning as
   // Unit/Financial account above.

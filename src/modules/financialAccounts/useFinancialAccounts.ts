@@ -3,14 +3,20 @@ import { useAuth } from '../../shared/auth/AuthContext'
 import {
   createFinancialAccount,
   isValidLastFour,
-  listFinancialAccounts,
+  listLlcFinancialAccounts,
+  listPropertyFinancialAccounts,
   setFinancialAccountArchived,
   updateFinancialAccount,
   type FinancialAccount,
   type FinancialAccountInput,
 } from './financialAccountsQueries'
 
-export function useFinancialAccounts(propertyId: string) {
+// Roadmap 7.40 — shared by both the property page's Financial accounts
+// box and the new LLC-level accounts panel (Settings → Organization
+// Types): pass exactly one of propertyId/llcId, matching the DB's own
+// scope check constraint. Optional params (not a single scope object)
+// so effect/callback dependency arrays stay plain primitives.
+export function useFinancialAccounts(propertyId?: string, llcId?: string) {
   const { accountId } = useAuth()
   const [accounts, setAccounts] = useState<FinancialAccount[]>([])
   const [loading, setLoading] = useState(true)
@@ -28,7 +34,9 @@ export function useFinancialAccounts(propertyId: string) {
   const refresh = useCallback(async () => {
     if (!accountId) return
     setLoading(true)
-    const { data, error: fetchError } = await listFinancialAccounts(accountId, propertyId)
+    const { data, error: fetchError } = propertyId
+      ? await listPropertyFinancialAccounts(accountId, propertyId)
+      : await listLlcFinancialAccounts(accountId, llcId!)
     setLoading(false)
 
     if (fetchError) {
@@ -37,7 +45,7 @@ export function useFinancialAccounts(propertyId: string) {
     }
     setError(null)
     setAccounts(data ?? [])
-  }, [accountId, propertyId])
+  }, [accountId, propertyId, llcId])
 
   useEffect(() => {
     refresh()
@@ -77,7 +85,8 @@ export function useFinancialAccounts(propertyId: string) {
     }
 
     setSaving(true)
-    const { error: saveError } = await createFinancialAccount(accountId, propertyId, input)
+    const scope = propertyId ? { propertyId } : { llcId: llcId! }
+    const { error: saveError } = await createFinancialAccount(accountId, scope, input)
     setSaving(false)
 
     if (saveError) {
@@ -138,5 +147,6 @@ export function useFinancialAccounts(propertyId: string) {
     add,
     save,
     toggleArchived,
+    refresh,
   }
 }

@@ -3,7 +3,7 @@ import { PickListSelect } from '../../shared/pickLists/PickListSelect'
 import { SearchableSelect, type SearchableSelectOption } from '../../shared/SearchableSelect'
 import { formatAmountOnBlur, sanitizeAmountInput } from '../../shared/currencyInput'
 import { listUnits } from '../units/unitsQueries'
-import { listFinancialAccounts } from '../financialAccounts/financialAccountsQueries'
+import { listFinancialAccountsForEntry } from '../financialAccounts/financialAccountsQueries'
 import { listAllTenantsForProperty } from '../tenants/propertyTenantsQueries'
 import { listProspectiveTenantsForProperty, createProspectiveTenant, type ProspectiveTenantInput } from '../tenants/prospectiveTenantsQueries'
 import { ProspectiveTenantForm } from '../tenants/ProspectiveTenantForm'
@@ -130,13 +130,21 @@ export function CaptureEntryDetailsForm({
 
   // Roadmap 1.16 correction — Financial account, scoped to this entry's
   // own (fixed, non-editable here) property, same pattern as Unit above.
+  // Roadmap 7.40 — widened to also include the property's LLC's shared
+  // accounts (if any), grouped separately so it's clear at a glance
+  // which account is property-specific vs. shared across sibling
+  // properties.
   const refreshFinancialAccountOptions = () => {
     if (!accountId || entry.entry_type !== 'receipt') return
-    listFinancialAccounts(accountId, entry.property.id).then(({ data }) => {
+    listFinancialAccountsForEntry(accountId, entry.property.id, entry.property.llc_id).then(({ data }) => {
       setFinancialAccountOptions(
         (data ?? [])
           .filter((a) => !a.archived)
-          .map((a) => ({ id: a.id, label: `${a.nickname} ...${a.last_four}` })),
+          .map((a) => ({
+            id: a.id,
+            label: `${a.nickname} ...${a.last_four}`,
+            group: a.llc_id ? 'Shared accounts' : 'This property',
+          })),
       )
     })
   }

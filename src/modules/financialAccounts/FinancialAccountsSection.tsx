@@ -5,6 +5,13 @@ import { EditableSection } from '../../shared/EditableSection'
 
 interface FinancialAccountsSectionProps {
   propertyId: string
+  // Roadmap 7.40 — when this property belongs to an LLC, its shared
+  // accounts are shown here too, distinguishably, read-only — editing a
+  // shared account happens only from the LLC's own panel (Settings →
+  // Organization Types), a single place to avoid two edit surfaces for
+  // the same row.
+  llcId: string | null
+  llcLabel: string | null
 }
 
 // Roadmap 7.18 — bank account(s)/credit card(s) associated with a
@@ -19,7 +26,7 @@ interface FinancialAccountsSectionProps {
 // old always-visible Add button below the list. "Show archived" stays
 // a secondaryAction — always visible regardless of view/edit state,
 // same as before this conversion (7.23).
-export function FinancialAccountsSection({ propertyId }: FinancialAccountsSectionProps) {
+export function FinancialAccountsSection({ propertyId, llcId, llcLabel }: FinancialAccountsSectionProps) {
   const {
     accounts,
     archivedCount,
@@ -37,6 +44,19 @@ export function FinancialAccountsSection({ propertyId }: FinancialAccountsSectio
     save,
     toggleArchived,
   } = useFinancialAccounts(propertyId)
+
+  // Roadmap 7.40 — the LLC's shared accounts, read-only here regardless
+  // of this box's own view/edit state. Hook only actually fetches when
+  // llcId is truthy (its own effect is keyed off it), so this is a
+  // no-op/empty list for an Individual-ownership property.
+  const { accounts: llcAccounts, loading: llcLoading } = useFinancialAccounts(undefined, llcId ?? undefined)
+
+  const sharedAccounts = llcId && (
+    <>
+      <h4>Shared — {llcLabel}</h4>
+      {llcLoading ? <p>Loading…</p> : <FinancialAccountList accounts={llcAccounts} readOnly />}
+    </>
+  )
 
   return (
     <EditableSection
@@ -59,6 +79,7 @@ export function FinancialAccountsSection({ propertyId }: FinancialAccountsSectio
         <>
           {error && <p role="alert">{error}</p>}
           {loading ? <p>Loading…</p> : <FinancialAccountList accounts={accounts} readOnly />}
+          {sharedAccounts}
         </>
       }
       edit={(exitEditing) => (
@@ -90,6 +111,8 @@ export function FinancialAccountsSection({ propertyId }: FinancialAccountsSectio
           <button type="button" onClick={exitEditing}>
             Done
           </button>
+
+          {sharedAccounts}
         </>
       )}
     />

@@ -54,6 +54,12 @@ export function PropertyProfileOverviewTab({
   saving,
   onSave,
 }: PropertyProfileOverviewTabProps) {
+  // Roadmap 7.40 — the Financial accounts box also shows this LLC's
+  // shared accounts (if any), distinguishably; llcOptions already
+  // carries the same "Name (Holding Co)" label used everywhere else an
+  // LLC is displayed, so no separate lookup/query is needed for it.
+  const llcLabel = property.llc_id ? (llcOptions.find((o) => o.id === property.llc_id)?.label ?? null) : null
+
   return (
     <div className="property-overview-grid">
       <EditableSection
@@ -79,7 +85,7 @@ export function PropertyProfileOverviewTab({
         )}
       />
 
-      <FinancialAccountsSection propertyId={property.id} />
+      <FinancialAccountsSection propertyId={property.id} llcId={property.llc_id} llcLabel={llcLabel} />
 
       <InsuranceLedger propertyId={property.id} />
 

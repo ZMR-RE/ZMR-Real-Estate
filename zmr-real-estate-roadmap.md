@@ -1639,6 +1639,21 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       which is the currently-live, intended behavior, not what item 2's
       own original wording says. Recorded here for transparency rather
       than silently marking item 2 "done as originally written."
+- [x] 7.40 Financial accounts at the LLC level: investigated and
+      proposed (see prior session report), now building per the
+      approved design — `property_financial_accounts` gains a nullable
+      `llc_id` alongside the existing (now nullable) `property_id`, a
+      check constraint enforcing exactly one of the two set. A property
+      under an LLC may still keep its own property-specific account in
+      addition to the LLC's shared ones — no forced either/or. New LLC-
+      level accounts panel on the Organization Types expandable row in
+      Settings (same place properties-under-this-LLC already lives).
+      Financial accounts box on Property Overview shows both scopes,
+      distinguishably. Quick Capture's payment-method picker unions
+      both scopes with a shared-account label. Existing duplicate
+      accounts across sibling properties: manual cleanup by the user,
+      no merge-assist tool at this volume (explicit decision, not
+      deferred by omission).
 - [x] 7.41 Revert 7.39 (5)'s persistent expanded-box tint: it reused
       shared/cardTint.ts's 4-color hash palette (built to distinguish
       different PROPERTIES on the Registry list) to mean "this box is
