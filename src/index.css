@@ -1049,6 +1049,28 @@ dd {
   color: var(--text);
 }
 
+/* A unit card's "at a glance" current-lease block (tenant/rent/end
+   date) — one per currently-active lease (usually one, occasionally two
+   during a brief tenant-transition overlap). */
+.unit-current-lease {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.unit-current-lease + .unit-current-lease {
+  margin-top: var(--space-3);
+}
+
+/* "+ End lease"'s post-save Security Deposit prompt (roadmap item 2) —
+   quiet informational text, same tint as an empty-state, since this is
+   guidance toward another box, not a status signal of its own. */
+.unit-end-lease-deposit-prompt {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+
 /* A unit's nested Specs/Leasing/Tenants/Utility records sections
    (roadmap 7.2) never received the 7.22 full-width-CollapsibleSection
    treatment the property-level Overview tab got — same layout here,

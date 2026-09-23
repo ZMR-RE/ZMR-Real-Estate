@@ -1,25 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
-import { listCurrentTenantsForProperty } from '../tenants/propertyTenantsQueries'
 import { createUnit, listUnits, setUnitArchived, updateUnit, type Unit, type UnitInput } from './unitsQueries'
 
-// Roadmap 7.55 (4) — each unit's own current rent, shown as a "Rent"
-// line on its card (UnitsSection.tsx). Summed across that unit's own
-// current (non-archived, end_date null) tenant_units rows only — never
-// across other units or the whole property — so this doesn't reopen
-// the property-wide co-tenant double-counting gap flagged and
-// deliberately held back from the Monthly rent stat card (7.52). A
-// single unit legitimately having 2+ concurrent tenant rows is a much
-// narrower, already-expected surface (that's exactly what per-unit
-// Tenants management already invites) than summing across an entire
-// property's units.
-export interface UnitWithRent extends Unit {
-  currentRent: number | null
-}
-
+// Roadmap "Units/Lease/Tenant rebuild" Stage 5 — reverts the brief
+// 7.55-era currentRent/UnitWithRent addition (which summed
+// tenant_units.rent_amount per unit, the exact per-tenant-row double-
+// counting risk this whole rebuild exists to retire). Rent/tenant/
+// lease-end-date "at a glance" now comes from each unit's own
+// useLeases call (UnitCard.tsx), not from here — this hook goes back to
+// being purely about the units list itself (label/status/archived).
 export function useUnits(propertyId: string) {
   const { accountId } = useAuth()
-  const [units, setUnits] = useState<UnitWithRent[]>([])
+  const [units, setUnits] = useState<Unit[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isAdding, setIsAdding] = useState(false)
@@ -35,26 +27,15 @@ export function useUnits(propertyId: string) {
   const refresh = useCallback(async () => {
     if (!accountId) return
     setLoading(true)
-    const [unitsRes, tenantsRes] = await Promise.all([
-      listUnits(accountId, propertyId),
-      listCurrentTenantsForProperty(accountId, propertyId),
-    ])
+    const { data, error: fetchError } = await listUnits(accountId, propertyId)
     setLoading(false)
 
-    const fetchError = unitsRes.error?.message ?? tenantsRes.error?.message
     if (fetchError) {
-      setError(fetchError)
+      setError(fetchError.message)
       return
     }
     setError(null)
-
-    const rentByUnit = new Map<string, number>()
-    for (const row of tenantsRes.data ?? []) {
-      if (row.unit && row.rent_amount !== null) {
-        rentByUnit.set(row.unit.id, (rentByUnit.get(row.unit.id) ?? 0) + Number(row.rent_amount))
-      }
-    }
-    setUnits((unitsRes.data ?? []).map((unit) => ({ ...unit, currentRent: rentByUnit.get(unit.id) ?? null })))
+    setUnits(data ?? [])
   }, [accountId, propertyId])
 
   useEffect(() => {

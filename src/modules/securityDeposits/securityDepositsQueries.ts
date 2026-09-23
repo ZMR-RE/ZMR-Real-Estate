@@ -29,6 +29,7 @@ export interface SecurityDeposit {
   unit: string | null
   tenant_name: string
   notes: string | null
+  lease_id: string | null
   transactions: DepositTransaction[]
 }
 
@@ -36,6 +37,10 @@ export interface SecurityDepositInput {
   unit: string | null
   tenantName: string
   notes: string | null
+  // Units/Lease/Tenant rebuild — optional link back to the lease this
+  // deposit belongs to (security_deposits.unit/tenant_name themselves
+  // stay free text, unchanged; this is purely an added cross-reference).
+  leaseId?: string | null
 }
 
 export interface DepositTransactionInput {
@@ -59,16 +64,30 @@ export async function getSecurityDepositsHeldAccount(accountId: string) {
     .returns<ChartAccountRef>()
 }
 
+const SECURITY_DEPOSIT_COLUMNS =
+  'id, unit, tenant_name, notes, lease_id, transactions:security_deposit_transactions(id, transaction_type, amount, transaction_date, description, voided, chart_account:chart_of_accounts(id, name, type))'
+
 export async function listSecurityDeposits(accountId: string, propertyId: string) {
   return supabase
     .from('security_deposits')
-    .select(
-      'id, unit, tenant_name, notes, transactions:security_deposit_transactions(id, transaction_type, amount, transaction_date, description, voided, chart_account:chart_of_accounts(id, name, type))',
-    )
+    .select(SECURITY_DEPOSIT_COLUMNS)
     .eq('account_id', accountId)
     .eq('property_id', propertyId)
     .order('created_at', { ascending: false })
     .returns<SecurityDeposit[]>()
+}
+
+// Units/Lease/Tenant rebuild — "+ End lease" (UnitCard.tsx) looks this
+// up to decide whether to link to an existing deposit's return workflow
+// or offer to log a new one for this lease.
+export async function getSecurityDepositForLease(accountId: string, leaseId: string) {
+  return supabase
+    .from('security_deposits')
+    .select(SECURITY_DEPOSIT_COLUMNS)
+    .eq('account_id', accountId)
+    .eq('lease_id', leaseId)
+    .maybeSingle()
+    .returns<SecurityDeposit>()
 }
 
 export async function createSecurityDeposit(accountId: string, propertyId: string, input: SecurityDepositInput) {
@@ -80,6 +99,7 @@ export async function createSecurityDeposit(accountId: string, propertyId: strin
       unit: input.unit,
       tenant_name: input.tenantName,
       notes: input.notes,
+      lease_id: input.leaseId ?? null,
     })
     .select()
     .single()

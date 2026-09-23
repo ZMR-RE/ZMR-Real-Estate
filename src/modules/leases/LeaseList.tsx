@@ -37,8 +37,10 @@ const STATUS_BADGE_VARIANTS = {
 
 // "+ End lease" inline form (roadmap item 2) — just end date + reason;
 // tenants/rent/dates-so-far are already set, ending is a distinct,
-// smaller action from editing those.
-function EndLeaseForm({
+// smaller action from editing those. Exported so UnitCard.tsx can reuse
+// it directly for the top-level "at a glance" End-lease quick action,
+// not just the one nested inside Lease history's own edit rows.
+export function EndLeaseForm({
   saving,
   todayDateString,
   onSave,

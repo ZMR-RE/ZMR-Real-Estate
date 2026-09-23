@@ -40,6 +40,11 @@ export function SecurityDepositsSection({ propertyId }: SecurityDepositsSectionP
   return (
     <EditableSection
       title="Security deposits"
+      // Units/Lease/Tenant rebuild — anchor id so "+ End lease" (Units
+      // box) can link/scroll straight here, same pattern
+      // PropertyTenantsOverview's own "Manage tenants in Units ↓" link
+      // already established for the reverse direction.
+      id="security-deposits-section"
       onEditStart={() => {
         cancelCreatingDeposit()
         cancelLoggingTransaction()

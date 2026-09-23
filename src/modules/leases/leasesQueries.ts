@@ -184,6 +184,10 @@ export async function listAllTenantsEverAtProperty(accountId: string, propertyId
     )
     .eq('account_id', accountId)
     .eq('unit.property_id', propertyId)
+    // Archived leases don't count as a real tenancy — same "stops
+    // counting as real anywhere" semantics as the at-a-glance current-
+    // lease filter in UnitCard.tsx.
+    .eq('archived', false)
     .order('start_date', { ascending: false })
     .returns<
       {

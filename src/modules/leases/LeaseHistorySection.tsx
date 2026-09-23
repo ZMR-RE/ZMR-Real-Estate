@@ -1,46 +1,50 @@
-import { useLeases } from './useLeases'
-import { LeaseForm } from './LeaseForm'
 import { LeaseList } from './LeaseList'
 import { EditableSection } from '../../shared/EditableSection'
+import type { Lease, LeaseInput } from './leasesQueries'
 
 interface LeaseHistorySectionProps {
-  propertyId: string
-  unitId: string
+  leases: Lease[]
+  loading: boolean
+  error: string | null
+  editingId: string | null
+  endingId: string | null
+  saving: boolean
+  todayDateString: string
+  onStartEditing: (id: string) => void
+  onSave: (id: string, input: Pick<LeaseInput, 'startDate' | 'endDate' | 'rentAmount' | 'lateFee' | 'moveInFee'>) => void
+  onCancelForm: () => void
+  onStartEnding: (id: string) => void
+  onEndLease: (id: string, endDate: string, endReason: string | null) => void
+  onToggleArchived: (lease: Lease) => void
 }
 
-// Replaces TenantAssignmentsSection (roadmap 8.4) — same Box interaction
-// standard shape (EditableSection, view-only by default, Edit reveals
-// per-row Edit/End lease/Archive plus "+ Add lease"), now backed by the
-// real leases/lease_tenants tables instead of tenant_units. "All past
-// leases: tenants, dates, rent, why ended" (roadmap item 1) is just
-// this list — nothing hidden, archived leases stay visible (dimmed via
-// the shared .row-voided class), never hard-deleted.
-export function LeaseHistorySection({ propertyId, unitId }: LeaseHistorySectionProps) {
-  const {
-    leases,
-    loading,
-    error,
-    isAdding,
-    editingId,
-    endingId,
-    saving,
-    tenantOptions,
-    addTenant,
-    startAdding,
-    startEditing,
-    startEnding,
-    cancelForm,
-    add,
-    save,
-    endLease,
-    toggleArchived,
-    todayDateString,
-  } = useLeases(propertyId, unitId)
-
+// Replaces TenantAssignmentsSection (roadmap 8.4) — "all past leases:
+// tenants, dates, rent, why ended" (roadmap item 1). Purely a history
+// display + per-row Edit/End lease/Archive — no "+ Add lease" of its
+// own; that lives at the unit-card level (UnitsSection.tsx) so it's a
+// single, top-level "at a glance" action rather than duplicated inside
+// this nested box too. Leases/handlers are passed in as props (not
+// fetched here) so the unit card and this history box share one
+// useLeases call per unit, not two competing fetches of the same data.
+export function LeaseHistorySection({
+  leases,
+  loading,
+  error,
+  editingId,
+  endingId,
+  saving,
+  todayDateString,
+  onStartEditing,
+  onSave,
+  onCancelForm,
+  onStartEnding,
+  onEndLease,
+  onToggleArchived,
+}: LeaseHistorySectionProps) {
   return (
     <EditableSection
       title="Lease history"
-      onEditStart={cancelForm}
+      onEditStart={onCancelForm}
       view={
         <>
           {error && <p role="alert">{error}</p>}
@@ -59,29 +63,14 @@ export function LeaseHistorySection({ propertyId, unitId }: LeaseHistorySectionP
               endingId={endingId}
               saving={saving}
               todayDateString={todayDateString}
-              onStartEditing={startEditing}
-              onSave={save}
-              onCancelEdit={cancelForm}
-              onStartEnding={startEnding}
-              onEndLease={endLease}
-              onCancelEnd={cancelForm}
-              onToggleArchived={toggleArchived}
+              onStartEditing={onStartEditing}
+              onSave={onSave}
+              onCancelEdit={onCancelForm}
+              onStartEnding={onStartEnding}
+              onEndLease={onEndLease}
+              onCancelEnd={onCancelForm}
+              onToggleArchived={onToggleArchived}
             />
-          )}
-
-          {isAdding ? (
-            <LeaseForm
-              tenantOptions={tenantOptions}
-              onCreateTenant={addTenant}
-              saving={saving}
-              todayDateString={todayDateString}
-              onSave={add}
-              onCancel={cancelForm}
-            />
-          ) : (
-            <button type="button" onClick={startAdding}>
-              + Add lease
-            </button>
           )}
 
           <button type="button" onClick={exitEditing}>
