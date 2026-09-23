@@ -2303,7 +2303,9 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       own Units box.
 
       Superseded/extended immediately by the Units/Lease/Tenant rebuild
-      (see the dedicated stage-by-stage entries following this one):
+      (see the "Tenants & Occupancy redesign" entry under Future
+      Considerations below, and git log "Units/Lease/Tenant rebuild,
+      Stage 1" through "Stage 9" for the full 9-commit build):
       building this out surfaced that "Unit 1" also leaked through
       several other unit-pickers (Specs scope filter, Quick Capture,
       Action Items, Vendor Estimates) and that a real per-unit "Rent"
@@ -2337,7 +2339,13 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       properties may share one Organization type.
 - [x] 8.3 Vendor as a real linked-record table, linked to Transactions and Tasks
 - [x] 8.4 Tenant as a real linked-record table, linked to Lease/Unit — built and live-verified by commit 2cf5aea (tenants/tenant_units tables, TenantAssignmentsSection, PropertyTenantsOverview); checkbox was left unchecked in that commit itself, caught by the 2026-09-16 structural audit
-- [x] 8.5 Lease as a real linked-record entity, linked to Unit + Tenant (term dates, rent amount) — extended 8.4's tenant_units table (rent_amount, late_fee columns) rather than building a second table: 8.4's own migration comment already called out that tenant_units (one row per tenancy period, start/end dates) was built specifically to become the Lease record once rent/term fields were added, so a separate leases table would only have duplicated that linking
+- [x] 8.5 Lease as a real linked-record entity, linked to Unit + Tenant (term dates, rent amount) — extended 8.4's tenant_units table (rent_amount, late_fee columns) rather than building a second table: 8.4's own migration comment already called out that tenant_units (one row per tenancy period, start/end dates) was built specifically to become the Lease record once rent/term fields were added, so a separate leases table would only have duplicated that linking.
+      AMENDED (Units/Lease/Tenant rebuild, see Future Considerations
+      above) — that shortcut was the root cause of a real gap: one
+      tenant_units row per TENANT (not per lease) meant co-tenants
+      sharing a unit couldn't be safely summed for rent. A genuine
+      leases + lease_tenants (many-to-many) table now exists;
+      tenant_units is kept, deprecated, no longer written to.
 - [x] 8.6 Property address as the canonical identifier across the app (search, dropdowns, headers) — supersedes any name-based identification; 7.2's Unit display convention follows this ({address} — {unit label}) — PropertyProfile.tsx's `<h1>` now uses propertyLabel() (matches every other display site); the Reports module (reportsCalculations.ts's computeBalanceSheet, useReports.ts's propertyOptions) also converted and verified live — Balance Sheet rows and the Property filter dropdown show addresses. Both deferred items from the earlier partial pass are now resolved. Unit display: no cross-property unit listing exists yet to apply the {address} — {unit label} convention to; UnitsSection.tsx shows unit label alone since it's always nested under that property's own page already.
 - [x] 8.7 Holding Company as a real linked entity: Holding Company → owns → LLC → owns → Property (not required data until formed)
 - [x] 8.8 Vendor-level Split Rule: saved reimbursement percentage per vendor (e.g. pest control, 50/50); user must manually apply it per transaction every time — never auto-applied, no setting to change this
@@ -2652,16 +2660,31 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 - [ ] Warm save-confirmation feedback for Property Overview's boxes
       (currently silent on save) — flagged by T4 during 7.51's
       micro-copy pass, not built; scope it properly when picked up.
-- [ ] Tenants & Occupancy redesign — fix the underlying data-model gap
-      7.52 surfaced: tenant_units stores rent per TENANT row, not per
+- [x] Tenants & Occupancy redesign — fixed the underlying data-model gap
+      7.52 surfaced: tenant_units stored rent per TENANT row, not per
       lease (no lease_id/grouping construct), so two co-tenants sharing
-      one unit can't be distinguished from two tenants who each
-      legitimately pay their own separate rent when summing
-      rent_amount. Needs a real Lease entity (or an explicit grouping
-      construct on tenant_units) before any feature safely sums rent
-      across co-tenants. Property Overview's planned 4th "Monthly rent"
-      headline stat card (7.52, scoped but held back) is blocked on
-      this and should ship as part of this redesign.
+      one unit couldn't be distinguished from two tenants who each
+      legitimately pay their own separate rent when summing rent_amount.
+      Built as a real Lease entity (leases + lease_tenants, a genuine
+      many-to-many join) across 9 staged commits following roadmap 7.55
+      (see git log "Units/Lease/Tenant rebuild, Stage 1" through "Stage
+      9" for full detail on each): schema + cross-entity FK links
+      (documents.lease_id retrofit, security_deposits.lease_id,
+      action_items.lease_id) + tenant_units backfill (kept, deprecated,
+      never dropped) + core Lease CRUD + Units box redesign (unit cards
+      show current tenant(s)/rent/lease end date at a glance, "+ Add
+      lease"/"+ End lease" with Security Deposit linking) + Tenants
+      directory rewrite (current/past, links to a new /tenants/:id
+      profile page) + Tenant profile page (lease history across every
+      property, linked documents) + Action Queue integration (a lease
+      within 60 days of ending auto-generates a renewal reminder,
+      page-load-triggered since this app has no cron/scheduled-function
+      infrastructure) + the Monthly rent stat card, finally safe to ship
+      (one rent figure per lease, live-verified: 2 co-tenants sharing a
+      $1,200/mo unit plus a separate $800/mo unit correctly summed to
+      $2,000, not $3,200). Amends roadmap 8.5's own note below — that
+      item's "extended tenant_units instead of building a real table"
+      decision is what created this gap; a real leases table now exists.
 
 ## Ongoing — Q&A / SOP Log
 - [ ] A living reference section (in-app or a maintained doc) answering recurring "how do I do X" questions as they come up during real use (e.g. "how do I add past mortgage information"). Updated whenever a new section is built out or a real question arises — not a one-time deliverable, an evolving document.

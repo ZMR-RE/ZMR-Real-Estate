@@ -132,3 +132,18 @@ export function OccupancyIcon() {
     </svg>
   )
 }
+
+// Units/Lease/Tenant rebuild, Stage 9 — Monthly rent's own icon, back
+// after being held back in 7.52 pending the co-tenant/lease structure
+// fix this whole rebuild delivers. Plain "$" stroke glyph, no enclosing
+// circle — 7.45's PurchaseValuationIcon already established that a
+// circle+squiggle reads as a generic info-circle at render size, not a
+// legible "$"; dropping the circle avoids repeating that mistake.
+export function MonthlyRentIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" aria-hidden="true">
+      <path d="M12 3v18" />
+      <path d="M16 7.5c0-1.7-1.8-3-4-3s-4 1.2-4 2.8c0 1.7 1.4 2.3 4 2.9s4 1.3 4 3c0 1.6-1.8 2.8-4 2.8s-4-1.3-4-3" />
+    </svg>
+  )
+}

@@ -1,6 +1,12 @@
 import type { ComponentType } from 'react'
 import type { Property } from './propertiesQueries'
-import { LivingAreaIcon, OccupancyIcon, YearBuiltIcon } from './propertyFieldGroupIcons'
+import { LivingAreaIcon, MonthlyRentIcon, OccupancyIcon, YearBuiltIcon } from './propertyFieldGroupIcons'
+
+const rentFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+})
 
 interface PropertyPhysicalFactsStatsProps {
   property: Property
@@ -13,6 +19,12 @@ interface PropertyPhysicalFactsStatsProps {
   // undefined while that fetch is still in flight (renders neither
   // card, same as any other stat with nothing to show yet).
   unitStats: { totalUnits: number; rentedUnits: number } | undefined
+  // Units/Lease/Tenant rebuild, Stage 9 — sum of every currently-active
+  // lease's rent_amount for the property (leasesQueries.ts's
+  // sumActiveLeaseRentForProperty), one figure per lease so co-tenants
+  // never get double-counted. Same undefined-while-loading/null-when-
+  // nothing-to-show convention as unitStats.
+  monthlyRent: number | null | undefined
 }
 
 interface Stat {
@@ -33,31 +45,21 @@ interface Stat {
 // sub-heading). Same Empty field visibility rule as every other box in
 // this app — a stat with genuinely no value renders no card at all.
 //
-// Roadmap 7.52 — the separate Units and Occupied cards (7.47) are
-// merged into one "Units occupied" card ("{rented} of {total}", colored
-// by occupancy rate), per the approved design. This item also scoped a
-// 4th "Monthly rent" stat card, deliberately NOT built here: building it
-// surfaced a real pre-existing data-model gap (tenant_units stores rent
-// per TENANT row, not per lease — no lease_id/grouping construct exists,
-// so summing rent_amount across co-tenants on one unit can silently
-// double-count, and there's no safe way to dedupe it without risking the
-// opposite mistake). Held back per explicit direction rather than
-// shipping a naive sum — Monthly rent will be built properly as part of
-// the upcoming Tenants & Occupancy redesign, which addresses this same
-// co-tenant/lease structure gap directly. No 4th card slot or "Coming
-// soon" placeholder in the meantime — omitted entirely, same as any
-// other stat with nothing (real) to show, rather than a stub UI element
-// for a feature that doesn't exist yet.
-//
-// Units occupied follows the same suppression rule the old Occupied
-// card used (0 total units → nothing meaningful to report, card omitted
-// entirely) rather than the old Units card's "always show, even 0" rule
-// — merging the two numbers into one fraction means "0 of 0" would be
-// the only remaining zero-state, and that's not a meaningful answer
-// either.
+// Units/Lease/Tenant rebuild, Stage 9 — the 4th "Monthly rent" card
+// (7.52 deliberately held it back: tenant_units summed rent per TENANT
+// row, so co-tenants on one unit could get double-counted). Now safe:
+// leases/lease_tenants (built earlier in this same rebuild) give one
+// rent figure per lease regardless of how many tenants share it.
+// Omitted entirely (not "$0 — Not set up") when there's nothing
+// active to sum — that warning-colored treatment is specific to a
+// single UNIT's own rent line inside the Units box (a data-entry gap
+// on a unit that's supposedly occupied), not this property-wide
+// summary card, which follows the same plain Empty field visibility
+// rule as Year built/Living area above it.
 function buildStats(
   property: Property,
   unitStats: { totalUnits: number; rentedUnits: number } | undefined,
+  monthlyRent: number | null | undefined,
 ): Stat[] {
   const stats: Stat[] = []
 
@@ -71,6 +73,14 @@ function buildStats(
       value: `${rentedUnits} of ${totalUnits}`,
       label: 'Units occupied',
       colorVariant,
+    })
+  }
+  if (monthlyRent !== null && monthlyRent !== undefined) {
+    stats.push({
+      key: 'monthly-rent',
+      Icon: MonthlyRentIcon,
+      value: rentFormatter.format(monthlyRent),
+      label: 'Monthly rent',
     })
   }
   if (property.year_built !== null && property.year_built !== '') {
@@ -98,12 +108,13 @@ function buildStats(
 export function hasPhysicalFactsStats(
   property: Property,
   unitStats: { totalUnits: number; rentedUnits: number } | undefined,
+  monthlyRent: number | null | undefined,
 ): boolean {
-  return buildStats(property, unitStats).length > 0
+  return buildStats(property, unitStats, monthlyRent).length > 0
 }
 
-export function PropertyPhysicalFactsStats({ property, unitStats }: PropertyPhysicalFactsStatsProps) {
-  const stats = buildStats(property, unitStats)
+export function PropertyPhysicalFactsStats({ property, unitStats, monthlyRent }: PropertyPhysicalFactsStatsProps) {
+  const stats = buildStats(property, unitStats, monthlyRent)
 
   if (stats.length === 0) return null
 

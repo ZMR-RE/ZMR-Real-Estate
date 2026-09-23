@@ -1,7 +1,9 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { formatDateOnly } from '../../shared/dateFormat'
+import { useAuth } from '../../shared/auth/AuthContext'
 import { useOccupancySnapshot } from '../propertyKpi/useOccupancySnapshot'
+import { sumActiveLeaseRentForProperty } from '../leases/leasesQueries'
 import type { Property } from './propertiesQueries'
 import { PROPERTY_FIELD_GROUPS, hasFieldValue } from './propertyFieldGroups'
 import { PropertyFieldGroup } from './PropertyFieldGroup'
@@ -72,6 +74,20 @@ export function PropertySummary({ property, llcOptions }: PropertySummaryProps) 
     ? undefined
     : { totalUnits: snapshot.totalUnits, rentedUnits: snapshot.rentedUnits }
 
+  // Units/Lease/Tenant rebuild, Stage 9 — Monthly rent stat card, safe
+  // to build now that leases (not tenant_units) give one rent figure
+  // per lease. Same undefined-while-loading convention as unitStats.
+  const { accountId } = useAuth()
+  const [monthlyRent, setMonthlyRent] = useState<number | null | undefined>(undefined)
+
+  useEffect(() => {
+    if (!accountId) return
+    setMonthlyRent(undefined)
+    sumActiveLeaseRentForProperty(accountId, property.id).then(({ data }) => {
+      setMonthlyRent(data ?? null)
+    })
+  }, [accountId, property.id])
+
   return (
     <div className="property-summary">
       <PropertyIdentityHeader property={property} llcOptions={llcOptions} />
@@ -89,7 +105,7 @@ export function PropertySummary({ property, llcOptions }: PropertySummaryProps) 
         // everywhere else) only if there's neither a stat nor a detail
         // to show, not just one or the other.
         if (group.id === 'physical-facts') {
-          if (presentFields.length === 0 && !hasPhysicalFactsStats(property, unitStats)) return null
+          if (presentFields.length === 0 && !hasPhysicalFactsStats(property, unitStats, monthlyRent)) return null
 
           return (
             <section className="property-field-group" key={group.id}>
@@ -97,7 +113,7 @@ export function PropertySummary({ property, llcOptions }: PropertySummaryProps) 
                 <group.Icon />
                 {group.title}
               </h3>
-              <PropertyPhysicalFactsStats property={property} unitStats={unitStats} />
+              <PropertyPhysicalFactsStats property={property} unitStats={unitStats} monthlyRent={monthlyRent} />
               {presentFields.length > 0 && (
                 <div className="property-details">
                   <h4 className="property-details-title">Details</h4>
