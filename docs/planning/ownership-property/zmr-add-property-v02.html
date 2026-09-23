@@ -1,0 +1,154 @@
+<div id="zmr-ownership-preview" aria-label="Proposed ZMR Add property flow">
+  <style>
+    #zmr-ownership-preview{--z-bg:light-dark(#f7f9fb,#0f1720);--z-panel:light-dark(#ffffff,#182430);--z-text:light-dark(#13293d,#f0f4f8);--z-sub:light-dark(#5b6472,#93a1b1);--z-line:light-dark(#dde3ea,#2b3846);--z-nav:#123456;--z-button:light-dark(#123456,#6fa8dc);--z-button-text:light-dark(#ffffff,#0f1720);--z-danger:light-dark(#b5442f,#e08571);font:16px/1.5 system-ui,sans-serif;color:var(--z-text);color-scheme:light dark;--z-gap:24px}
+    #zmr-ownership-preview *{box-sizing:border-box}
+    #zmr-ownership-preview .z-window{background:var(--z-bg);border:1px solid var(--z-line);border-radius:14px;overflow:hidden}
+    #zmr-ownership-preview .z-top{background:var(--z-nav);color:#f5f8fc;padding:14px 22px;display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
+    #zmr-ownership-preview .z-body{padding:var(--z-gap)}
+    #zmr-ownership-preview h2{font:800 28px/1.3 system-ui;margin:4px 0 6px;letter-spacing:-.01em}
+    #zmr-ownership-preview h3{font:700 18px/1.4 system-ui;margin:0 0 14px}
+    #zmr-ownership-preview p{margin:4px 0 14px;color:var(--z-sub)}
+    #zmr-ownership-preview .z-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:22px 0}
+    #zmr-ownership-preview button{font:inherit;border:1px solid var(--z-line);border-radius:8px;padding:10px 14px;min-height:44px;background:var(--z-panel);color:var(--z-text)}
+    #zmr-ownership-preview .z-steps button{padding:10px 6px;text-align:left;font-size:13px}
+    #zmr-ownership-preview .z-steps button[aria-current="step"]{background:var(--z-button);color:var(--z-button-text);border-color:var(--z-button)}
+    #zmr-ownership-preview .z-panel{padding:var(--z-gap);border:1px solid var(--z-line);border-radius:10px;background:var(--z-panel)}
+    #zmr-ownership-preview .z-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    #zmr-ownership-preview label{display:block;font-weight:500;margin-bottom:6px}
+    #zmr-ownership-preview input,#zmr-ownership-preview select{width:100%;font:400 16px/1.5 system-ui;color:var(--z-text);background:var(--z-panel);border:1px solid var(--z-line);border-radius:7px;min-height:44px;padding:9px 11px}
+    #zmr-ownership-preview .z-full{grid-column:1/-1}
+    #zmr-ownership-preview .z-hint{font-size:13px;color:var(--z-sub);margin-top:6px}
+    #zmr-ownership-preview .z-actions{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:20px}
+    #zmr-ownership-preview .z-actions-right{display:flex;gap:8px;flex-wrap:wrap}
+    #zmr-ownership-preview .z-primary{background:var(--z-button);color:var(--z-button-text);border-color:var(--z-button);border-radius:999px;font-weight:700}
+    #zmr-ownership-preview .z-required,#zmr-ownership-preview [role=alert]{color:var(--z-danger)}
+    #zmr-ownership-preview details{border-top:1px solid var(--z-line);margin-top:18px;padding-top:14px}
+    #zmr-ownership-preview summary{padding:6px 0;font-weight:500}
+    #zmr-ownership-preview .z-tax{margin-top:16px}
+    #zmr-ownership-preview dl{margin:0;display:grid;grid-template-columns:1fr 2fr;gap:10px 16px}
+    #zmr-ownership-preview dt{color:var(--z-sub)}
+    #zmr-ownership-preview dd{margin:0;overflow-wrap:anywhere}
+    #zmr-ownership-preview .z-document{border:1px solid var(--z-line);border-radius:8px;padding:16px;margin:14px 0}
+    #zmr-ownership-preview .z-inline{display:flex;align-items:center;gap:9px;font-weight:400;margin-top:10px}
+    #zmr-ownership-preview .z-inline input{width:18px;min-height:18px;margin:0}
+    #zmr-ownership-preview .z-result{margin-top:12px;color:var(--z-text)}
+    #zmr-ownership-preview [hidden]{display:none!important}
+    @media(max-width:480px){#zmr-ownership-preview .z-fields{grid-template-columns:1fr}#zmr-ownership-preview .z-steps{grid-template-columns:1fr 1fr}#zmr-ownership-preview dl{grid-template-columns:1fr}#zmr-ownership-preview dd{margin-bottom:6px}#zmr-ownership-preview .z-body{padding:14px}}
+  </style>
+  <div class="z-window">
+    <div class="z-top"><span>ZMR Real Estate</span><span>Preview v0.2 · no live writes</span></div>
+    <div class="z-body">
+      <p>Properties / Add property</p>
+      <h2>Add property</h2>
+      <p id="z-step-caption">Choose who owns this property.</p>
+      <nav class="z-steps" aria-label="Property setup steps">
+        <button type="button" class="cursor-interaction" data-step="0" aria-current="step">1 · Ownership</button>
+        <button type="button" class="cursor-interaction" data-step="1">2 · Property basics</button>
+        <button type="button" class="cursor-interaction" data-step="2">3 · Documents</button>
+        <button type="button" class="cursor-interaction" data-step="3">4 · Review</button>
+      </nav>
+      <section class="z-panel" data-panel="0" aria-label="Ownership step">
+        <h3>Who owns the property?</h3>
+        <label for="z-owner">Owned by <span class="z-required">*</span></label>
+        <select id="z-owner" required><option value="">Select owner / entity</option><option value="existing">5336 W Foster LLC · legal entity</option><option value="new-entity">+ Add legal entity</option><option value="new-person">Individual ownership · enter owner details</option></select>
+        <p class="z-hint" id="z-existing-hint">Use the existing owner record. Tax details stay in its profile.</p>
+        <div id="z-new-owner" class="z-tax" hidden>
+          <div class="z-fields">
+            <div class="z-full"><label for="z-legal"><span id="z-legal-label">Legal entity name</span> <span class="z-required">*</span></label><input id="z-legal" placeholder="Enter legal name" autocomplete="off"></div>
+            <div id="z-structure-wrap"><label for="z-structure">Legal structure</label><select id="z-structure"><option>Unknown</option><option>LLC</option><option>Corporation</option><option>Partnership</option><option>Trust</option><option>Other</option></select></div>
+            <div><label for="z-display">Display name</label><input id="z-display" placeholder="A name you recognize" autocomplete="off"></div>
+          </div>
+          <details id="z-tax-details">
+            <summary>Tax classification</summary>
+            <div class="z-fields z-tax">
+              <div id="z-members-wrap"><label for="z-members">LLC membership</label><select id="z-members"><option>Unknown / needs review</option><option>Single member</option><option>Multiple members</option></select></div>
+              <div><label for="z-tax">Federal tax treatment</label><select id="z-tax"><option>Unknown / needs review</option><option>Disregarded entity</option><option>Partnership</option><option>S corporation</option><option>C corporation</option><option>Other</option></select></div>
+              <div><label for="z-effective">Effective date</label><input id="z-effective" type="date"></div>
+              <div><label for="z-election">Election status</label><select id="z-election"><option>Unknown</option><option>No election recorded</option><option>Submitted</option><option>Accepted</option><option>Superseded</option></select></div>
+            </div>
+          </details>
+        </div>
+      </section>
+      <section class="z-panel" data-panel="1" aria-label="Property basics step" hidden>
+        <h3>Property basics</h3>
+        <p id="z-owner-summary">Owned by 5336 W Foster LLC</p>
+        <div class="z-fields">
+          <div class="z-full"><label for="z-address">Street address <span class="z-required">*</span></label><input id="z-address" required placeholder="Street address" autocomplete="off"></div>
+          <div><label for="z-city">City <span class="z-required">*</span></label><input id="z-city" required placeholder="City" autocomplete="off"></div>
+          <div><label for="z-state">State <span class="z-required">*</span></label><input id="z-state" required placeholder="State" autocomplete="off"></div>
+          <div><label for="z-zip">ZIP <span class="z-required">*</span></label><input id="z-zip" required placeholder="ZIP or ZIP+4" autocomplete="off"></div>
+          <div><label for="z-status">Property status</label><select id="z-status"><option>Active</option><option>Inactive</option><option>Sold</option></select></div>
+        </div>
+        <details><summary>Acquisition details</summary><div class="z-fields z-tax"><div><label for="z-purchase-date">Purchase date</label><input id="z-purchase-date" type="date"></div><div><label for="z-price">Purchase price ($)</label><input id="z-price" type="number" min="0" step="0.01"></div></div></details>
+        <p class="z-hint">Building details, units, insurance and tax history remain in Overview.</p>
+      </section>
+      <section class="z-panel" data-panel="2" aria-label="Documents step" hidden>
+        <h3>Ownership and property documents</h3>
+        <p>Optional · file now or add from the profile later.</p>
+        <button type="button" id="z-example-doc" class="cursor-interaction">Preview an attached document</button>
+        <div id="z-doc-fields" class="z-document" hidden>
+          <label for="z-doc-label">Document label</label><input id="z-doc-label" value="Ownership evidence — example">
+          <p class="z-hint">Original filename: example-deed.pdf · illustrative only</p>
+          <div class="z-fields"><div><label for="z-doc-category">Category</label><select id="z-doc-category"><option>Deed / ownership</option><option>Formation record</option><option>Tax election</option><option>Other</option></select></div><div><label for="z-doc-date">Document date</label><input id="z-doc-date" type="date"></div></div>
+          <label class="z-inline"><input id="z-doc-property" type="checkbox" checked>Link to this property</label>
+          <label class="z-inline"><input id="z-doc-owner" type="checkbox" checked>Link to the owner / entity</label>
+        </div>
+        <p class="z-hint">One document record can be found through both linked profiles.</p>
+      </section>
+      <section class="z-panel" data-panel="3" aria-label="Review step" hidden>
+        <h3>Review before creating</h3>
+        <dl><dt>Owned by</dt><dd id="z-review-owner">Selection needed</dd><dt>Property address</dt><dd id="z-review-address">Not entered</dd><dt>Status</dt><dd id="z-review-status">Active</dd><dt id="z-review-purchase-label" hidden>Acquisition</dt><dd id="z-review-purchase" hidden></dd><dt>Documents</dt><dd id="z-review-docs">None selected</dd></dl>
+        <p class="z-hint" style="margin-top:18px">Creation would open the new Property Overview. Existing records stay intact.</p>
+      </section>
+      <div class="z-actions"><button id="z-cancel" type="button" class="cursor-interaction">Reset preview</button><div class="z-actions-right"><button id="z-back" type="button" class="cursor-interaction" hidden>Back</button><button id="z-next" type="button" class="z-primary cursor-interaction">Continue</button></div></div>
+      <p id="z-preview-result" class="z-result" aria-live="polite"></p>
+      <p id="z-error" role="alert" hidden></p>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const root=document.getElementById('zmr-ownership-preview');
+  const q=id=>root.querySelector('#'+id);
+  const state={step:0,document:false,density:'Comfortable'};
+  const captions=['Choose who owns this property.','Start with the essentials.','Keep supporting records connected.','Check the owner, property and document links.'];
+  function ownerName(){return q('z-owner').value==='existing'?'5336 W Foster LLC':q('z-owner').value?(q('z-legal').value.trim()||'Owner name needed'):'Selection needed';}
+  function remember(){if(window.openai&&window.openai.setWidgetState)window.openai.setWidgetState({modelContent:{preview:'ZMR ownership proposal v0.2',approval:'Not approved by interaction'},privateContent:{step:state.step,density:state.density}}).catch(()=>{});}
+  function render(){
+    root.style.setProperty('--z-gap',state.density==='Compact'?'14px':'20px');
+    root.querySelectorAll('[data-panel]').forEach(el=>el.hidden=Number(el.dataset.panel)!==state.step);
+    root.querySelectorAll('[data-step]').forEach(el=>{if(Number(el.dataset.step)===state.step)el.setAttribute('aria-current','step');else el.removeAttribute('aria-current');});
+    q('z-step-caption').textContent=captions[state.step];
+    const kind=q('z-owner').value;
+    q('z-new-owner').hidden=kind==='existing'||!kind;q('z-existing-hint').hidden=kind!=='existing';
+    q('z-structure-wrap').hidden=kind==='new-person';q('z-tax-details').hidden=kind==='new-person';
+    q('z-members-wrap').hidden=q('z-structure').value!=='LLC';
+    q('z-legal-label').textContent=kind==='new-person'?'Individual’s legal name':'Legal entity name';
+    q('z-owner-summary').textContent='Owned by '+ownerName();
+    q('z-doc-fields').hidden=!state.document;
+    q('z-example-doc').textContent=state.document?'Remove example document':'Preview an attached document';
+    q('z-back').hidden=state.step===0;
+    q('z-next').textContent=state.step===3?'Save':'Continue';
+    q('z-review-owner').textContent=ownerName();
+    q('z-review-address').textContent=['z-address','z-city','z-state','z-zip'].map(id=>q(id).value.trim()).filter(Boolean).join(', ')||'Not entered';
+    q('z-review-status').textContent=q('z-status').value;
+    const purchase=[q('z-purchase-date').value,q('z-price').value?'$'+Number(q('z-price').value).toLocaleString():null].filter(Boolean).join(' · ');
+    q('z-review-purchase').textContent=purchase;q('z-review-purchase').hidden=!purchase;q('z-review-purchase-label').hidden=!purchase;
+    const anchors=[q('z-doc-property').checked?'property':null,q('z-doc-owner').checked?'owner / entity':null].filter(Boolean);
+    q('z-review-docs').textContent=state.document?(q('z-doc-label').value.trim()||'example-deed.pdf')+' · '+(anchors.length?'linked to '+anchors.join(' and '):'needs a property or entity link'):'None selected';
+  }
+  function move(step){state.step=Math.max(0,Math.min(3,step));q('z-preview-result').textContent='';q('z-error').hidden=true;render();remember();}
+  function validate(all=false){let bad=null;let target=state.step;if(all||state.step===0){if(!q('z-owner').value)bad='z-owner';else if(q('z-owner').value!=='existing'&&!q('z-legal').value.trim())bad='z-legal';if(bad)target=0;}if(!bad&&(all||state.step===1)){bad=['z-address','z-city','z-state','z-zip'].find(id=>!q(id).value.trim());if(bad)target=1;}if(!bad&&(all||state.step===2)&&state.document&&!q('z-doc-property').checked&&!q('z-doc-owner').checked){bad='z-doc-property';target=2;}if(bad){move(target);q('z-error').textContent=target===2?'Choose a property or entity link for the document.':'Complete the required field before continuing.';q('z-error').hidden=false;q(bad).focus();return false;}return true;}
+  root.querySelectorAll('[data-step]').forEach(el=>el.addEventListener('click',()=>move(Number(el.dataset.step))));
+  q('z-next').addEventListener('click',()=>{if(!validate(state.step===3))return;if(state.step<3)move(state.step+1);else q('z-preview-result').textContent='Preview complete — in ZMR, Save would open this property’s Overview. No live records were created.';});
+  q('z-back').addEventListener('click',()=>move(state.step-1));
+  q('z-owner').addEventListener('change',render);
+  q('z-structure').addEventListener('change',render);
+  q('z-example-doc').addEventListener('click',()=>{state.document=!state.document;render();});
+  q('z-cancel').addEventListener('click',()=>{root.querySelectorAll('input').forEach(el=>{if(el.type==='checkbox')el.checked=true;else el.value=el.id==='z-doc-label'?'Ownership evidence — example':'';});root.querySelectorAll('select').forEach(el=>el.selectedIndex=0);state.document=false;move(0);});
+  function restore(s){const saved=s&&s.privateContent;if(saved){if(Number.isInteger(saved.step))state.step=Math.max(0,Math.min(3,saved.step));if(['Compact','Comfortable'].includes(saved.density))state.density=saved.density;}render();}
+  restore(window.openai&&window.openai.widgetState);
+  window.addEventListener('openai:set_globals',e=>{if(e.detail&&e.detail.globals&&e.detail.globals.widgetState)restore(e.detail.globals.widgetState);});
+  if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:()=>{render();remember();}});tweak.addSelect(state,'density',{label:'Form spacing',options:['Comfortable','Compact']});}
+})();
+</script>

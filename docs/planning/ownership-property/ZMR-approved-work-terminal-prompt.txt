@@ -1,0 +1,35 @@
+Continue in /Users/janki/Projects/ZMR-Real-Estate. The owner has approved revised H7 and all of Batch I and explicitly wants implementation of approved work to continue while later product decisions are discussed. This is no longer an assessment-only task.
+
+Read CLAUDE.md, ZMR-CURRENT-WORK.md, the latest entries of docs/planning/ownership-property/ZMR-approval-register.md, O1-A-implementation-contract.md, and O1-A-terminal-build-prompt.md. This continuation supersedes their older blanket assessment-only/awaiting-decision restrictions for the bounded local implementation below. It does not authorize production deployment, live schema changes, unapproved design changes or live business-data entry.
+
+1. Finalize the contract from approved decisions, then proceed without another planning-only round.
+- I1: allow incomplete/unknown percentage drafts with explicit completeness state; known interests must be positive and <=100%, and totals cannot exceed 100% for the same ownership level/time. Complete allocations total 100. No inferred remainder or equal shares. Specify exact decimal precision, concurrent aggregate validation, and atomic multi-owner edits (48/52 to 50/50 must not require an invalid intermediate save).
+- I2: preserve effective-dated history for both property ownership and entity membership. Separate recorded-at from effective dates; allow unknown historic dates without claiming year-specific certainty. Corrections retain previous values; do not implement legal transfers or tax calculations.
+- I3: no invented primary owner/accounting owner or first-owner fallback. Audit and migrate all legacy single-owner consumers coherently; preserve existing explicit property/account/entity relationships. Ownership percentages do not allocate books, grant access, or imply tax shares. Specify safe legacy-pointer behavior, distinguish unresolved owners from multiple owners, and avoid two independently writable sources of truth.
+- I4: property ownership and entity membership corrections require consistent reason/history across every entry route.
+- I5: protect the touched Property information save against stale overwrites; audit new contacts, methods and links with appropriate access controls.
+- Revised H7 preserves tab responsibilities: Overview contains identity, compact occupancy/contracted-rent snapshot and property details; deeper KPI, Financials, Mortgage, Activity and Documents functions remain in their tabs. Do not duplicate forms/storage or implement global nav moves as part of O1-A.
+
+Make the contract self-contained: list all acceptance cases explicitly rather than referring to overwritten v1 sections. Update the prompt/status to reflect this bounded authorization. Report ordinary technical choices with rationale rather than asking the owner to design tables, synchronization, transactions or security.
+
+2. Implement the ownership foundation first, in reviewable local increments.
+Begin with additive schema/migration files, authorized query/service operations, compatibility adapters and meaningful isolated tests. Support multiple owners, separate entity membership, contextual reusable contacts/methods, document-owner links, effective history, corrections and stale-edit protection. Reuse existing records and IDs. Enforce account consistency and correction/audit invariants at the database/API boundary, including concurrent writes across different interest rows. Verify security-sensitive functions and grants; naming a function security definer is not a substitute for authorization checks.
+
+Inspect git status and concurrent work before edits. Use an isolated branch/worktree if necessary; preserve existing uncommitted planning files and other sessions' changes. Read-only production inspection is permitted through existing authorized access; do not expose credentials or private record dumps. Do not assume historical classifications from names/forms. If inconsistent existing records are found, isolate the affected migration step, report the issue and propose a repair; do not silently repair business data.
+
+3. Wire the approved profile behavior using existing design components.
+Once the foundation passes relevant isolated checks, implement approved ownership/contact/document profile behavior and the existing property ownership entry points. Preserve hero photos and all existing functionality. Use the existing visual system; unresolved hero composition and later navigation proposals are not part of this batch. If a particular UI behavior still needs a product decision, isolate it and continue independent approved work.
+
+4. Validate and prepare owner-led testing.
+Use a disposable local/test environment with synthetic fixtures for automated checks. Never create, seed, modify or delete business/test records in the live customer account. The owner enters all normal property, entity, contact, ownership and document information through the dashboard.
+
+Run applicable lint/build and meaningful tests. Include cross-account rejection, single/multiple ownership compatibility, simultaneous percentage updates, historical dates, stale-edit conflicts, document reuse, contact context and export/empty-account behavior. Do not mark live verification or roadmap completion as passed before the owner performs it.
+
+Provide a numbered owner UI test script only when the local build is actually testable: environment/link, setup, exact steps, expected results, persistence checks and how to safely discard isolated test data. Distinguish automated checks passed, owner tests pending and hosted verification pending.
+
+5. Keep moving within scope, report actual checkpoints.
+Do not stop after revising documents. Implement and test approved, unblocked work in the order above. If hosted upload limits cannot be verified, block upload release/configuration only and continue unaffected foundation/profile work. Do not guess quotas or weaken limits. Do not start bookkeeping, tax calculation, mailbox integrations, auto-sending, the Quick Capture/Action Queue redesign or global navigation changes.
+
+Update project progress after each completed increment with changed files, checks, remaining dependencies and the next task. Commit only your scoped files if appropriate; do not push/deploy or apply migrations to the live project. Never mark the whole feature done solely because local tests pass.
+
+Return a concise checkpoint report: what is implemented locally; what passed; what remains; whether owner testing is ready; and only genuine material decisions that block further approved work.

@@ -1,0 +1,38 @@
+<style>
+#zmr-style-preview{--z-bg:light-dark(#f7f9fb,#0f1720);--z-surface:light-dark(#fff,#182430);--z-text:light-dark(#5b6472,#93a1b1);--z-heading:light-dark(#13293d,#f0f4f8);--z-border:light-dark(#dde3ea,#2b3846);--z-accent:light-dark(#123456,#6fa8dc);--z-hover:light-dark(#0e2a45,#8fbde6);--z-tint:light-dark(#d4dde5,#253d53);--z-shadow:light-dark(rgba(15,25,35,.12),rgba(0,0,0,.3));font:16px/1.5 system-ui,'Segoe UI',Roboto,sans-serif;color:var(--z-text);background:var(--z-bg);padding:24px;border-radius:12px;color-scheme:light dark}
+#zmr-style-preview *{box-sizing:border-box}#zmr-style-preview h2{font-size:28px;font-weight:800;letter-spacing:-.01em;color:var(--z-heading);margin:4px 0}#zmr-style-preview small{font-size:12px}#zmr-style-preview .z-tabs{margin:20px 0;border-bottom:1px solid var(--z-border);padding:8px 0;color:var(--z-accent);font-size:14px;font-weight:600}#zmr-style-preview .z-tabs span{border-bottom:2px solid var(--z-accent);padding-bottom:9px}#zmr-style-preview details{background:var(--z-surface);border:1px solid var(--z-border);border-radius:12px;margin-top:16px;overflow:clip}#zmr-style-preview details:hover{background:var(--z-tint);box-shadow:inset 4px 0 0 var(--z-hover),0 6px 20px -4px var(--z-shadow)}#zmr-style-preview summary{list-style:none;display:flex;align-items:center;gap:8px;padding:16px 24px;color:var(--z-heading);font-size:14px;font-weight:600}#zmr-style-preview summary::-webkit-details-marker{display:none}#zmr-style-preview summary:before{content:'';width:8px;height:8px;border-right:2px solid var(--z-text);border-bottom:2px solid var(--z-text);transform:rotate(-45deg);flex-shrink:0}#zmr-style-preview details[open]>summary:before{transform:rotate(45deg)}#zmr-style-preview button{font:inherit;font-size:12px;color:var(--z-heading);background:var(--z-surface);border:1px solid var(--z-border);border-radius:8px;padding:4px 10px}#zmr-style-preview .z-edit{margin-left:auto}#zmr-style-preview .z-body{padding:0 24px 24px}#zmr-style-preview h3{font-size:14px;font-weight:800;color:var(--z-accent);margin:20px 0 12px}#zmr-style-preview h3:first-child{margin-top:0}#zmr-style-preview h4{font-size:13px;font-weight:600;color:var(--z-text);margin:16px 0 8px}#zmr-style-preview dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:0}#zmr-style-preview dt{font-size:12px;color:var(--z-text)}#zmr-style-preview dd{font-size:14px;color:var(--z-heading);margin:3px 0 0;overflow-wrap:anywhere}#zmr-style-preview label{display:block;font-size:13px;margin-bottom:16px}#zmr-style-preview input{display:block;width:100%;font:inherit;background:var(--z-surface);color:var(--z-heading);border:1px solid var(--z-border);border-radius:8px;padding:8px;margin-top:4px}#zmr-style-preview form{max-width:480px}#zmr-style-preview button[type=submit]{border-radius:999px;background:var(--z-accent);color:var(--z-surface);font-weight:700;padding:8px 18px}#zmr-style-preview [hidden]{display:none!important}#zmr-style-preview .z-actions{display:flex;gap:8px}#zmr-style-preview .z-empty{border:1px dashed var(--z-border);padding:16px;text-align:center;font-size:14px}#zmr-style-preview .z-result{font-size:12px;margin-top:12px}#zmr-style-preview .z-subline{font-size:13px}@media(max-width:480px){#zmr-style-preview{padding:16px}#zmr-style-preview summary{padding:16px}#zmr-style-preview .z-body{padding:0 16px 16px}#zmr-style-preview dl{grid-template-columns:1fr}#zmr-style-preview input{font-size:16px}}@media(pointer:coarse){#zmr-style-preview button{min-height:44px}}
+</style>
+<section id="zmr-style-preview" aria-label="Property Overview style preview">
+  <small>Illustrative preview · fictional information · no live changes</small>
+  <h2>123 Example Street</h2>
+  <div class="z-subline">Active · Owned by Example Holdings LLC</div>
+  <div class="z-tabs"><span>Overview</span></div>
+  <details open>
+    <summary class="cursor-interaction">Property information<button class="z-edit cursor-interaction" type="button">Edit</button></summary>
+    <div class="z-body">
+      <div class="z-view">
+        <h3>Acquisition</h3>
+        <dl><div><dt>Acquisition method</dt><dd>Purchase</dd></div><div><dt>Purchase date</dt><dd>June 15, 2022</dd></div></dl>
+        <h3>Building details</h3>
+        <h4>Basic facts</h4>
+        <dl><div><dt>Property type</dt><dd>Single-family</dd></div><div><dt>Year built</dt><dd data-display="year">1985</dd></div><div><dt>Living area (sq ft)</dt><dd data-display="area">1,800</dd></div></dl>
+        <h4>Land &amp; jurisdiction</h4>
+        <dl><div><dt>Lot size</dt><dd>6,000 sq ft</dd></div><div><dt>County</dt><dd>Example County</dd></div></dl>
+        <h4>Building features</h4>
+        <dl><div><dt>Basement</dt><dd>Unfinished</dd></div><div><dt>Garage spaces</dt><dd>2</dd></div></dl>
+      </div>
+      <form hidden aria-label="Sample building fields">
+        <h3>Building details</h3>
+        <label>Year built<input name="year" type="number" min="1" step="1" value="1985"></label>
+        <label>Living area (sq ft)<input name="area" type="number" min="1" step="any" value="1800"></label>
+        <div class="z-actions"><button type="submit" class="cursor-interaction">Save</button><button type="button" class="z-cancel cursor-interaction">Cancel</button></div>
+      </form>
+    </div>
+  </details>
+  <details><summary class="cursor-interaction">Financial accounts</summary><div class="z-body"><p class="z-empty">No accounts in this fictional example.</p></div></details>
+  <details><summary class="cursor-interaction">Specs &amp; measurements</summary><div class="z-body"><dl><div><dt>Scope</dt><dd>Whole building</dd></div><div><dt>Area</dt><dd>HVAC</dd></div><div><dt>Label</dt><dd>Furnace filter size</dd></div><div><dt>Value</dt><dd>16 × 25 × 1 inches</dd></div></dl></div></details>
+  <div class="z-result" role="status" aria-live="polite"></div>
+</section>
+<script>
+(()=>{const r=document.getElementById('zmr-style-preview'),box=r.querySelector('details'),edit=r.querySelector('.z-edit'),view=r.querySelector('.z-view'),form=r.querySelector('form'),status=r.querySelector('.z-result');let data={year:'1985',area:'1800'};function close(){view.hidden=false;form.hidden=true;edit.hidden=false}edit.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();box.open=true;for(const k of Object.keys(data))form.elements[k].value=data[k];view.hidden=true;form.hidden=false;edit.hidden=true;status.textContent='Sample editor · two fields shown to demonstrate the existing controls.'});r.querySelector('.z-cancel').addEventListener('click',()=>{close();status.textContent='Preview changes discarded.'});form.addEventListener('submit',e=>{e.preventDefault();for(const k of Object.keys(data)){data[k]=form.elements[k].value;const el=r.querySelector('[data-display="'+k+'"]');el.textContent=k==='area'&&data[k]?Number(data[k]).toLocaleString():data[k];el.parentElement.hidden=!data[k]}close();status.textContent='Saved in this preview only. Your dashboard was not changed.'});})();
+</script>

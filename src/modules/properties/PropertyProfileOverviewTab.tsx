@@ -13,6 +13,7 @@ import { SecurityDepositsSection } from '../securityDeposits/SecurityDepositsSec
 import { PropertyTenantsOverview } from '../tenants/PropertyTenantsOverview'
 import { FinancialAccountsSection } from '../financialAccounts/FinancialAccountsSection'
 import { VendorEstimatesSection } from '../vendorEstimates/VendorEstimatesSection'
+import { PropertyOwnershipInterestsSection } from './PropertyOwnershipInterestsSection'
 import { PropertyForm } from './PropertyForm'
 import { PropertySummary } from './PropertySummary'
 import type { Property, PropertyInput } from './propertiesQueries'
@@ -85,6 +86,8 @@ export function PropertyProfileOverviewTab({
           />
         )}
       />
+
+      <PropertyOwnershipInterestsSection propertyId={property.id} llcOptions={llcOptions} />
 
       <FinancialAccountsSection propertyId={property.id} llcId={property.llc_id} llcLabel={llcLabel} />
 

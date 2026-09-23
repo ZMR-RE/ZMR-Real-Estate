@@ -1,0 +1,26 @@
+Revise the preparation package in /Users/janki/Projects/ZMR-Real-Estate. Do not implement, deploy, run migrations or enter/edit real records.
+
+Read CLAUDE.md, ZMR-CURRENT-WORK.md, the approval register, O1-A-implementation-contract.md and the latest G decision amendment before proceeding. Existing O1-A v1.0 is superseded for ownership cardinality and contact design.
+
+New user decisions:
+- G1 approved: multiple property owners. User explicitly requires percentage interests both in properties and in entities, e.g. property A 100% Owner A; property B 48% Owner A/52% Owner B; entity C 50% Owner A/50% Owner C. These are examples, not instructions to enter real records.
+- G2 approved with attachment choice: reusable people and multiple phones/emails, explicitly associated by the user with the relevant property and/or entity and role. Do not spread contact details to every context automatically or grant login permissions.
+- G4, G6, G7, G8 approved. G3 hero concept pending review. G5 original proposal rejected: no Quick capture inside property profiles. Capture-to-Action Queue interaction and visuals require a later dedicated plan; do not invent that workflow now.
+- Owner will enter all property/entity/contact/ownership/document and other normal business data through the dashboard to test functionality. No terminal-created real business data, guessed identities, inferred percentages, direct database edits or live test records. Provide the owner a numbered UI test script after an implementation is ready. Isolated automated tests must not write to the live account.
+
+Revise the technical contract to satisfy multiple owners and repeated contextual contact methods, preserving existing IDs and records. A single properties.llc_id cannot be the sole representation of multi-owner relationships. A single contact_name/phone/email on llcs is insufficient. Decide the normalized relationship model and legacy compatibility after assessing all consumers; do not let old and new stores diverge. Do not assume every row in llcs is legally an entity based solely on a form name.
+
+Separate property title interests, entity membership interests, contact roles, bookkeeping scope, and tax allocations. Percentage interests are requested; detailed effective dates, completeness/total validation and historical rules must be presented for review. Preserve prior information. Do not multiply every income/expense/tax figure by ownership percentage. Tax reporting is a later phase and must distinguish entity books, member-specific documents, reporting year and applicable reviewed allocation rules. Shared closing evidence is not split into separate partial files.
+
+Review document links for multiple owners/entities as well as a property. A single additional documents.llc_id can link one entity but does not alone establish multiple-recipient support. Specify the actual approved cardinalities and preservation path. Do not broaden document access simply because an owner/contact is linked.
+
+Address prior report concerns:
+1. Remove 'zero risk' and 'automatic audit for free' claims unless supported by actual trigger installation, covered operations, permissions and tested behavior. List concrete compatibility and audit checks.
+2. Recommend conflict handling consistent with approved G7/D1 data preservation. Existing absence of protection is not sufficient justification for silently overwriting newer edits. Present the narrow technical solution and any material product decision.
+3. Ensure ownership correction reason/audit behavior covers every existing route that can reassign ownership, including Settings. No bypass that silently avoids approved D1.
+4. Verify same-account constraints for every new/changed relationship, not only the two reported existing gaps; inspect existing inconsistent data read-only before proposing constraints. No silent record repair.
+5. Hosted storage limit remains unverified. Separate this upload-release prerequisite from work that can proceed without uploading. Do not invent the quota or ask the owner to guess it.
+
+Update the contract, implementation prompt and owner/entity preview. Keep the build prompt marked AWAITING REVISED REVIEW; do not execute it. Preserve concurrent planning changes. List scope impact/dependencies and show exactly which decisions still need approval. Do not add global operating rules without user approval.
+
+Return a concise report with: revised relationship model, preservation plan, preview path, remaining numbered decisions, and a diff summary. Do not claim implementation or hosted verification occurred.

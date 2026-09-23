@@ -407,3 +407,139 @@ export async function moveToDocuments(input: MoveToDocumentsInput) {
 
   return { data: documentRow, error: null }
 }
+
+// O1-A ownership foundation (Batch G/I) — entity-scoped documents, via the
+// document_owner_links join table (20260925040000_document_owner_links.sql)
+// rather than a single documents.llc_id column: a document can now be
+// relevant to more than one owning entity, which a single nullable FK
+// can't express. documents.property_id (existing, singular) is unchanged.
+
+// Every document linked to a given entity — a plain join, unaffected by
+// whether the same document row is ALSO linked to other entities or a
+// property; discoverable independently from each linked entity's own
+// Documents section.
+export async function listDocumentsForLlc(accountId: string, llcId: string) {
+  const { data, error } = await supabase
+    .from('document_owner_links')
+    .select('document:documents(' + DOCUMENT_COLUMNS + ')')
+    .eq('account_id', accountId)
+    .eq('llc_id', llcId)
+    .returns<{ document: DocumentRecord | null }[]>()
+
+  if (error || !data) return { data: null, error }
+  const documents = data
+    .map((row) => row.document)
+    .filter((doc): doc is DocumentRecord => doc !== null)
+    .sort((a, b) => (a.uploaded_at < b.uploaded_at ? 1 : -1))
+  return { data: documents, error: null }
+}
+
+interface UploadEntityDocumentInput {
+  accountId: string
+  llcIds: string[]
+  propertyId?: string | null
+  category: DocumentCategory
+  label: string | null
+  uploadedBy: string
+  file: File
+}
+
+// Uploads once, links to every selected entity (and optionally a
+// property) — one storage_path, one documents row, one document_owner_links
+// row per entity. Never splits a shared document into per-owner copies.
+export async function uploadEntityDocument(input: UploadEntityDocumentInput) {
+  const { accountId, llcIds, propertyId, category, label, uploadedBy, file } = input
+  if (llcIds.length === 0) {
+    return { error: new Error('At least one entity must be selected.') }
+  }
+
+  const folderSegment = propertyId ?? 'account-level'
+  const destinationPath = `${accountId}/${folderSegment}/${category}/${crypto.randomUUID()}-${file.name}`
+  const { error: uploadError } = await supabase.storage.from('documents').upload(destinationPath, file)
+  if (uploadError) {
+    return { error: uploadError }
+  }
+
+  const { data: documentRow, error: insertError } = await supabase
+    .from('documents')
+    .insert({
+      account_id: accountId,
+      property_id: propertyId ?? null,
+      category,
+      label,
+      uploaded_by: uploadedBy,
+      storage_path: destinationPath,
+      file_size: file.size,
+    })
+    .select(DOCUMENT_COLUMNS)
+    .single<DocumentRecord>()
+
+  if (insertError || !documentRow) {
+    return { error: insertError }
+  }
+
+  const { error: linkError } = await supabase.from('document_owner_links').insert(
+    llcIds.map((llcId) => ({ account_id: accountId, document_id: documentRow.id, llc_id: llcId, linked_by: uploadedBy })),
+  )
+  if (linkError) {
+    // The file and its documents row are real, just not yet linked to any
+    // entity — never silently reported as a successful entity-document
+    // link when the link itself failed.
+    return { error: linkError, data: documentRow }
+  }
+
+  return { data: documentRow, error: null }
+}
+
+interface CreateEntityLinkInput {
+  accountId: string
+  llcIds: string[]
+  propertyId?: string | null
+  category: DocumentCategory
+  label: string | null
+  uploadedBy: string
+  linkUrl: string
+}
+
+export async function createEntityLink(input: CreateEntityLinkInput) {
+  const { accountId, llcIds, propertyId, category, label, uploadedBy, linkUrl } = input
+  if (llcIds.length === 0) {
+    return { error: new Error('At least one entity must be selected.') }
+  }
+
+  const { data: documentRow, error: insertError } = await supabase
+    .from('documents')
+    .insert({
+      account_id: accountId,
+      property_id: propertyId ?? null,
+      category,
+      label,
+      uploaded_by: uploadedBy,
+      link_url: linkUrl,
+    })
+    .select(DOCUMENT_COLUMNS)
+    .single<DocumentRecord>()
+
+  if (insertError || !documentRow) {
+    return { error: insertError }
+  }
+
+  const { error: linkError } = await supabase.from('document_owner_links').insert(
+    llcIds.map((llcId) => ({ account_id: accountId, document_id: documentRow.id, llc_id: llcId, linked_by: uploadedBy })),
+  )
+  if (linkError) {
+    return { error: linkError, data: documentRow }
+  }
+
+  return { data: documentRow, error: null }
+}
+
+// Read-only workspace storage usage (D5) — one query, not duplicated per
+// document panel, since it must reflect the whole account regardless of
+// which entity/property's Documents box happens to render it.
+export async function getAccountStorageUsage(accountId: string): Promise<{ totalBytes: number; error: unknown | null }> {
+  const { data, error } = await supabase.from('documents').select('file_size').eq('account_id', accountId)
+  if (error || !data) return { totalBytes: 0, error }
+  const totalBytes = data.reduce((sum, row) => sum + (row.file_size ?? 0), 0)
+  return { totalBytes, error: null }
+}

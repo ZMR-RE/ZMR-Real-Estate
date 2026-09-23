@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>ZMR — Owner/entity profile preview (O1-A, v2.0)</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f7f9fb; --surface: #ffffff; --surface-sunken: #eef1f5;
+    --text: #5b6472; --text-h: #13293d; --border: #dde3ea;
+    --accent: #123456; --accent-h: #0e2a45;
+    --accent-bg: rgba(18,52,86,.09); --accent-bg-strong: rgba(18,52,86,.16); --accent-border: rgba(18,52,86,.38);
+    --danger: #b5442f; --danger-bg: rgba(181,68,47,.1); --danger-border: rgba(181,68,47,.38);
+    --warning: #9a6420; --warning-bg: rgba(154,100,32,.1); --warning-border: rgba(154,100,32,.38);
+    --success: #3f7a45; --success-bg: rgba(63,122,69,.1); --success-border: rgba(63,122,69,.38);
+    --neutral-bg: rgba(91,100,114,.1); --neutral-border: rgba(91,100,114,.3);
+    --nav-bg: #123456; --nav-text: rgba(255,255,255,.78); --nav-text-h: #fff;
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 18px; --radius-pill: 999px;
+    --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
+    --shadow-sm: 0 1px 2px rgba(19,41,61,.06); --shadow-md: 0 4px 14px rgba(19,41,61,.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1720; --surface: #182430; --surface-sunken: #1c2934;
+      --text: #93a1b1; --text-h: #f0f4f8; --border: #2b3846;
+      --accent: #6fa8dc; --accent-h: #8fbde6;
+      --accent-bg: rgba(111,168,220,.12); --accent-bg-strong: rgba(111,168,220,.2); --accent-border: rgba(111,168,220,.4);
+      --danger: #e08571; --danger-bg: rgba(224,133,113,.12); --danger-border: rgba(224,133,113,.4);
+      --warning: #e0ac5f; --warning-bg: rgba(224,172,95,.12); --warning-border: rgba(224,172,95,.4);
+      --success: #83c18a; --success-bg: rgba(131,193,138,.12); --success-border: rgba(131,193,138,.4);
+      --neutral-bg: rgba(147,161,177,.12); --neutral-border: rgba(147,161,177,.3);
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.3); --shadow-md: 0 4px 14px rgba(0,0,0,.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 400 14px/1.5 system-ui, 'Segoe UI', Roboto, sans-serif;
+    padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  h1, h2, h3, h4 { color: var(--text-h); font-weight: 700; letter-spacing: -0.01em; margin: 0 0 var(--space-2); }
+  h1 { font-size: 28px; font-weight: 800; }
+  a { color: var(--accent); }
+  [hidden] { display: none !important; }
+  img { max-width: 100%; }
+
+  .preview-banner {
+    background: var(--nav-bg); color: var(--nav-text-h); padding: var(--space-3) var(--space-5);
+    font-size: 13px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+  .preview-banner strong { color: #fff; }
+  .shell { max-width: 900px; margin: 0 auto; padding: var(--space-5); }
+  .page-header-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-2); }
+  .breadcrumb { display: inline-flex; align-items: center; gap: 4px; color: var(--text); text-decoration: none; font-size: 13px; margin-bottom: var(--space-3); }
+  .breadcrumb:hover { color: var(--accent); }
+  .subline { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-5); color: var(--text); }
+
+  .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px var(--space-2); border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .status-badge-neutral { background: var(--neutral-bg); color: var(--text); }
+  .status-badge-success { background: var(--success-bg); color: var(--success); }
+  .status-badge-warning { background: var(--warning-bg); color: var(--warning); }
+  .status-badge-danger { background: var(--danger-bg); color: var(--danger); }
+  .status-badge-accent { background: var(--accent-bg); color: var(--accent); }
+
+  details.collapsible-section {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+    margin-top: var(--space-4); overflow: clip;
+  }
+  details.collapsible-section > summary {
+    cursor: pointer; list-style: none; padding: var(--space-4) var(--space-5);
+    font-size: 14px; font-weight: 600; color: var(--text-h); display: flex; align-items: center; gap: var(--space-2);
+  }
+  details.collapsible-section > summary::-webkit-details-marker { display: none; }
+  details.collapsible-section > summary::before {
+    content: ''; width: 8px; height: 8px; border-right: 2px solid var(--text); border-bottom: 2px solid var(--text);
+    transform: rotate(-45deg); transition: transform .15s ease; flex-shrink: 0;
+  }
+  details.collapsible-section[open] > summary::before { transform: rotate(45deg); }
+  details.collapsible-section:hover { background: var(--accent-bg-strong); box-shadow: inset 4px 0 0 0 var(--accent-h), var(--shadow-md); }
+  .collapsible-section-header-actions { margin-left: auto; font-size: 13px; font-weight: 400; cursor: auto; display: flex; gap: 6px; align-items: center; }
+  .collapsible-section-body { padding: 0 var(--space-5) var(--space-5); }
+  .collapsible-section-body > :first-child { margin-top: 0; }
+  .property-details-title { font-size: 13px; font-weight: 600; color: var(--text-h); margin: var(--space-4) 0 var(--space-2); }
+
+  button { font: inherit; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-h); padding: 8px 14px; min-height: 40px; cursor: pointer; }
+  button:hover { background: var(--surface-sunken); }
+  button[type="submit"], .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; border-radius: var(--radius-pill); }
+  button[type="submit"]:hover, .btn-primary:hover { background: var(--accent-h); border-color: var(--accent-h); }
+  .editable-section-edit { min-height: auto; padding: 4px 10px; font-size: 12px; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button[disabled][title] { cursor: help; }
+
+  dl.field-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4) var(--space-6); margin: 0; }
+  .field-grid .field dt { margin: 0 0 2px; color: var(--text); font-size: 12px; }
+  .field-grid .field dd { margin: 0; color: var(--text-h); font-size: 15px; font-weight: 500; }
+  @media (max-width: 900px) { dl.field-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { dl.field-grid { grid-template-columns: 1fr; } }
+
+  .field-column { display: flex; flex-direction: column; gap: var(--space-4); max-width: 480px; }
+  .field-column label { font-weight: 500; color: var(--text-h); display: block; margin-bottom: 4px; }
+  .field-column input, .field-column select, .field-column textarea {
+    width: 100%; font: 400 16px/1.5 system-ui; color: var(--text-h); background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius-sm); min-height: 44px; padding: 9px 11px;
+  }
+  .field-column textarea { min-height: 80px; }
+  .required-marker { color: var(--danger); margin-left: 2px; }
+  .form-actions { display: flex; gap: 8px; margin-top: var(--space-2); }
+  .form-hint { font-size: 12px; color: var(--text); margin: -8px 0 4px; }
+
+  .empty-state { padding: var(--space-5); text-align: center; color: var(--text); background: var(--surface-sunken); border: 1px dashed var(--border); border-radius: var(--radius-md); margin: var(--space-3) 0; }
+
+  .doc-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: var(--space-2); }
+  .doc-row .doc-main { flex: 1; min-width: 0; }
+  .doc-row .doc-name { font-weight: 600; color: var(--text-h); }
+  .doc-row .doc-meta { font-size: 12px; color: var(--text); }
+  .doc-progress { height: 5px; background: var(--surface-sunken); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .doc-progress > span { display: block; height: 100%; background: var(--accent); }
+  .doc-row.doc-failed .doc-progress > span { background: var(--danger); width: 100%; }
+  .doc-row.doc-uploading .doc-progress > span { width: 62%; }
+  .doc-row.doc-done .doc-progress { display: none; }
+
+  .link-scope-note { font-size: 12px; color: var(--text); }
+
+  .pct-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 700; background: var(--accent-bg); color: var(--accent); }
+  .unconfirmed-note { border: 1px dashed var(--warning-border); background: var(--warning-bg); color: var(--text-h); border-radius: var(--radius-sm); padding: var(--space-3); font-size: 13px; margin: var(--space-3) 0; }
+  .method-row { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 4px; }
+  .method-label { font-size: 11px; color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-pill); padding: 1px 8px; }
+  .preferred-star { color: var(--accent); font-size: 12px; }
+  .contact-card { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-4); margin-bottom: var(--space-3); }
+  .contact-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .contact-card-head strong { color: var(--text-h); }
+  .attach-row { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; font-size: 13px; }
+  .attach-row label { display: inline-flex; align-items: center; gap: 4px; font-weight: 400; margin: 0; }
+  .attach-row input[type="checkbox"] { width: auto; min-height: auto; }
+  .interest-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .interest-row:last-of-type { border-bottom: none; }
+  .interest-main { flex: 1; min-width: 160px; }
+  .demo-card { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); padding: var(--space-5); margin-top: var(--space-6); }
+  .demo-card > h2 { font-size: 20px; }
+
+  .badge-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  .correction-demo { border: 1px dashed var(--accent-border); border-radius: var(--radius-md); padding: var(--space-5); background: var(--accent-bg); margin-top: var(--space-6); }
+  .correction-modal { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); padding: var(--space-5); margin-top: var(--space-3); box-shadow: var(--shadow-md); }
+  .correction-option { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-4); margin-top: var(--space-3); }
+  .correction-option.disabled { opacity: .55; }
+  .correction-option h4 { margin: 0 0 4px; font-size: 14px; }
+  .correction-option p { margin: 0 0 8px; font-size: 13px; }
+
+  .mode-toggle { display: flex; gap: 8px; margin-bottom: var(--space-4); }
+  .mode-toggle button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; border-radius: var(--radius-pill); }
+
+  footer.instructions { max-width: 900px; margin: var(--space-6) auto var(--space-5); padding: 0 var(--space-5); font-size: 12px; color: var(--text); }
+
+  @media (max-width: 600px) {
+    .shell, footer.instructions { padding-left: var(--space-3); padding-right: var(--space-3); }
+    button { width: 100%; }
+    .collapsible-section-header-actions { flex-wrap: wrap; }
+    .form-actions button { width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="preview-banner">
+  <span><strong>ZMR Real Estate</strong> — O1-A owner/entity profile preview</span>
+  <span>Visual reference only · fictional data · no live writes · v2.0 (Batch G: multiple owners, percentages, reusable contacts) · Sept 23, 2026</span>
+</div>
+
+<div class="shell">
+
+  <div class="mode-toggle" role="group" aria-label="Preview mode">
+    <button type="button" id="mode-filled" aria-pressed="true">Entity example (filled)</button>
+    <button type="button" id="mode-empty" aria-pressed="false">New account (empty)</button>
+  </div>
+
+  <!-- ============ EMPTY-ACCOUNT STATE ============ -->
+  <div id="empty-account-view" hidden>
+    <a class="breadcrumb" href="#">&larr; Settings</a>
+    <h2>Owners &amp; entities</h2>
+    <p>The people and legal entities properties are held under &mdash; add one to get started.</p>
+    <p class="empty-state">No owners or entities yet.</p>
+    <button type="button">+ Add owner / entity</button>
+    <p style="margin-top:24px;font-size:12px;">A brand-new account with zero properties reaches this exact state &mdash; no fictional entity, no ZMR-specific data assumed.</p>
+  </div>
+
+  <!-- ============ FILLED ENTITY PROFILE ============ -->
+  <div id="filled-view">
+    <a class="breadcrumb" href="#">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Property registry
+    </a>
+    <div class="page-header-row">
+      <h1>Riverbend Holdings LLC</h1>
+    </div>
+    <div class="subline">
+      <span class="status-badge status-badge-success">Active</span>
+      <span>LLC · Legal entity</span>
+      <span>Last updated Sep 20, 2026 by J. Rivera</span>
+    </div>
+
+    <!-- Identity -->
+    <details class="collapsible-section" open>
+      <summary>
+        <span>Identity</span>
+        <span class="collapsible-section-header-actions">
+          <button type="button" class="editable-section-edit" data-edit-toggle="identity">Edit</button>
+        </span>
+      </summary>
+      <div class="collapsible-section-body">
+        <div id="identity-view">
+          <dl class="field-grid">
+            <div class="field"><dt>Owner / entity kind</dt><dd>Legal entity</dd></div>
+            <div class="field"><dt>Legal name</dt><dd>Riverbend Holdings LLC</dd></div>
+            <div class="field"><dt>Legal structure</dt><dd>LLC</dd></div>
+            <div class="field"><dt>Formation jurisdiction</dt><dd>Illinois</dd></div>
+            <div class="field"><dt>App status</dt><dd>Active</dd></div>
+          </dl>
+          <p class="form-hint" style="margin-top:16px;">
+            Display name, formation date, mailing address, EIN, registered agent, annual report due date, holding company, notes, and last-verified date are all blank on this record &mdash; each is simply omitted here, not shown as a dash or a placeholder. Opening Edit shows every one of these fields, filled or not.
+          </p>
+          <button type="button" style="margin-top:8px;" id="mark-verified-btn">Mark verified</button>
+          <div class="unconfirmed-note">
+            <strong>v2.0 example (a different, pre-existing record):</strong> a record migrated from before this batch shows &ldquo;Owner / entity kind &mdash; not yet confirmed&rdquo; here instead of a guessed value. Nothing in this batch assumes an existing record is a legal entity just because the old Add&nbsp;property form never collected a person's name &mdash; the owner confirms it explicitly, once, the next time they open that record.
+          </div>
+        </div>
+        <form id="identity-edit" class="field-column" hidden onsubmit="return false">
+          <div><label>Owner / entity kind <span class="required-marker">*</span></label>
+            <select><option>Legal entity</option><option>Individual</option></select></div>
+          <div><label>Legal name <span class="required-marker">*</span></label><input value="Riverbend Holdings LLC"></div>
+          <div><label>Display name</label><input placeholder="Falls back to legal name"></div>
+          <div><label>Legal structure</label>
+            <select><option selected>LLC</option><option>Corporation</option><option>Partnership</option><option>Trust</option><option>Other</option><option>Unknown</option></select></div>
+          <div><label>Formation jurisdiction</label><input value="Illinois"></div>
+          <div><label>Formation date</label><input type="date"></div>
+          <div><label>EIN</label><input placeholder="No masking applied &mdash; preserved as entered"></div>
+          <div><label>Registered agent</label><input></div>
+          <div><label>Annual report due date</label><input type="date"></div>
+          <div><label>Holding company</label><input placeholder="Select a holding company"></div>
+          <div><label>Mailing address</label><input placeholder="Street"></div>
+          <div><label>Notes</label><textarea></textarea></div>
+          <div class="form-actions">
+            <button type="submit" data-save="identity">Save</button>
+            <button type="button" data-cancel="identity">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </details>
+
+    <!-- Contacts (v2.0 — reusable people, multiple methods, explicit attachment; replaces v1.0's flat entity-only fields) -->
+    <details class="collapsible-section" open>
+      <summary><span>Contacts</span></summary>
+      <div class="collapsible-section-body">
+        <div class="contact-card">
+          <div class="contact-card-head">
+            <strong>Dana Whitfield</strong>
+            <span class="status-badge status-badge-accent">Primary contact for this entity</span>
+          </div>
+          <div class="method-row"><span class="method-label">Work</span> dana@riverbendholdings.example <span class="preferred-star" title="Preferred method">&#9733; preferred</span></div>
+          <div class="method-row"><span class="method-label">Mobile</span> (312) 555-0148</div>
+          <p class="form-hint" style="margin:8px 0 0;">Role: Property manager &middot; attached to: this entity and 5336 W Foster Ave. Dana is one reusable contact record &mdash; the same person can be linked, with a role chosen each time, to other properties or entities without re-entering their name or numbers.</p>
+        </div>
+        <div class="contact-card">
+          <div class="contact-card-head"><strong>Marcus Whitfield</strong></div>
+          <div class="method-row"><span class="method-label">Mobile</span> (312) 555-0199 <span class="preferred-star" title="Preferred method">&#9733; preferred</span></div>
+          <p class="form-hint" style="margin:8px 0 0;">Role: Co-owner contact &middot; attached to: this entity only.</p>
+        </div>
+
+        <h4 class="property-details-title">Link a contact</h4>
+        <form class="field-column" onsubmit="return false">
+          <div><label>Person</label><input placeholder="Search existing contacts, or type a new name&hellip;"></div>
+          <div><label>Role</label><input placeholder="e.g. Property manager, Attorney, Co-owner contact"></div>
+          <div class="attach-row">
+            <span>Attach to:</span>
+            <label><input type="checkbox" checked disabled> This entity</label>
+            <label><input type="checkbox"> 5336 W Foster Ave</label>
+            <label><input type="checkbox"> 142 Birchwood Ln</label>
+          </div>
+          <p class="form-hint">The user chooses the attachment every time &mdash; linking a contact here never copies it onto every property this entity owns automatically, and never creates a login or access grant of any kind for that person.</p>
+          <div class="form-actions"><button type="submit">Link contact</button></div>
+        </form>
+      </div>
+    </details>
+
+    <!-- Linked properties (v2.0 — now the entity's ownership INTERESTS, with percentage where known) -->
+    <details class="collapsible-section" open>
+      <summary><span>Linked properties</span></summary>
+      <div class="collapsible-section-body">
+        <div class="interest-row">
+          <div class="interest-main">
+            <a href="#">5336 W Foster Ave, Chicago, IL</a>
+            <div class="form-hint" style="margin:2px 0 0;">Sole owner on file</div>
+          </div>
+          <span class="status-badge status-badge-success">Active</span>
+          <button type="button" class="open-correction-demo-btn" data-scenario="remove-foster">Remove this entity's interest</button>
+        </div>
+        <div class="interest-row">
+          <div class="interest-main">
+            <a href="#">142 Birchwood Ln, Evanston, IL</a>
+            <div class="form-hint" style="margin:2px 0 0;">Co-owned &mdash; see percentage</div>
+          </div>
+          <span class="pct-badge">52%</span>
+          <span class="status-badge status-badge-success">Active</span>
+          <button type="button" class="open-correction-demo-btn" data-scenario="remove-birchwood">Remove this entity's interest</button>
+        </div>
+        <p class="form-hint" style="margin-top:12px;">
+          &ldquo;Remove this entity's interest&rdquo; opens the same correction dialog shown below at the bottom of this
+          page &mdash; whether an ownership change is made from here or from the property's own Ownership section, it is
+          the identical mechanism and always requires a reason. The old direct &ldquo;Reassign&rdquo; dropdown (Settings &rarr;
+          Organization types &rarr; View properties) is replaced by this, not left running alongside it.
+        </p>
+      </div>
+    </details>
+
+    <!-- Tax classification -->
+    <details class="collapsible-section">
+      <summary>
+        <span>Tax classification</span>
+        <span class="collapsible-section-header-actions">
+          <button type="button" class="editable-section-edit" data-edit-toggle="tax">Edit</button>
+        </span>
+      </summary>
+      <div class="collapsible-section-body">
+        <div id="tax-view">
+          <dl class="field-grid">
+            <div class="field"><dt>LLC membership</dt><dd>Single member</dd></div>
+            <div class="field"><dt>Federal tax treatment</dt><dd>Disregarded entity</dd></div>
+            <div class="field"><dt>Verification</dt><dd><span class="status-badge status-badge-warning">Needs review</span></dd></div>
+          </dl>
+          <p class="form-hint" style="margin-top:16px;">Selecting LLC or Single member never silently sets a filing status &mdash; Federal tax treatment stays a separate, independently-set field. Effective date is blank and omitted here.</p>
+
+          <h4 class="property-details-title">Election history</h4>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead><tr style="text-align:left;border-bottom:1px solid var(--border);">
+              <th style="padding:6px 4px;">Type</th><th style="padding:6px 4px;">Status</th><th style="padding:6px 4px;">Submitted</th><th style="padding:6px 4px;">Accepted</th><th></th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td style="padding:6px 4px;">Form 8832</td>
+                <td style="padding:6px 4px;"><span class="status-badge status-badge-neutral">Submitted</span></td>
+                <td style="padding:6px 4px;">Sep 1, 2026</td>
+                <td style="padding:6px 4px;">&mdash;</td>
+                <td style="padding:6px 4px;"><button type="button" title="Records a new election row and marks this one Superseded &mdash; never rewrites this row's own facts">Supersede</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="form-hint">"Submitted" is never auto-promoted to "Accepted" &mdash; that requires its own explicit action with its own acceptance date. Evidence documents (election copy, acceptance notice) attach per election row; none are required to save this section.</p>
+          <button type="button">+ Add election</button>
+        </div>
+        <form class="field-column" hidden id="tax-edit" onsubmit="return false">
+          <div><label>LLC membership</label>
+            <select><option>Unknown</option><option selected>Single member</option><option>Multiple members</option></select></div>
+          <div><label>Federal tax treatment</label>
+            <select><option selected>Unknown</option><option>Disregarded entity</option><option>Partnership</option><option>S corporation</option><option>C corporation</option><option>Other</option></select></div>
+          <div><label>Treatment effective date</label><input type="date"></div>
+          <div class="form-actions">
+            <button type="submit" data-save="tax">Save</button>
+            <button type="button" data-cancel="tax">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </details>
+
+    <!-- Documents -->
+    <details class="collapsible-section">
+      <summary><span>Documents</span></summary>
+      <div class="collapsible-section-body">
+        <div class="doc-row doc-done">
+          <div class="doc-main">
+            <div class="doc-name">Operating Agreement.pdf</div>
+            <div class="doc-meta">Formation documents &middot; entity only &middot; 1.8 MB</div>
+          </div>
+          <button type="button">View</button>
+        </div>
+        <div class="doc-row doc-done">
+          <div class="doc-main">
+            <div class="doc-name">Deed &mdash; 5336 W Foster Ave</div>
+            <div class="doc-meta">Deed &middot; linked to entity and property &middot; 640 KB</div>
+          </div>
+          <button type="button">View</button>
+        </div>
+        <div class="doc-row doc-uploading">
+          <div class="doc-main">
+            <div class="doc-name">Certificate of Good Standing.pdf</div>
+            <div class="doc-meta">Formation documents &middot; uploading&hellip; 62%</div>
+            <div class="doc-progress"><span></span></div>
+          </div>
+        </div>
+        <div class="doc-row doc-failed">
+          <div class="doc-main">
+            <div class="doc-name">Annual Report 2026.pdf</div>
+            <div class="doc-meta" style="color:var(--danger);">Upload failed &mdash; never appears as filed</div>
+          </div>
+          <button type="button">Retry</button>
+        </div>
+
+        <p class="link-scope-note">"Deed &mdash; 5336 W Foster Ave" is one stored file with two links &mdash; entity and property &mdash; not two copies. It is discoverable from both this profile and that property's own Documents. (142 Birchwood Ln's closing disclosure, once uploaded, will be one file linked to <em>both</em> co-owning entities' profiles the same way &mdash; still one file, one link per recipient, never split into per-owner copies.)</p>
+
+        <h4 class="property-details-title">Add documents (up to 25 per batch)</h4>
+        <div class="field-column">
+          <div><label>Category</label><select><option>Formation documents</option><option>Deed</option><option>Insurance</option><option>Other</option></select></div>
+          <div><label>Link to entities</label>
+            <div class="attach-row">
+              <label><input type="checkbox" checked disabled> This entity</label>
+              <label><input type="checkbox"> Co-owning entity, if any&hellip;</label>
+            </div>
+          </div>
+          <div><label>Also link to a property</label><select><option>None</option><option>142 Birchwood Ln, Evanston, IL</option></select></div>
+          <div><label>Attach files</label><input type="file" multiple></div>
+        </div>
+        <p class="form-hint">Each selected file gets its own category, label and progress row before Save; a bulk category default can be adjusted per file. A failed file can be retried on its own without duplicating the ones that already succeeded, and "Add another batch" stays available with no lifetime document cap.</p>
+        <p class="form-hint">Workspace storage used: 412 MB. No storage quota is shown &mdash; none is approved yet.</p>
+      </div>
+    </details>
+
+    <!-- Financial accounts -->
+    <details class="collapsible-section">
+      <summary><span>Financial accounts</span></summary>
+      <div class="collapsible-section-body">
+        <dl class="field-grid">
+          <div class="field"><dt>Chase Business Checking</dt><dd>Bank &middot; &bull;&bull;&bull;&bull;1234</dd></div>
+        </dl>
+        <p class="form-hint" style="margin-top:12px;">Shared across every property under this entity &mdash; this is the existing LLC-scoped Financial accounts panel, reused unchanged; it is not rebuilt for this profile.</p>
+      </div>
+    </details>
+
+  </div>
+
+  <!-- ============ PROPERTY-SIDE OWNERSHIP SECTION DEMO (v2.0, net new) ============ -->
+  <div class="demo-card">
+    <h2>Ownership section &mdash; on the property's own profile (new in v2.0)</h2>
+    <p class="form-hint" style="margin-bottom:16px;">
+      Not part of the entity profile above &mdash; this is the property side of the same data, for
+      142 Birchwood Ln, Evanston, IL, shown here because the multi-owner model needs its own reviewable
+      section (v1.0 had no property-side ownership display beyond a single "Owned by" line, which cannot
+      represent two owners without hiding one of them).
+    </p>
+    <details class="collapsible-section" open>
+      <summary>
+        <span>Ownership</span>
+        <span class="collapsible-section-header-actions">
+          <button type="button" class="editable-section-edit" data-edit-toggle="property-ownership">Edit</button>
+        </span>
+      </summary>
+      <div class="collapsible-section-body">
+        <div id="property-ownership-view">
+          <div class="interest-row">
+            <div class="interest-main"><a href="#">Riverbend Holdings LLC</a> &middot; LLC</div>
+            <span class="pct-badge">52%</span>
+          </div>
+          <div class="interest-row">
+            <div class="interest-main"><a href="#">Priya Anand</a> &middot; Individual</div>
+            <span class="pct-badge">48%</span>
+          </div>
+          <p class="form-hint" style="margin-top:12px;">
+            Both owners have a recorded percentage here, so they happen to sum to 100% &mdash; that is not
+            enforced by this preview. Whether percentages must sum to 100%, may be left incomplete, or
+            aren't validated at all is one of the open decisions in the revised contract (not shown as
+            settled here).
+          </p>
+        </div>
+        <div id="property-ownership-edit" class="field-column" hidden>
+          <div class="interest-row">
+            <div class="interest-main">Riverbend Holdings LLC</div>
+            <input style="max-width:90px;" value="52" aria-label="Percentage for Riverbend Holdings LLC"> %
+            <button type="button" class="open-correction-demo-btn" data-scenario="change-birchwood-pct">Change %</button>
+            <button type="button" class="open-correction-demo-btn" data-scenario="remove-foster">Remove</button>
+          </div>
+          <div class="interest-row">
+            <div class="interest-main">Priya Anand</div>
+            <input style="max-width:90px;" value="48" aria-label="Percentage for Priya Anand"> %
+            <button type="button" class="open-correction-demo-btn" data-scenario="change-birchwood-pct">Change %</button>
+            <button type="button" class="open-correction-demo-btn" data-scenario="remove-priya">Remove</button>
+          </div>
+          <div><label>Add another owner</label><input placeholder="Search existing owners/entities, or add new&hellip;"></div>
+          <div class="form-actions">
+            <button type="button" class="open-correction-demo-btn" data-scenario="add-owner">+ Add owner</button>
+            <button type="button" data-cancel="property-ownership">Done</button>
+          </div>
+          <p class="form-hint">Every add, remove, and percentage change here opens the same reason-requiring dialog shown below &mdash; there is exactly one way to change who owns this property, used from both this box and the entity's own Linked properties panel.</p>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- ============ CORRECTION-VS-TRANSFER DEMO ============ -->
+  <div class="correction-demo">
+    <h3>Ownership-entry correction, shown separately from a legal transfer</h3>
+    <p style="margin:0 0 12px;">
+      This one dialog is what every "Remove," "Change %," and "+ Add owner" control above actually opens
+      &mdash; on the property side and the entity side alike, per D1. There is exactly one mechanism for
+      changing an ownership interest, generalized to cover adding, removing, and adjusting a percentage
+      (not just swapping a single owner, as in the earlier single-owner design). It is included here so the
+      distinction between a correction and a legal transfer is reviewable now, without presenting a working
+      transfer workflow.
+    </p>
+    <button type="button" class="open-correction-demo-btn" data-scenario="remove-birchwood">Preview: remove an owner's interest</button>
+
+    <div class="correction-modal" id="correction-modal" hidden>
+      <h4 id="correction-modal-title">This changes who owns 142 Birchwood Ln, Evanston, IL</h4>
+      <p style="font-size:13px;" id="correction-modal-detail">Removing: Riverbend Holdings LLC's 52% interest.</p>
+      <p style="font-size:13px;">This property has 3 linked documents and posted financial activity. A correction does not move or relabel those records &mdash; review them separately if the owner was wrong when they were entered. Percentages are never used to split or multiply any financial figure.</p>
+
+      <div class="correction-option">
+        <h4>Correct an entry mistake</h4>
+        <p>The previous entry was wrong &mdash; a percentage was mistyped, the wrong owner was picked, or an owner was added/removed in error. Nothing about legal ownership actually changed.</p>
+        <label>Reason <span class="required-marker">*</span></label>
+        <textarea placeholder="e.g. Selected the wrong entity when this property was first added" style="width:100%;min-height:60px;font:inherit;border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--surface);color:var(--text-h);"></textarea>
+        <div class="form-actions"><button type="submit" class="btn-primary">Save correction</button></div>
+      </div>
+
+      <div class="correction-option disabled">
+        <h4>Record a legal ownership change</h4>
+        <p>Legal ownership transfer isn't part of this release yet.</p>
+        <button type="button" disabled title="Legal ownership transfer isn't part of this release yet">Not available</button>
+      </div>
+
+      <button type="button" style="margin-top:16px;" id="close-correction-demo">Cancel</button>
+    </div>
+  </div>
+
+</div>
+
+<footer class="instructions">
+  <strong>Viewing:</strong> open this file directly in a browser (double-click, or drag it into a browser
+  window) &mdash; no build step, no server. Toggle "Entity example" / "New account" above to see the
+  empty-account state. Click any box's "Edit" to see its edit state (every field shown, including blanks);
+  Save/Cancel return to view-only with the box's own fictional values restored. Below the entity profile,
+  a separate card demonstrates the new property-side Ownership section (142 Birchwood Ln, two owners at
+  48%/52%) &mdash; open its Edit state and click "Change %," "Remove," or "+ Add owner" to see that every one
+  of those opens the same correction dialog at the bottom of the page, regardless of which side triggered
+  it. Resize the window (or use a device toolbar) below ~900px and ~600px to see the responsive
+  field-grid/mobile reflow. This file contains no live Supabase calls, no real account data, and persists
+  nothing between reloads. v2.0 changes from the superseded single-owner version: multiple ownership
+  interests with percentages, reusable multi-method contacts with explicit attachment, and one unified
+  correction dialog reused everywhere an ownership interest can change.
+</footer>
+
+<script>
+  document.getElementById('mode-filled').addEventListener('click', () => setMode(true));
+  document.getElementById('mode-empty').addEventListener('click', () => setMode(false));
+  function setMode(filled) {
+    document.getElementById('filled-view').hidden = !filled;
+    document.getElementById('empty-account-view').hidden = filled;
+    document.getElementById('mode-filled').setAttribute('aria-pressed', String(filled));
+    document.getElementById('mode-empty').setAttribute('aria-pressed', String(!filled));
+  }
+
+  document.querySelectorAll('[data-edit-toggle]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const key = btn.dataset.editToggle;
+      document.getElementById(key + '-view').hidden = true;
+      document.getElementById(key + '-edit').hidden = false;
+      btn.hidden = true;
+    });
+  });
+  function exitEdit(key) {
+    document.getElementById(key + '-view').hidden = false;
+    document.getElementById(key + '-edit').hidden = true;
+    document.querySelector('[data-edit-toggle="' + key + '"]').hidden = false;
+  }
+  document.querySelectorAll('[data-cancel]').forEach((btn) => {
+    btn.addEventListener('click', () => exitEdit(btn.dataset.cancel));
+  });
+  document.querySelectorAll('[data-save]').forEach((btn) => {
+    btn.addEventListener('click', () => exitEdit(btn.dataset.save));
+  });
+
+  document.getElementById('mark-verified-btn').addEventListener('click', function () {
+    this.outerHTML = '<p class="form-hint" style="margin-top:8px;">Marked verified just now &mdash; this is the only action that ever sets Last verified.</p>';
+  });
+
+  var CORRECTION_SCENARIOS = {
+    'remove-foster': {
+      title: 'This changes who owns 5336 W Foster Ave, Chicago, IL',
+      detail: 'Removing: Riverbend Holdings LLC’s interest (sole owner on file &mdash; the property would have no owner on file afterward).'
+    },
+    'remove-birchwood': {
+      title: 'This changes who owns 142 Birchwood Ln, Evanston, IL',
+      detail: 'Removing: Riverbend Holdings LLC’s 52% interest.'
+    },
+    'remove-priya': {
+      title: 'This changes who owns 142 Birchwood Ln, Evanston, IL',
+      detail: 'Removing: Priya Anand’s 48% interest.'
+    },
+    'change-birchwood-pct': {
+      title: 'This changes an ownership percentage on 142 Birchwood Ln, Evanston, IL',
+      detail: 'Percentage change on an existing interest &mdash; previous and new values are both recorded.'
+    },
+    'add-owner': {
+      title: 'This adds an owner to 142 Birchwood Ln, Evanston, IL',
+      detail: 'Adding a new ownership interest &mdash; no percentage is assumed unless entered.'
+    }
+  };
+
+  document.querySelectorAll('.open-correction-demo-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      var scenario = CORRECTION_SCENARIOS[btn.dataset.scenario] || CORRECTION_SCENARIOS['remove-birchwood'];
+      document.getElementById('correction-modal-title').textContent = scenario.title;
+      document.getElementById('correction-modal-detail').innerHTML = scenario.detail;
+      document.getElementById('correction-modal').hidden = false;
+    });
+  });
+  document.getElementById('close-correction-demo').addEventListener('click', () => {
+    document.getElementById('correction-modal').hidden = true;
+  });
+</script>
+
+</body>
+</html>
