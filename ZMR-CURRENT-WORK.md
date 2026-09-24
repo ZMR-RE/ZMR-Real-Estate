@@ -286,3 +286,16 @@ Fixed the reported bug: at a ~976px page width, "Representative" ran into its ow
 
 **Not changed:** any other box, any field, any document/upload behavior, any backend/data. Batch O2–O7, the hosted upload limit, real Supabase integration, and owner acceptance all remain open, as before.
 
+## Practice-environment infrastructure built — blocked on cost/access decision — September 24, 2026
+
+Executed `ZMR-isolated-integration-terminal-prompt.txt`. Confirmed d686e73 is HEAD; did not rebuild the Insurance/AppShell work.
+
+**In plain language:** built and verified everything that doesn't require the practice project to already exist — a dedicated way to run the real dashboard (real navigation, real styles, real Supabase login, not a mock) pointed at a separate practice backend on its own port, that refuses to start rather than silently reaching your real database if the practice details are ever missing or wrong, and shows a permanent "PRACTICE" banner on every page so it's never confused with your real dashboard. Also reviewed every one of the 97 migrations for real business data and found exactly two that embed the real account name and your two real property addresses (used only to build production originally) — wrote out precisely how those get identified and cleaned up in the practice database only, never by editing that shared migration history.
+
+**Blocked exactly where the assignment said to stop:** creating the actual "ZMR Practice" project. There is no way to see this Supabase organization's billing plan or the cost of a second project from the command line — only the Supabase website shows that, and this session has no login for it and won't guess or attempt to create the project blind. **The decision needed from you:** either tell me your org's plan allows a free second project, or create the "ZMR Practice" project yourself on supabase.com (you'll see the exact price before confirming) and hand back its project URL, anon key, and database password — through the terminal's masked input, never typed in chat. Either way, the rest of this work continues immediately once you do.
+
+**Verified:** `npm run build`/`lint`/`test` clean (53/53 tests, 76-line lint baseline unchanged). Confirmed live that the practice server correctly refuses to render with no practice credentials configured yet (fails closed, does not fall back to production), and that the existing mock harness still renders normally and unaffected. Port 5173 and its `.env` untouched throughout; no `supabase link` was run in this shared working directory (still linked to the live project only); no project was created, no plan changed, no payment details entered anywhere.
+
+**Files:** new `vite.practice.config.ts`, `envs/practice/.env.example`, `docs/planning/ownership-property/ZMR-practice-bootstrap-plan.md`; modified `src/shared/supabaseClient.ts` (fail-closed check), `src/shared/AppShell.tsx`/`src/index.css` (practice banner), `package.json` (`dev:practice` script). Roadmap 9.25 added, marked partial with the exact blocker.
+
+**Not done, not claimed done:** the practice project itself, any real Supabase integration testing, ownership/Insurance/document verification against a real backend, owner acceptance, and production release. Batch O2–O7/P/Q untouched.

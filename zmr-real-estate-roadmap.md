@@ -2774,6 +2774,61 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       Still mock-harness evidence — the backend remains fully simulated
       — not Supabase-integration or owner-acceptance evidence.
 
+- [ ] 9.25 Isolated hosted-integration practice environment (owner-
+      approved, per `ZMR-isolated-integration-terminal-prompt.txt`) —
+      **infrastructure only, PARTIAL: blocked on one owner decision,
+      no practice project exists yet.** Real portfolio data and port
+      5173/its `.env` are completely untouched by this item.
+
+      **Built and verified (no live target needed for any of this):**
+      a dedicated `npm run dev:practice` (port 5190, `vite.practice.config.ts`)
+      that loads the REAL app entry (`index.html`/`main.tsx`/`App.tsx`/
+      `AppShell`) — not a mock — pointed at a practice-only env
+      directory (`envs/practice/`, `envDir` in the Vite config, so the
+      real root `.env` is never read by this config at all); a
+      fail-closed check in `supabaseClient.ts` (gated by
+      `VITE_PRACTICE_TARGET`, inert for the real app) that refuses to
+      start if the practice URL is missing or matches the production
+      project ref (`jsrovnaxrtllvvavfqvq`) — verified live: with no
+      `envs/practice/.env` yet, the app correctly refuses to render
+      rather than falling back to production; a permanent "PRACTICE —
+      fictional data" banner (`AppShell.tsx`, `.practice-banner`/
+      `.app-shell--practice` in index.css) on every route, also
+      gated and confirmed inert in both the real app and the existing
+      mock harness (which still renders normally, unchanged, per its
+      own regression check). Full bootstrap plan documented and ready
+      to execute — `ZMR-practice-bootstrap-plan.md` — including how the
+      two real-data-bearing migrations (`20260903192431_seed_zmr_account.sql`,
+      `20260904180522_seed_properties.sql` — found by an explicit review
+      of all 97 migrations for embedded real names/records, not assumed
+      clean) get identified and cleaned up in a practice-only follow-up
+      step, never by editing shared migration history, and how
+      `supabase db push --db-url` avoids ever repointing this shared
+      working directory's own Supabase CLI link (currently linked to
+      the live project — confirmed via `supabase projects list`,
+      exactly one project in the one org today).
+
+      **Genuinely blocked, per the prompt's own explicit stop condition:**
+      no second Supabase project exists, and this session found no way
+      to determine the org's actual billing plan or the incremental
+      cost of a second project without either (a) the Supabase web
+      dashboard (requires a login this session doesn't have and
+      shouldn't be given), or (b) attempting to create the project
+      blind, which the prompt explicitly forbids ("do not upgrade a
+      plan, enter payment details... stop for my decision if payment or
+      account access is required"). The Supabase CLI has no billing
+      subcommand and its `projects`/`orgs list` JSON output carries no
+      plan field. **The owner decision needed:** either confirm the org
+      is on a plan where a second project is free and say so, or create
+      the "ZMR Practice" project directly via the Supabase dashboard
+      (seeing the exact price before confirming) and hand back its
+      project ref/URL/anon key/db password via masked terminal input —
+      either path unblocks the rest of this item immediately, with no
+      further planning needed.
+
+      Nothing in Batch O2–O7/P/Q was started. `npm run build`/`lint`/
+      `test` clean (53/53 tests, 76-line lint baseline, unchanged).
+
 ## 10. Phase 10 — Navigation & Action Consolidation
 - [x] 10.1 Rename left nav to: Properties, Log It, Action Queue, Financials & Tax, Command Center, Automations, Portfolio KPIs
 - [x] 10.2 Action Queue: single task/action data model (property/unit/type/assignee/due date/recurring), collapsible boxes by type; same records surface filtered on each property's own Overview — no duplicate entry between portfolio-wide and per-property views — new `action_items` table (property_id/unit_id nullable, type reuses 8.1's task_type pick list, assignee is a plain user FK for now). Surfaces on the KPI tab's Follow-ups card (7.13's named candidate), not Overview — 7.13 built Follow-ups there specifically as this item's landing spot, and Overview has no equivalent placeholder; verified live, one row read by both the portfolio Action Queue and the property's own Follow-ups, no duplication. Mounted at the existing "Action Queue" nav destination (/reconciliation, ReconciliationQueue.tsx) rather than a new route, since wiring a new one would've required touching App.tsx/AppShell.tsx (both out of scope here) — that page now carries two distinct sections (Action Queue, Reconciliation) under one URL as a result. Existing Tasks (2.2) was NOT consolidated into this table as of this item's original completion — that migration (live task rows + dropping the old `tasks` table) needed its own explicit sign-off per CLAUDE.md and was deferred. STATUS UPDATE: that consolidation has since happened (20260918100000/20260918100100) — Tasks (2.2) is fully superseded, the `tasks` table and Task Engine module no longer exist.

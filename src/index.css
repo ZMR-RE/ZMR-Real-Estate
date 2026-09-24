@@ -264,6 +264,32 @@ code {
   min-height: 100svh;
 }
 
+/* ISOLATED-INTEGRATION — the practice review server's own permanent
+   banner (AppShell.tsx, gated by VITE_PRACTICE_TARGET; renders nothing
+   in the real app). Fixed across the very top of the viewport so it's
+   visible on every route, never just Overview. .app-shell--practice's
+   top padding reserves the banner's own height so it never overlaps
+   the sticky sidebar/tab-bar underneath it. */
+.app-shell--practice {
+  padding-top: 36px;
+}
+
+.practice-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--warning);
+  color: var(--surface);
+  font-weight: 700;
+  font-size: var(--text-sm);
+}
+
 /* Roadmap 7.29 — extends the Sticky/frozen headers rule to navigation:
    the sidebar stays pinned in the viewport while .app-main scrolls,
    same "frozen rows" idea as .tab-bar/thead th. height:100svh +
