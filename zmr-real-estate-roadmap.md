@@ -2579,6 +2579,68 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       concern files, per the File size discipline rule — flagged by T5
       during the 9.9 bridge build, not yet acted on.
 
+- [x] 9.24 INS-1 — Insurance presentation slice (Batch O, bounded partial
+      scope, not the full O1–O7 backlog): compact always-visible summary
+      row per policy (recorded dates, term-status countdown, policy #,
+      premium, payment plan — only fields actually present, per CLAUDE.md's
+      Empty field visibility rule); an expandable per-policy detail area
+      with Policy identification / Coverage & cost / Contacts & extras
+      laid out side by side on wide screens (`.field-group-row`, new
+      reusable 3/2/1 grid — see DESIGN-SYSTEM.md), reflowing to 2 then 1
+      column at the same breakpoints `.field-grid` uses, and the matching
+      Edit form grouped the same way; Documents pulled out of Contacts &
+      extras into its own compact expandable area, reusing real upload
+      dates (no fabricated labels); honest five-state date/status model
+      (Within recorded term / Upcoming term / Term ended / Dates
+      incomplete / Invalid date range) replacing the old binary Active/
+      Expired badge that asserted "Active" on a missing expiration date
+      and mixed a UTC-string comparison with a local-day countdown —
+      both bugs fixed (`computeInsuranceTermStatus`/`insuranceTermUrgency`,
+      insuranceQueries.ts); a stored end-before-start pair now blocked at
+      save time (useInsuranceLedger.ts) and, if it already existed, shown
+      as an honest "Invalid date range" rather than reinterpreted as a
+      valid term; premium shown as entered with "— basis not recorded"
+      (zero preserved distinctly from missing, never given an assumed
+      annual/installment meaning). History and renewal follow-up are
+      explicitly out of scope for this slice — shown as plain pending-
+      dependency text (Batch O7/O6), never a fake timeline or a
+      nonfunctional button.
+
+      NOT covered by this slice (remain queued, tracked in
+      ZMR-insurance-batch-O.md O2–O7): coverage-limit rows, premium
+      basis field (Policy-term total/Installment/Other/Unknown),
+      payment-handling/account-link, reusable agent/broker/claims
+      contacts, file upload for insurance documents (still blocked on
+      the unverified hosted per-file limit — reference links keep
+      working), explicit cancellation/renewal recording, renewal
+      follow-up in Action Queue, and shared multi-property policies.
+      None of O2–O7 is implemented, and none is claimed done here.
+
+      Verified: `npm run build`/`lint`/`test` clean (20/20 tests,
+      unchanged — no new test file; the term-status logic was exercised
+      live instead, per the two verification methods below). Real
+      application code (not a bespoke screen) exercised in a real
+      Chrome browser via the isolated mock-data harness
+      (`npm run dev:harness`) mounting the actual `PropertyProfile` page
+      — hero, tabs, and every Overview box — with seven fictional
+      `ZMR-TEST-FIXTURE` policies covering every named scenario (healthy/
+      success, expiring-in-16-days/warning, ends-today/danger, past-
+      ended with a long provider/policy-number and a real zero premium,
+      future-only-start/upcoming, past-start-only/incomplete, and a
+      stored invalid end-before-start row): every badge, countdown
+      phrase, and group-omission behaved exactly as designed at both a
+      true ~2118px desktop width and a true 387px mobile width (a
+      390px-wide iframe, the same "iframe-simulated mobile width"
+      technique 7.36 used — `scrollWidth === clientWidth`, no horizontal
+      overflow either width); Edit verified live: side-by-side groups at
+      3 grid columns, end-before-start blocked with an inline error and
+      the draft preserved, a valid Save round-trips into view, Cancel
+      discards an in-progress edit, and "+ Add insurance policy" creates
+      a genuinely new 8th record without touching the existing 7. This is
+      mock-harness evidence (no real Supabase involved, by construction)
+      — not owner acceptance and not hosted-integration evidence; see the
+      owner checklist below for what the owner should verify live.
+
 ## 10. Phase 10 — Navigation & Action Consolidation
 - [x] 10.1 Rename left nav to: Properties, Log It, Action Queue, Financials & Tax, Command Center, Automations, Portfolio KPIs
 - [x] 10.2 Action Queue: single task/action data model (property/unit/type/assignee/due date/recurring), collapsible boxes by type; same records surface filtered on each property's own Overview — no duplicate entry between portfolio-wide and per-property views — new `action_items` table (property_id/unit_id nullable, type reuses 8.1's task_type pick list, assignee is a plain user FK for now). Surfaces on the KPI tab's Follow-ups card (7.13's named candidate), not Overview — 7.13 built Follow-ups there specifically as this item's landing spot, and Overview has no equivalent placeholder; verified live, one row read by both the portfolio Action Queue and the property's own Follow-ups, no duplication. Mounted at the existing "Action Queue" nav destination (/reconciliation, ReconciliationQueue.tsx) rather than a new route, since wiring a new one would've required touching App.tsx/AppShell.tsx (both out of scope here) — that page now carries two distinct sections (Action Queue, Reconciliation) under one URL as a result. Existing Tasks (2.2) was NOT consolidated into this table as of this item's original completion — that migration (live task rows + dropping the old `tasks` table) needed its own explicit sign-off per CLAUDE.md and was deferred. STATUS UPDATE: that consolidation has since happened (20260918100000/20260918100100) — Tasks (2.2) is fully superseded, the `tasks` table and Task Engine module no longer exist.

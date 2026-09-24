@@ -6,6 +6,7 @@ import { PropertyForm } from '../modules/properties/PropertyForm'
 import { PropertySaveConflictNotice } from '../modules/properties/PropertySaveConflictNotice'
 import { usePropertyProfile } from '../modules/properties/usePropertyProfile'
 import { EntityProfile } from '../modules/llcs/EntityProfile'
+import { PropertyProfile } from '../modules/properties/PropertyProfile'
 import { harnessDb } from './mockSupabaseClient'
 
 // ISOLATED HARNESS PAGE — mounted only by harness.html / npm run
@@ -16,7 +17,7 @@ import { harnessDb } from './mockSupabaseClient'
 // call of any kind. All data is the fictional ZMR-TEST-FIXTURE set in
 // fixtures.ts, held in memory and reset on reload.
 export function HarnessApp() {
-  const [view, setView] = useState<'ownership' | 'entity' | 'property-info'>('ownership')
+  const [view, setView] = useState<'ownership' | 'entity' | 'property-info' | 'property-overview'>('ownership')
 
   const llcOptions = harnessDb.llcs.filter((l) => !l.archived).map((l) => ({ id: l.id as string, label: l.name as string }))
 
@@ -36,6 +37,9 @@ export function HarnessApp() {
           </button>{' '}
           <button type="button" onClick={() => setView('property-info')} aria-pressed={view === 'property-info'}>
             Property information (stale-edit guard)
+          </button>{' '}
+          <button type="button" onClick={() => setView('property-overview')} aria-pressed={view === 'property-overview'}>
+            Property Overview (Insurance INS-1)
           </button>
         </div>
         {view === 'ownership' && <PropertyOwnershipInterestsSection propertyId="harness-property-1" llcOptions={llcOptions} />}
@@ -51,6 +55,23 @@ export function HarnessApp() {
           </MemoryRouter>
         )}
         {view === 'property-info' && <HarnessPropertyInformation />}
+        {view === 'property-overview' && (
+          // INS-1 — mounts the REAL PropertyProfile page (breadcrumb,
+          // hero via PropertySummary/PropertyIdentityHeader, tab bar,
+          // and every Overview box — Insurance included) exactly as
+          // App.tsx routes it, just inside a MemoryRouter instead of
+          // the real BrowserRouter/AppShell. Every box's own query
+          // hits the same generic mock, seeded (fixtures.ts) with nine
+          // fictional insurance policies covering every date/status/
+          // value scenario named in the terminal prompt. This is the
+          // "actual application components/page composition" check —
+          // not a bespoke bare screen — with only the backend mocked.
+          <MemoryRouter initialEntries={['/properties/harness-property-1']}>
+            <Routes>
+              <Route path="/properties/:id" element={<PropertyProfile />} />
+            </Routes>
+          </MemoryRouter>
+        )}
       </div>
     </>
   )

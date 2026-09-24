@@ -121,6 +121,22 @@ of screens in the app.
   its input, no inline-editable fields by default (CLAUDE.md's Data
   integrity rule: view-by-default, explicit Edit action). Checkbox rows
   use `label:has(input[type=checkbox])` to avoid full-width stretching.
+- **`.field-group-row`** (INS-1) — lays whole `.property-field-group`
+  sections side by side: 3 across on wide screens, 2 then 1 at the same
+  breakpoints `.field-grid` uses. Different question from `.field-grid`
+  itself (which arranges individual fields, sized for single-column
+  form-usability research) — this arranges whole multi-field
+  subsections next to each other, used by both a box's expanded
+  read-only view and its matching Edit form so the two share one reflow
+  rule (Insurance's Policy identification/Coverage & cost/Contacts &
+  extras is the first user). Reach for it whenever a box groups related
+  content into named subsections that should sit side by side rather
+  than stack.
+- **`.field-hint`** (INS-1) — a small muted clarifying line under a
+  field, for a case where the label alone could read as asserting more
+  than what's actually recorded (e.g. a premium with no stored
+  annual/installment basis yet). Not a validation error and not a
+  required marker — purely informational.
 - **Buttons** — bare `<button>` is a secondary/outline button, still
   `--radius-sm` and regular weight. `button[type=submit]` is the primary
   action: filled `--accent`, `font-weight: 700`, and fully-rounded

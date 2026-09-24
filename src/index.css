@@ -1131,6 +1131,47 @@ dd {
   }
 }
 
+/* INS-1 — lays whole `.property-field-group` sections (not individual
+   fields) side by side: 3 across on wide screens, stepping down to 2
+   then 1 at the same breakpoints as `.field-grid` above, so the two
+   grids feel like one family. Deliberately separate from `.field-grid`
+   itself — that class's items are single fields, sized for the "one
+   field per row" form-usability research `.field-column` below cites;
+   this one's items are whole multi-field subsections, which is a
+   different question (whether related groups can sit side by side),
+   used by both the Insurance box's expanded view card and its Edit
+   form so the two share one reflow rule. Reusable by any future box
+   that groups its own content the same way. */
+.field-group-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4) var(--space-6);
+}
+
+@media (max-width: 900px) {
+  .field-group-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .field-group-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* INS-1 — a small muted clarifying line under a field, for a case where
+   the label alone could be misread as asserting more than what's
+   actually recorded (e.g. Insurance's premium having no stored basis
+   yet). Not a validation error (that's `[role=alert]`) and not a
+   required-field marker — purely informational, so it stays quiet:
+   smaller and lighter than the field's own label. */
+.field-hint {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+  color: var(--text);
+}
+
 /* Roadmap 7.31 — Property Information Edit mode: single column, one
    field per row (the form-usability research this item cites). Reused
    anywhere else an editable form wants the same treatment, not just
@@ -2120,6 +2161,16 @@ th {
   margin-top: var(--space-4);
 }
 
+/* INS-1 — cancels the stacked-spacing rule above specifically for
+   groups laid out side by side inside .field-group-row: they're grid
+   siblings sharing one row, not a vertical stack, so a top margin on
+   the 2nd/3rd group would shove it down out of alignment with the
+   1st. Same specificity (two classes) as the rule above, so this must
+   stay after it in source order to win the tie. */
+.field-group-row > .property-field-group + .property-field-group {
+  margin-top: 0;
+}
+
 .insurance-policy-row {
   display: flex;
   gap: var(--space-2);
@@ -2137,29 +2188,54 @@ th {
   min-width: 70px;
 }
 
-/* Personality pass — color-coded "story" number for the Expiration
-   date, same --success/--warning/--danger vocabulary as the
-   Units-occupied stat card (property-stat-card-value--*) and Action
-   Queue priority (7.15) rather than a new palette. */
-.insurance-expiration-value--success {
-  color: var(--success);
-  font-weight: 600;
+/* INS-1 — the compact, always-visible line under a policy's header:
+   term-status countdown, recorded dates, policy #, premium and payment
+   plan, joined into one muted sentence rather than separate labeled
+   rows (that's what the expanded Coverage & cost group is for). Wraps
+   rather than truncating a long provider/contact value. */
+.insurance-policy-summary-row {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-sm);
 }
 
-.insurance-expiration-value--warning {
-  color: var(--warning);
+/* INS-1 — the compact expandable Documents area inside an expanded
+   policy card. A plain <details>/<summary>, the same mechanics
+   `.collapsible-section` uses for the page's boxes, but deliberately
+   undecorated (no border/background) since it's a small area nested
+   two levels deep already, not a peer box of its own. */
+.insurance-policy-documents-area summary {
+  cursor: pointer;
+  font-size: var(--text-sm);
   font-weight: 600;
+  color: var(--accent);
 }
 
-.insurance-expiration-value--danger {
-  color: var(--danger);
-  font-weight: 600;
+.insurance-policy-documents-area summary:hover {
+  text-decoration: underline;
 }
 
-.insurance-policy-documents-inline {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+.insurance-policy-documents-area .insurance-policy-documents {
+  margin: var(--space-2) 0 0;
+}
+
+/* INS-1 item 4 — plain, non-interactive text for a feature this policy
+   card doesn't have real data to support yet (change history, renewal
+   follow-up). Muted and slightly smaller than body text so it reads as
+   a quiet dependency note, never mistaken for a live control. */
+.insurance-policy-pending-notes {
+  margin-top: var(--space-3);
+}
+
+.insurance-policy-pending-note {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-xs);
+  font-style: italic;
+}
+
+.insurance-policy-pending-note + .insurance-policy-pending-note {
+  margin-top: var(--space-1);
 }
 
 /* ============================================================

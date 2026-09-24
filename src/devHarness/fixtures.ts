@@ -141,6 +141,210 @@ export const FIXTURE_PROPERTIES = [
   },
 ]
 
+// INS-1 — one fixture per date/status/value scenario the terminal
+// prompt calls out by name: a healthy current term (success urgency), a
+// term expiring within 30 days (warning), a term ending today (danger,
+// "Term ends today" — never "expired"), a long-provider/long-value past
+// term with a real zero premium (preserved, not treated as missing), an
+// upcoming term with only a future start date, a genuinely incomplete
+// record (a single past start date and nothing else — the exact shape
+// of the old "missing expiration = Active" bug), and a stored
+// end-before-start row (an input error the Edit form now blocks going
+// forward, but a pre-existing bad row must still render honestly, not
+// crash or get reinterpreted as valid). Dates are relative to "today"
+// so this fixture never goes stale.
+const TODAY = new Date()
+function isoDateOffset(days: number): string {
+  const d = new Date(TODAY)
+  d.setDate(d.getDate() + days)
+  return d.toISOString().slice(0, 10)
+}
+
+export const FIXTURE_INSURANCE_POLICIES = [
+  {
+    id: 'harness-insurance-1',
+    account_id: FIXTURE_ACCOUNT_ID,
+    property_id: 'harness-property-1',
+    provider: 'ZMR-TEST-FIXTURE Statewide Insurance Co',
+    policy_number: 'POL-1001',
+    contact_info: null,
+    coverage_start_date: isoDateOffset(-266),
+    coverage_end_date: isoDateOffset(99),
+    premium_amount: '1450.00',
+    deductible: '1000.00',
+    named_insured: 'ZMR-TEST-FIXTURE Holdings LLC',
+    representative_name: 'Dana Representative',
+    representative_phone: '555-010-0001',
+    representative_email: 'dana@fixture.example',
+    payment_plan: 'Annual',
+    policy_discounts: 'Bundled discount',
+    created_at: '2026-09-20T00:00:00.000Z',
+  },
+  {
+    id: 'harness-insurance-2',
+    account_id: FIXTURE_ACCOUNT_ID,
+    property_id: 'harness-property-1',
+    provider: 'ZMR-TEST-FIXTURE Amber Mutual',
+    policy_number: null,
+    contact_info: null,
+    coverage_start_date: isoDateOffset(-388),
+    coverage_end_date: isoDateOffset(16),
+    premium_amount: null,
+    deductible: null,
+    named_insured: null,
+    representative_name: null,
+    representative_phone: null,
+    representative_email: null,
+    payment_plan: null,
+    policy_discounts: null,
+    created_at: '2026-09-19T00:00:00.000Z',
+  },
+  {
+    id: 'harness-insurance-3',
+    account_id: FIXTURE_ACCOUNT_ID,
+    property_id: 'harness-property-1',
+    provider: 'ZMR-TEST-FIXTURE Redline Assurance',
+    policy_number: 'POL-3003',
+    contact_info: null,
+    coverage_start_date: isoDateOffset(-207),
+    coverage_end_date: isoDateOffset(0),
+    premium_amount: '0',
+    deductible: null,
+    named_insured: 'ZMR-TEST-FIXTURE Property One',
+    representative_name: null,
+    representative_phone: '555-010-0003',
+    representative_email: null,
+    payment_plan: 'Monthly',
+    policy_discounts: null,
+    created_at: '2026-09-18T00:00:00.000Z',
+  },
+  {
+    id: 'harness-insurance-4',
+    account_id: FIXTURE_ACCOUNT_ID,
+    property_id: 'harness-property-1',
+    provider:
+      'ZMR-TEST-FIXTURE Mutual Insurance & Casualty Underwriters of the Midwest, Incorporated (long-name test)',
+    policy_number: 'POL-ABCDEFGH-1234567890-LONGVALUE-TEST',
+    contact_info: null,
+    coverage_start_date: isoDateOffset(-631),
+    coverage_end_date: isoDateOffset(-266),
+    premium_amount: '980.00',
+    deductible: '2500.00',
+    named_insured: 'ZMR-TEST-FIXTURE Holdings LLC (a long named-insured value for wrap testing)',
+    representative_name: null,
+    representative_phone: null,
+    representative_email: null,
+    payment_plan: 'Annual',
+    policy_discounts: null,
+    created_at: '2026-09-10T00:00:00.000Z',
+  },
+  {
+    id: 'harness-insurance-5',
+    account_id: FIXTURE_ACCOUNT_ID,
+    property_id: 'harness-property-1',
+    provider: 'ZMR-TEST-FIXTURE Horizon General',
+    policy_number: 'POL-2050',
+    contact_info: null,
+    coverage_start_date: isoDateOffset(45),
+    coverage_end_date: null,
+    premium_amount: null,
+    deductible: null,
+    named_insured: null,
+    representative_name: null,
+    representative_phone: null,
+    representative_email: null,
+    payment_plan: null,
+    policy_discounts: null,
+    created_at: '2026-09-05T00:00:00.000Z',
+  },
+  {
+    id: 'harness-insurance-6',
+    account_id: FIXTURE_ACCOUNT_ID,
+    property_id: 'harness-property-1',
+    provider: 'ZMR-TEST-FIXTURE Placeholder Mutual',
+    policy_number: null,
+    contact_info: null,
+    coverage_start_date: isoDateOffset(-10),
+    coverage_end_date: null,
+    premium_amount: null,
+    deductible: null,
+    named_insured: null,
+    representative_name: null,
+    representative_phone: null,
+    representative_email: null,
+    payment_plan: null,
+    policy_discounts: null,
+    created_at: '2026-08-01T00:00:00.000Z',
+  },
+  {
+    id: 'harness-insurance-7',
+    account_id: FIXTURE_ACCOUNT_ID,
+    property_id: 'harness-property-1',
+    provider: 'ZMR-TEST-FIXTURE Backdated Test Policy',
+    policy_number: 'POL-INVALID-1',
+    contact_info: null,
+    coverage_start_date: isoDateOffset(5),
+    coverage_end_date: isoDateOffset(-5),
+    premium_amount: '500.00',
+    deductible: null,
+    named_insured: null,
+    representative_name: null,
+    representative_phone: null,
+    representative_email: null,
+    payment_plan: null,
+    policy_discounts: null,
+    created_at: '2026-07-01T00:00:00.000Z',
+  },
+]
+
+export const FIXTURE_INSURANCE_DOCUMENTS = [
+  {
+    id: 'harness-insurance-doc-1',
+    account_id: FIXTURE_ACCOUNT_ID,
+    property_id: 'harness-property-1',
+    transaction_id: null,
+    category: 'Insurance',
+    label: null,
+    link_url: null,
+    link_type: null,
+    storage_path: `${FIXTURE_ACCOUNT_ID}/harness-property-1/Insurance/fixture-declarations-page.pdf`,
+    file_size: 245_000,
+    uploaded_at: '2026-01-05T00:00:00.000Z',
+    uploaded_by: 'mock-user',
+    property_insurance_policy_id: 'harness-insurance-1',
+  },
+  {
+    id: 'harness-insurance-doc-2',
+    account_id: FIXTURE_ACCOUNT_ID,
+    property_id: 'harness-property-1',
+    transaction_id: null,
+    category: 'Insurance',
+    label: null,
+    link_url: null,
+    link_type: null,
+    storage_path: `${FIXTURE_ACCOUNT_ID}/harness-property-1/Insurance/fixture-renewal-notice.pdf`,
+    file_size: 118_000,
+    uploaded_at: '2026-03-02T00:00:00.000Z',
+    uploaded_by: 'mock-user',
+    property_insurance_policy_id: 'harness-insurance-3',
+  },
+  {
+    id: 'harness-insurance-doc-3',
+    account_id: FIXTURE_ACCOUNT_ID,
+    property_id: 'harness-property-1',
+    transaction_id: null,
+    category: 'Insurance',
+    label: null,
+    link_url: null,
+    link_type: null,
+    storage_path: `${FIXTURE_ACCOUNT_ID}/harness-property-1/Insurance/fixture-invoice.pdf`,
+    file_size: 52_000,
+    uploaded_at: '2026-03-05T00:00:00.000Z',
+    uploaded_by: 'mock-user',
+    property_insurance_policy_id: 'harness-insurance-3',
+  },
+]
+
 function ownerRef(llcId: string) {
   const llc = FIXTURE_LLCS.find((l) => l.id === llcId)
   return { display_name: llc?.display_name ?? null, name: llc?.name ?? 'Unknown' }
@@ -206,8 +410,9 @@ export function buildFixtureDb(): MockDb {
     contact_links: [
       { id: 'harness-link-1', account_id: FIXTURE_ACCOUNT_ID, contact_id: 'harness-contact-1', property_id: null, llc_id: 'harness-llc-entity', role: 'Property manager', is_primary_contact: true },
     ],
-    documents: [],
+    documents: FIXTURE_INSURANCE_DOCUMENTS.map((d) => ({ ...d })),
     document_owner_links: [],
+    property_insurance_policies: FIXTURE_INSURANCE_POLICIES.map((p) => ({ ...p })),
     property_financial_accounts: [],
   }
 }

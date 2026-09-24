@@ -117,6 +117,15 @@ export function useInsuranceLedger(propertyId: string) {
       return
     }
 
+    // Batch O5 — "End date before start is an input error, not a valid
+    // term," rejected here (both supplied) before any save, matching
+    // the shared account calendar-date basis computeInsuranceTermStatus
+    // uses for display. yyyy-mm-dd strings compare correctly lexically.
+    if (values.coverage_start_date && values.coverage_end_date && values.coverage_end_date < values.coverage_start_date) {
+      setError('Expiration date cannot be before the effective date.')
+      return
+    }
+
     setSaving(true)
 
     const payload: InsurancePolicyInput = {

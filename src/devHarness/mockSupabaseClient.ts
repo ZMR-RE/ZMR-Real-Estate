@@ -21,6 +21,16 @@ const joins = {
     const document = harnessDb.documents.find((d) => d.id === row.document_id)
     return { ...row, document: document ?? null }
   },
+  // INS-1 — mirrors insuranceQueries.ts's POLICY_SELECT embedded join
+  // (documents:documents!documents_property_insurance_policy_id_fkey),
+  // which the harness's generic string-ignoring `.select()` can't
+  // resolve on its own; every document whose property_insurance_
+  // policy_id points at this row is attached, same shape the real
+  // PostgREST embed returns.
+  property_insurance_policies: (row: MockRow) => {
+    const documents = harnessDb.documents.filter((d) => d.property_insurance_policy_id === row.id)
+    return { ...row, documents }
+  },
 }
 
 export const supabase = createMockSupabaseClient(harnessDb, createMockRpcHandlers(harnessDb), joins)

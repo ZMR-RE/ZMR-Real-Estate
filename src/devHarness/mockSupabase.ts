@@ -58,6 +58,10 @@ class MockQueryBuilder implements PromiseLike<MockResult> {
     this.filters.push((r) => (r[col] as string | number) <= (val as string | number))
     return this
   }
+  is(col: string, val: null) {
+    this.filters.push((r) => r[col] === val)
+    return this
+  }
   order(col: string, opts?: { ascending?: boolean; nullsFirst?: boolean }) {
     this.orderCol = col
     this.orderAscending = opts?.ascending !== false

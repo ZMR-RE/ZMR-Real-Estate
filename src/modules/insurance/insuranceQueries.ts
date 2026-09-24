@@ -56,48 +56,123 @@ export interface InsurancePolicyInput {
   policy_discounts: string | null
 }
 
-// Roadmap 7.33 (5) — Active/Expired, computed at render time from
-// coverage_end_date vs today rather than stored, same "real-time check,
-// not a snapshot" approach as the Action Queue priority color system
-// (7.15). No end date set means ongoing coverage — Active, not a guess.
-export type InsuranceStatus = 'active' | 'expired'
+// INS-1 — replaces the old binary Active/Expired status (roadmap 7.33
+// (5)), which asserted "Active" whenever coverage_end_date was simply
+// absent — a false coverage assurance from missing data, exactly what
+// CLAUDE.md's Data integrity rule forbids ("never seed, infer, or guess
+// a field's value"). It also compared a UTC date string
+// (coverage_end_date < new Date().toISOString().slice(0,10)) against a
+// local-calendar-date day count elsewhere in the same file — two
+// different "today"s that could disagree near midnight. Every date here
+// now goes through one local-midnight basis (parseDateOnly), and every
+// label below describes which dates are ON FILE, never a verified,
+// insurer-confirmed coverage state.
+export type InsuranceTermStatusKind = 'within' | 'upcoming' | 'ended' | 'incomplete' | 'invalid_range'
 
-export function getInsuranceStatus(policy: Pick<InsurancePolicy, 'coverage_end_date'>): InsuranceStatus {
-  if (!policy.coverage_end_date) return 'active'
-  return policy.coverage_end_date < new Date().toISOString().slice(0, 10) ? 'expired' : 'active'
+export interface InsuranceTermStatus {
+  kind: InsuranceTermStatusKind
+  daysUntilStart: number | null
+  daysUntilEnd: number | null
+  // Batch O5 — "End date today displays 'Term ends today'; don't
+  // simultaneously label it expired." Kept distinct from a plain
+  // daysUntilEnd === 0 check so the UI never has to re-derive it.
+  endsToday: boolean
 }
 
-// Personality pass — color-coded "story" numbers, extending the same
-// --success/--warning/--danger vocabulary the Units-occupied stat card
-// and Action Queue priority (7.15) already use to Insurance's own
-// coverage-expiration date. Same "real-time check, not a snapshot"
-// approach as getInsuranceStatus above. No end date set means ongoing
-// coverage — success, not a guess at when it might lapse.
+function parseDateOnly(value: string): Date {
+  // No 'Z' — parsed as local midnight, so this always reflects the
+  // account's own calendar day regardless of the viewer's timezone,
+  // consistently with every other date on this row.
+  return new Date(`${value}T00:00:00`)
+}
+
+function todayAtMidnight(): Date {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return today
+}
+
+function daysBetween(from: Date, to: Date): number {
+  return Math.round((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+// Batch O5's four honest labels, plus a fifth (invalid_range) for a
+// stored end-before-start pair — "an input error, not a valid term",
+// so it is deliberately never one of the four. New saves are blocked
+// from creating this state (useInsuranceLedger's validation); this
+// case exists here only so a pre-existing bad row is never silently
+// reinterpreted as a valid term instead of surfaced honestly.
+export function computeInsuranceTermStatus(
+  policy: Pick<InsurancePolicy, 'coverage_start_date' | 'coverage_end_date'>,
+): InsuranceTermStatus {
+  const today = todayAtMidnight()
+  const start = policy.coverage_start_date ? parseDateOnly(policy.coverage_start_date) : null
+  const end = policy.coverage_end_date ? parseDateOnly(policy.coverage_end_date) : null
+
+  const daysUntilStart = start ? daysBetween(today, start) : null
+  const daysUntilEnd = end ? daysBetween(today, end) : null
+
+  if (start && end && end.getTime() < start.getTime()) {
+    return { kind: 'invalid_range', daysUntilStart, daysUntilEnd, endsToday: false }
+  }
+
+  if (start && end) {
+    if (daysUntilEnd! < 0) return { kind: 'ended', daysUntilStart, daysUntilEnd, endsToday: false }
+    if (daysUntilStart! > 0) return { kind: 'upcoming', daysUntilStart, daysUntilEnd, endsToday: false }
+    return { kind: 'within', daysUntilStart, daysUntilEnd, endsToday: daysUntilEnd === 0 }
+  }
+
+  // A known past end date is "Term ended" even without a known start —
+  // per Batch O5's own wording, that rule stands on its own. A known
+  // end that is today or still ahead, with no start on file, can't be
+  // placed relative to today (we don't know if it has even started) —
+  // "Dates incomplete", not a guess either way.
+  if (end && !start) {
+    if (daysUntilEnd! < 0) return { kind: 'ended', daysUntilStart, daysUntilEnd, endsToday: false }
+    return { kind: 'incomplete', daysUntilStart, daysUntilEnd, endsToday: false }
+  }
+
+  // A known future start with no end on file is unambiguously
+  // "Upcoming" — no end date is needed to know coverage hasn't started
+  // yet. A start that is today or in the past with no end on file is
+  // exactly the old bug's shape (a single known date, missing the other
+  // one) — "Dates incomplete", never "Within recorded term".
+  if (start && !end) {
+    if (daysUntilStart! > 0) return { kind: 'upcoming', daysUntilStart, daysUntilEnd, endsToday: false }
+    return { kind: 'incomplete', daysUntilStart, daysUntilEnd, endsToday: false }
+  }
+
+  return { kind: 'incomplete', daysUntilStart: null, daysUntilEnd: null, endsToday: false }
+}
+
+export type InsuranceTermUrgency = 'success' | 'accent' | 'warning' | 'danger' | 'neutral'
+
 const EXPIRING_VERY_SOON_DAYS = 7
 const EXPIRING_SOON_DAYS = 30
 
-export type InsuranceExpirationUrgency = 'success' | 'warning' | 'danger'
-
-// Whole days until coverage_end_date, negative once past it. Exported
-// separately from the urgency color so the UI can also show a plain
-// "expires in N days" / "expired N days ago" phrase, not just a color.
-export function daysUntilExpiration(policy: Pick<InsurancePolicy, 'coverage_end_date'>): number | null {
-  if (!policy.coverage_end_date) return null
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const end = new Date(`${policy.coverage_end_date}T00:00:00`)
-  return Math.round((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-}
-
-// danger covers both "already expired" (days <= 0) and "very close"
-// (within a week) — the task's own "red if expired/very close" wording
-// collapses both into one color rather than a 4th visual tier.
-export function insuranceExpirationUrgency(policy: Pick<InsurancePolicy, 'coverage_end_date'>): InsuranceExpirationUrgency {
-  const days = daysUntilExpiration(policy)
-  if (days === null) return 'success'
-  if (days <= EXPIRING_VERY_SOON_DAYS) return 'danger'
-  if (days <= EXPIRING_SOON_DAYS) return 'warning'
-  return 'success'
+// Batch O5 — "Keep existing 7/30-day urgency thresholds only for known
+// expiration dates, paired color with words" (the label itself, never
+// color alone). Only a term with a known end date still in force can
+// carry that urgency color; every other kind gets a color that never
+// reads as a coverage assurance — accent (scheduled, not yet in force)
+// for upcoming, neutral (no assurance either way) for incomplete data.
+export function insuranceTermUrgency(status: InsuranceTermStatus): InsuranceTermUrgency {
+  switch (status.kind) {
+    case 'ended':
+    case 'invalid_range':
+      return 'danger'
+    case 'within':
+      if (status.endsToday || (status.daysUntilEnd !== null && status.daysUntilEnd <= EXPIRING_VERY_SOON_DAYS)) {
+        return 'danger'
+      }
+      if (status.daysUntilEnd !== null && status.daysUntilEnd <= EXPIRING_SOON_DAYS) return 'warning'
+      return 'success'
+    case 'upcoming':
+      return 'accent'
+    case 'incomplete':
+    default:
+      return 'neutral'
+  }
 }
 
 // New build item — Insurance as a historical ledger, exact pattern of
