@@ -7,6 +7,7 @@ import { PropertySaveConflictNotice } from '../modules/properties/PropertySaveCo
 import { usePropertyProfile } from '../modules/properties/usePropertyProfile'
 import { EntityProfile } from '../modules/llcs/EntityProfile'
 import { PropertyProfile } from '../modules/properties/PropertyProfile'
+import { AppShell } from '../shared/AppShell'
 import { harnessDb } from './mockSupabaseClient'
 
 // ISOLATED HARNESS PAGE — mounted only by harness.html / npm run
@@ -60,15 +61,31 @@ export function HarnessApp() {
           // hero via PropertySummary/PropertyIdentityHeader, tab bar,
           // and every Overview box — Insurance included) exactly as
           // App.tsx routes it, just inside a MemoryRouter instead of
-          // the real BrowserRouter/AppShell. Every box's own query
-          // hits the same generic mock, seeded (fixtures.ts) with nine
-          // fictional insurance policies covering every date/status/
-          // value scenario named in the terminal prompt. This is the
-          // "actual application components/page composition" check —
-          // not a bespoke bare screen — with only the backend mocked.
+          // the real BrowserRouter. Every box's own query hits the same
+          // generic mock, seeded (fixtures.ts) with fictional insurance
+          // policies covering every date/status/value scenario named in
+          // the terminal prompt. This is the "actual application
+          // components/page composition" check — not a bespoke bare
+          // screen — with only the backend mocked.
+          //
+          // Review fix — this now also routes through the REAL AppShell
+          // (nested route + <Outlet/>, exactly App.tsx's own structure),
+          // not just PropertyProfile in isolation. A responsive bug this
+          // page's own reviewer found (a ~976px-page-width column
+          // collision) traced to this exact gap: without AppShell's
+          // fixed 232px sidebar, this harness rendered noticeably MORE
+          // content width at a given iframe/window width than the real
+          // app does at the same real browser width, so any css fix
+          // "verified" here without it could look right in the harness
+          // and still be wrong on the real page. AppShell's own
+          // useAuth()/NavLink/Outlet all resolve against this bundle's
+          // existing mocks (mockAuthContext.tsx, MemoryRouter) with no
+          // further changes needed.
           <MemoryRouter initialEntries={['/properties/harness-property-1']}>
             <Routes>
-              <Route path="/properties/:id" element={<PropertyProfile />} />
+              <Route element={<AppShell />}>
+                <Route path="/properties/:id" element={<PropertyProfile />} />
+              </Route>
             </Routes>
           </MemoryRouter>
         )}

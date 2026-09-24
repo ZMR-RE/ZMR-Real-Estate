@@ -2698,6 +2698,82 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       Edit — still mock-harness evidence only, not Supabase-integration
       or owner-acceptance evidence.
 
+      VISUAL REVIEW FIX (same day): owner-reported regression at a
+      ~976px page width — "Representative" ran into its own value in
+      the three-column details. Root cause: `.field-group-row` reused
+      `.field-grid`'s 900px/600px breakpoints, which are tuned for a
+      `<dl>` of short single fields, not a `.property-field-group`
+      carrying a long joined value like Representative's
+      "name · phone · email"; the app shell's fixed 232px sidebar plus
+      its own padding meant a 976px page left each of 3 columns only
+      ~260px — nowhere near enough. Two independent fixes, both
+      Insurance-scoped, `.field-grid` and every other box untouched:
+      (a) `.insurance-policy-row` (every label/value pair inside a
+      group — Representative, Coverage dates, Premium, etc.) now
+      stacks label above value unconditionally, matching this app's own
+      existing `dt`/`dd` convention (label above value is already how
+      every `<dl>`-based display in the app works; Insurance's
+      side-by-side flex row was the one inconsistent implementation,
+      literally named as a "logged follow-up" in the `dt`/`dd` CSS
+      comment). A stacked pair cannot overlap at any width, so this
+      isn't a breakpoint-dependent patch. (b) `.field-group-row`'s own
+      breakpoints changed from the shared 900/600 to 1200/640, tuned
+      empirically for this box's actual nesting (sidebar + app-main
+      padding + box padding + card padding) so 3 columns only appear
+      once each has comfortable room, well before 976px. A related gap
+      found in the same pass: Edit's nested `.field-row` pairs (date
+      range, phone/email, etc.) were still trying to sit side by side
+      within a single narrow group column, cramping every paired field
+      — fixed with a new `.field-group-row .field-row` rule that stacks
+      them unconditionally, scoped the same way, every other
+      `.field-row` in the app (Property Information's own Edit form,
+      confirmed still side-by-side at 1400px) untouched.
+
+      Verified: `npm run build`/`lint`/`test` clean (53/53 tests, 76
+      pre-existing lint warnings, no new ones). Programmatically swept
+      both View and Edit, both the short-value and the long-provider/
+      long-policy-number fixture, across 1400, 1201, 1200, 1100, 976
+      (the reported case), 900, 860, 859, 700, 641, 640, 600 and 390px
+      *true iframe-rendered page widths* (`innerWidth` read back and
+      confirmed at each one, not just the iframe's requested size):
+      zero label/value overlaps and zero horizontal overflow at every
+      one, 3 columns only above ~1200px, 2 from ~640–1200px, 1 below
+      that.
+
+      A harness-fidelity gap was caught and fixed mid-verification,
+      worth recording precisely: the harness's Property Overview view
+      had never been wrapped in the real `AppShell` (no 232px fixed
+      sidebar, no `.app-main` padding chain) — a gap the owner's own
+      prior review had already flagged ("harness bypasses AppShell/
+      app-main... need full-frame review"). The first pass of this
+      fix's testing used that un-wrapped harness and looked clean, but
+      re-deriving the real page's width math by hand
+      (232px sidebar + .app-main's 48px×2 padding + the box's own
+      padding) showed the un-wrapped harness was rendering noticeably
+      MORE content width at a given page width than the real app does
+      at the same width — meaning a fix that looked right there was not
+      yet trustworthy evidence for the real 976px report. Fixed by
+      routing the harness's Property Overview view through the actual
+      `AppShell` component (a nested route + `<Outlet/>`, exactly
+      `App.tsx`'s own structure — `AppShell`'s `useAuth()`/`NavLink`
+      resolve against this bundle's existing mocks with no further
+      changes needed), confirmed live (`.app-nav` reports a true 232px,
+      `.app-main` reports the expected reduced width at each page
+      width tested above), and the full sweep above is the one run
+      against that corrected harness. The review page a reviewer opens
+      now shows the real sidebar and nav alongside Insurance, not
+      Insurance in isolation — closing that "full-frame review" gap for
+      future visual checks too, not just this one.
+
+      Visually re-confirmed the true 976px case and the long-name/long-
+      policy-number card by screenshot against the AppShell-wrapped
+      page — clean stacked rows, even column widths, full values
+      legible (wrapped, not truncated, in View; a narrow text input in
+      Edit still visually clips a long typed value to its own width,
+      unchanged pre-existing input behavior, not new from this fix).
+      Still mock-harness evidence — the backend remains fully simulated
+      — not Supabase-integration or owner-acceptance evidence.
+
 ## 10. Phase 10 — Navigation & Action Consolidation
 - [x] 10.1 Rename left nav to: Properties, Log It, Action Queue, Financials & Tax, Command Center, Automations, Portfolio KPIs
 - [x] 10.2 Action Queue: single task/action data model (property/unit/type/assignee/due date/recurring), collapsible boxes by type; same records surface filtered on each property's own Overview — no duplicate entry between portfolio-wide and per-property views — new `action_items` table (property_id/unit_id nullable, type reuses 8.1's task_type pick list, assignee is a plain user FK for now). Surfaces on the KPI tab's Follow-ups card (7.13's named candidate), not Overview — 7.13 built Follow-ups there specifically as this item's landing spot, and Overview has no equivalent placeholder; verified live, one row read by both the portfolio Action Queue and the property's own Follow-ups, no duplication. Mounted at the existing "Action Queue" nav destination (/reconciliation, ReconciliationQueue.tsx) rather than a new route, since wiring a new one would've required touching App.tsx/AppShell.tsx (both out of scope here) — that page now carries two distinct sections (Action Queue, Reconciliation) under one URL as a result. Existing Tasks (2.2) was NOT consolidated into this table as of this item's original completion — that migration (live task rows + dropping the old `tasks` table) needed its own explicit sign-off per CLAUDE.md and was deferred. STATUS UPDATE: that consolidation has since happened (20260918100000/20260918100100) — Tasks (2.2) is fully superseded, the `tasks` table and Task Engine module no longer exist.
@@ -2824,4 +2900,3 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 
 ## Ongoing — Q&A / SOP Log
 - [ ] A living reference section (in-app or a maintained doc) answering recurring "how do I do X" questions as they come up during real use (e.g. "how do I add past mortgage information"). Updated whenever a new section is built out or a real question arises — not a one-time deliverable, an evolving document.
-

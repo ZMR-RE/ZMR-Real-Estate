@@ -272,3 +272,17 @@ Executed `docs/planning/ownership-property/ZMR-insurance-INS1-review-cleanup.txt
 **Review page kept available:** `npm run dev:harness` is running on **http://localhost:5180/harness.html** → "Property Overview (Insurance INS-1)" for the owner's visual review. Port 5173 (the owner's own dev server) was never touched. Restart instructions given in the terminal report if it needs to be stopped and relaunched.
 
 **Not done, not claimed done:** Batch O2–O7 (including O4's improved upload labels/categories and hosted-limit validation), the hosted per-file limit, real Supabase integration, and owner acceptance. Batch P (property tax) and Batch Q (market/rent presentation) remain queued, untouched by this terminal. Ownership's own real-platform integration gap (`486be47`) is unrelated and still open.
+## Insurance responsive-spacing fix delivered — September 24, 2026
+
+Fixed the reported bug: at a ~976px page width, "Representative" ran into its own contact value in the three-column Insurance details.
+
+**In plain language:** Insurance's label/value pairs (Representative, Coverage dates, Premium, etc.) now always show the label on its own line above the value, matching how the rest of the dashboard already displays labeled fields — it can't run together anymore, at any width. Separately, the box now switches from three columns down to two much sooner as the page narrows, so columns never get uncomfortably tight to begin with. A related cramping in Edit (date range, phone/email, and other paired fields squeezed side by side in a narrow column) is fixed the same way. No other box was touched.
+
+**A real gap in how this was being reviewed was also caught and fixed along the way:** the review page had never included the actual sidebar/navigation, so it was showing more room than your real dashboard has at the same window width — a first pass at this fix looked right there but wasn't trustworthy evidence for your actual 976px report. The review page now includes the real sidebar and navigation, not just the Insurance box by itself, so what you see there matches your real dashboard's width behavior.
+
+**Verified:** `npm run build`/`lint`/`test` clean (53/53 tests unchanged, 76-warning lint baseline unchanged). Checked both View and Edit, with both a short-value and an intentionally very long provider/policy-number/contact fixture, at 14 page widths from 390px (phone) to 1400px (wide desktop) including the exact reported 976px — zero label/value collisions and zero sideways scrolling at any of them, confirmed against the corrected review page (with the real sidebar present, not the earlier gap). Screenshots taken at the reported width and the long-value case. Still mock-harness evidence — no real Supabase involved — not owner acceptance.
+
+**Review page:** still running at **http://localhost:5180/harness.html** → "Property Overview (Insurance INS-1)" — now shows the real sidebar/nav alongside the box. Port 5173 untouched throughout. Restart if needed: `cd /Users/janki/Projects/ZMR-Real-Estate && npm run dev:harness`.
+
+**Not changed:** any other box, any field, any document/upload behavior, any backend/data. Batch O2–O7, the hosted upload limit, real Supabase integration, and owner acceptance all remain open, as before.
+

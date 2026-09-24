@@ -1132,29 +1132,43 @@ dd {
 }
 
 /* INS-1 — lays whole `.property-field-group` sections (not individual
-   fields) side by side: 3 across on wide screens, stepping down to 2
-   then 1 at the same breakpoints as `.field-grid` above, so the two
-   grids feel like one family. Deliberately separate from `.field-grid`
-   itself — that class's items are single fields, sized for the "one
-   field per row" form-usability research `.field-column` below cites;
-   this one's items are whole multi-field subsections, which is a
-   different question (whether related groups can sit side by side),
-   used by both the Insurance box's expanded view card and its Edit
-   form so the two share one reflow rule. Reusable by any future box
-   that groups its own content the same way. */
+   fields) side by side. Deliberately separate from `.field-grid` itself
+   — that class's items are single fields, sized for the "one field per
+   row" form-usability research `.field-column` below cites; this one's
+   items are whole multi-field subsections, which is a different
+   question (whether related groups can sit side by side), used by both
+   the Insurance box's expanded view card and its Edit form so the two
+   share one reflow rule. Reusable by any future box that groups its own
+   content the same way.
+
+   Review fix (visual regression at ~976px page width) — this used to
+   share `.field-grid`'s 900px/600px breakpoints, but those are tuned
+   for a `<dl>` of short single fields, not a `.property-field-group`
+   carrying a long joined value like Representative's "name · phone ·
+   email". Both classes render inside the same app shell (232px fixed
+   sidebar + .app-main's own padding + this box's own padding), so a
+   976px *page* width leaves each of 3 columns only ~260px — nowhere
+   near enough for that line, which is why it visually ran into its
+   label. Breakpoints below are tuned specifically for this box's own
+   known nesting depth (measured empirically, not copied from
+   `.field-grid`) so 3 columns only appear once each one has comfortable
+   room, and it steps to 2 well before that point, not at a number that
+   happened to work for a different, shorter kind of content. This is a
+   deliberately Insurance-only tuning — `.field-grid` and every other
+   consumer of the shared 900px/600px breakpoints are untouched. */
 .field-group-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-4) var(--space-6);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
   .field-group-row {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .field-group-row {
     grid-template-columns: 1fr;
   }
@@ -1206,6 +1220,23 @@ dd {
   .field-row {
     flex-direction: column;
   }
+}
+
+/* Review fix — a .field-row pairs two inputs side by side (a date
+   range, a cost pair, a phone/email pair); that's fine at this class's
+   normal full-form width, but Insurance's Edit form nests it one level
+   deeper, inside a .field-group-row column that can be as narrow as
+   ~200px even where .field-group-row itself isn't "cramped" (that
+   column width is still comfortable for one input, just not two side
+   by side). Unconditional, not another viewport breakpoint to guess
+   at — a paired row needs roughly double a single field's width, and a
+   .field-group-row column is by definition narrower than the box's
+   full width, so stacking here is always the safer choice, not just
+   below some threshold. Scoped to `.field-group-row .field-row` only —
+   every other `.field-row` in the app (Property Information's own Edit
+   form, etc.) is untouched. */
+.field-group-row .field-row {
+  flex-direction: column;
 }
 
 /* ============================================================
@@ -2171,21 +2202,41 @@ th {
   margin-top: 0;
 }
 
+/* Review fix — was a side-by-side flex row (label baseline-aligned next
+   to its value), which is exactly what let a long value like
+   Representative's "name · phone · email" run straight into its own
+   label the moment the row's column got narrow (see .field-group-row's
+   comment above for the ~976px case that surfaced this). Stacked —
+   label on its own line above the value — is this app's own established
+   pattern for a field label/value pair (see the plain `dt`/`dd` rules
+   below: label above value, never side-by-side, reused app-wide by
+   every `.field-grid`/`<dl>` display); this makes Insurance's rows match
+   that instead of being the one place with a different, narrower-width-
+   unsafe layout. Applied unconditionally rather than only below some
+   breakpoint — a value long enough to collide with its label in a 260px
+   column can also do it in a wider one with a long enough real-world
+   value (a long agency name, a long email address), and a label sitting
+   above its value costs one line, never an overlap, at any width. */
 .insurance-policy-row {
-  display: flex;
-  gap: var(--space-2);
-  align-items: baseline;
+  margin: 0;
 }
 
 .insurance-policy-row + .insurance-policy-row {
-  margin-top: var(--space-1);
+  margin-top: var(--space-2);
 }
 
 .insurance-policy-label {
+  display: block;
   font-size: var(--text-xs);
   font-weight: 600;
   color: var(--text);
-  min-width: 70px;
+}
+
+.insurance-policy-row > span:last-child {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-h);
+  overflow-wrap: break-word;
 }
 
 /* INS-1 — the compact, always-visible line under a policy's header:
