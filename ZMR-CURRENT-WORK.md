@@ -221,3 +221,23 @@ Continued the ownership implementation from commit `7b615e5`, per `docs/planning
 3. Hosted upload per-file size limit — still needed from whoever has Supabase dashboard access, to unblock Phase 2 (actual file upload) only.
 
 **Next:** once a real Supabase target exists, re-verify against it and write the numbered owner UI test script (deliberately not written yet — a script tested only against the mock harness would describe mock behavior, not the owner's real app).
+
+## O1-A ownership terminal — close-out checkpoint (I5 stale-edit guard, owner checklists, environment assessment) — September 24, 2026
+
+Executed `docs/planning/ownership-property/ZMR-ownership-closeout-terminal-prompt.txt` from commit `cb9b988`. Ownership-scoped terminal only; no Financial accounts N, Insurance O, or Capture/History J–M work was started.
+
+**In plain language — what changed and why:**
+- **The approval mix-up is fixed.** Batch I5 had approved protecting the Property information box against two people saving over each other; the previous checkpoint wrongly treated that as still undecided. It is now built: if someone else saved the same property after you opened Edit, your Save is refused *before anything is written*, your typed draft stays on screen, and you get exactly two choices — keep editing, or discard and load their version. There is deliberately no "save anyway." Both places in the code that save a property go through this same check, so there is no back door.
+- **A one-line database change** (`20260925080000_properties_set_updated_at.sql`) makes the property's "last changed" timestamp actually update on every save — it existed before but nothing maintained it. This is the token the check compares.
+- **Two owner checklists** are written at `docs/planning/ownership-property/O1-A-owner-test-checklist.md`. Checklist A is a look-and-click tour of the new screens on a fake-data harness you can run right now (`npm run dev:harness`, then http://localhost:5180/harness.html) — nothing there is real or saved, and you should not type real data into it. Checklist B is the real acceptance test; every step is marked UNTESTED because there is nowhere safe to run it yet.
+- **Test-environment assessment** (read-only; nothing installed, nothing created) is in the contract v3.2 §9.5.
+
+**Checks run:** `npm run build` ✓; `npm run lint` exit 0 (only pre-existing warning pattern); `npm run test` 20/20; scratch Postgres (local Postgres 16, all 97 migrations, fictional fixtures, RLS in force) T1–T7 for the guard — matching token saves, stale token writes nothing, two concurrent editors resolve correctly, a different account sees and changes nothing, no spurious audit row, fresh token saves, reapplying the migration fails loudly like every other migration; mock browser harness nine-step conflict scenario, every assertion true. Clean-clone check (fresh git clone of the close-out commit into an isolated directory, npm install, build, lint, test): install/build/lint all exit 0, tests 20/20, and every new file (migration, conflict notice, checklist) is tracked in git. **None of this is Supabase-integration or owner-acceptance evidence.**
+
+**Still unverified:** real Supabase integration (no isolated target exists), the hosted per-file upload limit (CLI has no bucket-config read; dashboard not opened), owner acceptance (Checklists A and B).
+
+**The one decision needed from the owner:** how to get an isolated Supabase target — install Docker Desktop or Colima for a local `supabase start` stack (recommended: free, exercises the real platform, cannot touch live), or create a second nonproduction Supabase project (free on the Free plan; plan status not checked). The terminal will do neither on its own.
+
+Ownership is **not complete and not released**.
+
+

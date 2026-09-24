@@ -29,6 +29,13 @@ export function usePropertyProfile(propertyId: string) {
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<ProfileTab>('overview')
   const [saving, setSaving] = useState(false)
+  // Batch I5 — stale-edit protection. `conflict` holds the newer server row
+  // when a save was refused because another editor saved first; the
+  // user's draft stays untouched in the still-mounted form. `formResetKey`
+  // changes only through an explicit "discard my changes" choice — the one
+  // way the form is ever re-seeded from the latest row, never automatic.
+  const [conflict, setConflict] = useState<Property | null>(null)
+  const [formResetKey, setFormResetKey] = useState(0)
 
   // Root-cause fix: this used to gate every piece of state behind ALL
   // five fetches succeeding — if any one of them errored (transactions,
@@ -96,16 +103,40 @@ export function usePropertyProfile(propertyId: string) {
   // in the update response, so displaying the save no longer depends on
   // transactions/activity/documents/market-value queries succeeding too.
   const saveProperty = async (input: PropertyInput): Promise<boolean> => {
+    if (!property) return false
     setSaving(true)
-    const { data, error: saveError } = await updateProperty(propertyId, input)
+    // `property.updated_at` is the baseline this draft was edited against.
+    // It is deliberately NOT advanced on conflict below, so a retried Save
+    // re-checks against the same baseline and is refused again — the only
+    // way past a conflict is the user's explicit discard-and-reload.
+    const result = await updateProperty(propertyId, input, property.updated_at)
     setSaving(false)
-    if (saveError || !data) {
-      setError(saveError?.message ?? 'Could not save property')
-      return false
+
+    switch (result.kind) {
+      case 'saved':
+        setError(null)
+        setConflict(null)
+        setProperty(result.property)
+        return true
+      case 'conflict':
+        setError(null)
+        setConflict(result.latest)
+        return false
+      case 'not_found':
+        setError('This property no longer exists or is no longer accessible.')
+        return false
+      default:
+        setError(result.message)
+        return false
     }
-    setError(null)
-    setProperty(data)
-    return true
+  }
+
+  const keepEditingAfterConflict = () => setConflict(null)
+
+  const discardDraftAndLoadLatest = () => {
+    if (conflict) setProperty(conflict)
+    setConflict(null)
+    setFormResetKey((k) => k + 1)
   }
 
   return {
@@ -125,6 +156,10 @@ export function usePropertyProfile(propertyId: string) {
     setTab,
     saving,
     saveProperty,
+    conflict,
+    formResetKey,
+    keepEditingAfterConflict,
+    discardDraftAndLoadLatest,
     refresh,
   }
 }

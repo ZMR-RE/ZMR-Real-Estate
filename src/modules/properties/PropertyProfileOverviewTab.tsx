@@ -15,6 +15,7 @@ import { FinancialAccountsSection } from '../financialAccounts/FinancialAccounts
 import { VendorEstimatesSection } from '../vendorEstimates/VendorEstimatesSection'
 import { PropertyOwnershipInterestsSection } from './PropertyOwnershipInterestsSection'
 import { PropertyForm } from './PropertyForm'
+import { PropertySaveConflictNotice } from './PropertySaveConflictNotice'
 import { PropertySummary } from './PropertySummary'
 import type { Property, PropertyInput } from './propertiesQueries'
 
@@ -27,6 +28,11 @@ interface PropertyProfileOverviewTabProps {
   onValueHistoryChanged: () => Promise<void>
   saving: boolean
   onSave: (input: PropertyInput) => Promise<boolean>
+  // Batch I5 — stale-edit protection state from usePropertyProfile.
+  conflict: Property | null
+  formResetKey: number
+  onKeepEditingAfterConflict: () => void
+  onDiscardDraftAndLoadLatest: () => void
 }
 
 // Roadmap 7.10 — every section on this tab uses a consistent box
@@ -55,6 +61,10 @@ export function PropertyProfileOverviewTab({
   onValueHistoryChanged,
   saving,
   onSave,
+  conflict,
+  formResetKey,
+  onKeepEditingAfterConflict,
+  onDiscardDraftAndLoadLatest,
 }: PropertyProfileOverviewTabProps) {
   // Roadmap 7.40 — the Financial accounts box also shows this LLC's
   // shared accounts (if any), distinguishably; llcOptions already
@@ -69,21 +79,35 @@ export function PropertyProfileOverviewTab({
         defaultOpen
         view={<PropertySummary property={property} llcOptions={llcOptions} />}
         edit={(exitEditing) => (
-          <PropertyForm
-            key={property.id}
-            propertyId={property.id}
-            initialValues={property}
-            llcOptions={llcOptions}
-            onCreateLlc={onCreateLlc}
-            holdingCompanyOptions={holdingCompanyOptions}
-            onCreateHoldingCompany={onCreateHoldingCompany}
-            saving={saving}
-            onSave={async (input) => {
-              const ok = await onSave(input)
-              if (ok) exitEditing()
-            }}
-            onCancel={exitEditing}
-          />
+          <>
+            {/* Batch I5 — on a refused save the box stays in Edit (onSave
+                returns false), the draft stays in the still-mounted form
+                below (its key only changes on an explicit discard), and
+                this notice explains what happened and offers the two
+                deliberate ways forward. */}
+            {conflict && (
+              <PropertySaveConflictNotice
+                latest={conflict}
+                onKeepEditing={onKeepEditingAfterConflict}
+                onDiscardAndReload={onDiscardDraftAndLoadLatest}
+              />
+            )}
+            <PropertyForm
+              key={`${property.id}-${formResetKey}`}
+              propertyId={property.id}
+              initialValues={property}
+              llcOptions={llcOptions}
+              onCreateLlc={onCreateLlc}
+              holdingCompanyOptions={holdingCompanyOptions}
+              onCreateHoldingCompany={onCreateHoldingCompany}
+              saving={saving}
+              onSave={async (input) => {
+                const ok = await onSave(input)
+                if (ok) exitEditing()
+              }}
+              onCancel={exitEditing}
+            />
+          </>
         )}
       />
 

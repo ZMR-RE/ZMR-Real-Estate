@@ -96,14 +96,48 @@ export const FIXTURE_LLCS = [
   },
 ]
 
+// Full Property shape (every PROPERTY_COLUMNS field), so the real
+// PropertyForm can be mounted against it in the harness. updated_at is
+// the stale-edit token (Batch I5); the mock builder bumps it on every
+// UPDATE the same way the real trigger does.
 export const FIXTURE_PROPERTIES = [
   {
     id: 'harness-property-1',
     account_id: FIXTURE_ACCOUNT_ID,
     name: 'ZMR-TEST-FIXTURE Property One',
     address: '000 Fictional Test Way',
+    city: 'Testville',
+    state: 'IL',
+    zip: '00000',
     llc_id: null,
     status: 'active',
+    insurance_provider: null,
+    insurance_policy_number: null,
+    contact_email: null,
+    purchase_price: null,
+    purchase_date: null,
+    property_type: null,
+    purchase_method: null,
+    property_tax_id: null,
+    county: null,
+    township: null,
+    square_footage: null,
+    lot_size: null,
+    municipal_zoning_code: null,
+    county_assessor_use_code: null,
+    bedroom_count: null,
+    bathroom_count: null,
+    basement: null,
+    garage_spaces: null,
+    street_parking: null,
+    parking_notes: null,
+    lot_size_value: null,
+    lot_size_unit: null,
+    year_built: null,
+    exterior_wall_materials: [],
+    owner_name: null,
+    contact_phone: null,
+    updated_at: '2026-09-01T00:00:00.000Z',
   },
 ]
 

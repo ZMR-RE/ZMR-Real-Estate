@@ -46,6 +46,18 @@ class MockQueryBuilder implements PromiseLike<MockResult> {
     this.filters.push((r) => r[col] === val)
     return this
   }
+  in(col: string, vals: unknown[]) {
+    this.filters.push((r) => vals.includes(r[col]))
+    return this
+  }
+  gte(col: string, val: unknown) {
+    this.filters.push((r) => (r[col] as string | number) >= (val as string | number))
+    return this
+  }
+  lte(col: string, val: unknown) {
+    this.filters.push((r) => (r[col] as string | number) <= (val as string | number))
+    return this
+  }
   order(col: string, opts?: { ascending?: boolean; nullsFirst?: boolean }) {
     this.orderCol = col
     this.orderAscending = opts?.ascending !== false
@@ -112,17 +124,33 @@ class MockQueryBuilder implements PromiseLike<MockResult> {
     const matchedRows = this.matched()
     let resultData: unknown
     let error: unknown = null
+    // Rows handed back are copies, as a real network response would be —
+    // React state must never alias the in-memory "database" row, or a
+    // later write to that row (e.g. the harness's simulated other editor)
+    // would silently update the caller's stale-edit token too.
+    const clone = (r: MockRow): MockRow => ({ ...r })
 
     if (this.mode === 'insert') {
       const rowsToInsert = Array.isArray(this.payload) ? this.payload : [this.payload as MockRow]
       const inserted = rowsToInsert.map((r) => ({ id: `mock-${Math.random().toString(36).slice(2)}`, created_at: new Date().toISOString(), ...r }))
       this.table.push(...inserted)
       this.onMutate?.('insert', this.payload, inserted)
-      resultData = this.singleMode ? inserted[0] : inserted
+      resultData = this.singleMode ? clone(inserted[0]) : inserted.map(clone)
     } else if (this.mode === 'update') {
-      matchedRows.forEach((row) => Object.assign(row, this.payload))
+      matchedRows.forEach((row) => {
+        Object.assign(row, this.payload)
+        // Mirror the per-table set_<table>_updated_at triggers (properties
+        // included, 20260925080000): a real UPDATE always moves updated_at.
+        if ('updated_at' in row) row.updated_at = new Date().toISOString()
+      })
       this.onMutate?.('update', this.payload, matchedRows)
-      resultData = this.singleMode ? matchedRows[0] ?? null : matchedRows
+      resultData = this.singleMode ? (matchedRows[0] ? clone(matchedRows[0]) : null) : matchedRows.map(clone)
+      // Mirror PostgREST: .single() on an UPDATE that matched zero rows is
+      // an error (PGRST116), not a silent null — exactly the signal the
+      // stale-edit guard in propertiesQueries.updateProperty relies on.
+      if (this.singleMode === 'single' && matchedRows.length === 0) {
+        error = { message: 'No rows found', code: 'PGRST116' }
+      }
     } else if (this.mode === 'delete') {
       matchedRows.forEach((row) => {
         const idx = this.table.indexOf(row)
@@ -131,7 +159,7 @@ class MockQueryBuilder implements PromiseLike<MockResult> {
       this.onMutate?.('delete', null, matchedRows)
       resultData = matchedRows
     } else {
-      let result = this.computeSelectResult()
+      let result = this.computeSelectResult().map(clone)
       if (this.join) result = result.map((r) => this.join!(r))
       if (this.singleMode === 'single') {
         resultData = result[0] ?? null

@@ -42,6 +42,10 @@ export function PropertyProfile() {
     setTab,
     saving,
     saveProperty,
+    conflict,
+    formResetKey,
+    keepEditingAfterConflict,
+    discardDraftAndLoadLatest,
     refresh,
     latestMarketValue,
   } = usePropertyProfile(id!)
@@ -106,6 +110,10 @@ export function PropertyProfile() {
           onValueHistoryChanged={refresh}
           saving={saving}
           onSave={saveProperty}
+          conflict={conflict}
+          formResetKey={formResetKey}
+          onKeepEditingAfterConflict={keepEditingAfterConflict}
+          onDiscardDraftAndLoadLatest={discardDraftAndLoadLatest}
         />
       )}
       {tab === 'financials' && <PropertyProfileTransactionsTab transactions={transactions} />}

@@ -1,8 +1,8 @@
-> **IMPLEMENTATION IN PROGRESS — September 24, 2026 (v3.1).** Batch I and revised H7 are approved; this batch is authorized for bounded local implementation per `ZMR-approved-work-terminal-prompt.txt` and `ZMR-ownership-next-increment.txt`. The ownership foundation, the full entity profile UI, and the Settings ownership-reassignment bypass closure are all implemented and verified — both at the database layer (scratch Postgres) and, new in this revision, interactively in a real browser against an isolated mock-data harness. **Still not deployed, and still not verified against any real Supabase project** (nonproduction or otherwise) — see below for exactly why and what's needed.
+> **BOUNDED CHECKPOINT REACHED — September 24, 2026 (v3.2).** Batch I and revised H7 are approved; this batch was authorized for bounded local implementation per `ZMR-approved-work-terminal-prompt.txt`, `ZMR-ownership-next-increment.txt`, and `ZMR-ownership-closeout-terminal-prompt.txt`. Everything in approved scope that can be built and verified *without* a real Supabase target is now built and verified locally — including, as of v3.2, the I5 Property-information stale-edit guard that v3.1 had wrongly deferred. **Still not deployed, still not verified against any real Supabase project, still not owner-accepted.** The next step is not more code: it is the owner's environment decision (contract §9.5), then integration testing, then Checklist B.
 
-# O1-A — terminal implementation prompt (v3.1, in progress)
+# O1-A — terminal implementation prompt (v3.2, at checkpoint)
 
-This is a **continuation prompt**. Read `O1-A-implementation-contract.md` v3.1 in full first, especially its §0 (what changed and why), §9 (verification — read carefully: it distinguishes database-level evidence, seed-fixture vs. fictional-fixture evidence, and browser-harness evidence, none of which is Supabase-integration evidence), and §10 (remaining work).
+This is a **continuation prompt**. Read `O1-A-implementation-contract.md` v3.2 in full first, especially its §0 (what changed and why), §2.8/§4.1 (the stale-edit guard), §9 (verification — read carefully: it distinguishes database-level evidence, seed-fixture vs. fictional-fixture evidence, and browser-harness evidence, none of which is Supabase-integration evidence), §9.5 (the environment assessment and the one decision pending), and §10 (remaining work).
 
 ---
 
@@ -15,16 +15,17 @@ This is a **continuation prompt**. Read `O1-A-implementation-contract.md` v3.1 i
 - The full entity profile page (`/entities/:id`): Identity, Contacts, Linked properties, Tax classification + Election history, Membership, Documents (Phase 1), Financial accounts.
 - The property-side Ownership box, now with an explicit "mark complete" control.
 - The Settings ownership-reassignment bypass closed — `OrganizationTypePropertiesPanel`/`useOrganizationTypeProperties` deleted, `updatePropertyLlc`/`listPropertiesByLlc` removed, `OrganizationTypeList` now embeds the same `EntityLinkedPropertiesPanel` the entity profile uses.
+- **The I5 Property-information stale-edit guard** (v3.2): `properties.updated_at` maintained by a new trigger migration (`20260925080000`), `updateProperty` refuses a stale draft at the database boundary, both callers of the save path guarded, draft preserved on conflict with a two-choice notice (keep editing / discard and load latest) and no overwrite path. Verified on scratch Postgres (T1–T7, contract §9.2) and in the mock browser harness (nine-step run, §9.4).
 - `npm run build`/`lint`/`test` all clean (20/20 tests).
-- Real browser verification via an isolated mock-data harness (`npm run dev:harness`, `http://localhost:5180/harness.html`) — genuine evidence the UI renders and behaves correctly, explicitly **not** Supabase-integration or owner-acceptance evidence (contract §9.4).
+- Real browser verification via an isolated mock-data harness (`npm run dev:harness`, `http://localhost:5180/harness.html`, now with a third view for the stale-edit guard) — genuine evidence the UI renders and behaves correctly, explicitly **not** Supabase-integration or owner-acceptance evidence (contract §9.4).
+- **Owner test checklists written**: `O1-A-owner-test-checklist.md` — Checklist A (mock harness, runnable by the owner today) and Checklist B (real integration acceptance, every step UNTESTED until a target exists).
 
 **What's still not done, in priority order:**
 
-1. **Get real Supabase integration testing running.** No Docker/Colima is available in this environment, and this Supabase org has exactly one project — the live one. Two options, both requiring the owner's action (see "Environment action needed" below): (a) the owner installs Docker or Colima so `supabase start` can run this project's actual local stack, or (b) the owner creates a second, dedicated nonproduction Supabase project. Do not attempt either yourself without the owner's explicit go-ahead — installing platform software and creating external projects are both actions CLAUDE.md/the governing instructions reserve for the owner.
-2. Once a real Supabase target exists: apply the 7 migrations there (`supabase db reset` for a local stack, or `supabase db push` against a real nonproduction project — never the live one), re-run every scenario in the contract's §9.2 against real Postgres/PostgREST/Auth, and run the §2.7 cross-account pre-check against a copy of real data if testing against anything derived from production.
-3. **Confirm whether the pre-existing Property information box's own save should get the same stale-write guard** now built for ownership interests (contract §10 item 1).
-4. **Hosted upload size limit** — still blocks Phase 2 (batch file upload) only; check with whoever has Supabase dashboard access.
-5. Once 1–2 are done, write the **numbered owner UI test script** the earlier version of this prompt asked for — not written yet, since a script tested only against the mock harness would describe mock behavior, not the owner's real app.
+1. **Owner decision on the test environment** (contract §9.5): local Supabase stack via Docker/Colima (recommended) or a second nonproduction Supabase project. Do not install software or create a project without that decision — both are owner actions under the governing instructions.
+2. Once a real Supabase target exists: apply all 97 migrations there (`supabase db reset` for a local stack, or `supabase db push` with an explicit non-live project ref — never the live one), re-run every scenario in the contract's §9.2 (including T1–T7) against real Postgres/PostgREST/Auth, run the §2.7 cross-account pre-check, then hand the owner Checklist B.
+3. **Hosted upload size limit** — still blocks Phase 2 (batch file upload) only; the CLI cannot read bucket configuration, so this needs whoever has Supabase dashboard access.
+4. Owner acceptance: Checklist A now (mock), Checklist B after item 2.
 
 ### Explicit exclusions — unchanged
 

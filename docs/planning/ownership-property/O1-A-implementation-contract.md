@@ -1,6 +1,6 @@
 # O1-A — technical implementation contract
 
-Version 3.1 · September 24, 2026 · Entity/membership UI complete, Settings bypass closed, I1 completeness logic corrected, migration-idempotency claim corrected, browser-verified against an isolated mock harness. Self-contained — does not require reading v1.0/v2.0 to understand current scope or acceptance criteria.
+Version 3.2 · September 24, 2026 · Close-out checkpoint: I5's Property-information stale-edit guard implemented on both callers of the property save path (the approval-interpretation error in v3.1 corrected), owner test checklists written, test-environment options assessed read-only. Self-contained — does not require reading v1.0/v2.0 to understand current scope or acceptance criteria.
 
 Authority: `ZMR-approval-register.md` (Batches A–D, G1/G2/G4/G6–G8, and Batch I: I1–I5 approved per `ZMR-approved-work-terminal-prompt.txt`), `ZMR-ownership-specification.md`, `ZMR-O1-A-build-package.md`, `ZMR-ownership-next-increment.txt`. Revised H7 (Property Overview tab responsibilities) is a constraint on this batch's UI, not new scope owned by it — see §1.3.
 
@@ -8,9 +8,20 @@ No live migration, deployment, or business-data entry occurred. Every claim in t
 
 ---
 
-## 0. What changed in this revision (v3.1), and why
+## 0. What changed in this revision (v3.2), and why
 
-A checkpoint review of v3.0 found four issues, corrected here:
+The cb9b988 checkpoint review found one approval-interpretation error in v3.1, corrected here, and this revision closes out the bounded assignment in `ZMR-ownership-closeout-terminal-prompt.txt`:
+
+1. **v3.1 misread the I5 approval.** The approval register's Batch I5 text reads: "Add stale-edit protection to the touched Property information save path and change history for new contacts/methods/links, within this batch; preserve drafts…". v3.1 §7/§10 treated the Property-information half of that as an open question ("flagged for confirmation rather than assumed") and only guarded the new ownership-interest tables. That was wrong — it was approved, in this batch. **Now implemented** (§2.8, §3, §4.1, §7): a `set_properties_updated_at` trigger makes `properties.updated_at` a reliable change token; `updateProperty` adds `.eq('updated_at', expected)` to the `UPDATE` so a stale draft matches zero rows at the database boundary and nothing is written; **both** callers of the property save path (`usePropertyProfile.saveProperty` and `usePropertyRegistry.save`) go through it — there is no unguarded caller left; on conflict the form stays mounted with the draft intact and a `PropertySaveConflictNotice` offers exactly two paths, "Keep editing my draft" or "Discard my changes and load the latest version" — never a silent rebase, never an "overwrite anyway".
+2. **Owner test checklists written** — `O1-A-owner-test-checklist.md`: Checklist A (mock harness visual inspection, with what a terminal already drove marked PASSED-mock and the rest marked for the owner) and Checklist B (real integration acceptance, every step UNTESTED pending an isolated Supabase target). v3.1 §10 item 6 had deferred this; the close-out prompt asked for it now with honest labeling, which is what it has.
+3. **Test-environment options assessed read-only** (§9.5): local Supabase stack via Docker/Colima vs. a second nonproduction hosted project, with machine facts, prerequisites, and cost. Recommendation: the local stack. Nothing was installed or created. The hosted upload limit remains unverified — the Supabase CLI has no bucket-configuration read command (only object-level `storage ls/cp/mv/rm`, which would touch live objects), so the blocker is retained, not guessed at.
+4. **§1.2 was stale** — it still listed the entity profile page and membership UI as "not yet built" although v3.1 had built them. Corrected.
+
+Verification for the guard is in §9.2 (scratch Postgres, T1–T7) and §9.4 (mock browser, nine-step conflict scenario) — labeled separately, as always, and neither is Supabase-integration evidence.
+
+### 0.1 Carried from v3.1
+
+A checkpoint review of v3.0 found four issues, corrected in v3.1:
 
 1. **The idempotency claim was wrong.** v3.0 §9.2 said two applications to fresh databases confirmed "idempotency of the sequence as a whole." That only demonstrates repeatable clean setup — it says nothing about re-applying a migration to a database that already has it. Actually tested now (§9.2): re-running an already-applied migration file fails immediately and loudly (`column already exists`, `trigger already exists`), identical to how every pre-existing migration in this repo behaves under the same test. The claim is corrected to state exactly this, not idempotency.
 2. **I1's completeness rule had a real bug**, not just an imprecise description. §2.3/§2.6 (v3.0) validated a set as "complete" whenever every entered owner happened to have a known percentage — meaning a single owner entered at 48%, with the rest of the ownership not yet on file, was rejected outright (treated as an invalid "fully-known-but-not-100%" set) rather than accepted as a legitimate incomplete allocation. Fixed by adding an explicit `allocation_status` ('incomplete' | 'complete') that the caller must assert on every save — never inferred from the entries themselves. See §2.3/§2.6/§4 for the corrected design, and §9.2 for the regression test proving both the old bug and the fix.
@@ -23,7 +34,7 @@ Batch I's five items remain resolved as v3.0 described (repeated here for comple
 - **I2** (history): effective-dated history is preserved for both property ownership and entity membership, with `effective_date` (when the fact was/is true) kept separate from `recorded_at` (when the system learned it); unknown historic dates are recorded as unknown, never guessed.
 - **I3** (legacy pointer): no invented primary/first-owner fallback. `properties.llc_id` is never written by the new mutation path — there is exactly one writable source of truth for title ownership. A read-only view bridges legacy single-owner consumers.
 - **I4** (corrections): every route that can change a property's ownership or an entity's membership requires a reason, with no bypass — enforced at the database level (see §2.6) and now, additionally, with the one remaining application-level bypass (the Settings "Reassign" dropdown) closed (§3.4/§6).
-- **I5** (protection + audit): ownership-interest writes get stale-write protection via a version check; the new contacts/methods/links tables get audit-trail coverage.
+- **I5** (protection + audit): ownership-interest writes get stale-write protection via a version check; the new contacts/methods/links tables get audit-trail coverage; and — added in v3.2 after v3.1 wrongly deferred it — the pre-existing Property information save path gets stale-edit protection with draft preservation (§2.8).
 - **Revised H7**: the Property Overview tab keeps Overview limited to identity, a compact occupancy/rent snapshot, and property details; deeper KPI/Financials/Mortgage/Activity/Documents behavior stays in their own tabs. This contract's new Ownership section lives in Overview (identity-adjacent, per Batch E's approved page order: "Property identity → Ownership → Acquisition → ..."); the entity profile page is its own contextual route (§3.1), not a nav addition, and does not duplicate anything already owned by another tab.
 
 ---
@@ -40,9 +51,8 @@ Batch I's five items remain resolved as v3.0 described (repeated here for comple
 
 ### 1.2 Explicitly not yet built (see §10 for the concrete remaining-work list)
 
-- The owner/entity profile page (`/entities/:id`) itself — Identity, Contacts, Tax classification, Documents, Financial-accounts sections. The query layer for contacts and entity documents exists and is verified at the schema/RLS level (§9), but no UI consumes it yet.
-- The `OrganizationTypePropertiesPanel` reassign-dropdown replacement — the entity-side "remove this entity's interest" control that must call the same shared function as the property-side box built in this pass. Left as an isolated, named remaining item (§10) rather than touched partially.
-- Entity membership interest UI (the query/RPC layer exists and is verified; no box renders it yet).
+- Phase 2 document upload on entity screens (D2–D4) — blocked on the unverified hosted per-file limit (§8, §10).
+- Any UI surface for reading the ownership/membership correction logs (Batch M's History presentation — approved separately, not started here).
 - Any acquisition, Add-property-flow, or Documents-center work — unchanged exclusions from every prior version of this contract.
 - Any bookkeeping/tax-calculation code path. No percentage anywhere in this schema is read by `financial_transactions`, `chart_of_accounts`, or any report.
 
@@ -182,6 +192,26 @@ returned zero rows. **This is not evidence about the actual hosted production da
 
 Triggers were added for these two pre-existing relationships and for every new relationship this batch introduces (`contact_links.contact_id/property_id/llc_id`, `contact_methods.contact_id`, `document_owner_links.document_id/llc_id`) — each verified directly: setting `properties.llc_id` to a foreign-account entity, and separately inserting a `contact_links`/`document_owner_links` row crossing accounts, were both rejected with a clear `cross-account reference rejected (...)` message naming the specific relationship.
 
+### 2.8 Property information stale-edit protection (I5, added in v3.2)
+
+Migration: `20260925080000_properties_set_updated_at.sql`. `properties.updated_at` already existed but nothing maintained it — every other table with an `updated_at` in this schema has its own `set_<table>_updated_at` trigger, and `properties` was the exception. The migration adds `set_properties_updated_at()` (`before update`, sets `new.updated_at = now()`), following that exact per-table convention rather than introducing a shared trigger function. No backfill: existing rows keep whatever `updated_at` they have (the token only needs to be *stable between a read and a write*, and to *change on every write* — both true from the moment the trigger exists). The audit trigger's `skip_cols` already excludes `updated_at`, so the token never produces a spurious audit row (verified, §9.2 T5).
+
+The guard lives at the database boundary, not in application logic: `updateProperty(id, input, expectedUpdatedAt)` issues
+
+```sql
+update properties set … where id = $1 and updated_at = $2 returning …
+```
+
+If another editor saved since this draft's baseline read, the row's `updated_at` no longer equals the baseline, the `UPDATE` matches zero rows, **nothing is written**, and PostgREST's `.single()` returns `PGRST116`. `updateProperty` then does one follow-up read of the row and returns a discriminated result: `saved` (with the fresh row), `conflict` (with the *latest* row, for the notice), `not_found` (row gone, or not visible under RLS), or `error`. Callers switch on `kind`; there is no path by which a stale draft reaches the table.
+
+**Both callers of the property save path are guarded** — the close-out prompt asked for every caller to be reviewed so no bypass remains, and there are exactly two:
+- `usePropertyProfile.saveProperty` (Property profile → Overview → Property information box).
+- `usePropertyRegistry.save` (the registry's edit form path; not reachable from today's registry UI, which only creates, but the code path exists and is guarded identically).
+
+`createProperty` (insert) is unchanged — there is nothing to be stale against on a new row. No other file writes to `properties` directly; `updatePropertyLlc` was deleted in v3.1.
+
+**Draft preservation:** on `conflict`, the hook stores the latest row in `conflict` state and returns `false` **without** touching `property` (the baseline) or the mounted form — the user's typed values remain exactly where they were. The baseline `updated_at` is deliberately *not* advanced, so a retried Save is refused again against the same baseline: the only exit is the user's explicit choice. `discardDraftAndLoadLatest` sets `property` to the latest row and bumps a `formResetKey` that re-keys `PropertyForm`, re-seeding it from the newer data (still in edit mode, so the user can re-apply their edits by hand). `keepEditingAfterConflict` just clears the notice. In `usePropertyRegistry`, the conflict path specifically does **not** call `refresh()` — `refresh()` flips `loading`, which unmounts the form and would have destroyed the draft.
+
 ---
 
 ## 3. TypeScript query/service layer — as built
@@ -192,7 +222,7 @@ Triggers were added for these two pre-existing relationships and for every new r
 | `src/modules/llcs/ownershipInterestsQueries.ts` | Extended | Every Supabase call for both interest tables and both correction logs. This revision adds `AllocationStatus`/`OwnershipCompleteness` types, `getLlcMembershipSummary`, and threads `allocationStatus` through `replacePropertyOwnershipInterests`/`replaceLlcMembershipInterests` and `validateOwnershipEntriesClientSide` (§0 point 2) |
 | `src/modules/contacts/contactsQueries.ts` | New module (v3.0) | `contacts`/`contact_methods`/`contact_links` CRUD, `listContactsForLlc`/`listContactsForProperty` (joined, methods embedded) |
 | `src/modules/documents/documentsQueries.ts` | Extended (v3.0) | `listDocumentsForLlc` (via `document_owner_links` join), `uploadEntityDocument`/`createEntityLink` (accept `llcIds: string[]`), `getAccountStorageUsage` |
-| `src/modules/properties/propertiesQueries.ts` | Reduced | `PropertyForOrganizationType`, `listPropertiesByLlc`, and `updatePropertyLlc` **removed** (not deprecated, deleted outright — CLAUDE.md's guidance against backward-compat cruft) after confirming zero remaining callers. These were the Settings-side bypass's only data-access functions (§3.4) |
+| `src/modules/properties/propertiesQueries.ts` | Reduced (v3.1), extended (v3.2) | v3.1: `PropertyForOrganizationType`, `listPropertiesByLlc`, and `updatePropertyLlc` **removed** (not deprecated, deleted outright — CLAUDE.md's guidance against backward-compat cruft) after confirming zero remaining callers. These were the Settings-side bypass's only data-access functions (§3.4). v3.2: `Property` gains `updated_at` (selected in `PROPERTY_COLUMNS`, excluded from `PropertyInput`); `updateProperty(id, input, expectedUpdatedAt)` now takes the baseline token and returns `UpdatePropertyResult` (`saved`/`conflict`/`not_found`/`error`) — §2.8 |
 | `src/shared/pickLists/pickListsQueries.ts` | Extended | `PickListName` union gains `'tax_election_type'`, `'contact_method_label'`, `'contact_role'` — no migration needed, since `pick_list_options.list_name` is plain `text` with no database-level check constraint; this is a TypeScript-only addition |
 
 `npm run build` (`tsc -b && vite build`), `npm run lint` (`oxlint`), and `npm run test` (`vitest run`) are all clean against the full repository with every file in this document added, per §9.1.
@@ -234,6 +264,10 @@ Triggers were added for these two pre-existing relationships and for every new r
 
 **Verified interactively in a real browser** (§9.4): adding a second owner, checking "complete," entering a reason, and saving correctly produced a two-owner view with a green "Complete allocation" badge — the literal regression case for the I1 fix, confirmed end-to-end through actual rendered UI, not just at the database layer.
 
+### 4.1 Property information conflict UX (v3.2)
+
+`src/modules/properties/PropertySaveConflictNotice.tsx` — a `role="alert"` block rendered *above* the still-mounted `PropertyForm` inside the Property information box's edit state (`PropertyProfileOverviewTab.tsx`) and above the registry form (`PropertyRegistry.tsx`). Text: "Your changes were not saved. {address} was changed by someone else after you started editing. Your draft is still here — nothing you typed has been lost, and nothing on the server was overwritten." Two buttons only: **Discard my changes and load the latest version** and **Keep editing my draft**. No third "save anyway" option exists, by design — the approved requirement is to prevent overwriting newer changes, and an overwrite button would be exactly that. The box stays in edit mode throughout; Cancel still works as before and discards the draft the normal way.
+
 ---
 
 ## 5. What this contract explicitly excludes (unchanged from every prior version)
@@ -269,7 +303,14 @@ Triggers were added for these two pre-existing relationships and for every new r
 
 **New in this revision — isolated browser-test harness** (never imported by the real app; see §9.4 for what it is and isn't evidence of): `src/devHarness/` (`mockSupabase.ts`, `mockRpc.ts`, `mockAuthContext.tsx`, `mockSupabaseClient.ts`, `fixtures.ts`, `HarnessApp.tsx`, `main.tsx`), `harness.html`, `vite.harness.config.ts`, `package.json`'s new `dev:harness` script.
 
-**Modified in the prior revision (v3.0), unchanged here**: `src/modules/documents/documentsQueries.ts`, `src/modules/properties/PropertyProfileOverviewTab.tsx`, `package.json` (added `vitest`/`test` script), `.env.test`, `vitest.config.ts`.
+**Modified in the prior revision (v3.0)**: `src/modules/documents/documentsQueries.ts`, `src/modules/properties/PropertyProfileOverviewTab.tsx`, `package.json` (added `vitest`/`test` script), `.env.test`, `vitest.config.ts`.
+
+**v3.2 (stale-edit guard close-out):**
+- New migration: `supabase/migrations/20260925080000_properties_set_updated_at.sql`.
+- New: `src/modules/properties/PropertySaveConflictNotice.tsx`; `docs/planning/ownership-property/O1-A-owner-test-checklist.md`.
+- Modified: `src/modules/properties/propertiesQueries.ts` (`updated_at`, `UpdatePropertyResult`, guarded `updateProperty`), `usePropertyProfile.ts` and `usePropertyRegistry.ts` (both callers switched to the guarded call; `conflict`/`formResetKey`/`keepEditingAfterConflict`/`discardDraftAndLoadLatest`), `PropertyProfileOverviewTab.tsx`, `PropertyProfile.tsx`, `PropertyRegistry.tsx` (wiring the notice and form re-key).
+- Harness only: `src/devHarness/HarnessApp.tsx` (third view exercising the real save path with a "simulate another editor" control), `fixtures.ts` (full `Property` shape incl. `updated_at`), `mockSupabase.ts` (bumps `updated_at` on UPDATE like the trigger; emits `PGRST116` on a zero-row `.single()`; adds `in`/`gte`/`lte` filters; returns row *copies* — see §9.4 for why that last one mattered).
+- Untouched again: `Settings.tsx`, `AppShell.tsx`, `App.tsx`, and every file outside `src/modules/properties/`, `src/devHarness/`, and the two docs named above.
 
 **Untouched**: `Settings.tsx`, `AppShell.tsx`, every file under `src/modules/units`/`leases`/`tenants`, and the entire parallel Batch E/F/G/H Property-Overview-layout planning track.
 
@@ -283,7 +324,7 @@ Unchanged principles from prior drafts, now implemented rather than only specifi
 - **Validation**: client-side check blocks Save with an inline error; the database is the actual enforcement boundary regardless of what the client already checked.
 - **Failed requests**: on error, `saving` clears, the message renders via `role="alert"`, and entered values are preserved (the user can retry without retyping) — matching the existing pattern throughout this codebase.
 - **Retry/double-submit**: the Save button disables for the duration of the request.
-- **Conflicting edits**: implemented for the ownership-interest tables specifically (I5) via the version-counter check in §2.6 — **not** retrofitted onto the pre-existing Property information box's own save in this pass (see §10; still an open confirmation item, not assumed either way).
+- **Conflicting edits**: implemented for the ownership-interest tables (I5) via the version-counter check in §2.6, and — as of v3.2 — for the Property information save path via the `updated_at` token check in §2.8, with the draft-preserving notice in §4.1. Both refuse the stale write at the database boundary; neither ever rebases and saves a draft on the user's behalf.
 - **Cross-account isolation**: §2.7, verified.
 
 ---
@@ -299,6 +340,8 @@ Phase 1 (link/read-only document work) does not depend on the hosted storage lim
 ### 9.1 Static checks
 
 `npm run build` (`tsc -b && vite build`) — clean. `npm run lint` (`oxlint`) — clean; 11 new warnings appear across the new hook files (all the identical pre-existing `react(set-state-in-effect)` pattern that already appears roughly 50 times throughout this codebase's other `use<Module>.ts` hooks — not a new category of issue, and not something this codebase treats as an error). `npm run test` (`vitest run`) — 20/20 passing (16 from v3.0 plus 4 new regression cases for the I1 completeness fix, §9.2).
+
+**Re-run for v3.2** after the stale-edit guard and harness changes: `npm run build` ✓ (the only output beyond success is Vite's pre-existing chunk-size advisory), `npm run lint` exit 0 (the two warnings in the touched hooks are the pre-existing `useEffect(refresh)` lines, unchanged by this work), `npm run test` 20/20. The clean-clone check required by CLAUDE.md's Definition of Done was run after the v3.2 commit — see the close-out entry in `ZMR-CURRENT-WORK.md` for its result.
 
 ### 9.2 Database-level verification (scratch Postgres 16, not hosted — see the caveat below)
 
@@ -319,6 +362,18 @@ A disposable local Postgres 16.15 cluster (Homebrew, no Docker available in this
    - An empty entry set with `allocation_status='complete'` → **rejected**: `A complete allocation must include at least one owner`.
    - The identical four cases repeated against `replace_llc_membership_interests` (30%-only/incomplete accepted, same set/complete rejected, stale-version rejected) — confirming parity between the property and membership functions, per the instruction to preserve consistency "across all ownership/membership correction routes."
 
+**New in v3.2 — stale-edit guard, scratch database `zmr_test4`** (all 97 migrations applied fresh, including the new trigger migration; fictional fixtures: Account A with two members, Account B with one, one `ZMR-TEST-FIXTURE` property in Account A; every statement executed as an authenticated member via `set role authenticated` + a mocked `auth.uid()`, so RLS was in force):
+
+| # | Scenario | Result |
+|---|---|---|
+| T1 | Member of A updates with the matching `updated_at` token | 1 row updated; `updated_at` moved forward (trigger fired) |
+| T2 | Same member retries with the now-stale token | 0 rows updated; column values unchanged |
+| T3 | Two concurrent editors: A1 and A2 both read token `ts0`; A2 writes `township='B-wrote-this'` first (1 row); A1 then writes with `ts0` | A1: 0 rows; `township` still `'B-wrote-this'`; A1's follow-up `select … where id=…` sees the row → the client classifies this as `conflict`, not `not_found` |
+| T4 | Member of Account B attempts the same `UPDATE … where id = <A's property> and updated_at = <correct token>` | 0 rows updated **and** 0 rows visible on the follow-up read (RLS) → `not_found` on the client; nothing written |
+| T5 | `audit_log` rows for the property after T1–T3 | Only `city` and `township` change rows; no `updated_at` row (skip_cols honored) |
+| T6 | Member of A re-reads the fresh token and updates | 1 row — a normal save after a conflict resolves cleanly |
+| T7 | Reapply `20260925080000_properties_set_updated_at.sql` to a database that already has it | Fails immediately: `trigger "properties_set_updated_at" for relation "properties" already exists` — same non-idempotent behavior as every other migration in this repo (§0.1 point 1) |
+
 **What this does and does not prove:** this is genuine execution evidence for the SQL's correctness, RLS behavior, trigger logic, and (new in this revision) the corrected completeness rule — a materially stronger signal than "written but never run." It is Postgres 16.15 against a hand-assembled mock of Supabase's platform schema, not the hosted project (Postgres 17.6.1 per `supabase/.temp/postgres-version`), and every scenario used either the repo's own seed data (schema-level tests) or clearly-fictional invented identities (feature-level tests) — never real business data. Before any real deployment: (a) re-run the same migration sequence through the project's actual Supabase toolchain against a real nonproduction Supabase project (this environment had no Docker, so `supabase start` was not available — a genuine environmental limitation, not a shortcut), and (b) run the §2.7 pre-check against the actual hosted database, which this session could not reach.
 
 ### 9.3 Not performed (owner-led, per the explicit testing instruction)
@@ -337,17 +392,35 @@ No data was created, modified, or deleted in the live customer account. No live-
 
 **What this does and does not prove:** this is real evidence that the built UI renders correctly, handles its interactive flows correctly, and correctly reflects the corrected I1 logic — a materially stronger signal than "the build compiles." It proves nothing about the real Supabase integration: RLS as enforced by the actual PostgREST/Auth stack, real network latency/error handling, or any interaction with real account data. It is not owner-acceptance testing and is not represented as such anywhere in this document.
 
+**New in v3.2 — stale-edit conflict UX, driven in Chrome against the harness's third view** ("Property information (stale-edit guard)"), which mounts the real `usePropertyProfile` hook, the real `PropertyForm`, and the real `PropertySaveConflictNotice`; a harness-only button plays the second editor by mutating the in-memory row's `address` and `updated_at` exactly as the trigger would. Nine-step scripted run, every assertion true:
+
+1. View shows `000 Fictional Test Way`, token `2026-09-01T00:00:00.000Z`. 2. Edit opens the form. 3. Draft typed: `123 My Unsaved Draft St`. 4. Simulated other editor: counter 1, row changed. 5. **Save refused**: notice shown with the exact §4.1 wording naming `1 Changed-By-Someone-Else Ave`; draft still in the field; still in edit mode; no button matching /overwrite/ anywhere in the DOM. 6. **Keep editing**: notice gone, draft intact. 7. **Save again**: refused again (no rebase). 8. **Discard and load latest**: form re-seeded with `1 Changed-By-Someone-Else Ave`, notice gone, still editing. 9. Edit to `456 Saved After Reload Ave`, Save: succeeds, view mode shows the new address and a fresh token; zero `role="alert"` elements left.
+
+**Two mock-fidelity bugs were found in the harness during this run, both in `src/devHarness/`, neither in application code — recorded so nobody mistakes the fixes for feature work:** (a) the mock query builder lacked `.in()` (used by `listActivityLog`, which `usePropertyProfile` fetches alongside the property), so the view hung on "Loading…" — added `in`/`gte`/`lte`; (b) the mock returned the *same object* it stores as the "database" row, so React state aliased it and the simulated other editor's `updated_at` bump silently updated the hook's baseline token too — the first run's Save therefore *succeeded* when it should have been refused. A real network response is always a fresh copy; the mock now returns copies. Until (b) was fixed the harness could not have demonstrated a conflict at all, which is exactly why the scratch-Postgres run (§9.2 T1–T7) is the primary evidence for the guard and the browser run is evidence for the *UX around* it.
+
+### 9.5 Test-environment assessment — read-only, nothing installed or created (v3.2)
+
+**Machine (observed):** Apple Silicon (arm64), macOS 15.3.1, 10 CPU cores, 16 GB RAM, ~597 GiB free of 926 GiB. No `docker`, `colima`, `orbstack`, or `podman` binary on the PATH. Supabase CLI 2.90.0 installed (2.117.0 available). `supabase projects list` shows exactly one project in this org — "ZMR Real Estate", ref `jsrovnaxrtllvvavfqvq`, the live one, linked to this repo.
+
+**Option 1 — local stack (`supabase start`).** Prerequisite per Supabase's own docs: a running Docker-compatible daemon (Docker Desktop, or a lightweight alternative such as Colima/OrbStack/Podman). The stack pulls roughly a dozen images (Postgres, PostgREST, GoTrue, Storage, Kong, Studio, etc.) — a few GB of disk and a few GB of RAM for the container VM; this machine clears both with room to spare. Cost: none (Docker Desktop's free tier covers small businesses; Colima is open source). Figures here are from the terminal's working knowledge of Supabase's local-development docs and Docker's licensing terms — no web page was fetched in this session, so confirm the current numbers on those pages before relying on them. Nothing touches the live project; migrations run via `supabase db reset` against the local containers only. One-time owner action: install one of those tools. Risk: low; fully reversible (uninstall).
+
+**Option 2 — second nonproduction Supabase project.** Steps: Supabase dashboard → New project under the existing org → apply migrations with `supabase db push` after linking *from a separate checkout or with an explicit `--project-ref`*, never by re-linking this working copy (which is linked to live). Cost: on Supabase's Free plan a second active project is $0 (the plan allows a small number of active projects per org); on a paid plan each additional project bills at that plan's per-project rate. The org's current plan and the exact rate were **not** checked — no billing page was read and no plan status was queried — so confirm on the dashboard before choosing this option. Ongoing: a second hosted project to remember to pause/clean up; Free-tier projects auto-pause after inactivity.
+
+**Recommendation: Option 1.** It exercises this project's *actual* platform stack (Postgres 17, PostgREST, Auth, Storage) rather than a hand-built approximation, costs nothing, creates no new cloud surface, and cannot touch the live project even by mis-linking. Option 2 is the fallback if the owner prefers not to install a container runtime.
+
+**The one owner decision needed:** Option 1 or Option 2. The terminal will not install software (Option 1) or create a project (Option 2) without that decision.
+
+**Hosted upload limit — still unverified, blocker retained.** The only authorized access this session has is the linked CLI. Its `storage` subcommands are `ls`, `cp`, `mv`, `rm` — object operations against live buckets, i.e. live data — and there is no bucket-*configuration* read command. The dashboard was not opened. So the per-file limit was neither read nor guessed; Phase 2 upload stays blocked on someone with dashboard access reading Storage → Settings → "Upload file size limit".
+
 ---
 
 ## 10. Remaining work and open items
 
-Concrete, not a request for more product decisions — Batch I already resolved the material ones. Items resolved in this revision (entity profile UI, membership UI, the Settings bypass) are removed from this list; see §0 for what changed.
+Concrete, not a request for more product decisions — Batch I already resolved the material ones. Items closed in v3.1 (entity profile UI, membership UI, the Settings bypass, membership-reason parity) and in v3.2 (the Property-information stale-edit guard — §0 point 1; the owner checklists — §0 point 2) are removed from this list.
 
-1. **Retrofit the stale-write guard onto the pre-existing Property information box's own save?** Still not done — flagged for confirmation rather than assumed, since it changes behavior on an already-shipped form beyond what this batch strictly needed to touch.
-2. **Hosted upload size limit.** Still unverifiable without Supabase dashboard/CLI access — blocks Phase 2 (batch file upload) only, per §8. Nothing else in this batch is blocked by it.
-3. **Docker-based local Supabase verification** (`supabase start` + the project's own migration tooling) was unavailable in this environment; §9.2's verification, while real, used a hand-built approximation of the Supabase platform, not the platform itself. Whoever has Docker available should re-run the migration sequence through `supabase db reset` before this is trusted for a real nonproduction deployment.
-4. **No real Supabase project (nonproduction or otherwise) beyond the single live "ZMR Real Estate" project was found** (`supabase projects list` returns exactly one, linked, project). §9.4's browser verification is real but explicitly not Supabase-integration evidence — it cannot be, since the harness's mock client never makes a network call. The concrete minimum action to get real integration testing: either (a) install Docker or a lightweight alternative (e.g. Colima — free, open source) so `supabase start` can run the project's actual local stack, or (b) create a second, dedicated nonproduction Supabase project through the dashboard for this kind of testing going forward. Both are the owner's call — see the accompanying report for the exact cost/action needed; neither was done in this session (installing platform software and creating external projects both require the owner's explicit action per the governing instructions).
-5. **Whether entity membership changes need the same reason-capturing rigor as property ownership changes, applied consistently, has been resolved as "yes"** in this revision — `EntityMembershipSection`/`replace_llc_membership_interests` require a reason exactly like the property side, with full parity verified (§9.2). This item from earlier drafts is now closed, listed here only so its resolution is visible rather than silently dropped.
-6. **A numbered owner UI test script** should be written once the owner has Docker or a nonproduction Supabase project available to actually run the app against (item 4) — a script written against the mock harness would describe mock behavior, not the owner's real app, so it is deliberately not written yet; see the terminal prompt for what it needs to contain when that blocker clears.
+1. **Real Supabase integration testing has not happened.** Every verification in §9 is scratch-Postgres or mock-browser evidence. What unblocks it is the single owner decision in §9.5: local stack (Option 1, recommended) or a second nonproduction project (Option 2). Once one exists: apply all 97 migrations there (`supabase db reset` locally, or `supabase db push` with an explicit non-live project ref), run the §2.7 cross-account pre-check, re-run §9.2's scenarios (including T1–T7) against the real platform, and only then hand the owner Checklist B.
+2. **Owner acceptance has not happened.** Checklist A (mock) is ready for the owner now — it needs nothing but `npm run dev:harness`. Checklist B waits on item 1.
+3. **Hosted upload size limit** — still unverified; the CLI cannot read bucket configuration (§9.5). Blocks Phase 2 upload only.
+4. **Before any production migration:** run the §2.7 pre-check queries against the actual hosted database and report any rows found, then apply the 8 new migrations (`20260925010000` … `20260925080000`) through the normal toolchain. Not authorized in this session and not attempted.
 
-Nothing above reopens G1/G2/G4/G6–G8 or I1–I5. Everything else in this document is either a resolved, implemented, and verified fact, or an explicitly isolated remaining item.
+Nothing above reopens G1/G2/G4/G6–G8 or I1–I5. Ownership is **not complete and not released**: items 1–2 are required by CLAUDE.md's Definition of Done and remain outstanding. Everything else in this document is either a resolved, implemented, and locally verified fact, or an explicitly isolated remaining item.
