@@ -299,3 +299,17 @@ Executed `ZMR-isolated-integration-terminal-prompt.txt`. Confirmed d686e73 is HE
 **Files:** new `vite.practice.config.ts`, `envs/practice/.env.example`, `docs/planning/ownership-property/ZMR-practice-bootstrap-plan.md`; modified `src/shared/supabaseClient.ts` (fail-closed check), `src/shared/AppShell.tsx`/`src/index.css` (practice banner), `package.json` (`dev:practice` script). Roadmap 9.25 added, marked partial with the exact blocker.
 
 **Not done, not claimed done:** the practice project itself, any real Supabase integration testing, ownership/Insurance/document verification against a real backend, owner acceptance, and production release. Batch O2–O7/P/Q untouched.
+
+## Practice project created and real integration verified — September 24, 2026
+
+Owner independently verified no additional charge and said to continue, reusing an existing project if present (none was) and creating one otherwise.
+
+**In plain language:** the "ZMR Practice" project now exists (Supabase project ref `gxgvrktzpxhtqklupvif`, same organization as your real project, same region). All 97 database migrations were applied to it. The two migrations that happened to embed your real account name and your two real property addresses (an artifact of how production was originally set up, not anything new) were handled exactly as planned: they run unmodified everywhere except inside a disposable, one-time-use copy of the repo (never your tracked project files) where one line was adjusted so the practice database doesn't choke on a reference to your real login that obviously doesn't exist in an empty practice project. Afterward, that real-named account and the two real properties were deleted from practice and replaced with two disposable, obviously-fake test logins and one fictional account.
+
+Then I actually used the real dashboard — not a mock — against this project: created a fictional property, added an owner, marked ownership complete, added an insurance policy, uploaded and re-opened real documents (up to about 8.8 MB), and reproduced the "someone else is editing this at the same time" warning by changing the property directly in the practice database while a browser tab had it open for editing — the warning appeared correctly and nothing was silently overwritten. I also signed in as a second fake login and confirmed it cannot see the first one's property at all.
+
+**Verified:** `npm run build`/`lint`/`test` clean (53/53, 76-line lint baseline unchanged). Everything above is real evidence against a real, separate Supabase backend — not the mock harness. Your real dashboard (port 5173) was never touched, and this repo's own connection to your real Supabase project was confirmed unchanged throughout.
+
+**Still open:** the exact hosted upload size limit (only confirmed working up to ~8.8 MB — the automation tooling available to this session can't push a single upload past 10 MB, so the true ceiling is still only visible on the Supabase dashboard). Your own review and acceptance of any of this. New checklist: `docs/planning/ownership-property/ZMR-practice-integration-owner-checklist.md` — start there, it has the disposable login email and a numbered walkthrough. The practice project itself was left running (not torn down) so you can keep using it; tell me if you'd rather I delete it.
+
+Roadmap 9.25 checked off. No O2–O7/P/Q/R work started.

@@ -2774,11 +2774,14 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       Still mock-harness evidence — the backend remains fully simulated
       — not Supabase-integration or owner-acceptance evidence.
 
-- [ ] 9.25 Isolated hosted-integration practice environment (owner-
+- [x] 9.25 Isolated hosted-integration practice environment (owner-
       approved, per `ZMR-isolated-integration-terminal-prompt.txt`) —
-      **infrastructure only, PARTIAL: blocked on one owner decision,
-      no practice project exists yet.** Real portfolio data and port
-      5173/its `.env` are completely untouched by this item.
+      infrastructure built, a real practice Supabase project created
+      with the owner's explicit go-ahead ("no additional charge"
+      confirmed by the owner), and real-backend integration verified
+      live end to end (§ "REAL INTEGRATION VERIFIED" below). Real
+      portfolio data and port 5173/its `.env` are completely untouched
+      by this item throughout.
 
       **Built and verified (no live target needed for any of this):**
       a dedicated `npm run dev:practice` (port 5190, `vite.practice.config.ts`)
@@ -2808,23 +2811,61 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       the live project — confirmed via `supabase projects list`,
       exactly one project in the one org today).
 
-      **Genuinely blocked, per the prompt's own explicit stop condition:**
-      no second Supabase project exists, and this session found no way
-      to determine the org's actual billing plan or the incremental
-      cost of a second project without either (a) the Supabase web
-      dashboard (requires a login this session doesn't have and
-      shouldn't be given), or (b) attempting to create the project
-      blind, which the prompt explicitly forbids ("do not upgrade a
-      plan, enter payment details... stop for my decision if payment or
-      account access is required"). The Supabase CLI has no billing
-      subcommand and its `projects`/`orgs list` JSON output carries no
-      plan field. **The owner decision needed:** either confirm the org
-      is on a plan where a second project is free and say so, or create
-      the "ZMR Practice" project directly via the Supabase dashboard
-      (seeing the exact price before confirming) and hand back its
-      project ref/URL/anon key/db password via masked terminal input —
-      either path unblocks the rest of this item immediately, with no
-      further planning needed.
+      **The blocker was resolved by the owner, not guessed around:**
+      the owner independently verified no additional charge and gave
+      explicit go-ahead. `supabase projects create` was then run once
+      (org `axoccuzqqmsucjpfqomm`, region `us-east-2`, a freshly
+      generated db password never displayed or committed) — project
+      ref `gxgvrktzpxhtqklupvif`, status `ACTIVE_HEALTHY`. This
+      repo's own Supabase CLI link was confirmed unchanged before and
+      after (`supabase projects list` still shows only the live
+      project linked).
+
+      **REAL INTEGRATION VERIFIED** — all 97 migrations applied via
+      `supabase db push --db-url` from a disposable scratch clone (the
+      tracked `supabase/migrations/` in this repo was never touched);
+      the two real-data-bearing migrations were handled exactly per
+      `ZMR-practice-bootstrap-plan.md`: the FK-violating
+      `account_members` insert in `20260903192431_seed_zmr_account.sql`
+      (referencing a real production Auth UID absent from practice's
+      own `auth.users`) did in fact hard-abort the push, confirming the
+      plan's own documented uncertainty rather than assuming it away;
+      guarded in the disposable clone only (`where exists (select 1
+      from auth.users where id = v_user_id)`) so the rest of the
+      migration, and every migration after it, applied cleanly. Practice
+      then held the real-named "ZMR Real Estate" account (0 members —
+      the guard worked) and the two real property rows; both deleted,
+      replaced with a fictional "ZMR-TEST-PRACTICE Holdings" account and
+      two disposable Auth users (`zmr-test-practice@example.test`,
+      `...-b@example.test`, created via direct SQL since this app has no
+      public signup flow) — re-verified afterward: 0 real accounts, 0
+      real properties, exactly the fictional ones remain.
+
+      Exercised through the real app UI (`npm run dev:practice`, port
+      5190) against this real project: created a fictional property,
+      confirmed save/reload persistence; added an owner and marked the
+      allocation complete (the real `replace_property_ownership_interests`
+      RPC, not the mock); added an Insurance policy, confirmed the
+      end-before-start validation blocks a bad save with the same
+      message as the mock, then saved a valid one; uploaded a real
+      document (a small file, then a ~8.8 MB one — the browser
+      automation tooling used caps a single upload at 10 MB, so nothing
+      larger was tried) and retrieved it via a real signed Storage URL;
+      reproduced the Property Information stale-write conflict by
+      updating the row directly via SQL mid-edit (the same technique
+      used against scratch Postgres and the mock, now against the real
+      hosted database) — the real conflict notice appeared, the draft
+      was preserved, and the database confirmed NOT overwritten before
+      discarding and reloading; signed in as the second disposable user
+      and confirmed cross-account isolation both ways (empty registry,
+      and the first account's property URL returns "not found") — real
+      Postgres RLS, not a mocked rule.
+
+      **Still not verified:** the *exact* hosted per-file upload limit
+      (only confirmed working up to the ~8.8 MB actually tried; the
+      dashboard remains the only way to read the configured number).
+      Owner acceptance of any of this. New owner checklist:
+      `ZMR-practice-integration-owner-checklist.md`.
 
       Nothing in Batch O2–O7/P/Q was started. `npm run build`/`lint`/
       `test` clean (53/53 tests, 76-line lint baseline, unchanged).
