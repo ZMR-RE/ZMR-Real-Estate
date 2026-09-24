@@ -2602,23 +2602,29 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       valid term; premium shown as entered with "— basis not recorded"
       (zero preserved distinctly from missing, never given an assumed
       annual/installment meaning). History and renewal follow-up are
-      explicitly out of scope for this slice — shown as plain pending-
-      dependency text (Batch O7/O6), never a fake timeline or a
-      nonfunctional button.
+      explicitly out of scope for this slice — simply not rendered, with
+      no on-card engineering/backlog explanation (that context lives in
+      the planning docs and owner checklist, not the customer-facing
+      card) — never a fake timeline or a nonfunctional button.
 
       NOT covered by this slice (remain queued, tracked in
       ZMR-insurance-batch-O.md O2–O7): coverage-limit rows, premium
       basis field (Policy-term total/Installment/Other/Unknown),
       payment-handling/account-link, reusable agent/broker/claims
-      contacts, file upload for insurance documents (still blocked on
-      the unverified hosted per-file limit — reference links keep
-      working), explicit cancellation/renewal recording, renewal
-      follow-up in Action Queue, and shared multi-property policies.
-      None of O2–O7 is implemented, and none is claimed done here.
+      contacts, better upload labels/categories and hosted-limit-aware
+      retry (O4's remaining scope), explicit cancellation/renewal
+      recording, renewal follow-up in Action Queue, and shared
+      multi-property policies. Document **upload itself is not new
+      scope** — the multi-file input and `uploadInsurancePolicyDocument`
+      predate INS-1 and are unchanged by it; what's genuinely unverified
+      is real-backend behavior (never run against actual Supabase this
+      session, only the mock harness) and the hosted per-file size
+      limit, both pre-existing gaps this slice didn't touch. None of
+      O2–O7 is implemented, and none is claimed done here.
 
-      Verified: `npm run build`/`lint`/`test` clean (20/20 tests,
-      unchanged — no new test file; the term-status logic was exercised
-      live instead, per the two verification methods below). Real
+      Verified: `npm run build`/`lint`/`test` clean (20/20 tests as of
+      the initial slice; the review-cleanup pass below added a dedicated
+      test file). Real
       application code (not a bespoke screen) exercised in a real
       Chrome browser via the isolated mock-data harness
       (`npm run dev:harness`) mounting the actual `PropertyProfile` page
@@ -2640,6 +2646,57 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       mock-harness evidence (no real Supabase involved, by construction)
       — not owner acceptance and not hosted-integration evidence; see the
       owner checklist below for what the owner should verify live.
+
+      REVIEW CLEANUP (same day): three corrections, per owner review
+      feedback, none of them a scope change. (a) The per-card
+      "Policy change history isn't available yet... pending Batch O7"/
+      "Renewal follow-up... pending Batch O6" text is removed —
+      customer-facing cards no longer name internal batch numbers or
+      explain unbuilt-feature status; that reasoning lives in planning
+      docs and the owner checklist now, and the card simply shows
+      nothing for a feature it doesn't have (the honest state, not a
+      gap needing a caption). (b) `parseDateOnly`'s comment wrongly
+      claimed dates are read on "the account's own calendar day
+      regardless of viewer timezone" — there is no per-account timezone
+      anywhere in this app; corrected to state plainly that this is the
+      viewer's own local timezone, self-consistent within one viewer's
+      session (matching a real DST-crossing test below), never a
+      canonical account-wide "today". (c) The "NOT covered by this
+      slice" list above wrongly implied document upload itself was
+      unbuilt; corrected — upload (multi-file input,
+      `uploadInsurancePolicyDocument`) predates INS-1 and is untouched;
+      only real-backend behavior and the hosted per-file limit remain
+      unverified, both pre-existing gaps. The owner checklist (v1.1)
+      carries the same three corrections.
+
+      New test coverage added this pass:
+      `src/modules/insurance/insuranceQueries.test.ts`, 33 deterministic
+      cases (53 total in the suite) — every documented boundary:
+      missing/single-known/both-known dates for all five status kinds,
+      start-today and end-today edges, the day immediately after a term
+      ends, a reversed range both "now-straddling" and "entirely
+      future", the 7/30-day urgency thresholds at the boundary and one
+      day past it on each side, and two real daylight-saving crossings
+      (`America/New_York` spring-forward 2026-03-08 and fall-back
+      2026-11-01, TZ pinned in the test so it's deterministic on any
+      machine) confirming `daysBetween`'s `Math.round` recovers the
+      correct whole-day count despite the 23-/25-hour transition days.
+      `termCountdownPhrase` (now exported from InsuranceLedgerList.tsx)
+      is tested directly against `computeInsuranceTermStatus`'s own
+      output, including the DST cases, to confirm the badge and its
+      countdown text can never disagree — both read the same
+      `daysUntilStart`/`daysUntilEnd`, neither re-derives "today"
+      itself. No logic defect was found in `computeInsuranceTermStatus`/
+      `insuranceTermUrgency` — every case already matched the documented
+      semantics; this pass added proof, not a fix, beyond the two
+      comment/text corrections above. `npm run build`/`lint`/`test`
+      re-run clean (test: 53/53, up from 20; lint: same pre-existing
+      warning count). Re-verified live in the mock harness at desktop
+      and true 387px mobile widths: the removed pending-feature text is
+      gone from every card with no visual gap left behind, and the
+      Documents group's file input is confirmed present and unchanged in
+      Edit — still mock-harness evidence only, not Supabase-integration
+      or owner-acceptance evidence.
 
 ## 10. Phase 10 — Navigation & Action Consolidation
 - [x] 10.1 Rename left nav to: Properties, Log It, Action Queue, Financials & Tax, Command Center, Automations, Portfolio KPIs
@@ -2767,3 +2824,4 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 
 ## Ongoing — Q&A / SOP Log
 - [ ] A living reference section (in-app or a maintained doc) answering recurring "how do I do X" questions as they come up during real use (e.g. "how do I add past mortgage information"). Updated whenever a new section is built out or a real question arises — not a one-time deliverable, an evolving document.
+

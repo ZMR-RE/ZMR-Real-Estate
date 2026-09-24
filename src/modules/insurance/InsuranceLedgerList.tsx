@@ -2,6 +2,7 @@ import { useState } from 'react'
 import {
   computeInsuranceTermStatus,
   insuranceTermUrgency,
+  termCountdownPhrase,
   type InsurancePolicy,
   type InsuranceTermStatus,
 } from './insuranceQueries'
@@ -51,26 +52,6 @@ function formatDate(value: string): string {
 function TermStatusBadge({ status }: { status: InsuranceTermStatus }) {
   const urgency = insuranceTermUrgency(status)
   return <span className={`status-badge ${URGENCY_BADGE_VARIANTS[urgency]}`}>{TERM_STATUS_LABELS[status.kind]}</span>
-}
-
-function termCountdownPhrase(status: InsuranceTermStatus): string | null {
-  switch (status.kind) {
-    case 'within':
-      if (status.endsToday) return 'term ends today'
-      if (status.daysUntilEnd === null) return null
-      return `expires in ${status.daysUntilEnd} day${status.daysUntilEnd === 1 ? '' : 's'}`
-    case 'upcoming':
-      if (status.daysUntilStart === null) return null
-      return `starts in ${status.daysUntilStart} day${status.daysUntilStart === 1 ? '' : 's'}`
-    case 'ended':
-      if (status.daysUntilEnd === null) return null
-      return `ended ${Math.abs(status.daysUntilEnd)} day${Math.abs(status.daysUntilEnd) === 1 ? '' : 's'} ago`
-    case 'invalid_range':
-      return 'expiration date is before the effective date'
-    case 'incomplete':
-    default:
-      return null
-  }
 }
 
 function dateRangeText(policy: InsurancePolicy): string | null {
@@ -194,29 +175,6 @@ function DocumentsArea({ policy, onViewDocument }: { policy: InsurancePolicy; on
   )
 }
 
-// INS-1 item 4 — "History may only be rendered if real existing events
-// support it; otherwise record history integration as a pending
-// dependency, not a fake timeline or a nonfunctional control." No audit
-// trigger is attached to property_insurance_policies today (only
-// properties/llcs/mortgage_details are), so there is no real per-policy
-// change history to show yet. This is plain text, not a button — a
-// nonfunctional control would be worse than no control. Same treatment
-// for renewal follow-up (Batch O6, not yet built): no button, no "none
-// scheduled" claim, just an honest note of what's pending and why.
-function PendingFeatureNotes() {
-  return (
-    <div className="insurance-policy-pending-notes">
-      <p className="insurance-policy-pending-note">
-        Policy change history isn't available yet — no change-tracking is attached to insurance policies today
-        (pending Batch O7's history integration).
-      </p>
-      <p className="insurance-policy-pending-note">
-        Renewal follow-up reminders aren't available yet (pending Batch O6) — nothing is scheduled or assumed.
-      </p>
-    </div>
-  )
-}
-
 function PolicyCard({
   policy,
   defaultExpanded,
@@ -250,11 +208,17 @@ function PolicyCard({
 
       <SummaryRow policy={policy} status={status} />
 
+      {/* Review cleanup — no change-history timeline or renewal-reminder
+          control is rendered here: neither has real data behind it yet
+          (no audit trigger on property_insurance_policies; no reminder
+          storage/Action Queue wiring — tracked in the Batch O planning
+          docs and owner checklist, not repeated as on-card copy). Showing
+          nothing is the honest state, not a gap to explain to the owner
+          on every single card. */}
       {expanded && (
         <>
           <ExpandedGroups policy={policy} status={status} />
           <DocumentsArea policy={policy} onViewDocument={onViewDocument} />
-          <PendingFeatureNotes />
         </>
       )}
     </div>

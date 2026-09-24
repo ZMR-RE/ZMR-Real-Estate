@@ -2219,25 +2219,6 @@ th {
   margin: var(--space-2) 0 0;
 }
 
-/* INS-1 item 4 — plain, non-interactive text for a feature this policy
-   card doesn't have real data to support yet (change history, renewal
-   follow-up). Muted and slightly smaller than body text so it reads as
-   a quiet dependency note, never mistaken for a live control. */
-.insurance-policy-pending-notes {
-  margin-top: var(--space-3);
-}
-
-.insurance-policy-pending-note {
-  margin: 0;
-  color: var(--text);
-  font-size: var(--text-xs);
-  font-style: italic;
-}
-
-.insurance-policy-pending-note + .insurance-policy-pending-note {
-  margin-top: var(--space-1);
-}
-
 /* ============================================================
    Capture History filter bar (roadmap 1.24) — Type and Show used to be
    two bare label/select pairs with no shared container (each select at

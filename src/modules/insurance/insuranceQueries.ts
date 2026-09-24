@@ -80,9 +80,19 @@ export interface InsuranceTermStatus {
 }
 
 function parseDateOnly(value: string): Date {
-  // No 'Z' — parsed as local midnight, so this always reflects the
-  // account's own calendar day regardless of the viewer's timezone,
-  // consistently with every other date on this row.
+  // Review cleanup — corrected claim: no 'Z' means this is parsed at
+  // local midnight in whichever timezone the code is actually running
+  // in (the viewer's browser). There is no per-account or per-property
+  // timezone setting anywhere in this app, so this is NOT "the
+  // account's calendar day regardless of viewer" — a viewer in a
+  // different timezone gets their own local midnight for the same
+  // stored date. What IS true, and is what actually matters here:
+  // every date this module computes (this one and todayAtMidnight()
+  // below) is parsed the same way, in the same execution context, so
+  // within one viewer's session the countdown/status is self-consistent
+  // — never a UTC-vs-local mismatch like the old getInsuranceStatus/
+  // daysUntilExpiration pairing had. Do not read this as an account
+  // timezone; none exists, and adding one is out of scope here.
   return new Date(`${value}T00:00:00`)
 }
 
@@ -92,6 +102,13 @@ function todayAtMidnight(): Date {
   return today
 }
 
+// Math.round (not a plain integer divide) is deliberate: two local-
+// midnight Dates that cross a daylight-saving transition are not
+// exactly N*86400000 ms apart (a spring-forward day is 23h, fall-back
+// 25h), so a straight divide could land on e.g. 13.958 or 14.042
+// instead of 14 — rounding recovers the correct whole-day count in
+// every realistic case (a 1-hour DST shift is nowhere near enough to
+// flip which integer a divide-then-round lands on).
 function daysBetween(from: Date, to: Date): number {
   return Math.round((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24))
 }
@@ -172,6 +189,33 @@ export function insuranceTermUrgency(status: InsuranceTermStatus): InsuranceTerm
     case 'incomplete':
     default:
       return 'neutral'
+  }
+}
+
+// Review cleanup — moved here from InsuranceLedgerList.tsx (a plain
+// function export from a .tsx component file was tripping the
+// react(only-export-components) lint rule) and reads only
+// status.daysUntilStart/daysUntilEnd/endsToday — the exact fields
+// computeInsuranceTermStatus already produced — so the badge label and
+// its countdown text can never read a different "today" than each
+// other; neither this function nor the badge re-derives it.
+export function termCountdownPhrase(status: InsuranceTermStatus): string | null {
+  switch (status.kind) {
+    case 'within':
+      if (status.endsToday) return 'term ends today'
+      if (status.daysUntilEnd === null) return null
+      return `expires in ${status.daysUntilEnd} day${status.daysUntilEnd === 1 ? '' : 's'}`
+    case 'upcoming':
+      if (status.daysUntilStart === null) return null
+      return `starts in ${status.daysUntilStart} day${status.daysUntilStart === 1 ? '' : 's'}`
+    case 'ended':
+      if (status.daysUntilEnd === null) return null
+      return `ended ${Math.abs(status.daysUntilEnd)} day${Math.abs(status.daysUntilEnd) === 1 ? '' : 's'} ago`
+    case 'invalid_range':
+      return 'expiration date is before the effective date'
+    case 'incomplete':
+    default:
+      return null
   }
 }
 
