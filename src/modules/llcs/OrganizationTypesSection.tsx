@@ -1,17 +1,18 @@
 import { useAuth } from '../../shared/auth/AuthContext'
 import { useHoldingCompanies } from '../holdingCompanies/useHoldingCompanies'
-import { useLlcs } from './useLlcs'
 import { useOrganizationTypes } from './useOrganizationTypes'
 import { LlcForm } from './LlcForm'
 import { OrganizationTypeList } from './OrganizationTypeList'
 
 // Roadmap 8.2a/8.2b/8.2c — Organization type ("LLC") management: rename,
-// edit/archive existing records (previously add-only), and see/reassign
-// the properties assigned to one. Lives in Settings, same home as Chart
-// of Accounts and the pick-list manager — no new top-level nav item.
+// edit/archive existing records (previously add-only), and see the
+// properties assigned to one (via EntityLinkedPropertiesPanel, embedded
+// by OrganizationTypeList — reassignment now goes through the guarded
+// ownership-correction mechanism, not a direct picker here). Lives in
+// Settings, same home as Chart of Accounts and the pick-list manager —
+// no new top-level nav item.
 export function OrganizationTypesSection() {
   const { accountId } = useAuth()
-  const { llcOptions } = useLlcs(accountId)
   const { holdingCompanyOptions, addHoldingCompany } = useHoldingCompanies(accountId)
   const { llcs, loading, error, isAdding, editingId, saving, startAdding, startEditing, cancelForm, add, save, toggleArchived } =
     useOrganizationTypes(accountId)
@@ -27,9 +28,7 @@ export function OrganizationTypesSection() {
         <p>Loading…</p>
       ) : (
         <OrganizationTypeList
-          accountId={accountId}
           llcs={llcs}
-          llcOptions={llcOptions}
           editingId={editingId}
           saving={saving}
           error={error}

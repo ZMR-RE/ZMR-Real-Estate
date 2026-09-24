@@ -105,7 +105,20 @@ create policy "members can view their llc membership interests"
 create table property_ownership_versions (
   property_id uuid primary key references properties(id) on delete cascade,
   account_id uuid not null references accounts(id) on delete cascade,
-  version bigint not null default 0
+  version bigint not null default 0,
+  -- I1 fix: completeness is an explicit fact the user asserts on every
+  -- save, never inferred from the data. A single owner entered at 48%
+  -- with nothing else on file is NOT "complete" just because that one
+  -- entry has a known percentage — it may simply mean the remaining
+  -- owner(s) haven't been entered yet. 'complete' may only be set (and
+  -- is only accepted, see replace_property_ownership_interests below)
+  -- when every current owner has a known percentage and they sum to
+  -- exactly 100. Defaults to 'incomplete' — a set with zero owners is
+  -- reported as 'none' by property_ownership_summary regardless of this
+  -- column's value, so 'incomplete' here is never a misleading default
+  -- for a brand-new, empty property.
+  allocation_status text not null default 'incomplete'
+    check (allocation_status in ('incomplete', 'complete'))
 );
 alter table property_ownership_versions enable row level security;
 create policy "members can view their property ownership versions"
@@ -114,7 +127,9 @@ create policy "members can view their property ownership versions"
 create table llc_membership_versions (
   llc_id uuid primary key references llcs(id) on delete cascade,
   account_id uuid not null references accounts(id) on delete cascade,
-  version bigint not null default 0
+  version bigint not null default 0,
+  allocation_status text not null default 'incomplete'
+    check (allocation_status in ('incomplete', 'complete'))
 );
 alter table llc_membership_versions enable row level security;
 create policy "members can view their llc membership versions"
@@ -192,11 +207,22 @@ where is_account_member(p.account_id)
 group by p.id, p.account_id
 having count(*) filter (where poi.is_current) <= 1;
 
--- Ownership-completeness summary, computed rather than stored, so it can
--- never drift from the interests it summarizes (I1: "explicit
--- completeness state" — shown to the user, not silently inferred
--- elsewhere; "no inferred remainder or equal shares" — this view never
--- fills in a missing percentage, it only reports what is/isn't known).
+-- Ownership-completeness summary — completeness is read from the
+-- explicit allocation_status the user asserted on the property's last
+-- successful save (property_ownership_versions.allocation_status), NEVER
+-- inferred from whether the current percentages happen to sum to 100.
+-- This is the corrected design: an earlier draft derived 'complete'
+-- merely from "every current owner has a known percentage," which
+-- wrongly treated a single owner entered at 48% (with more owners yet to
+-- be added) as a finished allocation. See
+-- replace_property_ownership_interests in the next migration for where
+-- allocation_status is actually set and validated — this view only
+-- reads it back, so the two can never disagree with each other.
+--
+-- 'none' (zero current owners) always wins regardless of the stored
+-- flag, so a brand-new property with nothing entered yet never reads as
+-- 'incomplete' in a way that implies someone already started an
+-- allocation.
 create view property_ownership_summary as
 select
   p.id as property_id,
@@ -206,11 +232,30 @@ select
   sum(poi.percentage) filter (where poi.is_current) as percentage_total,
   case
     when count(*) filter (where poi.is_current) = 0 then 'none'
-    when count(*) filter (where poi.is_current and poi.percentage is null) > 0 then 'partial'
-    when sum(poi.percentage) filter (where poi.is_current) = 100 then 'complete'
-    else 'partial'
+    else coalesce(pov.allocation_status, 'incomplete')
   end as completeness
 from properties p
 left join property_ownership_interests poi on poi.property_id = p.id
+left join property_ownership_versions pov on pov.property_id = p.id
 where is_account_member(p.account_id)
-group by p.id, p.account_id;
+group by p.id, p.account_id, pov.allocation_status;
+
+-- Entity membership counterpart — same shape, same rule, kept as its own
+-- view rather than a parameterized/union query so each stays a plain,
+-- directly-readable table-shaped object for its own query layer.
+create view llc_membership_summary as
+select
+  l.id as llc_id,
+  l.account_id,
+  count(*) filter (where lmi.is_current) as member_count,
+  count(*) filter (where lmi.is_current and lmi.percentage is not null) as members_with_percentage,
+  sum(lmi.percentage) filter (where lmi.is_current) as percentage_total,
+  case
+    when count(*) filter (where lmi.is_current) = 0 then 'none'
+    else coalesce(lmv.allocation_status, 'incomplete')
+  end as completeness
+from llcs l
+left join llc_membership_interests lmi on lmi.llc_id = l.id
+left join llc_membership_versions lmv on lmv.llc_id = l.id
+where is_account_member(l.account_id)
+group by l.id, l.account_id, lmv.allocation_status;

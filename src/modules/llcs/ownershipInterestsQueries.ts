@@ -48,12 +48,25 @@ export interface LlcMembershipInterest {
   recorded_at: string
 }
 
+// 'complete' is an explicit assertion the user makes on save (see
+// AllocationStatus below) — never inferred here or anywhere else from
+// "every current owner happens to have a known percentage." A single
+// owner entered at 48% with nothing else on file reads as 'incomplete',
+// not 'complete', until the user explicitly says this is the full list.
+export type OwnershipCompleteness = 'none' | 'incomplete' | 'complete'
+
 export interface OwnershipSummary {
   owner_count: number
   owners_with_percentage: number
   percentage_total: number | null
-  completeness: 'none' | 'partial' | 'complete'
+  completeness: OwnershipCompleteness
 }
+
+// What the caller asserts on every save — required, not inferred. See
+// _validate_ownership_entries in 20260925060000_ownership_interest_functions.sql:
+// 'complete' is rejected server-side unless every current entry has a
+// known percentage summing to exactly 100.
+export type AllocationStatus = 'incomplete' | 'complete'
 
 export interface PropertyOwnershipCorrection {
   id: string
@@ -172,6 +185,15 @@ export async function getPropertyOwnershipSummary(accountId: string, propertyId:
     .maybeSingle<OwnershipSummary>()
 }
 
+export async function getLlcMembershipSummary(accountId: string, llcId: string) {
+  return supabase
+    .from('llc_membership_summary')
+    .select('member_count, members_with_percentage, percentage_total, completeness')
+    .eq('account_id', accountId)
+    .eq('llc_id', llcId)
+    .maybeSingle<{ member_count: number; members_with_percentage: number; percentage_total: number | null; completeness: OwnershipCompleteness }>()
+}
+
 export async function listPropertyOwnershipCorrections(accountId: string, propertyId: string) {
   return supabase
     .from('property_ownership_corrections')
@@ -193,12 +215,14 @@ export async function replacePropertyOwnershipInterests(
   entries: OwnershipEntryInput[],
   reason: string,
   expectedVersion: number,
+  allocationStatus: AllocationStatus,
 ) {
   return supabase.rpc('replace_property_ownership_interests', {
     p_property_id: propertyId,
     p_entries: entries.map((e) => ({ owner_id: e.ownerId, percentage: e.percentage, effective_date: e.effectiveDate ?? null })),
     p_reason: reason,
     p_expected_version: expectedVersion,
+    p_allocation_status: allocationStatus,
   })
 }
 
@@ -207,12 +231,14 @@ export async function replaceLlcMembershipInterests(
   entries: OwnershipEntryInput[],
   reason: string,
   expectedVersion: number,
+  allocationStatus: AllocationStatus,
 ) {
   return supabase.rpc('replace_llc_membership_interests', {
     p_llc_id: llcId,
     p_entries: entries.map((e) => ({ owner_id: e.ownerId, percentage: e.percentage, effective_date: e.effectiveDate ?? null })),
     p_reason: reason,
     p_expected_version: expectedVersion,
+    p_allocation_status: allocationStatus,
   })
 }
 
@@ -250,12 +276,23 @@ export interface ClientSideValidationResult {
 }
 
 // Client-side convenience only, mirroring the server's own rules
-// (_validate_ownership_entries in the same migration referenced above) so
-// the Save button can be disabled and an inline error shown before a
+// (_validate_ownership_entries in 20260925060000_ownership_interest_functions.sql)
+// so the Save button can be disabled and an inline error shown before a
 // round trip — NOT the authoritative check. The server re-validates every
 // one of these rules regardless of what the client already checked, since
 // a client-side check can be bypassed and must never be the only gate.
-export function validateOwnershipEntriesClientSide(entries: OwnershipEntryInput[]): ClientSideValidationResult {
+//
+// `allocationStatus` must be passed explicitly by the caller — this
+// function never infers 'complete' from the entries themselves (a single
+// owner entered at 48% with nothing else is a valid 'incomplete' set, not
+// an error, and not silently treated as finished). This mirrors a real
+// correction made after an earlier version of both this function and its
+// server-side counterpart wrongly inferred completeness from "every
+// entry has a known percentage."
+export function validateOwnershipEntriesClientSide(
+  entries: OwnershipEntryInput[],
+  allocationStatus: AllocationStatus,
+): ClientSideValidationResult {
   const seen = new Set<string>()
   let knownSum = 0
   let unknownCount = 0
@@ -277,11 +314,22 @@ export function validateOwnershipEntriesClientSide(entries: OwnershipEntryInput[
     knownSum = Math.round((knownSum + rounded) * 100) / 100
   }
 
+  // Applies regardless of allocationStatus.
   if (knownSum > 100) {
     return { valid: false, error: `Known percentages cannot exceed 100% (currently ${knownSum}%).` }
   }
-  if (entries.length > 0 && unknownCount === 0 && knownSum !== 100) {
-    return { valid: false, error: `A fully-known allocation must total exactly 100% (currently ${knownSum}%).` }
+
+  if (allocationStatus === 'complete') {
+    if (entries.length === 0) {
+      return { valid: false, error: 'A complete allocation must include at least one owner.' }
+    }
+    if (unknownCount > 0) {
+      return { valid: false, error: 'A complete allocation cannot include an owner with an unknown percentage.' }
+    }
+    if (knownSum !== 100) {
+      return { valid: false, error: `A complete allocation must total exactly 100% (currently ${knownSum}%).` }
+    }
   }
+
   return { valid: true }
 }

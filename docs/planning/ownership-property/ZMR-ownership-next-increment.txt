@@ -1,0 +1,21 @@
+Continue O1-A implementation from commit 7b615e5. Do not start Batch J implementation; it is recorded for a later build.
+
+Read the latest approval register and checkpoint. Finish the remaining approved ownership UI: entity profile (Identity, contextual Contacts, linked properties, Tax/election history, Documents and existing financial-account access), membership-interest UI, and every ownership entry route. Replace the Settings reassignment bypass with the same guarded correction mechanism. Preserve all current records, navigation and concurrent work. Do not stop because production migrations are unauthorized: finish source/UI work and isolated verification independently.
+
+Resolve these checkpoint issues:
+- Two successful applications of migrations to two fresh databases demonstrate repeatable clean setup, not idempotency against an already-migrated database. Correct that claim. Test repeat execution only where the migration contract requires it; do not gratuitously rerun production migrations.
+- I1 permits incomplete ownership records. Do not infer 'complete' merely because each entered owner has a percentage. One entered owner at 48% may mean another owner has not been entered yet. Explicitly distinguish incomplete vs complete allocation; reject >100% at the same level/time, require 100% when marked complete, and prevent incomplete data from masquerading as an allocation ready for reporting. Review current validation and test this scenario before building on it. If the implementation needs a new user-facing completion action, specify it clearly.
+- Synthetic fixture pre-checks do not verify existing hosted data. Keep these results distinct. Use obviously fictional isolated fixtures instead of copying real property identities.
+- Preserve frontend and database/API enforcement, audit consistency, aggregate concurrency checks, and protection against stale overwrites across all ownership/membership correction routes.
+
+Create a safe path to browser testing:
+1. Inspect whether an actual local Supabase runtime or existing authorized nonproduction Supabase project is available. Do not modify production environment variables or point the user's existing live-backed localhost session at new services.
+2. If one is available, configure an isolated checkout/dev server with separate environment settings, apply migrations only to the disposable nonproduction target, and verify actual Supabase Auth/API/RLS/Storage behavior. Do not print credentials. Do not create paid external projects or install new platform software without approval.
+3. If unavailable, continue isolated component/browser tests with clearly labeled mock data; these do NOT count as Supabase integration or owner acceptance. Return the exact minimum environment action needed, its cost if any, and what the owner must do. Do not ask for passwords in chat.
+4. Give a distinct URL and environment label when ready. Do not claim the live-connected localhost app is test-ready merely because mock UI works. Do not create or alter live business/test records; the owner performs business-data entry through the dashboard.
+
+Hosted upload-limit verification blocks upload release only. Finish unaffected screens and local behavior while that remains unresolved. Leave incomplete upload controls clearly unavailable rather than presenting working saves that cannot persist.
+
+Run build/lint/tests appropriate to each increment and inspect the local UI in a browser where safe. Report lint warnings accurately. Update project docs and completion evidence; no completed roadmap checkbox until its full criteria pass. No push, production migration, deployment, real-record remapping or deletion.
+
+Return: local implementation completed; exact remaining work; checks and limitations; no-bypass status; test environment availability; exact URL if truly usable; and a short numbered owner test script when ready. Keep working through approved unblocked steps rather than stopping after another assessment.

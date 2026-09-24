@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import {
+  getPropertyOwnershipSummary,
   getPropertyOwnershipVersion,
   interpretOwnershipError,
   listPropertyOwnershipInterests,
   replacePropertyOwnershipInterests,
+  type AllocationStatus,
+  type OwnershipCompleteness,
   type OwnershipEntryInput,
   type PropertyOwnershipInterest,
 } from '../llcs/ownershipInterestsQueries'
@@ -19,6 +22,7 @@ export function usePropertyOwnershipInterests(propertyId: string) {
   const { accountId } = useAuth()
   const [interests, setInterests] = useState<PropertyOwnershipInterest[]>([])
   const [version, setVersion] = useState(0)
+  const [completeness, setCompleteness] = useState<OwnershipCompleteness>('none')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -26,9 +30,10 @@ export function usePropertyOwnershipInterests(propertyId: string) {
   const refresh = useCallback(async () => {
     if (!accountId) return
     setLoading(true)
-    const [{ data, error: fetchError }, currentVersion] = await Promise.all([
+    const [{ data, error: fetchError }, currentVersion, { data: summary }] = await Promise.all([
       listPropertyOwnershipInterests(accountId, propertyId),
       getPropertyOwnershipVersion(propertyId),
+      getPropertyOwnershipSummary(accountId, propertyId),
     ])
     setLoading(false)
 
@@ -39,15 +44,19 @@ export function usePropertyOwnershipInterests(propertyId: string) {
     setError(null)
     setInterests(data ?? [])
     setVersion(currentVersion)
+    // completeness is explicit, server-stored state (never inferred
+    // client-side from whether percentages happen to sum to 100) — see
+    // ownershipInterestsQueries.ts's OwnershipCompleteness comment.
+    setCompleteness(summary?.completeness ?? 'none')
   }, [accountId, propertyId])
 
   useEffect(() => {
     refresh()
   }, [refresh])
 
-  const save = async (entries: OwnershipEntryInput[], reason: string) => {
+  const save = async (entries: OwnershipEntryInput[], reason: string, allocationStatus: AllocationStatus) => {
     setSaving(true)
-    const { error: saveError } = await replacePropertyOwnershipInterests(propertyId, entries, reason, version)
+    const { error: saveError } = await replacePropertyOwnershipInterests(propertyId, entries, reason, version, allocationStatus)
     setSaving(false)
 
     if (saveError) {
@@ -66,5 +75,5 @@ export function usePropertyOwnershipInterests(propertyId: string) {
     return true
   }
 
-  return { interests, version, loading, error, saving, save, refresh }
+  return { interests, version, completeness, loading, error, saving, save, refresh }
 }

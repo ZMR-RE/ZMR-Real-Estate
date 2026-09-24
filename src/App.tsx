@@ -5,6 +5,7 @@ import { LoginForm } from './modules/auth/LoginForm'
 import { PropertyRegistry } from './modules/properties/PropertyRegistry'
 import { PropertyProfile } from './modules/properties/PropertyProfile'
 import { TenantProfile } from './modules/tenants/TenantProfile'
+import { EntityProfile } from './modules/llcs/EntityProfile'
 import { CaptureInbox } from './modules/capture/CaptureInbox'
 import { ReconciliationQueue } from './modules/captureTriage/ReconciliationQueue'
 import { RentOps } from './modules/rentOps/RentOps'
@@ -34,6 +35,7 @@ function App() {
           <Route path="/properties" element={<PropertyRegistry />} />
           <Route path="/properties/:id" element={<PropertyProfile />} />
           <Route path="/tenants/:id" element={<TenantProfile />} />
+          <Route path="/entities/:id" element={<EntityProfile />} />
           <Route path="/capture" element={<CaptureInbox />} />
           <Route path="/reconciliation" element={<ReconciliationQueue />} />
           <Route path="/rent-ops" element={<RentOps />} />

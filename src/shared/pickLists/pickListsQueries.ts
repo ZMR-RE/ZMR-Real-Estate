@@ -93,6 +93,9 @@ export type PickListName =
   | 'heating_type'
   | 'exterior_wall_material'
   | 'insurance_payment_plan'
+  | 'tax_election_type'
+  | 'contact_method_label'
+  | 'contact_role'
 
 export interface PickListOption {
   id: string

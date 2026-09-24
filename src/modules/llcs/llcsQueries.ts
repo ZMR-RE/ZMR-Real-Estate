@@ -143,3 +143,86 @@ export async function updateLlc(id: string, input: LlcInput) {
 export async function setLlcArchived(id: string, archived: boolean) {
   return supabase.from('llcs').update({ archived }).eq('id', id).select(LLC_COLUMNS).returns<Llc[]>().single()
 }
+
+// Tax election history (20260925020000_llc_tax_elections.sql) — 3B:
+// "retain prior history rather than overwrite." A mid-flight status
+// update (Submitted -> Accepted) is an ordinary UPDATE of the same row
+// (updateTaxElectionStatus); a genuinely new/different election never
+// rewrites an old row's own facts — it inserts a new row and marks the
+// old one 'superseded' (supersedeTaxElection).
+export interface LlcTaxElection {
+  id: string
+  llc_id: string
+  election_type: string
+  status: 'unknown' | 'no_election_recorded' | 'submitted' | 'accepted' | 'superseded'
+  submitted_date: string | null
+  effective_date: string | null
+  acceptance_date: string | null
+  notes: string | null
+  superseded_by_id: string | null
+  created_at: string
+}
+
+export type LlcTaxElectionInput = Pick<LlcTaxElection, 'election_type' | 'status' | 'submitted_date' | 'effective_date' | 'acceptance_date' | 'notes'>
+
+const TAX_ELECTION_COLUMNS =
+  'id, llc_id, election_type, status, submitted_date, effective_date, acceptance_date, notes, superseded_by_id, created_at'
+
+export async function listTaxElections(accountId: string, llcId: string) {
+  return supabase
+    .from('llc_tax_elections')
+    .select(TAX_ELECTION_COLUMNS)
+    .eq('account_id', accountId)
+    .eq('llc_id', llcId)
+    .order('created_at', { ascending: false })
+    .returns<LlcTaxElection[]>()
+}
+
+export async function createTaxElection(accountId: string, llcId: string, input: LlcTaxElectionInput, createdBy: string) {
+  return supabase
+    .from('llc_tax_elections')
+    .insert({ ...input, account_id: accountId, llc_id: llcId, created_by: createdBy })
+    .select(TAX_ELECTION_COLUMNS)
+    .returns<LlcTaxElection[]>()
+    .single()
+}
+
+// Ordinary progress update on the SAME row (e.g. Submitted -> Accepted) —
+// never used to change election_type/dates in a way that rewrites a
+// settled fact. That case goes through supersedeTaxElection instead.
+export async function updateTaxElectionStatus(
+  id: string,
+  status: LlcTaxElection['status'],
+  acceptanceDate: string | null,
+  updatedBy: string,
+) {
+  return supabase
+    .from('llc_tax_elections')
+    .update({ status, acceptance_date: acceptanceDate, updated_by: updatedBy })
+    .eq('id', id)
+    .select(TAX_ELECTION_COLUMNS)
+    .returns<LlcTaxElection[]>()
+    .single()
+}
+
+// A genuinely new/different election: inserts a new row, then marks the
+// old one 'superseded' and links it forward — the old row's own
+// election_type/dates/notes are never touched.
+export async function supersedeTaxElection(
+  accountId: string,
+  llcId: string,
+  oldElectionId: string,
+  input: LlcTaxElectionInput,
+  createdBy: string,
+) {
+  const { data: newElection, error: insertError } = await createTaxElection(accountId, llcId, input, createdBy)
+  if (insertError || !newElection) return { data: null, error: insertError }
+
+  const { error: updateError } = await supabase
+    .from('llc_tax_elections')
+    .update({ status: 'superseded', superseded_by_id: newElection.id, updated_by: createdBy })
+    .eq('id', oldElectionId)
+
+  if (updateError) return { data: newElection, error: updateError }
+  return { data: newElection, error: null }
+}

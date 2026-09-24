@@ -139,3 +139,85 @@ H1–H5 approved; unnumbered yes treated as H6 by sequence and disclosed. H7 pen
 ## CURRENT AUTHORIZATION — H7 revision and I1–I5 approved
 
 User requests continuing approved terminal work while future decisions are planned. Follow docs/planning/ownership-property/ZMR-approved-work-terminal-prompt.txt. Incorporate approved I requirements, then implement the local ownership foundation and approved profile functionality; do not stop at another planning-only report. Preserve pending visual/navigation decisions and user-only live data entry. No live migration/deployment authorized. This supersedes older blanket “no implementation yet” checkpoint text for the scoped local work. Terminal progress is not automatically monitored by this chat; owner shares checkpoint reports.
+
+
+## Current checkpoint — 7b615e5 / Batch J approved
+
+Ownership implementation is partial: foundation/services and property Ownership increment committed; entity/membership screens, old Settings bypass and actual Supabase/browser verification remain. No live changes authorized. Follow ZMR-ownership-next-increment.txt to complete independent approved work and establish an isolated test environment. J approved for later, except J2 button placement needs clarification against prior profile-Capture exclusion; shared in-place form and contextual preselection are requested. Do not leap to J while O1-A remains incomplete.
+
+
+## Latest J2 clarification / next workflow planning
+
+User approves a property-profile Capture BUTTON opening the shared in-place form, not a Capture TAB. Property preselected visibly/editably; no automatic owner links. Prior button-exclusion notes are superseded. Batch K capture/review transitions proposed in register; not approved and not added to running ownership implementation.
+
+
+## Latest decision — Batch K approved
+
+K1–K6 approved by “batch k approved.” Capture/review workflow requirements are settled at this level. Next preparation for that queued scope: reconcile existing fields, specify transitions and prepare a realistic visual/handoff. Current ownership implementation remains first; do not switch the running terminal to capture work before finishing its approved increment.
+
+
+## Capture preparation complete — Batch L pending
+
+Prepared docs/planning/capture-review/ZMR-capture-review-specification.md and ZMR-capture-review-preview.html from inspected existing Capture/Action Queue code. J/K remain approved; L1–L4 and preview layout await owner review. Current receipt reconciliation posts a transaction; planned separation must preserve historical transactions and evidence. No application source, migrations or live data changed by this preparation. Ownership terminal continues its existing approved increment; capture remains queued after ownership. Demo browser checks passed; not a production feature or owner acceptance test.
+
+
+## Latest approval — Batch L approved
+
+User: “approve batch L. One thing I noticed missing was history and how it will be presented in our dashboard.” L1–L4 are approved, superseding all pending-L wording above. This does not approve the preview layout or the newly proposed history presentation. J/K/L are approved for the queued capture scope; ownership remains first. History retention was already required, but its display needs an explicit specification.
+
+Next review: docs/planning/capture-review/ZMR-history-presentation-proposal.md, proposed M1–M4. Existing capture History and Property Activity/History inspected; no application changes or live records touched.
+
+
+## Batch M approved — history presentation
+
+Evidence: owner said “approve Batch M.” M1–M4 are approved: preserve existing history destinations and add scoped capture/work/entity history access; newest-first expandable actor/action/time/record entries; operational event coverage with filters and discoverable completed/archived records; read-only history with new correction events, permission controls and honest legacy gaps. See docs/planning/capture-review/ZMR-history-presentation-proposal.md (filename retained, status updated) and specification v0.2. Supersedes earlier pending-M status.
+
+J/K/L/M are approved for the queued capture scope. Ownership remains first. Capture preview layout remains pending; next preparation is the history visual and implementation handoff reconciliation. No application implementation, live records or deployment changed by this approval-recording step.
+
+
+## Capture/history handoff prepared
+
+Approved J–M consolidated in docs/planning/capture-review/ZMR-capture-history-terminal-handoff.md with C1–C5 implementation slices and verification gates. New ZMR-history-preview.html illustrates approved M behavior using fictional records; exact visual styling remains pending owner feedback, not a blocker to approved work using existing design components. Demo browser checks verified expanded field changes, event-type filtering and linked record preview; not live application testing. Ownership increment remains first. No application source, migrations, live records or deployment changed by this preparation. Owner will paste the handoff to terminal; this chat has not dispatched or monitored it.
+
+
+## Owner steering — hold handoff; return to Property Overview
+
+Owner explicitly will not send capture/history handoff while terminal is running and will report completion. Do not dispatch it or presume terminal progress. The consolidated handoff is a reference backlog, not the next all-at-once assignment. After checkpoint review, prepare one cohesive bounded implementation prompt at a time with clear dependencies, preservation checks and owner UI acceptance.
+
+Owner says recent workflow previews lack the existing Property Overview personality. Preserve hero/photo, actual typography/navy palette, hover feedback, box hierarchy and established view/Edit interaction. Recent previews do not approve replacement styling. Return planning to unfinished Overview boxes, then review each property-profile tab, supporting Excel-to-dashboard entry with explicit field mapping. Acquisition C, Overview E, Building F and revised H7 have approved requirements but must not be represented as completed screens or comprehensive visual approval. J–M remain approved queued requirements, not immediate work ahead of Property Overview.
+
+
+## Batch N approved — Financial accounts
+
+Evidence: owner said “batch N approved.” N1–N5 approved in ZMR-property-overview-continuation.md: compact Overview account reference; preserve existing identification and add optional institution/purpose/notes; distinguish property-specific/entity-shared associations without inferred account access; explicit supporting-document links without automatic posting; archive/restore, historical references, Updated on and scoped history.
+
+Queued requirements only. Reconcile multi-owner account context with the current ownership implementation before building. Existing personality/design patterns remain the visual baseline. Terminal handoff remains on hold until owner shares its completion report; do not send the whole backlog. Next Overview planning topic: Insurance. No application source, live records, migration or deployment changed by this approval update.
+
+
+## Insurance review prepared — O pending
+
+See docs/planning/ownership-property/ZMR-insurance-batch-O.md for existing-field inventory, numbered proposals and acceptance checks. Preserve current Insurance cards and property-page personality. N remains approved; O awaits owner feedback. Terminal handoff remains on hold; no source/migration/live-data changes.
+
+## O1-A ownership terminal — increment 2 (entity/membership UI, bypass closure, I1 fix) — September 24, 2026
+
+Continued the ownership implementation from commit `7b615e5`, per `docs/planning/ownership-property/ZMR-ownership-next-increment.txt`. This is the ownership-scoped terminal's own work, separate from the Capture/History/Property-Overview/Insurance planning above — no overlap, no files shared.
+
+**Implemented and verified locally (not deployed):**
+- **Full owner/entity profile page** (`/entities/:id`): Identity, Contacts (reusable people/methods), Linked properties, Tax classification + Election history, Membership (entity roster with percentages), Documents (Phase 1 — link only), Financial accounts (reused unchanged).
+- **Settings ownership-reassignment bypass closed.** `OrganizationTypePropertiesPanel.tsx`/`useOrganizationTypeProperties.ts` deleted; `updatePropertyLlc`/`listPropertiesByLlc` removed from `propertiesQueries.ts`; the Settings "View properties" row now embeds the same `EntityLinkedPropertiesPanel` the entity profile uses. There is exactly one write path for a property's ownership interest now, from either side.
+- **A real correctness bug found and fixed**, per the checkpoint review: the ownership-completeness logic previously inferred "complete" whenever every entered owner had a known percentage — which wrongly rejected the legitimate case of "one owner at 48%, the rest not yet entered." Fixed with an explicit `allocation_status` ('incomplete'/'complete') the user asserts via a checkbox on every save; never inferred. Regression-tested at the database layer and confirmed working in a real browser.
+- **The migration-idempotency claim from the prior checkpoint was corrected.** It previously claimed idempotency from two fresh-database applications, which only shows repeatable clean setup. Actually tested: reapplying an already-applied migration fails immediately and loudly, identical to how every pre-existing migration in this repo behaves — Supabase's own migration ledger, not idempotent SQL, is what prevents double-application in real operation.
+- **Fixture identities corrected to be obviously fictional** (`ZMR-TEST-FIXTURE`-prefixed) for the new verification work, distinct from the prior checkpoint's schema-level tests, which incidentally reused the repo's real seed-migration property/entity names — both are now clearly labeled for what they do and don't prove.
+- **New: an isolated mock-data browser-test harness** (`npm run dev:harness`, `http://localhost:5180/harness.html`) — a separate Vite entry/port with the real Supabase client and auth context replaced by in-memory mocks for that bundle only, never touching the real `npm run dev`/`.env`. Used to actually click through the new UI in a real browser: the property Ownership box's full add-owner/mark-complete/save flow, and every section of the entity profile page, all confirmed rendering and behaving correctly. This is real evidence the UI works, explicitly **not** Supabase-integration or owner-acceptance evidence — the harness cannot reach any real backend by construction (no URL, no key).
+- `npm run build`/`lint`/`test` all clean (20/20 tests, up from 16).
+
+**Genuinely blocked, not attempted:** real Supabase integration testing. This Supabase org has exactly one project (the live one) and this environment has no Docker/Colima for a local stack. Two concrete options exist, both requiring the owner's own action — see the numbered decisions below.
+
+**Files:** see `docs/planning/ownership-property/O1-A-implementation-contract.md` v3.1 §6 for the exact list (2 migrations revised in place, ~13 new application files, ~7 modified, 2 deleted, plus the new `src/devHarness/` harness).
+
+**Owner decisions needed:**
+1. How to get real Supabase integration testing running: install Docker/Colima (free, one-time software install) so `supabase start` works, or create a second dedicated nonproduction Supabase project through the dashboard. Either unblocks re-running all of this session's database-level verification against the real platform instead of a hand-built approximation.
+2. Whether the pre-existing Property information box's own save should get the same stale-write protection now built for ownership interests.
+3. Hosted upload per-file size limit — still needed from whoever has Supabase dashboard access, to unblock Phase 2 (actual file upload) only.
+
+**Next:** once a real Supabase target exists, re-verify against it and write the numbered owner UI test script (deliberately not written yet — a script tested only against the mock harness would describe mock behavior, not the owner's real app).

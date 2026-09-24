@@ -1,15 +1,14 @@
 import { Fragment, useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import type { HoldingCompanyInput } from '../holdingCompanies/holdingCompaniesQueries'
 import { LlcForm } from './LlcForm'
-import { OrganizationTypePropertiesPanel } from './OrganizationTypePropertiesPanel'
+import { EntityLinkedPropertiesPanel } from './EntityLinkedPropertiesPanel'
 import { LlcFinancialAccountsPanel } from './LlcFinancialAccountsPanel'
 import type { Llc, LlcInput } from './llcsQueries'
 
 interface OrganizationTypeListProps {
-  accountId: string | null
   llcs: Llc[]
-  llcOptions: SearchableSelectOption[]
   editingId: string | null
   saving: boolean
   error: string | null
@@ -21,10 +20,15 @@ interface OrganizationTypeListProps {
   onToggleArchived: (llc: Llc) => void
 }
 
+// O1-A (Batch I): the properties-assigned expandable row now embeds
+// EntityLinkedPropertiesPanel — the same component the entity profile's
+// own "Linked properties" box uses — instead of the earlier
+// OrganizationTypePropertiesPanel, whose "Reassign" dropdown called
+// updatePropertyLlc directly with no reason captured. There is now
+// exactly one way to change a property's ownership interest anywhere in
+// the app, entity-side or property-side.
 export function OrganizationTypeList({
-  accountId,
   llcs,
-  llcOptions,
   editingId,
   saving,
   error,
@@ -79,7 +83,9 @@ export function OrganizationTypeList({
             ) : (
               <Fragment key={llc.id}>
                 <tr className={llc.archived ? 'row-voided' : ''}>
-                  <td>{llc.name}</td>
+                  <td>
+                    <Link to={`/entities/${llc.id}`}>{llc.name}</Link>
+                  </td>
                   <td>{llc.holding_company?.name ?? '—'}</td>
                   <td>
                     <span className={`status-badge ${llc.archived ? 'status-badge-neutral' : 'status-badge-success'}`}>
@@ -101,7 +107,7 @@ export function OrganizationTypeList({
                 {expandedId === llc.id && (
                   <tr>
                     <td colSpan={4}>
-                      <OrganizationTypePropertiesPanel accountId={accountId} llcId={llc.id} llcOptions={llcOptions} />
+                      <EntityLinkedPropertiesPanel llcId={llc.id} />
                       <LlcFinancialAccountsPanel llcId={llc.id} />
                     </td>
                   </tr>

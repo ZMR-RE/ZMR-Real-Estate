@@ -3,8 +3,13 @@ import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 import { SearchableSelect } from '../../shared/SearchableSelect'
 import { EditableSection } from '../../shared/EditableSection'
 import { NO_LLC_ID } from '../llcs/useLlcs'
-import { validateOwnershipEntriesClientSide, type OwnershipEntryInput } from '../llcs/ownershipInterestsQueries'
+import { validateOwnershipEntriesClientSide, type AllocationStatus, type OwnershipEntryInput } from '../llcs/ownershipInterestsQueries'
 import { usePropertyOwnershipInterests } from './usePropertyOwnershipInterests'
+
+const COMPLETENESS_LABEL: Record<AllocationStatus, string> = {
+  incomplete: 'Incomplete — more owners may still be added',
+  complete: 'Complete — this is the full ownership allocation',
+}
 
 interface PropertyOwnershipInterestsSectionProps {
   propertyId: string
@@ -24,10 +29,11 @@ interface DraftEntry {
 // replacePropertyOwnershipInterests with a required reason (D1,
 // generalized per I4) — there is no quick path that skips it.
 export function PropertyOwnershipInterestsSection({ propertyId, llcOptions }: PropertyOwnershipInterestsSectionProps) {
-  const { interests, loading, error, saving, save } = usePropertyOwnershipInterests(propertyId)
+  const { interests, completeness, loading, error, saving, save } = usePropertyOwnershipInterests(propertyId)
   const [draft, setDraft] = useState<DraftEntry[] | null>(null)
   const [reason, setReason] = useState('')
   const [addingOwnerId, setAddingOwnerId] = useState<string | null>(null)
+  const [markComplete, setMarkComplete] = useState(false)
   const [clientError, setClientError] = useState<string | null>(null)
 
   const realOwnerOptions = llcOptions.filter((o) => o.id !== NO_LLC_ID)
@@ -41,6 +47,11 @@ export function PropertyOwnershipInterestsSection({ propertyId, llcOptions }: Pr
       })),
     )
     setReason('')
+    // Seeds from the current explicit state rather than defaulting to
+    // false every time — re-opening Edit on an already-complete
+    // allocation shouldn't silently demote it to incomplete unless the
+    // user actually unchecks it.
+    setMarkComplete(completeness === 'complete')
     setClientError(null)
   }
 
@@ -66,7 +77,8 @@ export function PropertyOwnershipInterestsSection({ propertyId, llcOptions }: Pr
   const handleSave = async (exitEditing: () => void) => {
     if (!draft) return
     const entries = draftToEntries(draft)
-    const clientCheck = validateOwnershipEntriesClientSide(entries)
+    const allocationStatus: AllocationStatus = markComplete ? 'complete' : 'incomplete'
+    const clientCheck = validateOwnershipEntriesClientSide(entries, allocationStatus)
     if (!clientCheck.valid) {
       setClientError(clientCheck.error ?? 'Invalid ownership entry.')
       return
@@ -76,7 +88,7 @@ export function PropertyOwnershipInterestsSection({ propertyId, llcOptions }: Pr
       return
     }
     setClientError(null)
-    const ok = await save(entries, reason.trim())
+    const ok = await save(entries, reason.trim(), allocationStatus)
     if (ok) exitEditing()
   }
 
@@ -91,14 +103,25 @@ export function PropertyOwnershipInterestsSection({ propertyId, llcOptions }: Pr
         ) : interests.length === 0 ? (
           <p className="empty-state">No owner on file yet.</p>
         ) : (
-          <dl className="field-grid">
-            {interests.map((interest) => (
-              <div className="field" key={interest.id}>
-                <dt>{interest.owner_name}</dt>
-                <dd>{interest.percentage === null ? 'Percentage not recorded' : `${interest.percentage}%`}</dd>
-              </div>
-            ))}
-          </dl>
+          <>
+            <dl className="field-grid">
+              {interests.map((interest) => (
+                <div className="field" key={interest.id}>
+                  <dt>{interest.owner_name}</dt>
+                  <dd>{interest.percentage === null ? 'Percentage not recorded' : `${interest.percentage}%`}</dd>
+                </div>
+              ))}
+            </dl>
+            {/* Explicit, server-stored completeness — never inferred from
+                whether the percentages above happen to sum to 100. A single
+                owner at 48% with nothing else reads as "Incomplete" here,
+                not silently treated as the finished allocation. */}
+            <p>
+              <span className={`status-badge ${completeness === 'complete' ? 'status-badge-success' : 'status-badge-neutral'}`}>
+                {completeness === 'complete' ? 'Complete allocation' : 'Incomplete — more owners may still be added'}
+              </span>
+            </p>
+          </>
         )
       }
       edit={(exitEditing) => (
@@ -140,6 +163,20 @@ export function PropertyOwnershipInterestsSection({ propertyId, llcOptions }: Pr
               + Add owner
             </button>
           </div>
+
+          <label htmlFor="ownership_mark_complete">
+            <input
+              id="ownership_mark_complete"
+              type="checkbox"
+              checked={markComplete}
+              onChange={(e) => setMarkComplete(e.target.checked)}
+            />
+            This is the complete ownership allocation (every owner listed, percentages totaling 100%)
+          </label>
+          <p>
+            Leave unchecked if more owners may still be added — an incomplete allocation is saved exactly as entered, never
+            padded with an assumed remainder. Currently marked: {COMPLETENESS_LABEL[markComplete ? 'complete' : 'incomplete']}
+          </p>
 
           <div>
             <label htmlFor="ownership_reason">

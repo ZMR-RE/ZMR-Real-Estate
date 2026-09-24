@@ -20,15 +20,29 @@
 -- validation is computed entirely from the caller's desired end state
 -- (p_entries) before any row is touched, so there is never an
 -- observable, partially-applied intermediate state.
+--
+-- Corrected in this revision (checkpoint review finding): the original
+-- version of this function inferred "complete" merely from "every
+-- current entry has a known percentage," which was wrong — a single
+-- owner entered at 48% with nothing else on file does not mean the
+-- allocation is finished; it may simply mean the remaining owner(s)
+-- haven't been entered yet. Completeness is now an explicit
+-- `p_allocation_status` argument the caller must assert on every save
+-- ('incomplete' or 'complete'), never inferred from the entries
+-- themselves. 'complete' is validated strictly (every current owner must
+-- have a known percentage, summing to exactly 100); 'incomplete' only
+-- requires the ordinary per-entry/aggregate-ceiling rules. See
+-- property_ownership_versions.allocation_status /
+-- property_ownership_summary in the previous migration for where this is
+-- stored and read back.
 
 -- Shared validation: entry shape, percentage bounds/precision, duplicate
--- owners, and the aggregate rules from I1 ("known interests must be
--- positive and <=100%, and totals cannot exceed 100%... complete
--- allocations total 100. No inferred remainder or equal shares"). Used by
--- both mutation functions below so the two rule sets can never drift
--- apart from each other.
+-- owners, and the aggregate rules from I1. Used by both mutation
+-- functions below so the two rule sets can never drift apart from each
+-- other.
 create or replace function _validate_ownership_entries(
   p_entries jsonb,
+  p_allocation_status text,
   out known_sum numeric,
   out unknown_count int,
   out entry_count int,
@@ -41,6 +55,10 @@ declare
   v_id uuid;
   v_pct numeric(5,2);
 begin
+  if p_allocation_status not in ('incomplete', 'complete') then
+    raise exception 'Allocation status must be either incomplete or complete.' using errcode = 'ZM003';
+  end if;
+
   known_sum := 0;
   unknown_count := 0;
   entry_count := 0;
@@ -70,13 +88,29 @@ begin
     end if;
   end loop;
 
+  -- Applies regardless of allocation_status: known percentages may never
+  -- sum past 100, complete or not.
   if known_sum > 100 then
     raise exception 'Known ownership percentages cannot exceed 100%% (currently %).', known_sum
       using errcode = 'ZM003';
   end if;
-  if entry_count > 0 and unknown_count = 0 and known_sum <> 100 then
-    raise exception 'A fully-known ownership allocation must total exactly 100%% (currently %).', known_sum
-      using errcode = 'ZM003';
+
+  -- Only a 'complete' assertion demands full knowledge and an exact
+  -- 100% total. An 'incomplete' set is valid with any number of unknown
+  -- percentages and any known sum from 0 up to (and not exceeding) 100 —
+  -- this is what lets "just one owner at 48%, more to come" be saved
+  -- honestly instead of being rejected or silently mislabeled complete.
+  if p_allocation_status = 'complete' then
+    if entry_count = 0 then
+      raise exception 'A complete allocation must include at least one owner.' using errcode = 'ZM003';
+    end if;
+    if unknown_count > 0 then
+      raise exception 'A complete allocation cannot include an owner with an unknown percentage.' using errcode = 'ZM003';
+    end if;
+    if known_sum <> 100 then
+      raise exception 'A complete allocation must total exactly 100%% (currently %).', known_sum
+        using errcode = 'ZM003';
+    end if;
   end if;
 end;
 $$;
@@ -84,12 +118,14 @@ $$;
 -- p_entries shape: jsonb array of {"owner_id": uuid, "percentage": number|null, "effective_date": "YYYY-MM-DD"|null}
 -- representing the COMPLETE desired set of currently-effective owners for
 -- the property. Any existing current interest whose owner_id is absent
--- from this array is treated as removed.
+-- from this array is treated as removed. p_allocation_status ('incomplete'
+-- | 'complete') is a required, explicit assertion — see the file header.
 create or replace function replace_property_ownership_interests(
   p_property_id uuid,
   p_entries jsonb,
   p_reason text,
-  p_expected_version bigint
+  p_expected_version bigint,
+  p_allocation_status text default 'incomplete'
 )
 returns bigint
 language plpgsql
@@ -123,7 +159,7 @@ begin
   end if;
 
   select * into v_known_sum, v_unknown_count, v_entry_count, v_owner_ids
-  from _validate_ownership_entries(p_entries);
+  from _validate_ownership_entries(p_entries, p_allocation_status);
 
   if exists (
     select 1 from unnest(v_owner_ids) as owner_id
@@ -132,8 +168,8 @@ begin
     raise exception 'One or more owners are not part of this account.' using errcode = 'ZM002';
   end if;
 
-  insert into property_ownership_versions (property_id, account_id, version)
-  values (p_property_id, v_account_id, 0)
+  insert into property_ownership_versions (property_id, account_id, version, allocation_status)
+  values (p_property_id, v_account_id, 0, 'incomplete')
   on conflict (property_id) do nothing;
 
   select version into v_current_version
@@ -205,7 +241,7 @@ begin
   end loop;
 
   update property_ownership_versions
-  set version = version + 1
+  set version = version + 1, allocation_status = p_allocation_status
   where property_id = p_property_id
   returning version into v_current_version;
 
@@ -213,8 +249,8 @@ begin
 end;
 $$;
 
-revoke all on function replace_property_ownership_interests(uuid, jsonb, text, bigint) from public;
-grant execute on function replace_property_ownership_interests(uuid, jsonb, text, bigint) to authenticated;
+revoke all on function replace_property_ownership_interests(uuid, jsonb, text, bigint, text) from public;
+grant execute on function replace_property_ownership_interests(uuid, jsonb, text, bigint, text) to authenticated;
 
 -- Entity membership counterpart — identical shape, scoped by llc_id
 -- (the entity) instead of property_id, with member_llc_id (a person or
@@ -223,7 +259,8 @@ create or replace function replace_llc_membership_interests(
   p_llc_id uuid,
   p_entries jsonb,
   p_reason text,
-  p_expected_version bigint
+  p_expected_version bigint,
+  p_allocation_status text default 'incomplete'
 )
 returns bigint
 language plpgsql
@@ -257,7 +294,7 @@ begin
   end if;
 
   select * into v_known_sum, v_unknown_count, v_entry_count, v_member_ids
-  from _validate_ownership_entries(p_entries);
+  from _validate_ownership_entries(p_entries, p_allocation_status);
 
   if p_llc_id = any(v_member_ids) then
     raise exception 'An entity cannot be its own member.' using errcode = 'ZM003';
@@ -270,8 +307,8 @@ begin
     raise exception 'One or more members are not part of this account.' using errcode = 'ZM002';
   end if;
 
-  insert into llc_membership_versions (llc_id, account_id, version)
-  values (p_llc_id, v_account_id, 0)
+  insert into llc_membership_versions (llc_id, account_id, version, allocation_status)
+  values (p_llc_id, v_account_id, 0, 'incomplete')
   on conflict (llc_id) do nothing;
 
   select version into v_current_version
@@ -343,7 +380,7 @@ begin
   end loop;
 
   update llc_membership_versions
-  set version = version + 1
+  set version = version + 1, allocation_status = p_allocation_status
   where llc_id = p_llc_id
   returning version into v_current_version;
 
@@ -351,8 +388,8 @@ begin
 end;
 $$;
 
-revoke all on function replace_llc_membership_interests(uuid, jsonb, text, bigint) from public;
-grant execute on function replace_llc_membership_interests(uuid, jsonb, text, bigint) to authenticated;
+revoke all on function replace_llc_membership_interests(uuid, jsonb, text, bigint, text) from public;
+grant execute on function replace_llc_membership_interests(uuid, jsonb, text, bigint, text) to authenticated;
 
-revoke all on function _validate_ownership_entries(jsonb) from public;
-grant execute on function _validate_ownership_entries(jsonb) to authenticated;
+revoke all on function _validate_ownership_entries(jsonb, text) from public;
+grant execute on function _validate_ownership_entries(jsonb, text) to authenticated;
