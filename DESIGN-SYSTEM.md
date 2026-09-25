@@ -137,6 +137,18 @@ of screens in the app.
   Currently used only by the devHarness-only grouped-Property-form
   preview (not shipped in the real app) — add this modifier again if a
   future real box needs a two-, not three-, column grouping.
+- **`.preview-steps`/`.preview-step`/`.preview-step--active`/`.preview-step--done`**
+  (Batch S, devHarness-only) — a plain four-step indicator for the
+  property-creation flow preview. Reuses existing tokens only, no new
+  color. Not a shipped component — the flow itself is still pending
+  visual approval.
+- **`.insurance-policy-form`** (owner-approved Insurance width fix) —
+  the one named, deliberate exception to the plain-`form` 480px cap
+  above: `max-width: 960px`, so its own 3-column `.field-group-row`
+  isn't squeezed into three ~140px columns. Still a max-width, not a
+  fixed width — collapses the same as any other form at narrower
+  viewports. Scoped to this one class only; every other form in the app
+  keeps the 480px default.
 - **`.field-hint`** (INS-1) — a small muted clarifying line under a
   field, for a case where the label alone could read as asserting more
   than what's actually recorded (e.g. a premium with no stored

@@ -8,6 +8,7 @@ import { usePropertyProfile } from '../modules/properties/usePropertyProfile'
 import { EntityProfile } from '../modules/llcs/EntityProfile'
 import { PropertyProfile } from '../modules/properties/PropertyProfile'
 import { PropertyFormGroupedPreview } from './PropertyFormGroupedPreview'
+import { PropertyCreationFlowPreview } from './PropertyCreationFlowPreview'
 import { AppShell } from '../shared/AppShell'
 import { harnessDb } from './mockSupabaseClient'
 
@@ -20,7 +21,7 @@ import { harnessDb } from './mockSupabaseClient'
 // fixtures.ts, held in memory and reset on reload.
 export function HarnessApp() {
   const [view, setView] = useState<
-    'ownership' | 'entity' | 'property-info' | 'property-overview' | 'form-preview'
+    'ownership' | 'entity' | 'property-info' | 'property-overview' | 'form-preview' | 'creation-flow-preview'
   >('ownership')
 
   const llcOptions = harnessDb.llcs.filter((l) => !l.archived).map((l) => ({ id: l.id as string, label: l.name as string }))
@@ -47,6 +48,13 @@ export function HarnessApp() {
           </button>{' '}
           <button type="button" onClick={() => setView('form-preview')} aria-pressed={view === 'form-preview'}>
             Batch S3 — grouped form visual preview
+          </button>{' '}
+          <button
+            type="button"
+            onClick={() => setView('creation-flow-preview')}
+            aria-pressed={view === 'creation-flow-preview'}
+          >
+            Package 1 — property creation flow preview
           </button>
         </div>
         {view === 'ownership' && <PropertyOwnershipInterestsSection propertyId="harness-property-1" llcOptions={llcOptions} />}
@@ -106,6 +114,18 @@ export function HarnessApp() {
             <Routes>
               <Route element={<AppShell />}>
                 <Route path="/properties/new" element={<PropertyFormGroupedPreview />} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        )}
+        {view === 'creation-flow-preview' && (
+          // Package 1 — the separate four-step CREATION flow, distinct
+          // from form-preview's post-create grouped Edit form above.
+          // Same real-AppShell-frame pattern.
+          <MemoryRouter initialEntries={['/properties/new']}>
+            <Routes>
+              <Route element={<AppShell />}>
+                <Route path="/properties/new" element={<PropertyCreationFlowPreview />} />
               </Route>
             </Routes>
           </MemoryRouter>

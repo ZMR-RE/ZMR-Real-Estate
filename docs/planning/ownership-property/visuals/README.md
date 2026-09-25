@@ -1,27 +1,81 @@
-# Batch S3 / Insurance-width visual evidence
+# Visual evidence — Insurance width, S3 grouped Edit form, property-creation flow
 
 Captured from the real, running mock-data harness (`npm run dev:harness`
 → `http://localhost:5180/harness.html`), inside the real `AppShell`
-frame — not a bare component. Nothing here is implemented in the real
-application; both remain gated on explicit visual approval.
+frame. **Insurance's images are of the real, shipped application code**
+(`.insurance-policy-form { max-width: 960px }`, `src/index.css`) — not
+a mockup. The S3 and creation-flow images are still non-saving,
+devHarness-only previews, pending their own visual approval.
 
-## S3 — grouped Property form preview, desktop (960px, two columns)
+## Insurance Edit form — real, shipped, responsive width
 
-Read top to bottom in this order:
-1. `s3-desktop-1-identity-purchase.jpg` — Identity & location / Purchase & valuation, Property details and Exterior information group headers visible.
-2. `s3-desktop-2-property-details-exterior.jpg` — Property details (living area through street parking) and Exterior information (wall material checkboxes), scrolled down.
-3. `s3-desktop-3-tax-zoning-county.jpg` — Property tax ID, municipal zoning code, county assessor use code, county, township.
-4. `s3-desktop-4-purchase-method-save.jpg` — Purchase method, Property type, the disabled Save button, and the flagged-conflicts callout.
+Owner-approved and implemented (Sept 25 2026). Captured live at three
+widths to confirm the responsive behavior, not just the wide case:
 
-## S3 — same form, mobile (390px, single column)
+- `insurance-shipped-wide-960.jpg` — 1400px viewport, form reaches its
+  960px max-width. Provider/Named insured/Representative phone/email/
+  Policy discounts read in full.
+- `insurance-shipped-intermediate-700.jpg` — 700px viewport, form
+  correctly shrinks to ~578px (not fixed at 960); `.field-group-row`
+  reflows to two columns. No horizontal overflow (`scrollWidth ===
+  clientWidth`, checked, not assumed).
+- `insurance-shipped-narrow-390.jpg` — 390px viewport, form shrinks to
+  ~268px; single column. No overflow. Individual long values (e.g. the
+  Provider field) still don't fit visibly all at once inside the
+  narrower input box at this width — that's normal native `<input>`
+  behavior at any width this narrow, not a defect; the full value stays
+  reachable via standard keyboard text-field navigation (Home/End/
+  arrow keys), same as any other input in the app.
 
-1. `s3-mobile-1-top.jpg` — harness toolbar and the preview banner.
-2. `s3-mobile-2-identity.jpg` — Identity & location fields, one per row.
-3. `s3-mobile-3-purchase-property-details.jpg` — Purchase & valuation, the legacy Ownership fields, into Property details — confirms groups stack in the same top-to-bottom order as desktop's reading order, not reshuffled.
+`insurance-before-480px.jpg` / `insurance-after-960px-proposed.jpg`
+(from the prior pass) are kept as the historical proposal evidence —
+what convinced the owner to approve this — superseded in accuracy by
+the three `insurance-shipped-*` images above, which show the real
+merged code.
 
-## Insurance Edit form — real field width, before/after
+## S3 — grouped Property Edit form preview (updated for approved labels)
 
-Both captured from the actual, already-shipped Insurance Edit form (not a mockup) — the "after" image used a disposable, scoped CSS override applied only inside an isolated iframe for this screenshot; nothing in the tracked codebase was changed to produce it.
+Reflects the two approved changes: Name is no longer required, and the
+flat Owner name/Contact phone/Contact email fields are replaced with
+the **"Review saved contact details"** action. Still a non-saving
+preview, pending its own visual approval — the two-column direction and
+both action labels are approved, the assembled screen itself is not yet.
 
-- `insurance-before-480px.jpg` — today's real width (480px, the app-wide `form` cap). Provider, Named insured, Representative phone/email, and Policy discounts are all visibly truncated (e.g. `ZMR-TEST-FI...`, `555-010-000...`, `dana@fixture....`, `Bundled disco...`).
-- `insurance-after-960px-proposed.jpg` — same real data, same real component, at a proposed 960px. Every value reads in full (`ZMR-TEST-FIXTURE Statewide Insura...`, `555-010-0001`, `dana@fixture.example`, `Bundled discount`).
+- `s3-updated-desktop-identity-contacts.jpg` — desktop, Identity &
+  location / Purchase & valuation columns; Name field shows no asterisk
+  and a "No longer required" hint; "Review saved contact details"
+  button visible in place of the old flat fields.
+- `s3-updated-mobile-identity.jpg` — 390px, Identity & location
+  stacked single-column, same updated Name field.
+- `s3-updated-mobile-review-contact-button.jpg` — 390px, scrolled to
+  the "Review saved contact details" button, confirming it stacks
+  correctly at phone width too.
+
+(The prior pass's `s3-desktop-*`/`s3-mobile-*` images showed the
+now-superseded required-Name/flat-fields state and have been removed —
+keeping stale screenshots of a component that no longer matches them
+would be actively misleading.)
+
+## Property-creation four-step flow (new this pass)
+
+A separate preview from the grouped Edit form above — Batch B's
+originally-approved four-step creation shape (Ownership → Property
+basics → Documents → Review), used only when creating a brand-new
+property. Editing an existing property still opens the grouped Edit
+form above, never this flow.
+
+- `creation-flow-step1-ownership.jpg` — Step 1: pick/add owners,
+  optional percentage per owner, an explicit allocation-completeness
+  checkbox (never inferred from percentages).
+- `creation-flow-step2-basics.jpg` — Step 2: address/city/state/zip
+  required, Name optional; a note that Acquisition/Building Details are
+  deliberately not part of this flow (they stay on the post-create Edit
+  form, same as today).
+- `creation-flow-step3-documents.jpg` — Step 3: staged file list,
+  explicitly optional, nothing uploads until Step 4's Save.
+- `creation-flow-step4-review.jpg` — Step 4: read-only summary, empty
+  fields omitted, disabled Save.
+- `creation-flow-mobile-step1.jpg` — 390px, Step 1. The step-number
+  tabs wrap to two lines at this width and stay tappable, but read as a
+  rough first pass, not a polished treatment — worth a specific look
+  during visual review, not glossed over here.

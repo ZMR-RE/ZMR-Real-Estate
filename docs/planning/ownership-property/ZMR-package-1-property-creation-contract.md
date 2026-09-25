@@ -33,7 +33,12 @@ Verified applied to Practice directly (not assumed): `information_schema.columns
 
 **Audit coverage:** contacts/contact_methods/contact_links already had UPDATE-only audit coverage, added by `20260925030000_contacts.sql` — that file's own comment already named the exact gap this closes ("Creating a new contact, method, or link is not itself audit-logged"). `20260925100000_audit_trail_contacts.sql` generalizes the existing `log_audit_changes()` function to also handle `TG_OP = 'INSERT'`, and extends the three existing triggers (drop+recreate under the same names, not a second parallel trigger) to fire on insert. Verified live against Practice: inserting a real (`ZMR-TEST-`-prefixed, cleaned up after) contact now produces two `audit_log` rows (`name`, `archived`, old value empty, new value populated); before the fix, none were produced.
 
-**A regression introduced by that same `20260925100000` migration was found and fixed with a forward migration** (`20260925110000_contact_links_audit_update_fix.sql` — `20260925100000` is already applied to Practice, so it's corrected forward, not edited in place, to avoid environment divergence): the migration had replaced `contact_links_audit_log`'s existing `after update` trigger with `after insert` only, on the stated reasoning that no `updated_at` column means a create-once record. That reasoning was wrong for `contact_links` specifically — `contactsQueries.ts`'s `setContactLinkPrimary` (line 112-113) does a real `update contact_links set is_primary_contact = ...`, a genuine update path unrelated to whether the table tracks its own `updated_at`. Verified there is no equivalent update call anywhere on `contact_methods` (only insert/delete) — that table's insert-only coverage was correct and is unchanged. Fixed by restoring `after insert or update` on `contact_links` only. **Targeted tests run against Practice, each with a real operation and an asserted audit-row (or explicit absence):** contact create (2 rows) and update (1 row); link create (3 rows) and change-primary (the exact `is_primary_contact: false → true` update, 1 row, confirmed distinct from the insert's own `null → false` row); a forced direct `contact_methods` update (0 audit rows — confirmed, not assumed, by checking for the specific new value; this is a real, pre-existing, accepted gap since the app has no update call site for that table, not something this fix needed to close); a real transaction edit + void (3 rows: `amount`, `voided`, `voided_at`); a real period lock + reopen (2 rows: `status` both ways). Account isolation checked at the write level: a contact created under the second disposable test account's `account_id` produced audit rows carrying that same `account_id`, not the first account's — the read-side `is_account_member()` RLS policy itself is unchanged by this fix and was not re-derived. All test rows (and their audit rows) were created under `ZMR-TEST-AUDITFIX`-prefixed names/values and positively confirmed removed (zero remaining across every table touched) after testing.
+**Two regressions introduced by that same `20260925100000` migration were found and fixed with forward migrations** (`20260925100000` is already applied to Practice, so both are corrected forward, not by editing that file in place, to avoid environment divergence). The migration had replaced both `contact_links_audit_log` and `contact_methods_audit_log`'s existing `after update` triggers with `after insert` only, on the stated reasoning that no `updated_at` column means a create-once record:
+
+- `contact_links` — wrong specifically because `contactsQueries.ts`'s `setContactLinkPrimary` (line 112-113) does a real `update contact_links set is_primary_contact = ...`, a genuine update path unrelated to whether the table tracks its own `updated_at`. Fixed in `20260925110000_contact_links_audit_update_fix.sql`.
+- `contact_methods` — corrected a second time, one pass later: this session first (wrongly) treated the missing UI update call site as evidence the loss was acceptable. It wasn't — the *original* `20260925030000_contacts.sql` migration deliberately gave `contact_methods` the same `after update` coverage as `contacts`/`contact_links`, RLS already permits updating it, and "nothing in the app happens to call update yet" is not the same claim as "update coverage was never needed." Fixed in `20260925120000_contact_methods_audit_update_fix.sql`.
+
+**Targeted tests run against Practice, each with a real operation and an asserted audit-row (or explicit absence):** contact create (2 rows) and update (1 row); link create (3 rows) and change-primary (the exact `is_primary_contact: false → true` update, 1 row, confirmed distinct from the insert's own `null → false` row); `contact_methods` insert (4 rows) and update (the exact `value` change, 1 row, confirmed distinct from the insert's own row); a real transaction edit + void (3 rows: `amount`, `voided`, `voided_at`); a real period lock + reopen (2 rows: `status` both ways). Account isolation checked two ways: at the write level (a second test account's rows carried that account's own `account_id`, not the first account's), and at the read/write-authorization level (a simulated RLS session as the first account's real user: 0 rows visible or updatable for the second account's `contact_methods` row, versus a real, positive same-account access check in the identical session proving the simulation itself was genuine, not a false negative). All test rows (and their audit rows) were created under `ZMR-TEST-AUDITFIX`/`ZMR-TEST-CMAUDIT`-prefixed names/values and positively confirmed removed (zero remaining across every table touched) after testing.
 
 **A separate bug was found while tracing this, fixed in the same migration, and its production impact has now been checked directly — correcting an earlier overstatement.** `20260925030000_contacts.sql`'s own rewrite of `audit_log_table_name_check` dropped `'financial_transactions'` and `'financial_periods'` from the allowed list (both added by earlier migrations, `20260911100000` and `20260911110000`) instead of extending it — a real regression, reproduced directly on Practice (inserted a real test transaction and voided it; the void failed before the fix, succeeded after).
 
@@ -48,7 +53,7 @@ Verified applied to Practice directly (not assumed): `information_schema.columns
 | Case | What `property_ownership_interests` actually shows | `llc_id` treated as authoritative? | What the four consumers show |
 |---|---|---|---|
 | Zero owners | No rows at all | No | "No owner recorded" — plain, not an error |
-| Legacy-only | No rows; `llc_id` set from before the ownership-interests system existed | **No — this is the case the recommendation is about** | "Ownership not yet confirmed (previously recorded as: *[entity name]*)" — read-only, with a "Confirm this as the current owner" action available on the property's own Ownership box. Clicking it creates one real, explicit `property_ownership_interests` row (via the existing `replace_property_ownership_interests`, with its required reason) naming that same entity — a human decision, every time, never automatic, never bulk. |
+| Legacy-only | No rows; `llc_id` set from before the ownership-interests system existed | **No — this is the case the recommendation is about** | "Ownership not yet confirmed (previously recorded as: *[entity name]*)" — read-only, with a **"Review ownership"** action available on the property's own Ownership box (owner-approved label, Sept 25 2026). Opening it shows the recorded association plainly, permits correcting it or adding multiple owners, and requires an explicit allocation-completeness assertion and a reason before saving — it never silently confirms and never defaults to 100% for a single entry. Saving creates one real, explicit `property_ownership_interests` row (via the existing `replace_property_ownership_interests`) — a human decision, every time, never automatic, never bulk. |
 | One owner, allocation incomplete | One row, `allocation_status = 'incomplete'` | **No** — one entry with incomplete status is not proof of sole ownership (the exact case the handoff named: 48% incomplete could mean more owners are still being entered) | The one known owner, plus "additional owners may exist — allocation not yet marked complete" |
 | Owner kind unresolved | One or more rows reference an `llcs` row with `owner_kind is null` | No (kind is unresolved, not just count) | "Owner type unresolved" — shown plainly, never guessed as individual or entity |
 | 2+ current owners | 2+ rows | No | Every consumer shows/handles multiple owners explicitly — e.g. `FinancialAccountsSection` presents an owner/entity picker instead of silently scoping to one |
@@ -60,7 +65,7 @@ This table is the actual implementation contract for the four consumers — none
 
 ## 3. Contacts — unchanged from v2, still not owner identities
 
-No schema change. `contacts`/`contact_methods`/`contact_links` are reusable communication records; ownership interests reference `llcs` (which already models both entities and people — `llcs.owner_kind: 'individual' | 'entity' | null`, `llcsQueries.ts:24`). The legacy-contact reconciliation flow (select/create a contact, explicit role and link, explicit confirmation of exactly what transfers, retained-not-cleared original value, idempotent retry, now-real audit coverage per §1) is unchanged from v2 and uses only existing, standard patterns already established for this system — no new product question is being re-asked here.
+No schema change. `contacts`/`contact_methods`/`contact_links` are reusable communication records; ownership interests reference `llcs` (which already models both entities and people — `llcs.owner_kind: 'individual' | 'entity' | null`, `llcsQueries.ts:24`). The legacy-contact reconciliation flow — opened via the owner-approved **"Review saved contact details"** action (select/create a contact, explicit role and link, explicit confirmation of exactly what transfers, retained-not-cleared original value, idempotent retry, now-real audit coverage per §1) — is unchanged in mechanism from v2 and uses only existing, standard patterns already established for this system — no new product question is being re-asked here.
 
 ## 4. Layout, navigation, validation — unchanged from v2
 
@@ -210,20 +215,17 @@ New migrations already written and verified against Practice this pass:
 1. `20260925090000_properties_name_nullable.sql` — applied, verified.
 2. `20260925100000_audit_trail_contacts.sql` — applied, verified; also fixes the pre-existing `financial_transactions`/`financial_periods` constraint regression (§1). **Confirmed, read-only, not applied to production, and production confirmed unaffected by the regression it fixes** — see §1.
 3. `20260925110000_contact_links_audit_update_fix.sql` — forward-fix for a regression `20260925100000` itself introduced (lost `contact_links` UPDATE audit coverage); applied and verified against Practice. Also Practice-only.
+4. `20260925120000_contact_methods_audit_update_fix.sql` — same cause, second table (`contact_methods`); applied and verified against Practice. Also Practice-only.
 
 New migrations still to be written (not yet applied anywhere):
-4. `create_property_with_ownership` function + `property_creation_requests` table (§5).
-5. `properties.legacy_contact_reconciled_at` nullable timestamp column (§3, unchanged from v2).
+5. `create_property_with_ownership` function + `property_creation_requests` table (§5).
+6. `properties.legacy_contact_reconciled_at` nullable timestamp column (§3, unchanged from v2).
 
-No migration in this package touches `property_ownership_interests` schema, or any Insurance/Financials/Tax table. Release gate unchanged: Practice verification against §9, the separate S3 visual-approval gate for any layout change, then a scoped production release proposal — no production deploy or migration is authorized by this document. All three applied migrations above are Practice-only and will ship with this package's own eventual, separately-approved release — none is a standalone emergency patch, since production was confirmed unaffected.
+No migration in this package touches `property_ownership_interests` schema, or any Insurance/Financials/Tax table. Release gate unchanged: Practice verification against §9, the separate S3 visual-approval gate for any layout change, then a scoped production release proposal — no production deploy or migration is authorized by this document. All four applied migrations above are Practice-only and will ship with this package's own eventual, separately-approved release — none is a standalone emergency patch, since production was confirmed unaffected.
 
-## 10a. Proposed owner-facing wording (pending its own approval — not the data-model decision)
+## 10a. Owner-facing wording — approved September 25, 2026
 
-For §2's Ownership box (legacy/unconfirmed case): a section labeled **"Review recorded ownership"** with a **"Review ownership"** button. Opening it shows the recorded association plainly, permits correcting it or adding multiple owners, and requires an explicit allocation-completeness assertion and a reason before saving — it never defaults to 100% for a single entry.
-
-For §3's legacy-contact action: **"Review saved contact details"** — opening it lets the user choose an existing contact or create one, verify the role and methods/links, and Save; the original legacy value is retained either way.
-
-These are wording recommendations only, submitted for approval alongside the mechanism they describe (§2, §3) — approving the mechanism does not itself approve this specific copy, and neither implies any new confirmed-ownership assumption beyond what §2's six-case rule already states.
+The exact action labels **"Review ownership"** (§2's legacy/unconfirmed-ownership case) and **"Review saved contact details"** (§3's legacy-contact action) are approved. Both open a review before anything saves; neither silently confirms ownership nor replaces original information — that behavior is unchanged from the mechanism §2/§3 already specify, and approving the wording did not by itself approve any new behavior beyond it. Applied in this revision to every place this contract names the action, and to the S3/creation-flow visuals (§13).
 
 ## 11. Dependency-ordered packages after this one (unchanged from v2)
 
@@ -238,15 +240,40 @@ Package 2 (Insurance O2–O7), Package 3 (Financial accounts N), Package 4 (Prop
 | `financial_transactions`/`financial_periods` audit-constraint regression | Found and fixed in Practice | Live constraint read before/after; live void-transaction test failed before the fix, succeeded after |
 | **Production impact of that regression** | **Unaffected — confirmed, not inferred** | `supabase migration list`: no Sept-25 migration has reached production; `supabase db query --linked` (read-only, Management API, no password handled): production's constraint already correctly includes both tables, its five triggers are exactly as expected, no contacts/methods/links tables exist there at all |
 | `contact_links` UPDATE-audit regression (introduced by this session's own prior fix) | Found and fixed with a forward migration | Live trigger list before/after; targeted create/update/link/change-primary/contact-method/transaction/period tests, each asserting the expected audit row or its confirmed absence; all test data verified removed after |
+| `contact_methods` UPDATE-audit regression (same prior fix, same cause) | Found and fixed with a second forward migration — "no current UI update path" was not a valid reason to drop coverage the original migration deliberately provided | Live trigger list before/after; targeted insert+update test, exact-value assertion (not just a count); cross-account denial confirmed via a simulated second-user RLS session (0 rows visible/updatable), with a same-account positive-access sanity check proving the simulation itself was real |
 | `llc_id` ambiguity | Resolved to one plain rule (§2), no auto-backfill | — |
 | Idempotency mechanism | Corrected, account-scoped, handles concurrent/changed-payload cases | Design only — not yet implemented (needs the function + table in §10 item 4) |
 | Upload/Storage recovery | Concrete, testable design against real failure boundaries | Design only — not yet implemented |
+| Insurance Edit width | **Implemented and shipped**, responsive (not fixed on phones) | §14; verified live at 960px/700px/390px, no overflow at any |
+| Owner-facing labels ("Review ownership", "Review saved contact details") | **Approved and applied** everywhere this contract and the visuals name the action | §10a |
 | Scope honesty (Acquisition contacts, closing docs, Overview grouping) | Explicitly stated as out of scope | §8 |
-| S3 visual-approval gate | Still open | Separate from this contract |
-| Production changes | None made | All three applied migrations are Practice-only |
+| S3 / creation-flow visual-approval gate | Still open | §13 |
+| Production changes | None made | All four applied migrations are Practice-only |
 
-**Genuinely unresolved product choices (only these remain):**
-1. Approve/revise the "Ownership not yet confirmed" wording and the "Confirm this as the current owner" action's exact placement (§2) — a labeling/UX choice, not a data-model question; the data-model rule itself (the six-case table) is not optional.
-2. Approve/revise the legacy-contact reconciliation flow's exact copy/placement (§3) — the mechanism itself follows existing patterns and is not being re-asked.
+**Genuinely unresolved product choices (only this remains):**
+1. Final visual approval of the property-creation four-step flow and the post-create grouped Edit form (§13) — the two-column direction, the Insurance width, and both action labels are already approved; what's left is sign-off on the actual assembled screens themselves, not any further wording or mechanism question.
 
-Item 3 from the prior version of this checklist ("whether to push the audit fix to production now") is withdrawn — production is confirmed unaffected, so this is no longer a decision anyone needs to make under time pressure; the fix ships with this package's normal release.
+## 13. Visuals (this pass)
+
+All captured live from the real running harness and tracked at
+`docs/planning/ownership-property/visuals/` (see that folder's own
+README for what each file shows in detail):
+
+- **Insurance Edit form, real and shipped**: `insurance-shipped-wide-960.jpg` / `-intermediate-700.jpg` / `-narrow-390.jpg` — confirms the responsive width at three real viewport sizes, not just the wide case, with no horizontal overflow at any of them (checked via `scrollWidth`/`clientWidth`, not eyeballed).
+- **S3 grouped Edit form, updated for the approved labels**: `s3-updated-desktop-identity-contacts.jpg`, `s3-updated-mobile-identity.jpg`, `s3-updated-mobile-review-contact-button.jpg` — Name no longer required, flat contact fields replaced by "Review saved contact details."
+- **Property-creation four-step flow, new this pass**: `creation-flow-step1-ownership.jpg` through `-step4-review.jpg` (desktop), `creation-flow-mobile-step1.jpg` (390px) — the separate flow this contract's §4 describes, distinct from the grouped Edit form above.
+
+Not yet approved: the assembled screens themselves (layout, exact copy in context, the creation-flow step indicator's mobile treatment, which the visuals README flags as a rough first pass worth a specific look).
+
+## 14. Insurance Edit width — implemented and shipped
+
+`.insurance-policy-form { max-width: 960px }` (`src/index.css`), scoped
+to this one class — verified as the form's sole real-world consumer
+before adding the rule, so no other form in the app is affected. A
+max-width, not a fixed width: confirmed live at 1400px (960px reached),
+700px (578px, two-column `.field-group-row` reflow engaged), and 390px
+(268px, single column) — all three with `document.documentElement.
+scrollWidth === clientWidth`, i.e. no horizontal page overflow at any of
+them. Every existing field, value, validation rule, and the upload/
+document/view/Edit/Save/Cancel behavior are all unchanged — only the
+form's own width rule was touched. Documented in `DESIGN-SYSTEM.md`.
