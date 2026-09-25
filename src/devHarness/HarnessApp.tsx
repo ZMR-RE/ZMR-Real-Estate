@@ -7,6 +7,7 @@ import { PropertySaveConflictNotice } from '../modules/properties/PropertySaveCo
 import { usePropertyProfile } from '../modules/properties/usePropertyProfile'
 import { EntityProfile } from '../modules/llcs/EntityProfile'
 import { PropertyProfile } from '../modules/properties/PropertyProfile'
+import { PropertyFormGroupedPreview } from './PropertyFormGroupedPreview'
 import { AppShell } from '../shared/AppShell'
 import { harnessDb } from './mockSupabaseClient'
 
@@ -18,7 +19,9 @@ import { harnessDb } from './mockSupabaseClient'
 // call of any kind. All data is the fictional ZMR-TEST-FIXTURE set in
 // fixtures.ts, held in memory and reset on reload.
 export function HarnessApp() {
-  const [view, setView] = useState<'ownership' | 'entity' | 'property-info' | 'property-overview'>('ownership')
+  const [view, setView] = useState<
+    'ownership' | 'entity' | 'property-info' | 'property-overview' | 'form-preview'
+  >('ownership')
 
   const llcOptions = harnessDb.llcs.filter((l) => !l.archived).map((l) => ({ id: l.id as string, label: l.name as string }))
 
@@ -41,6 +44,9 @@ export function HarnessApp() {
           </button>{' '}
           <button type="button" onClick={() => setView('property-overview')} aria-pressed={view === 'property-overview'}>
             Property Overview (Insurance INS-1)
+          </button>{' '}
+          <button type="button" onClick={() => setView('form-preview')} aria-pressed={view === 'form-preview'}>
+            Batch S3 — grouped form visual preview
           </button>
         </div>
         {view === 'ownership' && <PropertyOwnershipInterestsSection propertyId="harness-property-1" llcOptions={llcOptions} />}
@@ -85,6 +91,21 @@ export function HarnessApp() {
             <Routes>
               <Route element={<AppShell />}>
                 <Route path="/properties/:id" element={<PropertyProfile />} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        )}
+        {view === 'form-preview' && (
+          // Batch S3 — same "real AppShell frame, MemoryRouter only"
+          // pattern as property-overview above, so the preview is seen at
+          // the real sidebar/content width, not a bare unstyled div. The
+          // route path itself doesn't matter (PropertyFormGroupedPreview
+          // takes no props/params) — it just needs to render inside
+          // AppShell's <Outlet/>.
+          <MemoryRouter initialEntries={['/properties/new']}>
+            <Routes>
+              <Route element={<AppShell />}>
+                <Route path="/properties/new" element={<PropertyFormGroupedPreview />} />
               </Route>
             </Routes>
           </MemoryRouter>

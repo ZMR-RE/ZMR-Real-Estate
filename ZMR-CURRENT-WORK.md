@@ -222,6 +222,13 @@ Continued the ownership implementation from commit `7b615e5`, per `docs/planning
 
 **Next:** once a real Supabase target exists, re-verify against it and write the numbered owner UI test script (deliberately not written yet — a script tested only against the mock harness would describe mock behavior, not the owner's real app).
 
+
+## Batch O approved / cb9b988 checkpoint reviewed
+
+Owner approved O1–O7 (“Approve bath o”) and supplied terminal completion report. Insurance requirements are queued, not implemented. Commit cb9b988 atop 7b615e5 independently confirmed present. Terminal reports entity UI, Settings bypass closure, explicit allocation completeness and mock browser verification; this chat did not rerun reported tests or verify every implementation claim. No actual Supabase integration or owner acceptance yet; documents are reference-only.
+
+Detected contract drift: I5 in the approved register explicitly covers the Property information save path, but contract v3.1 §10 treats it as pending and leaves it unimplemented. Next bounded prompt ZMR-ownership-closeout-terminal-prompt.txt addresses this already-approved gap, separates mock/real owner checklists, and requests read-only environment assessment. No installation, cloud project, production migration or deployment authorized. Prepared for owner to paste, not dispatched by chat. The broad capture handoff remains held; do not start N/O/J–M automatically.
+
 ## O1-A ownership terminal — close-out checkpoint (I5 stale-edit guard, owner checklists, environment assessment) — September 24, 2026
 
 Executed `docs/planning/ownership-property/ZMR-ownership-closeout-terminal-prompt.txt` from commit `cb9b988`. Ownership-scoped terminal only; no Financial accounts N, Insurance O, or Capture/History J–M work was started.
@@ -241,6 +248,28 @@ Executed `docs/planning/ownership-property/ZMR-ownership-closeout-terminal-promp
 Ownership is **not complete and not released**.
 
 
+## Insurance contextual visual prepared — review pending
+
+See docs/planning/ownership-property/ZMR-insurance-overview-preview.html and ZMR-insurance-visual-review.md. Live Overview/Insurance inspected read-only; preview uses fictional data and existing design tokens with surrounding section context. Hero remains unchanged above the focused area. Three presentation decisions pending; Batch O requirements remain approved. Only planning/preview files changed. Current terminal close-out continues, no new handoff dispatched.
+
+
+## Owner feedback — reduce vertical stacking; checkpoint received
+
+Owner supplied terminal close-out report for 486be47: Property information/registry stale-save protection implemented and verified via reported static, scratch-Postgres and mock-browser checks; actual Supabase integration, hosted upload limit and owner acceptance remain unverified. Owner says “good for now”; no software install, cloud project, production migration or release authorization inferred.
+
+Owner finds Insurance preview too vertical and says desktop horizontal space is underused across dashboard boxes. Insurance visual approval remains pending; Batch O functional requirements stay approved. Next layout recommendation: a compact full-width Insurance summary row, side-by-side interior information groups on sufficiently wide screens, and narrower-screen stacking; documents/history collapsed below. Review whole Overview box composition separately against existing full-width-expanded-section rules. Do not silently adopt a two-column dashboard or change global rules; use concrete desktop/mobile comparison for owner review. No new build handoff dispatched.
+
+
+## Horizontal layout direction approved / INS-1 queued
+
+User says “I approve this” to compact Insurance summary row; three side-by-side expanded groups on wide screens, two/one when narrower; documents/history below; review compatible Overview box pairs while detailed sections can expand full width. Exact cross-box pairing is not specified and is not permission for a blanket two-column conversion. Preserve existing visual identity and readable type.
+
+Next bounded terminal assignment prepared: ZMR-insurance-INS1-terminal-prompt.txt. Actual Insurance application presentation using existing schema/fields, honest premium/date meaning, responsive view/Edit and isolated visual verification. No production changes/migrations, no software install/cloud project, no real data entry. New insurance storage, shared policies, contacts, renewals, document/history expansions stay queued as distinct O slices. Ownership 486be47 real-platform integration remains unresolved. Prepared for owner to paste, not dispatched by chat.
+
+
+## Property tax review prepared — Batch P pending
+
+Inspected existing year/two-installment model and compact table. Proposed P1–P7 in docs/planning/ownership-property/ZMR-property-tax-batch-P.md: compact layout/tax year; bill and variable installment facts; distinct payments; truthful completeness/status; evidence/Financials links; explicit reminders; preservation/history. All pending owner review; no new terminal assignment. Insurance INS-1 remains active. Legacy amount meaning is unresolved and must not be guessed.
 
 ## INS-1 delivered — Insurance presentation slice in the real Property Overview — September 24, 2026
 
@@ -257,6 +286,15 @@ Executed `docs/planning/ownership-property/ZMR-insurance-INS1-terminal-prompt.tx
 **Owner checklist:** `docs/planning/ownership-property/ZMR-insurance-INS1-owner-checklist.md` — section A (mock harness, runnable now, `npm run dev:harness` → http://localhost:5180/harness.html → "Property Overview (Insurance INS-1)") and section B (real dashboard, cannot be done until this is deployed).
 
 **Not done, not claimed done:** Batch O2–O7, real Supabase/hosted verification of this change, and owner acceptance. Insurance is not marked complete beyond the INS-1 checkbox; ownership's own real-platform integration gap (486be47) is unrelated and also still open.
+
+
+## Batch P approved / INS-1 checkpoint reviewed
+
+Owner approves P1–P7 and supplies INS-1 terminal report. Commit dff3397 confirmed present. Source review finds horizontal Insurance presentation and retained existing file-upload input/path; real Supabase evidence and owner visual acceptance remain outstanding. No independent rerun of reported tests in this planning review. PendingFeatureNotes exposes implementation/Batch O references inside product UI. New date helpers lack dedicated source tests found by focused search; timezone comment claims account basis although implementation uses viewer-local dates.
+
+Prepared bounded next prompt ZMR-insurance-INS1-review-cleanup.txt: remove engineering notes from product, test date boundaries, correct upload/test-checklist claims and make styled Overview ready for owner visual review. P remains queued; do not start another broad feature batch. No installation/deployment/live-data authorization. Prompt prepared for owner, not dispatched.
+
+
 ## INS-1 review cleanup delivered — September 24, 2026
 
 Executed `docs/planning/ownership-property/ZMR-insurance-INS1-review-cleanup.txt` from commit `dff3397`, per the owner-relayed review findings recorded above ("Batch P approved / INS-1 checkpoint reviewed"). Bounded cleanup of the same INS-1 slice, not a new feature batch.
@@ -272,6 +310,24 @@ Executed `docs/planning/ownership-property/ZMR-insurance-INS1-review-cleanup.txt
 **Review page kept available:** `npm run dev:harness` is running on **http://localhost:5180/harness.html** → "Property Overview (Insurance INS-1)" for the owner's visual review. Port 5173 (the owner's own dev server) was never touched. Restart instructions given in the terminal report if it needs to be stopped and relaunched.
 
 **Not done, not claimed done:** Batch O2–O7 (including O4's improved upload labels/categories and hosted-limit validation), the hosted per-file limit, real Supabase integration, and owner acceptance. Batch P (property tax) and Batch Q (market/rent presentation) remain queued, untouched by this terminal. Ownership's own real-platform integration gap (`486be47`) is unrelated and still open.
+
+## Batch Q proposed — Market & rent value history
+
+Pending Q1–Q6 in docs/planning/ownership-property/ZMR-market-rent-batch-Q.md: horizontal presentation, source evidence, rent scope/period, chosen estimate for analysis, traceable corrections, and clear separation from books/actual rent. Existing latest values feed Mortgage, Portfolio KPI and market-value Balance Sheet report; consumer mapping required before semantic changes. Insurance cleanup remains terminal assignment; P approved and queued. No new implementation dispatched.
+
+
+## Q revised — owner monthly multi-source workflow; competitor research
+
+Owner clarifies monthly manual Redfin/Zillow/Rentometer observations, source-specific rent/value trend lines and an average across comparable estimates. This supersedes the single-latest-value emphasis of proposed Q4 for chart design, not the existing application calculations. See docs/planning/ownership-property/ZMR-monthly-estimates-and-competitors.md. Detailed averaging/missing-source rules proposed; Q1–Q6 not blanket-approved. Competitor review is strategic context, not additional implementation scope or claims of exclusive features. Insurance remains terminal assignment.
+
+
+## Q approved; Insurance review found responsive spacing issue
+
+Owner says “Approve batch q,” following the monthly multi-source clarification. Approve Q with revised charts: distinct property-value/rent charts, named source lines plus average, monthly entry grid and evidence, source count/range and no zero/stale substitution, comparable unit/property/period and Rentometer statistic. Original Q4 single-latest chart emphasis superseded; downstream calculation input needs explicit mapping before changes. Competitive ideas are not newly approved scope.
+
+Terminal cleanup commit 3d412d3 independently confirmed. Reported 53 tests/clean clone not independently rerun here. Opened running mock page, selected Property Overview INS-1 and expanded Insurance. Internal pending-feature notes gone. Actual screenshot at approximately 976px page width shows Representative label running into contact value in three-column details; responsive spacing still requires correction before visual acceptance. Review page left open for owner, no real data touched. Real Supabase integration/upload limit remain unresolved.
+
+
 ## Insurance responsive-spacing fix delivered — September 24, 2026
 
 Fixed the reported bug: at a ~976px page width, "Representative" ran into its own contact value in the three-column Insurance details.
@@ -285,6 +341,24 @@ Fixed the reported bug: at a ~976px page width, "Representative" ran into its ow
 **Review page:** still running at **http://localhost:5180/harness.html** → "Property Overview (Insurance INS-1)" — now shows the real sidebar/nav alongside the box. Port 5173 untouched throughout. Restart if needed: `cd /Users/janki/Projects/ZMR-Real-Estate && npm run dev:harness`.
 
 **Not changed:** any other box, any field, any document/upload behavior, any backend/data. Batch O2–O7, the hosted upload limit, real Supabase integration, and owner acceptance all remain open, as before.
+
+## Owner questions — placement and review-process correction proposed
+
+Owner questions Overview placement of recurring market/rent history, suggests charts in KPI and monthly upkeep in Action Queue; asks why 5180 differs from 5173 and whether workflow is efficient. Verified harness bypasses AppShell/app-main; normal 5173 runs same project with hosted URL configured. Proposed R1–R5 in docs/planning/ownership-property/ZMR-placement-and-review-process-proposal.md. Pending, not new approved rules or relocation authority; no install/provisioning. Existing terminal CSS work left untouched. Need full-frame review and isolated integration environment; do not claim mock-only success is completed product.
+
+
+## Placement and review corrections approved — delivery reset
+
+Owner agrees Overview destination candidates and mapping every current function first, and authorizes recommended review-process corrections. Added scoped approved workflow rules to CLAUDE.md, plus ZMR-property-destination-map-and-delivery.md and ZMR-review-environment-terminal-prompt.txt. Tenant/unit detail destination still unspecified; preserve existing access. No immediate relocation or deployment authorization. General frequent-release goal requires concrete scoped release review, not a push of all unreleased HEAD.
+
+Immediate handoff: finish active Insurance responsive fix, then full-AppShell owner preview and consolidated verification; do not start another feature batch. Test-environment preference asked asynchronously (hosted nonproduction versus local stack), with no installation/provisioning yet. Prepared prompt only; owner controls terminal. All planning/approval records preserved, app source untouched by this planning step.
+
+
+## Hosted practice environment approved — real portfolio remains production
+
+Owner confirms information entered through 5173 is real and must remain available through the published dashboard across computers; approves proceeding with the recommended separate hosted practice environment. This is not approval to repoint 5173, copy business records into practice, change live data, deploy code or apply production migrations. Prepare/use a distinct hosted Supabase project after verifying current capacity and no incremental charge; obtain a specific decision for any cost or unresolved account access. Practice uses fictional data, real backend integration, normal application UI and a dedicated local port. Local URLs are not cross-device hosting.
+
+Terminal reports d686e73 delivers Insurance responsive spacing and real AppShell harness integration, so do not repeat that task. Evidence is reported, not independently reverified here; owner acceptance and real integration remain open. Next handoff: docs/planning/ownership-property/ZMR-isolated-integration-terminal-prompt.txt, superseding the earlier review-environment prompt's pending environment decision. Prompt prepared for owner to relay, not dispatched. Preserve existing real portfolio/configuration and confirm targets before writes. No application source or live records changed in this planning step.
 
 ## Practice-environment infrastructure built — blocked on cost/access decision — September 24, 2026
 
@@ -300,6 +374,13 @@ Executed `ZMR-isolated-integration-terminal-prompt.txt`. Confirmed d686e73 is HE
 
 **Not done, not claimed done:** the practice project itself, any real Supabase integration testing, ownership/Insurance/document verification against a real backend, owner acceptance, and production release. Batch O2–O7/P/Q untouched.
 
+
+## Batch R explicitly approved; practice provisioning awaiting billing verification
+
+Owner says "Approve batch r": preserve prominent hero and existing design; compact shared occupancy/rent summary; Acquisition/Building Details in Overview; Insurance/service setup/account references in Overview with payments in Financials and follow-up in Action Queue; market/rent history in KPI with shared update form through monthly Action Queue; property-tax bills/payment history in Financials with parcel/jurisdiction reference in Overview; preserve every existing function before removing its former access. This consolidates placement approval, not authority to deploy or relocate all sections at once.
+
+Terminal reports practice scaffolding on port 5190 with fail-closed guard/banner/bootstrap plan, but no practice Supabase project or integration verification yet. Billing visibility is the concrete blocker. Recommend owner inspect Supabase dashboard (option 1); never confirm free eligibility without checking the actual organization/account. No credentials should be pasted into chat. Paid provisioning still requires a specific cost decision.
+
 ## Practice project created and real integration verified — September 24, 2026
 
 Owner independently verified no additional charge and said to continue, reusing an existing project if present (none was) and creating one otherwise.
@@ -313,3 +394,42 @@ Then I actually used the real dashboard — not a mock — against this project:
 **Still open:** the exact hosted upload size limit (only confirmed working up to ~8.8 MB — the automation tooling available to this session can't push a single upload past 10 MB, so the true ceiling is still only visible on the Supabase dashboard). Your own review and acceptance of any of this. New checklist: `docs/planning/ownership-property/ZMR-practice-integration-owner-checklist.md` — start there, it has the disposable login email and a numbered walkthrough. The practice project itself was left running (not torn down) so you can keep using it; tell me if you'd rather I delete it.
 
 Roadmap 9.25 checked off. No O2–O7/P/Q/R work started.
+
+
+## Owner acceptance findings — September 25, 2026
+Owner confirms Practice banner, Overview structure and rejection of complete ownership allocation totaling 70%. Not full acceptance: successful ownership persistence, document opening, stale-edit conflict and tests 6/7 not owner-confirmed. Owner proposes KPI default, clearer insurance date labels, wider forms and softer theme/hover treatment. Recorded S1–S5 as recommendations awaiting approval in ZMR-owner-review-2026-09-25.md, including detailed tests 6/7. No terminal dispatch or app/rule changes. Existing checklist has contradictory ownership success step and unsuitable random-byte document fixture for owner review. Registry legacy Name and owner/contact inputs need reconciliation, not cosmetic widening alone.
+
+
+## Batch S responses and testing responsibility — September 25, 2026
+S1 approved (existing-property KPI default, new-property Overview setup, explicit links preserved). S2 response requests eventual owner testing with real data on live; not live-write/deploy authority or explicit acceptance of all proposed copy. S3 wider grouped form direction approved, visual required before implementation. S4 authorizes terminal design evidence collection to inform universal rules, not global restyling or unreviewed new rules. S5 explicitly changes testing responsibility: agent/terminal performs feasible repeatable tests and reports evidence; owner is asked only for necessary manual checks, design decisions and final genuine live workflow. Passing engineering tests need not be repeated by owner.
+Prepared ZMR-batch-S-terminal-handoff.txt for owner relay; not dispatched. No application source changes. Final live entry stays owner-operated after a reviewed release, preserving real records.
+
+
+## Batch S executed — September 25, 2026
+Executed `docs/planning/ownership-property/ZMR-batch-S-terminal-handoff.txt` per direct owner instruction to run it (superseding manual repeat of the seven functional tests).
+
+**S1 — implemented, built/linted/tested clean.** `usePropertyProfile.ts` now defaults to the KPI tab (`initialTab: ProfileTab = 'kpi'`); `usePropertyRegistry.ts`'s create path navigates to the new property with router state `{ initialTab: 'overview' }`; `PropertyProfile.tsx` reads that state as the one explicit override. No KPI calculation changed; no zero-filling added.
+
+**Functional tests (instruction 1) — engineering-verified in Practice, live dashboard UI, real Supabase, no mocks:**
+- Existing property → KPI default; new property → Overview; a later fresh navigation to the same property → back to KPI (proves the Overview landing is one-time, tied to creation, not sticky); hard reload preserves tab (browser-native history.state); back/forward restore each entry's own tab.
+- Valid ownership save (distinct from the 70%-rejection case you already confirmed) — verified.
+- Document upload — replaced the prior random-byte fixture with a genuine, valid, hand-built PDF (`file`-verified `PDF document, version 1.4, 1 pages`, readable text); uploaded, reloaded, and re-fetched byte-for-byte identical (729 bytes, `application/pdf`, matching `%PDF-1.4` header).
+- Stale-write conflict — reproduced with two genuine concurrent browser tabs sharing one login (not a SQL-simulated "other editor"), per your "prefer two browser sessions" instruction; conflict notice appeared, draft was preserved, and direct SQL confirmed the database was not silently overwritten.
+- Two-account isolation — positively verified via direct SQL that the two test accounts have distinct `account_id`s with no shared `account_members` row (not just different logins) before running the browser-level checks; each account correctly cannot see the other's property via registry or direct route.
+- Cleanup: the one stray `township` test value from the stale-write test was reverted to its prior value; the legitimate `city = 'Demo City'` edit from the persistence test was left intact as designed. No pre-existing owner-created practice record was deleted.
+- Not run this pass, blocked/out of scope: nothing — all seven functional checks in the handoff were feasible with available tooling and completed.
+
+**S3 — visual preview built, NOT implemented.** New file `src/devHarness/PropertyFormGroupedPreview.tsx`, a fork (not an edit) of the real `PropertyForm.tsx`'s field set, wired into the existing mock-data harness (`npm run dev:harness` → `http://localhost:5180/harness.html` → "Batch S3 — grouped form visual preview") so it renders inside the real AppShell frame. Save is disabled and does not submit; a fixed banner labels it a non-saving preview. Verified live: desktop shows two `.property-field-group` columns side by side (new `.field-group-row--two-col` CSS modifier, `index.css`, documented in `DESIGN-SYSTEM.md`); at a genuine 390px width every group correctly collapses to one column, one field per row. Every field from the real form is preserved. Two conflicts are flagged in the preview itself, not resolved: the required Name field duplicating the address-is-identifier rule (and the entered value is otherwise unused outside the registry's own list row), and the flat Owner name/Contact phone/Contact email block duplicating the real, structured Ownership box on the Overview tab. `PropertyForm.tsx` itself and the real registry route are untouched — nothing is wired in.
+
+**S4 — design evidence gathered (measured, not a restyle):**
+- Token audit: every color/spacing/radius/type-scale value in `DESIGN-SYSTEM.md` matches `index.css` exactly in both themes — no documentation drift found.
+- Contrast (computed directly from the declared token hex/rgba values, WCAG formula, not eyeballed): every measured text/background pair — body text, headings, links, danger/warning/success badge text, input text on `--surface-sunken`, and the sidebar's translucent nav text — passes WCAG AA (4.5:1 normal text) in both light and dark themes; the closest is light-mode `--warning` on `--surface` at 4.98:1, still a pass. The focus outline (`--accent`, 2px solid, 1px offset) clears the 3:1 non-text-contrast requirement against both `--surface` and `--bg` in both themes. No contrast failures found — flagging this as a clean measured result, not a gap to fix.
+- Whole-card hover fill: traced to `.collapsible-section:hover` (`index.css:991-996`) — applies `--accent-bg-strong` background plus an inset left accent border and shadow to the entire box. This is a background-tint/visual-weight preference question, not a contrast defect (nothing above failed contrast because of it).
+- Registry/content width: there is no registry-specific width rule — the shared `.app-main { max-width: 1440px; margin-inline: auto }` (`index.css:411-418`) governs every page's content width, registry included.
+- Responsive breakpoints (confirmed from source, not just observed): sidebar/main switches from column to a horizontal top nav bar at `≤860px` (`.app-shell`), further reflow at `≤600px`; `.field-group-row` (whole-section grouping) steps 3→2→1 at 1200px/640px; `.field-grid` (individual fields) at 900px/600px.
+- Not measured this pass, marked unknown rather than assumed: full keyboard tab-order walkthrough per screen; whether the live PRACTICE banner (port 5190 only, not the harness) obstructs any sticky header at real mobile widths — this session's browser-resize tool did not reliably resize the real window this pass (confirmed via `window.innerWidth`, stayed fixed regardless of the requested size); mobile screenshots above were instead captured via a same-origin iframe pinned to 390px, which is an accurate CSS-viewport substitute for reflow but not a substitute for checking the real fixed banner's stacking. Recommend a quick manual check on your own phone or an actual resized desktop window before treating mobile polish as fully verified.
+- No universal rule invented, no CLAUDE.md/DESIGN-SYSTEM.md rule changed, no dashboard-wide max-width change made.
+
+**Files this batch:** `src/modules/properties/{usePropertyProfile.ts,usePropertyRegistry.ts,PropertyProfile.tsx}` (S1), `src/devHarness/{PropertyFormGroupedPreview.tsx (new),HarnessApp.tsx}` (S3 preview wiring only), `src/index.css`/`DESIGN-SYSTEM.md` (`.field-group-row--two-col` + preview-only banner/callout classes). No other concurrent terminal's files touched.
+
+Roadmap: S1 checked off under 7.38 lineage (see roadmap diff). S3/S4 remain open pending your visual/design decisions below — not checked off.

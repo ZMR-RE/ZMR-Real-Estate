@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { Breadcrumb } from '../../shared/Breadcrumb'
 import { usePropertyProfile, type ProfileTab } from './usePropertyProfile'
@@ -26,6 +26,16 @@ const TABS: { key: ProfileTab; label: string }[] = [
 
 export function PropertyProfile() {
   const { id } = useParams<{ id: string }>()
+  // Batch S1 — the one explicit-destination path today: navigating here
+  // right after creating a new property passes { initialTab: 'overview' }
+  // via router state (see usePropertyRegistry.save). Anything else
+  // (clicking an existing property from the registry, a bookmark, back/
+  // forward) has no state and gets usePropertyProfile's own 'kpi'
+  // default. Router state travels with browser history entries natively,
+  // so back/forward continues to land on whichever tab that entry opened
+  // with, with no extra wiring needed here.
+  const location = useLocation()
+  const initialTab = (location.state as { initialTab?: ProfileTab } | null)?.initialTab
   const {
     property,
     llcOptions,
@@ -48,7 +58,7 @@ export function PropertyProfile() {
     discardDraftAndLoadLatest,
     refresh,
     latestMarketValue,
-  } = usePropertyProfile(id!)
+  } = usePropertyProfile(id!, initialTab)
 
   // Root-cause fix: `loading` used to gate the whole page unconditionally,
   // so every refresh() call (not just the initial one) — including the

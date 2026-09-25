@@ -132,6 +132,11 @@ of screens in the app.
   extras is the first user). Reach for it whenever a box groups related
   content into named subsections that should sit side by side rather
   than stack.
+- **`.field-group-row--two-col`** (Batch S3) — same class, capped at 2
+  columns on desktop instead of 3, still 1 at the same 640px breakpoint.
+  Currently used only by the devHarness-only grouped-Property-form
+  preview (not shipped in the real app) — add this modifier again if a
+  future real box needs a two-, not three-, column grouping.
 - **`.field-hint`** (INS-1) — a small muted clarifying line under a
   field, for a case where the label alone could read as asserting more
   than what's actually recorded (e.g. a premium with no stored

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { useLlcs } from '../llcs/useLlcs'
 import { useHoldingCompanies } from '../holdingCompanies/useHoldingCompanies'
@@ -48,6 +49,7 @@ const BLANK_PROPERTY: PropertyInput = {
 
 export function usePropertyRegistry() {
   const { accountId } = useAuth()
+  const navigate = useNavigate()
   const [properties, setProperties] = useState<Property[]>([])
   const { llcOptions, addLlc } = useLlcs(accountId)
   const { holdingCompanyOptions, addHoldingCompany } = useHoldingCompanies(accountId)
@@ -122,12 +124,25 @@ export function usePropertyRegistry() {
         return
       }
     } else {
-      const { error: saveError } = await createProperty(accountId, input)
+      const { data: created, error: saveError } = await createProperty(accountId, input)
       setSaving(false)
       if (saveError) {
         setError(saveError.message)
         return
       }
+      setError(null)
+      setConflict(null)
+      setIsCreating(false)
+      setSelectedId(null)
+      // Batch S1 — a brand-new property has no KPI data yet (no
+      // transactions, no market value entered), so land on Overview,
+      // where the owner actually fills the property in, instead of
+      // usePropertyProfile's own default (KPI, for an existing
+      // property). Router state, not a query param or global flag, so
+      // it only ever affects this one navigation and plays correctly
+      // with back/forward (each history entry carries its own state).
+      if (created) navigate(`/properties/${created.id}`, { state: { initialTab: 'overview' } })
+      return
     }
 
     setError(null)

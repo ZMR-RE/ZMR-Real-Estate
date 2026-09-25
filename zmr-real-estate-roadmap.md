@@ -1736,6 +1736,25 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       which is the currently-live, intended behavior, not what item 2's
       own original wording says. Recorded here for transparency rather
       than silently marking item 2 "done as originally written."
+
+      ADDENDUM — Batch S1, September 25, 2026: the tab-reorder above put
+      KPI first, but every navigation into a property (new or existing)
+      still landed there by default. Owner correction: an existing
+      property should default to KPI (the portfolio-headline view,
+      "probably where they're headed first"); only a brand-new property
+      — which has no KPI data yet — should land on Overview, where it
+      actually gets filled in. `usePropertyProfile(propertyId, initialTab
+      = 'kpi')` now takes that as an explicit param; the one caller that
+      needs the Overview override (`usePropertyRegistry`'s create path)
+      passes it via router state (`{ initialTab: 'overview' }`) on the
+      navigate right after a successful create, which also survives back/
+      forward and a hard reload since it rides the browser history entry.
+      No KPI calculation touched, no field defaulted to zero. Verified
+      live in Practice: existing property → KPI; new property → Overview;
+      a later fresh navigation to that same property → back to KPI
+      (confirms the Overview landing is one-time, not sticky); reload and
+      back/forward both preserve the entry's own tab. `npm run build`
+      clean.
 - [x] 7.40 Financial accounts at the LLC level: investigated and
       proposed (see prior session report), now building per the
       approved design — `property_financial_accounts` gains a nullable
@@ -2996,3 +3015,15 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 
 ## Ongoing — Q&A / SOP Log
 - [ ] A living reference section (in-app or a maintained doc) answering recurring "how do I do X" questions as they come up during real use (e.g. "how do I add past mortgage information"). Updated whenever a new section is built out or a real question arises — not a one-time deliverable, an evolving document.
+
+
+## Ownership/property planning checkpoint — September 23, 2026
+
+See [ZMR-CURRENT-WORK.md](ZMR-CURRENT-WORK.md) for project-local approved decisions, detailed specifications, visual reference, pending items and next terminal handoff. Batches A–D are approved product scope; none of the following unchecked items is claimed implemented. This addendum supersedes conflicting labels only where the approval register explicitly records user approval; historical roadmap entries remain intact.
+
+- [ ] OWN-P1 Finish owner/entity profile visual and technical contract; one consolidated final review remains before first implementation handoff.
+- [ ] OWN-I1 Implement and verify ownership foundation and owner/entity profile per approved Batch A and applicable D safeguards; preserve existing entities, documents, accounts and property relationships.
+- [ ] OWN-I2 Implement and verify Add property, acquisition details and uploads per approved Batches B–D after the foundation is verified.
+- [ ] OWN-AUDIT Audit each implemented scope against its complete acceptance/preservation criteria before marking complete or moving to the next scope.
+
+These stable amendment IDs do not renumber existing roadmap items. Future bookkeeping, legal transfers, portfolio reporting and operator CRM are tracked in the checkpoint/build map and remain outside this first implementation scope.

@@ -1200,6 +1200,52 @@ dd {
   }
 }
 
+/* Batch S3 — devHarness-only preview variant of .field-group-row, capped
+   at 2 columns on desktop instead of 3 (the handoff's explicit "desktop
+   two-group-column" spec for a wider Property form). A modifier, not a
+   change to .field-group-row itself — Insurance's existing 3/2/1 layout
+   is untouched. Still collapses to 1 column at the same 640px mobile
+   breakpoint as its parent class. */
+.field-group-row--two-col {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 640px) {
+  .field-group-row--two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Batch S3 — devHarness-only preview chrome: a visible "this is a mockup,
+   nothing here saves" banner and the flagged-conflicts callout list below
+   the preview form. Not used anywhere in the real application. */
+.preview-banner {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-md);
+  color: var(--warning);
+  font-weight: 700;
+  font-size: var(--text-sm);
+}
+
+.preview-callouts {
+  margin-top: var(--space-6);
+  padding: var(--space-4);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.preview-callouts ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 /* INS-1 — a small muted clarifying line under a field, for a case where
    the label alone could be misread as asserting more than what's
    actually recorded (e.g. Insurance's premium having no stored basis

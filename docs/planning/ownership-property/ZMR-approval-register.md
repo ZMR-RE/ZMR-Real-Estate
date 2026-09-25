@@ -310,11 +310,163 @@ Authorization: proceed with bounded local ownership-foundation implementation, i
 
 Continuation prompt: ZMR-approved-work-terminal-prompt.txt. Prioritize foundation/compatibility/integrity tests, then approved profile UI using current design patterns. Keep migration files additive, test locally, inspect hosted limits without guessing and isolate that upload-release blocker. Updates must distinguish implemented locally, verified locally, awaiting owner UI testing and released.
 
+
+## Batch J approval — capture/queue, with J2 location clarification pending
+
+User says “I approve Batch J.” J1 Quick Capture records inputs; Action Queue reviews/resolves. J2 reuse one capture form; user explicitly requests it open in place rather than navigate to the global page, with property preselection from context. User mentions property profile, conflicting with prior no-property-Capture decision; a clarification is pending on button placement only. Do not implement profile Capture without resolving it. In the meantime Action Queue scoped to exactly one property can preselect that property visibly; unfiltered/multi-property views cannot guess.
+
+J3 format (receipt/visit/communication/mileage) distinct from work category (leasing/occupancy/maintenance/bookkeeping). J4 save creates linked review item, reuses attachments, does not automatically post accounting/change ownership/send messages. J5 filing/review status separate from completion of follow-up work. J6 user selects property/entity/both, with private Unassigned allowed for intake and assignment required before final filing/posting. J7 To resolve offers Needs review/Open work/Completed filters; Automations separate tab; contextual fields visible. These are approved requirements for a subsequent batch, not permission to interrupt ownership implementation.
+
+Terminal checkpoint 7b615e5 confirmed present by git log; contract reports new schema/services and one property Ownership UI increment, tests, and mocked-platform Postgres verification. This chat did not independently rerun those tests. Entity/membership UI and Settings bypass unresolved; no browser/integration/owner acceptance done. Fresh-database repeatability is not rerun idempotency. Recheck percentage validation against incomplete owner lists rather than assuming all entered percentages imply a complete allocation.
+
+
+## J2 resolved — contextual Capture button, no property Capture tab
+
+User clarification: “it can have a button to capture information but i meant it should not have its own tab within a property profile.” Approved: property profile Capture button opens the shared form in place (drawer/dialog), visibly preselects the property and permits correction. No separate property Capture tab, no separate capture data model, and no navigation away to the global Quick Capture page. This supersedes earlier notes excluding a property-profile button. Action Queue can use the same form, preselecting a single-property context where present. Owner associations must not be guessed from the property. Terminal is running on ownership; do not interrupt it with this later feature.
+
+## Batch K — Capture form and review transitions (proposed)
+
+| ID | Proposal |
+|---|---|
+| K1 | Shared responsive drawer/dialog opened by contextual Capture button, with property chip/selection visible and editable. Global capture has no guessed property. Mobile can use a full-screen dialog. Keep Cancel/Save and confirm before discarding unsaved input; successful Save confirms the review item and stays in originating context. |
+| K2 | Preserve existing capture types and their existing fields: Receipt, Visit, Communication, Mileage. Require capture type and event date; property/entity association can remain Unassigned at intake under J6. Show relevant fields for the chosen type. Exact existing field inventory must be reconciled before build; do not remove fields or add blanket requirements for receipt amounts/vendors merely to save intake. |
+| K3 | One or more explicit property/entity associations where supported by approved model, multiple attachments per D, optional notes and work category; do not infer or auto-attach every owner. Each staged attachment must receive explicit final links before filing. Preserve existing capture scope and review migration plan for new intake associations. |
+| K4 | Save creates one capture and its linked Needs review item, with duplicate-safe retries. Review can save progress, file supporting documents, explicitly create/link follow-up work, or route to bookkeeping review. No automatic posting/sending. Mark review complete only when its required routing/association decisions are resolved. |
+| K5 | Work is Open, In progress or Completed, separate from capture review/filed state. Due date optional; no date never means overdue. Financial verification/posting remains separate from work completion. Avoid global new workflow states unless this batch's exact scope is approved. |
+| K6 | Completion does not erase source capture, documents or linked work. Allow reopening with history and soft archiving mistakes/duplicates with a reason; no automatic merge or hard deletion. Duplicate detection is a warning, not permission to discard evidence. |
+
+K1–K6 remain pending. This is subsequent workflow planning, not new scope for the running ownership terminal.
+
+
+## Batch K approved
+
+Evidence: user said “batch k approved.” All K1–K6 in the preceding proposal are approved: shared contextual capture drawer/dialog; existing type-specific fields and required type/date with Unassigned intake allowed; explicit contextual links/attachments; review and routing without automatic posting/sending; separate Open/In progress/Completed work status with optional due dates; reopen/archive with history rather than automatic merge or permanent deletion.
+
+The concrete field inventory, state-transition contract, legacy-data compatibility and review visual still need preparation before this subsequent implementation batch. Approval does not authorize additional capture types, global workflow changes beyond the specified scope, automatic messages, or live-data entry by terminal. Keep the running ownership implementation focused on its unfinished approved work.
+
+
+## Batch L proposed — Capture implementation details (September 23, 2026)
+
+J/K remain approved. Field inventory, lifecycle transitions, preservation safeguards and 16 acceptance cases are prepared in ../capture-review/ZMR-capture-review-specification.md. Interactive demonstration: ../capture-review/ZMR-capture-review-preview.html. Fictional data only; no application implementation or live changes in this planning step.
+
+- L1 pending: one property per capture, or entity-only/Unassigned, plus explicit entity associations. Multi-property receipt allocation happens later in bookkeeping without duplicate receipt files or counting the full expense against each property.
+- L2 pending: finish capture review only after retained attachments are filed with valid categories/links, context assigned and requested work/bookkeeping routes saved. Notes-only captures require no fabricated document. Accidental attachments require explicit archive/history.
+- L3 pending: separate existing receipt Reconcile posting action into Review/File and an explicit validated Financials posting step. Preserve all previously posted transactions and evidence.
+- L4 pending: recurring work requires its first due date; one-off work can remain undated.
+
+Preview layout is pending review, not automatically approved by interaction. Browser checks confirmed category validation, review completion independent of open work, and work completion retaining filed evidence without posting. This is demonstration QA, not application acceptance testing. Running ownership work remains first.
+
+
+## Latest approval — Batch L approved
+
+User: “approve batch L. One thing I noticed missing was history and how it will be presented in our dashboard.” L1–L4 are approved, superseding all pending-L wording above. This does not approve the preview layout or the newly proposed history presentation. J/K/L are approved for the queued capture scope; ownership remains first. History retention was already required, but its display needs an explicit specification.
+
+Batch M1–M4 proposed in ../capture-review/ZMR-history-presentation-proposal.md: placement, event presentation, coverage/filtering, read-only correction/integrity. All pending; not inferred from the history observation.
+
+
+## Batch M approved — history presentation
+
+Evidence: owner said “approve Batch M.” M1–M4 are approved: preserve existing history destinations and add scoped capture/work/entity history access; newest-first expandable actor/action/time/record entries; operational event coverage with filters and discoverable completed/archived records; read-only history with new correction events, permission controls and honest legacy gaps. See docs/planning/capture-review/ZMR-history-presentation-proposal.md (filename retained, status updated) and specification v0.2. Supersedes earlier pending-M status.
+
+J/K/L/M are approved for the queued capture scope. Ownership remains first. Capture preview layout remains pending; next preparation is the history visual and implementation handoff reconciliation. No application implementation, live records or deployment changed by this approval-recording step.
+
+
+## Owner steering — hold handoff; return to Property Overview
+
+Owner explicitly will not send capture/history handoff while terminal is running and will report completion. Do not dispatch it or presume terminal progress. The consolidated handoff is a reference backlog, not the next all-at-once assignment. After checkpoint review, prepare one cohesive bounded implementation prompt at a time with clear dependencies, preservation checks and owner UI acceptance.
+
+Owner says recent workflow previews lack the existing Property Overview personality. Preserve hero/photo, actual typography/navy palette, hover feedback, box hierarchy and established view/Edit interaction. Recent previews do not approve replacement styling. Return planning to unfinished Overview boxes, then review each property-profile tab, supporting Excel-to-dashboard entry with explicit field mapping. Acquisition C, Overview E, Building F and revised H7 have approved requirements but must not be represented as completed screens or comprehensive visual approval. J–M remain approved queued requirements, not immediate work ahead of Property Overview.
+
+Batch N1–N5 proposed, not approved: Financial accounts presentation, optional metadata, explicit scope, linked documents, archive/history. See ZMR-property-overview-continuation.md.
+
+
+## Batch N approved — Financial accounts
+
+Evidence: owner said “batch N approved.” N1–N5 approved in ZMR-property-overview-continuation.md: compact Overview account reference; preserve existing identification and add optional institution/purpose/notes; distinguish property-specific/entity-shared associations without inferred account access; explicit supporting-document links without automatic posting; archive/restore, historical references, Updated on and scoped history.
+
+Queued requirements only. Reconcile multi-owner account context with the current ownership implementation before building. Existing personality/design patterns remain the visual baseline. Terminal handoff remains on hold until owner shares its completion report; do not send the whole backlog. Next Overview planning topic: Insurance. No application source, live records, migration or deployment changed by this approval update.
+
+
+## Batch O proposed — Insurance
+
+O1–O7 pending in ZMR-insurance-batch-O.md: existing visual character; identification/coverage; explicit premium basis/payment meaning; reusable contacts/documents; honest date states/renewal history; opt-in renewal task; shared-policy associations/history. Existing insurance source inspected, including missing-expiration Active behavior and ambiguous premium basis. No user approval inferred.
+
+
+## Batch O approved / cb9b988 checkpoint reviewed
+
+Owner approved O1–O7 (“Approve bath o”) and supplied terminal completion report. Insurance requirements are queued, not implemented. Commit cb9b988 atop 7b615e5 independently confirmed present. Terminal reports entity UI, Settings bypass closure, explicit allocation completeness and mock browser verification; this chat did not rerun reported tests or verify every implementation claim. No actual Supabase integration or owner acceptance yet; documents are reference-only.
+
+Detected contract drift: I5 in the approved register explicitly covers the Property information save path, but contract v3.1 §10 treats it as pending and leaves it unimplemented. Next bounded prompt ZMR-ownership-closeout-terminal-prompt.txt addresses this already-approved gap, separates mock/real owner checklists, and requests read-only environment assessment. No installation, cloud project, production migration or deployment authorized. Prepared for owner to paste, not dispatched by chat. The broad capture handoff remains held; do not start N/O/J–M automatically.
+
+
+## Owner feedback — reduce vertical stacking; checkpoint received
+
+Owner supplied terminal close-out report for 486be47: Property information/registry stale-save protection implemented and verified via reported static, scratch-Postgres and mock-browser checks; actual Supabase integration, hosted upload limit and owner acceptance remain unverified. Owner says “good for now”; no software install, cloud project, production migration or release authorization inferred.
+
+Owner finds Insurance preview too vertical and says desktop horizontal space is underused across dashboard boxes. Insurance visual approval remains pending; Batch O functional requirements stay approved. Next layout recommendation: a compact full-width Insurance summary row, side-by-side interior information groups on sufficiently wide screens, and narrower-screen stacking; documents/history collapsed below. Review whole Overview box composition separately against existing full-width-expanded-section rules. Do not silently adopt a two-column dashboard or change global rules; use concrete desktop/mobile comparison for owner review. No new build handoff dispatched.
+
+
+## Horizontal layout direction approved / INS-1 queued
+
+User says “I approve this” to compact Insurance summary row; three side-by-side expanded groups on wide screens, two/one when narrower; documents/history below; review compatible Overview box pairs while detailed sections can expand full width. Exact cross-box pairing is not specified and is not permission for a blanket two-column conversion. Preserve existing visual identity and readable type.
+
+Next bounded terminal assignment prepared: ZMR-insurance-INS1-terminal-prompt.txt. Actual Insurance application presentation using existing schema/fields, honest premium/date meaning, responsive view/Edit and isolated visual verification. No production changes/migrations, no software install/cloud project, no real data entry. New insurance storage, shared policies, contacts, renewals, document/history expansions stay queued as distinct O slices. Ownership 486be47 real-platform integration remains unresolved. Prepared for owner to paste, not dispatched by chat.
+
+
+## Property tax review prepared — Batch P pending
+
+Inspected existing year/two-installment model and compact table. Proposed P1–P7 in docs/planning/ownership-property/ZMR-property-tax-batch-P.md: compact layout/tax year; bill and variable installment facts; distinct payments; truthful completeness/status; evidence/Financials links; explicit reminders; preservation/history. All pending owner review; no new terminal assignment. Insurance INS-1 remains active. Legacy amount meaning is unresolved and must not be guessed.
+
+
+## Batch P approved / INS-1 checkpoint reviewed
+
+Owner approves P1–P7 and supplies INS-1 terminal report. Commit dff3397 confirmed present. Source review finds horizontal Insurance presentation and retained existing file-upload input/path; real Supabase evidence and owner visual acceptance remain outstanding. No independent rerun of reported tests in this planning review. PendingFeatureNotes exposes implementation/Batch O references inside product UI. New date helpers lack dedicated source tests found by focused search; timezone comment claims account basis although implementation uses viewer-local dates.
+
+Prepared bounded next prompt ZMR-insurance-INS1-review-cleanup.txt: remove engineering notes from product, test date boundaries, correct upload/test-checklist claims and make styled Overview ready for owner visual review. P remains queued; do not start another broad feature batch. No installation/deployment/live-data authorization. Prompt prepared for owner, not dispatched.
+
+
+## Batch Q proposed — Market & rent value history
+
+Pending Q1–Q6 in docs/planning/ownership-property/ZMR-market-rent-batch-Q.md: horizontal presentation, source evidence, rent scope/period, chosen estimate for analysis, traceable corrections, and clear separation from books/actual rent. Existing latest values feed Mortgage, Portfolio KPI and market-value Balance Sheet report; consumer mapping required before semantic changes. Insurance cleanup remains terminal assignment; P approved and queued. No new implementation dispatched.
+
+
+## Q revised — owner monthly multi-source workflow; competitor research
+
+Owner clarifies monthly manual Redfin/Zillow/Rentometer observations, source-specific rent/value trend lines and an average across comparable estimates. This supersedes the single-latest-value emphasis of proposed Q4 for chart design, not the existing application calculations. See docs/planning/ownership-property/ZMR-monthly-estimates-and-competitors.md. Detailed averaging/missing-source rules proposed; Q1–Q6 not blanket-approved. Competitor review is strategic context, not additional implementation scope or claims of exclusive features. Insurance remains terminal assignment.
+
+
+## Q approved; Insurance review found responsive spacing issue
+
+Owner says “Approve batch q,” following the monthly multi-source clarification. Approve Q with revised charts: distinct property-value/rent charts, named source lines plus average, monthly entry grid and evidence, source count/range and no zero/stale substitution, comparable unit/property/period and Rentometer statistic. Original Q4 single-latest chart emphasis superseded; downstream calculation input needs explicit mapping before changes. Competitive ideas are not newly approved scope.
+
+Terminal cleanup commit 3d412d3 independently confirmed. Reported 53 tests/clean clone not independently rerun here. Opened running mock page, selected Property Overview INS-1 and expanded Insurance. Internal pending-feature notes gone. Actual screenshot at approximately 976px page width shows Representative label running into contact value in three-column details; responsive spacing still requires correction before visual acceptance. Review page left open for owner, no real data touched. Real Supabase integration/upload limit remain unresolved.
+
+
+## Owner questions — placement and review-process correction proposed
+
+Owner questions Overview placement of recurring market/rent history, suggests charts in KPI and monthly upkeep in Action Queue; asks why 5180 differs from 5173 and whether workflow is efficient. Verified harness bypasses AppShell/app-main; normal 5173 runs same project with hosted URL configured. Proposed R1–R5 in docs/planning/ownership-property/ZMR-placement-and-review-process-proposal.md. Pending, not new approved rules or relocation authority; no install/provisioning. Existing terminal CSS work left untouched. Need full-frame review and isolated integration environment; do not claim mock-only success is completed product.
+
+
+## Placement and review corrections approved — delivery reset
+
+Owner agrees Overview destination candidates and mapping every current function first, and authorizes recommended review-process corrections. Added scoped approved workflow rules to CLAUDE.md, plus ZMR-property-destination-map-and-delivery.md and ZMR-review-environment-terminal-prompt.txt. Tenant/unit detail destination still unspecified; preserve existing access. No immediate relocation or deployment authorization. General frequent-release goal requires concrete scoped release review, not a push of all unreleased HEAD.
+
+Immediate handoff: finish active Insurance responsive fix, then full-AppShell owner preview and consolidated verification; do not start another feature batch. Test-environment preference asked asynchronously (hosted nonproduction versus local stack), with no installation/provisioning yet. Prepared prompt only; owner controls terminal. All planning/approval records preserved, app source untouched by this planning step.
+
+
+## Hosted practice environment approved — real portfolio remains production
+
+Owner confirms information entered through 5173 is real and must remain available through the published dashboard across computers; approves proceeding with the recommended separate hosted practice environment. This is not approval to repoint 5173, copy business records into practice, change live data, deploy code or apply production migrations. Prepare/use a distinct hosted Supabase project after verifying current capacity and no incremental charge; obtain a specific decision for any cost or unresolved account access. Practice uses fictional data, real backend integration, normal application UI and a dedicated local port. Local URLs are not cross-device hosting.
+
+Terminal reports d686e73 delivers Insurance responsive spacing and real AppShell harness integration, so do not repeat that task. Evidence is reported, not independently reverified here; owner acceptance and real integration remain open. Next handoff: docs/planning/ownership-property/ZMR-isolated-integration-terminal-prompt.txt, superseding the earlier review-environment prompt's pending environment decision. Prompt prepared for owner to relay, not dispatched. Preserve existing real portfolio/configuration and confirm targets before writes. No application source or live records changed in this planning step.
+
+
 ## Isolated integration environment — infrastructure delivered, blocked on cost/access
 
 Executed the isolated-integration prompt. No practice Supabase project was created — the CLI exposes no billing/plan field (`orgs`/`projects list` JSON checked directly) and the org's actual per-project cost could not be determined without dashboard access this session doesn't have; per the prompt's own explicit stop condition, no plan upgrade, payment entry, or blind project creation was attempted. Owner decision needed: confirm the org's plan permits a free second project, or create "ZMR Practice" via the dashboard (seeing the real price first) and hand back its URL/anon key/db password via masked input.
 
 Everything not requiring that project to exist was built and verified: `npm run dev:practice` (port 5190) loading the real app entry against a practice-only env directory, a fail-closed guard in `supabaseClient.ts` (confirmed refusing to start with no practice env configured, never falling back to production), a permanent PRACTICE banner (confirmed inert in the real app and the existing mock harness), and a full bootstrap plan (`ZMR-practice-bootstrap-plan.md`) identifying the two migrations (`20260903192431_seed_zmr_account.sql`, `20260904180522_seed_properties.sql`) that embed real business data and exactly how to clean that up in practice only, without editing shared migration history or repointing this shared working directory's own Supabase CLI link (confirmed still linked only to the live project). Port 5173/its `.env` and all real portfolio data untouched. `npm run build`/`lint`/`test` clean (53/53, 76-line lint baseline). No O2–O7/P/Q work started.
+
 
 ## Practice project created; real integration verified end to end
 
@@ -325,3 +477,23 @@ All 97 migrations applied via `supabase db push --db-url` from a disposable scra
 Real application UI exercised against this real project end to end: property create/save/reload, ownership add/complete-allocation (real RPC), Insurance add/date-validation/document upload+signed-URL retrieval (verified to ~8.8 MB, tooling-capped there), the Property Information stale-write conflict (reproduced via direct SQL against the real hosted database, confirmed no overwrite), and cross-account RLS isolation with a second disposable user. This is qualitatively different evidence from every prior checkpoint in this register — real Postgres/Auth/Storage, not scratch Postgres and not the mock harness.
 
 Not verified: the exact hosted per-file upload ceiling beyond ~8.8 MB (dashboard-only), and owner acceptance. Owner checklist: `ZMR-practice-integration-owner-checklist.md`. `npm run build`/`lint`/`test` clean (53/53). Real portfolio data, port 5173, and this repo's own Supabase CLI link (still only the live project) untouched throughout. No O2–O7/P/Q/R work started.
+
+
+## Batch R explicitly approved; practice provisioning awaiting billing verification
+
+Owner says "Approve batch r": preserve prominent hero and existing design; compact shared occupancy/rent summary; Acquisition/Building Details in Overview; Insurance/service setup/account references in Overview with payments in Financials and follow-up in Action Queue; market/rent history in KPI with shared update form through monthly Action Queue; property-tax bills/payment history in Financials with parcel/jurisdiction reference in Overview; preserve every existing function before removing its former access. This consolidates placement approval, not authority to deploy or relocate all sections at once.
+
+Terminal reports practice scaffolding on port 5190 with fail-closed guard/banner/bootstrap plan, but no practice Supabase project or integration verification yet. Billing visibility is the concrete blocker. Recommend owner inspect Supabase dashboard (option 1); never confirm free eligibility without checking the actual organization/account. No credentials should be pasted into chat. Paid provisioning still requires a specific cost decision.
+
+
+## Owner acceptance findings — September 25, 2026
+Owner confirms Practice banner, Overview structure and rejection of complete ownership allocation totaling 70%. Not full acceptance: successful ownership persistence, document opening, stale-edit conflict and tests 6/7 not owner-confirmed. Owner proposes KPI default, clearer insurance date labels, wider forms and softer theme/hover treatment. Recorded S1–S5 as recommendations awaiting approval in ZMR-owner-review-2026-09-25.md, including detailed tests 6/7. No terminal dispatch or app/rule changes. Existing checklist has contradictory ownership success step and unsuitable random-byte document fixture for owner review. Registry legacy Name and owner/contact inputs need reconciliation, not cosmetic widening alone.
+
+
+## Batch S responses and testing responsibility — September 25, 2026
+S1 approved (existing-property KPI default, new-property Overview setup, explicit links preserved). S2 response requests eventual owner testing with real data on live; not live-write/deploy authority or explicit acceptance of all proposed copy. S3 wider grouped form direction approved, visual required before implementation. S4 authorizes terminal design evidence collection to inform universal rules, not global restyling or unreviewed new rules. S5 explicitly changes testing responsibility: agent/terminal performs feasible repeatable tests and reports evidence; owner is asked only for necessary manual checks, design decisions and final genuine live workflow. Passing engineering tests need not be repeated by owner.
+Prepared ZMR-batch-S-terminal-handoff.txt for owner relay; not dispatched. No application source changes. Final live entry stays owner-operated after a reviewed release, preserving real records.
+
+
+## Batch S executed — September 25, 2026
+Executed the handoff per direct owner instruction. S1 implemented and live-verified in Practice (roadmap 7.38 addendum); all seven functional checks from instruction 1 completed autonomously with evidence, none left for the owner to repeat. S3 delivered as a non-saving, non-production visual preview only (`src/devHarness/PropertyFormGroupedPreview.tsx`, via `npm run dev:harness`) — not implemented in the real form, per the explicit visual-approval gate; both conflicts (Name-vs-address identifier, flat Owner fields duplicating the real Ownership box) flagged in the preview itself, not resolved. S4 evidence gathered and measured (token/contrast audit, hover-fill selector, width-limit selector, confirmed breakpoints) with no universal rule invented and no rule file changed. Full detail, file list, and remaining owner decisions: `ZMR-CURRENT-WORK.md`'s "Batch S executed" entry. No other approved batch started; no deploy, migration, or real business record touched.

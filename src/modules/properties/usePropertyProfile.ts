@@ -16,7 +16,16 @@ import { getLatestValue, type LatestPropertyValue } from '../propertyValueHistor
 // (2.5), per explicit user confirmation.
 export type ProfileTab = 'overview' | 'financials' | 'mortgage' | 'kpi' | 'activity' | 'documents'
 
-export function usePropertyProfile(propertyId: string) {
+// Batch S1 — entering an existing property normally lands on KPI (the
+// portfolio-headline landing view, per the owner's own stated workflow:
+// once a property exists, KPI is "probably where they're headed
+// first"); `initialTab` is the one explicit override, used right now
+// only right after creating a brand-new property (it has no KPI data
+// yet, so Overview — where the owner actually fills the property in —
+// is the useful landing spot there instead). Any future caller that
+// needs a specific starting tab uses this same param rather than a
+// second hardcoded default.
+export function usePropertyProfile(propertyId: string, initialTab: ProfileTab = 'kpi') {
   const { accountId } = useAuth()
   const [property, setProperty] = useState<Property | null>(null)
   const { llcOptions, addLlc } = useLlcs(accountId)
@@ -27,7 +36,7 @@ export function usePropertyProfile(propertyId: string) {
   const [latestMarketValue, setLatestMarketValue] = useState<LatestPropertyValue | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [tab, setTab] = useState<ProfileTab>('overview')
+  const [tab, setTab] = useState<ProfileTab>(initialTab)
   const [saving, setSaving] = useState(false)
   // Batch I5 — stale-edit protection. `conflict` holds the newer server row
   // when a save was refused because another editor saved first; the
