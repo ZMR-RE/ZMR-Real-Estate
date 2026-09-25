@@ -267,11 +267,24 @@ code {
 /* ISOLATED-INTEGRATION — the practice review server's own permanent
    banner (AppShell.tsx, gated by VITE_PRACTICE_TARGET; renders nothing
    in the real app). Fixed across the very top of the viewport so it's
-   visible on every route, never just Overview. .app-shell--practice's
-   top padding reserves the banner's own height so it never overlaps
-   the sticky sidebar/tab-bar underneath it. */
+   visible on every route, never just Overview.
+   Reconciliation fix, Batch S — the top padding below only reserved the
+   banner's height for the page's initial, unscrolled layout; it did
+   nothing once a sticky element's own `top: 0` engaged, because sticky
+   positioning is computed against the scrolling container's viewport,
+   not against a sibling's padding. Measured live on a real practice
+   property page: once scrolled, `.app-nav`'s and `.tab-bar`'s sticky
+   `top: 0` put them exactly where the fixed, higher-z-index banner sits,
+   so the banner painted over their own top ~36px the entire time (the
+   sidebar brand text, permanently — .app-nav sits at the shell's own
+   top regardless of scroll — and the tab bar's labels, once scrolled
+   down past the initial gap). --practice-banner-height is declared here
+   (falls back to 0px everywhere it's referenced outside Practice, via
+   each consumer's own `var(..., 0px)`) and consumed by every sticky
+   element that would otherwise assume nothing sits above it. */
 .app-shell--practice {
   padding-top: 36px;
+  --practice-banner-height: 36px;
 }
 
 .practice-banner {
@@ -308,8 +321,13 @@ code {
   background: var(--nav-bg);
   border-right: 1px solid var(--nav-border);
   position: sticky;
-  top: 0;
-  height: 100svh;
+  /* Reconciliation fix, Batch S — see .app-shell--practice's own
+     comment: without this, the sidebar's sticky top sat at the fixed
+     practice banner's own position, so the banner painted over the
+     sidebar's top ~36px (brand text) at all times. 0px outside
+     Practice, unchanged. */
+  top: var(--practice-banner-height, 0px);
+  height: calc(100svh - var(--practice-banner-height, 0px));
   overflow-y: auto;
 }
 
@@ -875,7 +893,11 @@ dd {
   border-bottom: 1px solid var(--border);
   margin: var(--space-2) 0 var(--space-6);
   position: sticky;
-  top: 0;
+  /* Reconciliation fix, Batch S — see .app-shell--practice's own
+     comment: without this, once scrolled, the tab bar stuck at the
+     fixed practice banner's own position and was painted over by it.
+     0px outside Practice, unchanged. */
+  top: var(--practice-banner-height, 0px);
   z-index: 10;
   background: var(--bg);
 }
@@ -2181,13 +2203,15 @@ td {
 thead th {
   padding-top: var(--space-4);
   position: sticky;
-  top: 0;
+  /* Reconciliation fix, Batch S — same practice-banner offset as
+     .app-nav/.tab-bar above; 0px outside Practice, unchanged. */
+  top: var(--practice-banner-height, 0px);
   z-index: 5;
   background: var(--surface);
 }
 
 .app-main:has(.tab-bar) thead th {
-  top: var(--sticky-tab-bar-height, 0px);
+  top: calc(var(--sticky-tab-bar-height, 0px) + var(--practice-banner-height, 0px));
 }
 
 tbody tr:last-child td {

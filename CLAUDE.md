@@ -278,3 +278,36 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 
 ## Session close-out
 - Before ending a session, write a short plain-language summary of what changed and why — for a non-coder to review without reading the code directly.
+
+
+## User approval for new operating rules
+- Explicitly requested by the project owner on September 23, 2026: present proposed new or materially changed build/operating rules to the owner for approval before adding them to project rule files or making them mandatory in terminal prompts. Do not infer rule approval from a general build request. Existing approved rules remain in force.
+- For the current ownership/property work, read `ZMR-CURRENT-WORK.md` and its linked approval register before proceeding; these record the owner's approved scope and outstanding review items outside the chat.
+
+
+## Owner-led data entry and acceptance testing — ownership/property batch
+- Explicit user instruction, September 23, 2026: the owner enters property, entity and other normal business information through the dashboard to verify functionality. Do not populate or edit live business records through terminal scripts or terminal-operated live-data entry for this batch. Provide numbered UI test steps and expected results when a testable build is ready. Use isolated non-production fixtures for automated tests; do not infer real identities or ownership percentages.
+- Approved G8 for this batch: review a complete realistic desktop/mobile preview and conduct an initial target-owner usability pilot, measuring task completion, errors, time and confidence. Five participants is a starting plan, not statistical proof. This scoped approval does not silently impose a new global process on unrelated work.
+
+
+## Independent recommendations — owner-requested collaboration preference
+- Explicit owner instruction, September 23, 2026: evaluate ideas on their merits; state agreement, disagreement or tradeoffs with a reason. Distinguish tentative ideas from approved decisions. Respect explicit final decisions, and flag material conflicts rather than silently treating every suggestion as mandatory scope.
+
+
+## Full-application visual review and incremental delivery — approved September 24, 2026
+- Owner approved the review-process corrections: use the normal AppShell, navigation, content sizing, production styles/components and representative fictional data for visual acceptance. A component harness without the application frame is engineering evidence, not a substitute for owner-facing layout review. Explicitly identify any simulated backend.
+- Deliver one coherent approved outcome through targeted checks and owner visual review before starting another implementation slice. Maintain a planning backlog without dispatching all batches at once. Review matching wide, intermediate and phone layouts, including long/empty/unknown values; consolidate findings when practical.
+- Reports must distinguish implemented locally, visually reviewed by owner, real integration verified, and released. Include the exact review URL/environment, checks actually run and material gaps; do not re-request settled product approvals.
+- General support for frequent releases is not authorization to deploy arbitrary HEAD or apply live migrations. Prepare a concrete scoped release for approval, preserving existing records and checking dependencies/compatibility, especially when unreleased database changes share the branch.
+
+
+## Testing responsibility — owner-approved September 25, 2026
+- Terminal/agent performs all feasible repeatable functional, regression and integration checks autonomously in the isolated practice environment and reports evidence. Do not require the owner to repeat passing engineering checks as a completion gate. This supersedes earlier checklist instructions assigning routine test execution to the owner, not the need for visual/workflow acceptance.
+- Owner review focuses on design/preferences, real workflow suitability and manual checks that tooling genuinely cannot perform. Explain the precise limitation and minimal requested action for any manual check. Preserve explicit visual-before-implementation gates.
+- Final real business entry remains owner-operated through the published dashboard after an approved release; practice fixtures are not migrated to production. This testing delegation does not authorize live edits, deployment or live migrations.
+
+
+## Connected workflow delivery — owner-approved September 25, 2026
+- Applies to planning agent and executing terminal: build complete connected approved workflows, test continuously, and consolidate owner review. This supersedes stopping for review after each small box; it preserves explicit visual-before-implementation gates and scoped production-release approval.
+- Within approved, sufficiently specified scope, proceed through unblocked work and routine fixes without owner micro-approvals. A package must reconcile current approvals, visual references, field meanings, data relationships/consumers, record preservation, interaction/failure states, permissions, acceptance evidence and release dependencies. Do not equate approval of direction with resolution of missing consequential details.
+- Significant issues are classified by cause and addressed in the relevant specification, implementation or tests. New/materially changed global operating rules still require owner approval; do not assume every defect is a prompt omission.
