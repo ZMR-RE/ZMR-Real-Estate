@@ -3,7 +3,9 @@
 Captured from the real, running mock-data harness (`npm run dev:harness`
 → `http://localhost:5180/harness.html`), inside the real `AppShell`
 frame. Screenshots are cropped to the actual app viewport (sidebar +
-content) — the harness's own dev-only toggle bar is excluded.
+content) — the harness's own dev-only toggle bar is excluded, except
+where a wide screenshot deliberately keeps a little of it in frame to
+show overall page context.
 
 **Insurance's images show real, already-merged application code**
 (`.insurance-policy-form { max-width: 960px }`, `src/index.css`) —
@@ -29,49 +31,81 @@ checked directly). `insurance-before-480px.jpg` / `insurance-after-
 to the approval — superseded in accuracy by the three
 `insurance-implemented-*` images, which show the real merged code.
 
-## Property-creation four-step flow (corrected this pass)
+## S3 — grouped Property Edit form preview (screen-organization pass, Sept 25 2026)
 
-A separate flow from the grouped Edit form below — used only when
+Existing-property **Edit** context — a single page, no step
+navigation, kept clearly distinct from the creation flow below.
+Regrouped from the prior pass's three groups into five, per the
+screen-organization review: **Identity & location**, **Acquisition**,
+**Building & site**, **Jurisdiction & identifiers**, and **Ownership &
+saved contacts** — balanced into two explicit 14-field columns (not
+left to grid auto-flow) so neither side is a lopsided giant group next
+to a near-empty one. Purchase method and the deed reference now live
+under Acquisition (previously buried under a generic "Property
+details"/"Purchase" heading); property type moved into Identity &
+location; exterior materials merged into Building & site instead of
+sitting alone in a short standalone column. Photo/Deed now show a
+realistic existing-record state ("View current photo" / "View current
+deed document") rather than the creation-only "not available until
+saved" wording. No leftover "(pick list)" / "(left blank)" / "Not
+wired" implementation prose remains in the rendered area — the one
+preview banner at the top is the only meta-commentary shown.
+
+- `s3-edit-form-grouped-desktop.jpg` — full form at 960px, zoomed out
+  to show both columns and every group in one frame (not a cropped
+  fragment) — confirms the two-column balance and full label/title
+  hierarchy at a glance.
+- `s3-edit-form-mobile-390.jpg` — 390px, scrolled to the Ownership /
+  Acquisition / Building & site groups, confirming the two columns
+  collapse to one and groups stack in the same logical left-then-right
+  reading order as desktop.
+
+## Property-creation four-step flow (screen-organization pass, Sept 25 2026)
+
+A separate flow from the grouped Edit form above — used only when
 creating a brand-new property. Editing an existing property never
-enters this flow. Corrected from the prior pass to show real Back/Next/
-Cancel navigation (not just clickable step tabs), a structured owner
-picker, no Name field anywhere, and no engineering prose in the visible
-area — only the one preview banner and ordinary product copy.
+enters this flow. This pass reworked all four steps per the
+screen-organization review:
 
-- `creation-flow-step1-ownership.png` — Step 1, default state: a
-  dropdown of existing owners (not a free-text field), percentage
-  optional, the allocation-completeness checkbox, Cancel/Next.
-- `creation-flow-step1-add-new-owner.png` — Step 1 with "+ Add a new
-  owner…" selected, revealing its own separate name field — confirms
-  typing a name is a distinct, explicit action, never the default way
-  to enter an owner.
-- `creation-flow-step2-invalid-address.png` — Step 2, an actual invalid
-  state: Next was clicked with Address empty, showing the inline
-  "Address is required" message and not advancing. No Name field is
-  present on this step at all.
-- `creation-flow-step2-valid.png` — Step 2 with a valid address entered,
-  Back/Next both present.
-- `creation-flow-step3-documents-skip.png` — Step 3 with nothing staged;
-  the button reads "Skip" since there's nothing to carry forward.
-- `creation-flow-step3-documents-staged.png` — Step 3 after choosing a
-  file; the button switches to "Next".
-- `creation-flow-step4-review.png` — Step 4: read-only summary with
-  "Edit" links that jump back to the section that produced each value
-  (Owners → Step 1, Address → Step 2, Documents → Step 3), the
-  allocation-incomplete state shown plainly, Back/Save.
-- `creation-flow-mobile-step1.png` — 390px, Step 1, confirming the
-  progress indicator and navigation both remain usable at phone width.
+- `creation-step1-ownership-two-owners.jpg` — Step 1 default state,
+  now seeded with **two** owners (one with a deliberately long name,
+  "ZMR-TEST-FIXTURE Holdings LLC (Formerly Riverside Properties
+  Group)"), each owner in its own bordered row/block, the owner picker
+  given more width than the short percentage field, Remove kept inside
+  the same block. Below the roster, a plain informational line ("1 of
+  2 owners has a percentage entered so far — 55% assigned...") is
+  shown distinct from the allocation-complete checkbox — the summary
+  is never inferred into that checkbox.
+- `creation-step1-add-new-owner.jpg` — same step with "+ Add a new
+  owner…" selected on one row, showing its own persistent "New owner's
+  name" `<label>` (not just a placeholder).
+- `creation-step1-ownership-mobile-390.jpg` — 390px, confirming the
+  step tabs, owner blocks, and the entered/complete summary all remain
+  usable and legible stacked at phone width.
+- `creation-step2-basics.jpg` — Step 2, unchanged sequence per the
+  review (address full-width, then City/State/Zip with City wider than
+  the short fields, Status below) — preserved, not reworked.
+- `creation-step3-documents-single.jpg` — Step 3 with one staged file,
+  showing the new per-file row: file name, size, a "Ready to upload"
+  status, and its own Remove action.
+- `creation-step3-documents-two-files.jpg` — Step 3 with a second file
+  staged, confirming multiple rows list and remove independently.
+- `creation-step4-review.jpg` — Step 4, rebuilt into two clearly
+  titled sections side by side — **Property basics** and
+  **Ownership** — each with its own top-right Edit action; address
+  shown prominently; owner rows individually listed with aligned
+  name/percentage columns (not a joined string), including the
+  explicit "percentage not yet entered" state; Documents shown full
+  width below both sections; footer keeps Cancel on the left and
+  Back/Save on the right, exact "Save" label per the project's
+  universal action-labeling rule.
+- `creation-step4-review-mobile-390-top.jpg` /
+  `creation-step4-review-mobile-390-bottom.jpg` — 390px, confirming
+  Property basics and Ownership stack (rather than staying side by
+  side) with Documents below, matching logical reading order at phone
+  width.
 
-## S3 — grouped Property Edit form preview (Name re-labeled, not removed)
-
-This is the **existing-property Edit** context, kept clearly distinct
-from the creation flow above (a single page, no step navigation).
-Existing saved Name values must stay visible/editable here — removing
-the field outright would erase that path, so it's re-labeled instead:
-
-- `s3-edit-form-name-optional-label.png` — Name field labeled "Name
-  (optional label)", no required marker, no engineering-framed hint
-  text; "Review saved contact details" shown in place of the old flat
-  Owner/Contact fields, with only ordinary product copy underneath it.
-  No status/implementation prose is rendered anywhere in this preview
-  area anymore.
+All creation-flow and S3 screenshots in this pass were captured full-
+frame (page zoomed out rather than cropped to one section) so the
+overall grouping and column balance — not just one isolated step — can
+be judged directly from the image.

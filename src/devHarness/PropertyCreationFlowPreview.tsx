@@ -4,46 +4,36 @@ import { US_STATES } from '../shared/usStates'
 // Batch S / Package 1 — VISUAL PREVIEW ONLY, not wired into the
 // application. Distinct from PropertyFormGroupedPreview.tsx (the
 // single-page, post-create grouped EDIT form): this previews the
-// separate four-step CREATION flow Batch B originally approved
-// (Ownership → Property basics → Documents (optional) → Review).
-// Editing an existing property never re-enters this wizard.
+// separate four-step CREATION flow (Ownership → Property basics →
+// Documents (optional) → Review). Editing an existing property never
+// re-enters this wizard.
 //
-// Corrected this pass, per explicit review feedback on the prior
-// version:
-// - Real Back/Next/Cancel navigation at every step (the prior version
-//   only had clickable step-number tabs at the top, which read as
-//   arbitrary free jumping, not an actual wizard). The progress
-//   indicator up top is now a plain, non-interactive display of
-//   current/completed steps — Back/Next/the Review step's own "Edit"
-//   links are the only way to move between steps, same as a real
-//   multi-step form.
-// - No Name field anywhere in this flow — address is the identifier at
-//   creation; nothing here re-adds the redundant input. (An existing
-//   property's own saved Name stays visible/editable elsewhere, in the
-//   separate post-create Edit form preview, as an optional legacy
-//   label — not here.)
-// - Step 1's owner picker is a real structured selection from existing
-//   fixture owners (a `<select>`, same shape as the real
-//   SearchableSelect's own option list) plus an explicit "add a new
-//   owner" action that reveals its own separate name field — typing in
-//   the main picker itself is not possible, so nothing here could be
-//   mistaken for "typing creates a verified owner."
-// - The allocation-completeness hint no longer claims that leaving it
-//   unchecked lets a later addition "bypass correction requirements" —
-//   every ownership change, at any time, already requires an explicit
-//   reason (the real `replace_property_ownership_interests` RPC); nothing
-//   about this checkbox changes that.
-// - No engineering/status prose rendered in the visible preview area —
-//   one banner at the top says this is a non-saving preview, and that's
-//   the only meta-commentary shown; everything else here is ordinary
-//   product copy or fictional data.
-// - Step 2 demonstrates an actual invalid state: clicking Next with
-//   Address empty shows an inline validation message and does not
-//   advance, matching real required-field enforcement.
+// Revised per the Sept 25 2026 screen-organization review:
+// - Each owner is its own bordered block (not just a bare row), with
+//   the owner picker given more width than the short percentage field,
+//   and Remove kept inside the same block. "+ Add another owner" sits
+//   directly under the roster. The inline "new owner" field now has a
+//   real <label>, not just a placeholder. A plain, informational
+//   "entered so far" summary (count of owners with a percentage, and
+//   their sum) sits between the roster and the allocation-complete
+//   checkbox — distinct from that checkbox, never inferred into it.
+//   Default state now shows two owners, one with a deliberately long
+//   name, one with no percentage yet, so multi-owner/long-value
+//   wrapping is visible without extra clicks.
+// - Property basics keeps address full-width, then city/state/zip with
+//   city given more width than the short state/zip fields, status
+//   below — already-approved sequence, unchanged.
+// - Documents now shows each staged file as its own row: name, size,
+//   a "Ready to upload" status, and its own Remove action.
+// - Review is rebuilt into two titled sections side by side (Property
+//   basics, Ownership), each with its own top-right Edit link, plus
+//   Documents shown full-width below both — not one flat field list.
+//   Owner rows in Review are aligned (name, then percentage or an
+//   explicit "not yet entered"), never a comma-joined string.
 const OWNER_OPTIONS = [
   { id: 'harness-llc-owner-a', name: 'ZMR-TEST-FIXTURE Owner A' },
   { id: 'harness-llc-owner-b', name: 'ZMR-TEST-FIXTURE Owner B' },
-  { id: 'harness-llc-entity', name: 'ZMR-TEST-FIXTURE Holdings LLC' },
+  { id: 'harness-llc-entity', name: 'ZMR-TEST-FIXTURE Holdings LLC (Formerly Riverside Properties Group)' },
 ]
 
 interface OwnerRow {
@@ -52,23 +42,37 @@ interface OwnerRow {
   percentage: string
 }
 
+interface StagedFile {
+  name: string
+  size: string
+}
+
 const STEP_LABELS = ['Ownership', 'Property basics', 'Documents', 'Review']
 
 export function PropertyCreationFlowPreview() {
   const [step, setStep] = useState(1)
-  const [owners, setOwners] = useState<OwnerRow[]>([{ ownerId: 'harness-llc-owner-a', newOwnerName: '', percentage: '' }])
+  const [owners, setOwners] = useState<OwnerRow[]>([
+    { ownerId: 'harness-llc-owner-a', newOwnerName: '', percentage: '55' },
+    { ownerId: 'harness-llc-entity', newOwnerName: '', percentage: '' },
+  ])
   const [allocationComplete, setAllocationComplete] = useState(false)
-  const [basics, setBasics] = useState({ address: '', city: 'Practiceville', state: 'IL', zip: '60000', status: 'active' })
+  const [basics, setBasics] = useState({ address: '300 New Construction Ave', city: 'Practiceville', state: 'IL', zip: '60000', status: 'active' })
   const [addressTouched, setAddressTouched] = useState(false)
-  const [stagedFiles, setStagedFiles] = useState<string[]>([])
+  const [stagedFiles, setStagedFiles] = useState<StagedFile[]>([
+    { name: 'ZMR-TEST-PRACTICE-deed-preview.pdf', size: '412 KB' },
+  ])
 
   const addOwnerRow = () => setOwners((prev) => [...prev, { ownerId: 'harness-llc-owner-a', newOwnerName: '', percentage: '' }])
   const updateOwnerRow = (i: number, patch: Partial<OwnerRow>) =>
     setOwners((prev) => prev.map((o, idx) => (idx === i ? { ...o, ...patch } : o)))
   const removeOwnerRow = (i: number) => setOwners((prev) => prev.filter((_, idx) => idx !== i))
+  const removeStagedFile = (i: number) => setStagedFiles((prev) => prev.filter((_, idx) => idx !== i))
 
   const ownerDisplayName = (o: OwnerRow) =>
     o.ownerId === 'new' ? o.newOwnerName || '(new owner not yet named)' : OWNER_OPTIONS.find((opt) => opt.id === o.ownerId)?.name ?? ''
+
+  const enteredPercentages = owners.map((o) => Number(o.percentage)).filter((n) => !Number.isNaN(n) && n > 0)
+  const percentageSum = enteredPercentages.reduce((a, b) => a + b, 0)
 
   const addressValid = basics.address.trim().length > 0
 
@@ -83,7 +87,7 @@ export function PropertyCreationFlowPreview() {
   const goToStep = (n: number) => setStep(n)
 
   return (
-    <div style={{ maxWidth: 720 }}>
+    <div style={{ maxWidth: 780 }}>
       <div className="preview-banner">PREVIEW ONLY — nothing on this screen is saved. Every value is fictional.</div>
 
       <div className="preview-steps" aria-label={`Step ${step} of 4: ${STEP_LABELS[step - 1]}`}>
@@ -103,44 +107,50 @@ export function PropertyCreationFlowPreview() {
           <h3 className="property-field-group-title">Ownership</h3>
           <div className="field-column">
             {owners.map((owner, i) => (
-              <div className="field-row" key={i}>
-                <div className="field">
-                  <label htmlFor={`owner-select-${i}`}>Owner</label>
-                  <select
-                    id={`owner-select-${i}`}
-                    value={owner.ownerId}
-                    onChange={(e) => updateOwnerRow(i, { ownerId: e.target.value })}
-                  >
-                    {OWNER_OPTIONS.map((opt) => (
-                      <option key={opt.id} value={opt.id}>
-                        {opt.name}
-                      </option>
-                    ))}
-                    <option value="new">+ Add a new owner…</option>
-                  </select>
-                  {owner.ownerId === 'new' && (
+              <div key={i} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: 'var(--space-4)' }}>
+                <div className="field-row">
+                  <div className="field" style={{ flex: 3 }}>
+                    <label htmlFor={`owner-select-${i}`}>Owner</label>
+                    <select
+                      id={`owner-select-${i}`}
+                      value={owner.ownerId}
+                      onChange={(e) => updateOwnerRow(i, { ownerId: e.target.value })}
+                    >
+                      {OWNER_OPTIONS.map((opt) => (
+                        <option key={opt.id} value={opt.id}>
+                          {opt.name}
+                        </option>
+                      ))}
+                      <option value="new">+ Add a new owner…</option>
+                    </select>
+                    {owner.ownerId === 'new' && (
+                      <div style={{ marginTop: 'var(--space-2)' }}>
+                        <label htmlFor={`owner-new-name-${i}`}>New owner&rsquo;s name</label>
+                        <input
+                          id={`owner-new-name-${i}`}
+                          value={owner.newOwnerName}
+                          onChange={(e) => updateOwnerRow(i, { newOwnerName: e.target.value })}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="field" style={{ flex: 1 }}>
+                    <label htmlFor={`owner-pct-${i}`}>Percentage (optional)</label>
                     <input
-                      style={{ marginTop: 'var(--space-2)' }}
-                      placeholder="New owner's name"
-                      value={owner.newOwnerName}
-                      onChange={(e) => updateOwnerRow(i, { newOwnerName: e.target.value })}
+                      id={`owner-pct-${i}`}
+                      placeholder="Not yet known"
+                      value={owner.percentage}
+                      onChange={(e) => updateOwnerRow(i, { percentage: e.target.value })}
                     />
+                  </div>
+                  {owners.length > 1 && (
+                    <div className="field" style={{ flex: '0 0 auto', justifyContent: 'flex-end', display: 'flex' }}>
+                      <button type="button" onClick={() => removeOwnerRow(i)} aria-label="Remove owner" style={{ marginTop: 'var(--space-5)' }}>
+                        Remove
+                      </button>
+                    </div>
                   )}
                 </div>
-                <div className="field">
-                  <label htmlFor={`owner-pct-${i}`}>Percentage (optional)</label>
-                  <input
-                    id={`owner-pct-${i}`}
-                    placeholder="Not yet known"
-                    value={owner.percentage}
-                    onChange={(e) => updateOwnerRow(i, { percentage: e.target.value })}
-                  />
-                </div>
-                {owners.length > 1 && (
-                  <button type="button" onClick={() => removeOwnerRow(i)} aria-label="Remove owner">
-                    Remove
-                  </button>
-                )}
               </div>
             ))}
             <div className="field">
@@ -148,12 +158,16 @@ export function PropertyCreationFlowPreview() {
                 + Add another owner
               </button>
             </div>
+            <p className="field-hint">
+              {enteredPercentages.length} of {owners.length} owner{owners.length === 1 ? '' : 's'} {enteredPercentages.length === 1 ? 'has' : 'have'} a
+              percentage entered so far — {percentageSum}% assigned. This is informational only and does not mark allocation complete.
+            </p>
             <div className="field">
               <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontWeight: 400 }}>
                 <input type="checkbox" checked={allocationComplete} onChange={(e) => setAllocationComplete(e.target.checked)} />
-                All current owners are entered — allocation is complete
+                All current owners are entered and their percentages total 100% — allocation is complete
               </label>
-              <p className="field-hint">Leave unchecked if more owners still need to be added.</p>
+              <p className="field-hint">Leave unchecked if more owners still need to be added, or percentages aren&rsquo;t all known yet.</p>
             </div>
           </div>
         </div>
@@ -180,11 +194,11 @@ export function PropertyCreationFlowPreview() {
               )}
             </div>
             <div className="field-row">
-              <div className="field">
+              <div className="field" style={{ flex: 2 }}>
                 <label htmlFor="basics-city">City</label>
                 <input id="basics-city" value={basics.city} onChange={(e) => setBasics((p) => ({ ...p, city: e.target.value }))} />
               </div>
-              <div className="field">
+              <div className="field" style={{ flex: 1 }}>
                 <label htmlFor="basics-state">State</label>
                 <select id="basics-state" value={basics.state} onChange={(e) => setBasics((p) => ({ ...p, state: e.target.value }))}>
                   {US_STATES.map((s) => (
@@ -194,7 +208,7 @@ export function PropertyCreationFlowPreview() {
                   ))}
                 </select>
               </div>
-              <div className="field">
+              <div className="field" style={{ flex: 1 }}>
                 <label htmlFor="basics-zip">Zip</label>
                 <input id="basics-zip" value={basics.zip} onChange={(e) => setBasics((p) => ({ ...p, zip: e.target.value }))} />
               </div>
@@ -218,14 +232,37 @@ export function PropertyCreationFlowPreview() {
             <div className="field">
               <label>Deed / acquisition documents</label>
               {stagedFiles.length > 0 && (
-                <ul style={{ margin: 0, paddingLeft: 'var(--space-5)' }}>
-                  {stagedFiles.map((f) => (
-                    <li key={f}>{f}</li>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                  {stagedFiles.map((f, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-3)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: 'var(--space-2) var(--space-3)',
+                      }}
+                    >
+                      <span style={{ flex: 2 }}>{f.name}</span>
+                      <span style={{ flex: 1, color: 'var(--text)' }}>{f.size}</span>
+                      <span className="status-badge status-badge-success" style={{ flex: 1 }}>
+                        Ready to upload
+                      </span>
+                      <button type="button" onClick={() => removeStagedFile(i)}>
+                        Remove
+                      </button>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
-              <button type="button" onClick={() => setStagedFiles(['ZMR-TEST-PRACTICE-deed-preview.pdf'])} disabled={stagedFiles.length > 0}>
-                Choose a file
+              <button
+                type="button"
+                onClick={() => setStagedFiles((prev) => [...prev, { name: 'ZMR-TEST-PRACTICE-second-file.pdf', size: '198 KB' }])}
+                style={{ marginTop: 'var(--space-2)' }}
+              >
+                Add files
               </button>
               <p className="field-hint">Nothing uploads until Save on the Review step.</p>
             </div>
@@ -234,43 +271,62 @@ export function PropertyCreationFlowPreview() {
       )}
 
       {step === 4 && (
-        <div className="property-field-group">
-          <h3 className="property-field-group-title">Review</h3>
-          <div className="field-column">
-            <dl className="field-grid">
-              <div className="field">
-                <dt>
-                  Owners <button type="button" onClick={() => goToStep(1)}>Edit</button>
-                </dt>
-                <dd>{owners.map(ownerDisplayName).filter(Boolean).join('; ') || '—'}</dd>
+        <>
+          <div className="field-group-row field-group-row--two-col">
+            <div className="property-field-group">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <h3 className="property-field-group-title">Property basics</h3>
+                <button type="button" onClick={() => goToStep(2)}>
+                  Edit
+                </button>
               </div>
-              <div className="field">
-                <dt>Allocation</dt>
-                <dd>{allocationComplete ? 'Complete' : 'Incomplete — more owners may still be added'}</dd>
-              </div>
-              <div className="field">
-                <dt>
-                  Address <button type="button" onClick={() => goToStep(2)}>Edit</button>
-                </dt>
+              <dl>
+                <dt style={{ fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--text-h)' }}>{basics.address}</dt>
                 <dd>
-                  {basics.address}, {basics.city}, {basics.state} {basics.zip}
+                  {basics.city}, {basics.state} {basics.zip}
                 </dd>
-              </div>
-              <div className="field">
                 <dt>Status</dt>
                 <dd>{basics.status}</dd>
+              </dl>
+            </div>
+
+            <div className="property-field-group">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <h3 className="property-field-group-title">Ownership</h3>
+                <button type="button" onClick={() => goToStep(1)}>
+                  Edit
+                </button>
               </div>
-              {stagedFiles.length > 0 && (
-                <div className="field">
-                  <dt>
-                    Documents <button type="button" onClick={() => goToStep(3)}>Edit</button>
-                  </dt>
-                  <dd>{stagedFiles.join(', ')}</dd>
-                </div>
-              )}
-            </dl>
+              <div className="field-column">
+                {owners.map((owner, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{ownerDisplayName(owner)}</span>
+                    <span>{owner.percentage ? `${owner.percentage}%` : 'percentage not yet entered'}</span>
+                  </div>
+                ))}
+                <p className="field-hint">
+                  {allocationComplete ? 'Allocation marked complete.' : 'Allocation incomplete — more owners may still be added.'}
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
+
+          <div className="property-field-group" style={{ marginTop: 'var(--space-4)' }}>
+            <h3 className="property-field-group-title">Documents</h3>
+            <div className="field-column">
+              {stagedFiles.length > 0 ? (
+                stagedFiles.map((f, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{f.name}</span>
+                    <span>{f.size}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="field-hint">No documents staged.</p>
+              )}
+            </div>
+          </div>
+        </>
       )}
 
       <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-4)' }}>
