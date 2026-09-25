@@ -32,7 +32,7 @@ export function PropertyList({ properties, onAddNew }: PropertyListProps) {
               <Link to={`/properties/${property.id}`} className="card-list-link">
                 <span>
                   {label}
-                  {property.name !== label ? ` (${property.name})` : ''}
+                  {property.name && property.name !== label ? ` (${property.name})` : ''}
                   {property.city ? `, ${property.city}` : ''}
                 </span>
                 {badge && <span className={`status-badge ${badge.variant}`}>{badge.label}</span>}

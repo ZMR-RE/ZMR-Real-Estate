@@ -3,7 +3,10 @@ import { supabase } from '../../shared/supabaseClient'
 export interface Property {
   id: string
   account_id: string
-  name: string
+  // Package 1 — no longer required; address is the real identifier
+  // (shared/propertyLabel.ts). Existing values are untouched; a new
+  // property can now be created with no name at all.
+  name: string | null
   llc_id: string | null
   address: string | null
   city: string | null

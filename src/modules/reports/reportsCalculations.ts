@@ -154,7 +154,7 @@ export interface BalanceSheet {
 // 7.19) — each property's most recent market_value entry — rather than a
 // static properties.market_value column, keyed by property id.
 export function computeBalanceSheet(
-  properties: { id: string; name: string; address: string | null }[],
+  properties: { id: string; name: string | null; address: string | null }[],
   transactionsAllTime: Transaction[],
   mortgagePaymentsAllTime: MortgagePaymentPrincipal[],
   portfolioMortgages: PortfolioMortgageRow[],

@@ -1,411 +1,236 @@
-# Package 1 — Connected property creation & core setup (v2, corrected)
+# Package 1 — Connected property creation & core setup (v3, final readiness)
 
-Supersedes the v1 draft committed at `05a6cd8`. Corrected per
-`ZMR-package-1-contract-corrections.txt` into one internally consistent,
-source-backed specification. Every claim below cites the actual file/
-migration it's based on — nothing is asserted as "already existing" or
-"already safe" without a citation.
+Supersedes v2 (`53b844f`). Corrected per
+`ZMR-package-1-final-readiness-handoff.txt`. The two settled product
+approvals (drop the redundant Name requirement; move to structured
+ownership/contacts, retaining legacy values for explicit reconciliation)
+are unchanged and not re-asked. This revision resolves every remaining
+engineering gap with a concrete, source-backed, testable mechanism —
+nothing left as "pick one" where the approved behavior already implies
+the answer — and narrows the one real open product question (legacy
+ownership ambiguity) to a single plain recommendation.
 
-**What's already approved (do not re-approve, do not re-ask):** stop
-requiring a redundant Name input when address identifies the property,
-preserving every existing name value and its consumers; move new
-ownership/contact entry onto the structured system, retaining original
-flat legacy values for explicit reconciliation — never inferred, never
-deleted (approval register, "Two legacy-field recommendations approved;
-Package 1 review", Sept 25 2026). **What is NOT approved and is not
-executed here:** the specific mechanisms below (a nullable name column
-vs. an autofill value; the exact legacy-contact reconciliation flow; any
-`llc_id` compatibility-pointer behavior). Those are proposals in this
-document, flagged in §6, awaiting their own decision.
+**What changed in this revision, in one place:**
+- Name is now nullable — **implemented and verified this pass** (not just proposed): migration applied to Practice, TypeScript types/consumers updated across the whole repo, build/lint/test clean. See §1.
+- Audit coverage for `contacts`/`contact_methods`/`contact_links` INSERTs — **implemented and verified this pass**. A related, more serious, pre-existing bug was found and fixed in the same migration: see §1.
+- The `llc_id` "backfill" idea from v2 is withdrawn — it silently turned an unverified legacy pointer into confirmed ownership, which is exactly what's now explicitly prohibited. Replaced with an explicit, never-automatic "confirm ownership" action. See §2.
+- The idempotency mechanism in v2 was broken (`ON CONFLICT DO NOTHING RETURNING` returns no rows on conflict — it cannot actually retrieve the prior request). Fixed, with account-scoped authorization and explicit changed-payload handling. See §5.
+- Document/Storage recovery now has a concrete, testable design (stable object keys, resumability after reload, verified-safe cleanup). See §6.
+- Scope is stated plainly where it was previously implied: §8.
 
-## 0. What this package is
+## 1. Name and audit coverage — implemented and verified this pass
 
-Connects two things that exist today but don't talk to each other: the
-single-form Add/Edit Property screen (`PropertyForm.tsx`) and the
-already-real, already-tested structured ownership system
-(`property_ownership_interests`, `src/modules/llcs/
-ownershipInterestsQueries.ts`). It formalizes Batch B's approved
-four-step creation shape (OWN-04: "Ownership → Property basics →
-Documents (optional) → Review") as the actual creation flow, and
-resolves the Name/flat-contact conflicts the Batch S3 preview flagged —
-without inferring bookkeeping context from ownership percentages,
-without clearing any existing legacy value, and without claiming
-mechanisms exist that don't.
+**Name:** `properties.name` is now nullable
+(`supabase/migrations/20260925090000_properties_name_nullable.sql`).
+Verified applied to Practice directly (not assumed): `information_schema.columns` confirms `is_nullable = YES`, and a real `insert ... values (..., name => null, ...)` against Practice succeeded and was cleaned up. Every TypeScript consumer was updated, not just the one found by an earlier text search — the compiler caught three more than that search did, which is exactly why "validate all TS types" mattered here:
+- `propertiesQueries.ts`'s `Property.name: string | null`.
+- `usePropertyRegistry.ts`'s `BLANK_PROPERTY.name: null`.
+- `PropertyForm.tsx`'s Name field: `required` and the asterisk removed, `onChange` now stores `null` on an empty value instead of `''`.
+- `PropertyList.tsx:35`'s parenthetical guard: `property.name && property.name !== label`.
+- `shared/propertyLabel.ts`'s `PropertyRef.name: string | null`, and its own fallback chain extended to `property.address ?? property.name ?? '—'` — a property with neither address nor name was always structurally possible (address was never HTML-`required` either) and the function's return type is `string`, so it needs its own terminal fallback, not just a pass-through of `name`.
+- `reportsCalculations.ts`'s `computeBalanceSheet` parameter shape (doesn't read `.name`, but its type annotation was wrong).
+`npm run build`/`lint`/`test` clean (53/53) after every change. No component was assumed to be the only dependent — the type system was used to prove it.
 
-**Non-goals, explicit:** no visual restyle beyond what S3 already covers
-(that gate is separate and still pending); Insurance/Financials/Tax/
-Market-rent untouched; no production deploy or migration executed by
-this document itself — every migration named below is a proposal for
-approval, not something already applied.
+**Audit coverage:** contacts/contact_methods/contact_links already had UPDATE-only audit coverage, added by `20260925030000_contacts.sql` — that file's own comment already named the exact gap this closes ("Creating a new contact, method, or link is not itself audit-logged"). `20260925100000_audit_trail_contacts.sql` generalizes the existing `log_audit_changes()` function to also handle `TG_OP = 'INSERT'`, and extends the three existing triggers (drop+recreate under the same names, not a second parallel trigger) to fire on insert. Verified live against Practice: inserting a real (`ZMR-TEST-`-prefixed, cleaned up after) contact now produces two `audit_log` rows (`name`, `archived`, old value empty, new value populated); before the fix, none were produced.
 
-## 1. Field dictionary — source, destination, consumers (source-verified)
+**A separate, more serious bug was found while tracing this and fixed in the same migration:** `20260925030000_contacts.sql`'s own rewrite of `audit_log_table_name_check` dropped `'financial_transactions'` and `'financial_periods'` from the allowed list (both added by earlier migrations, `20260911100000` and `20260911110000`) instead of extending it. Both tables' audit triggers were never dropped and still fire on every transaction edit/void and every period lock/reopen — which means, since that migration, every one of those UPDATEs has been hitting the check constraint *inside the same transaction* and failing outright (an AFTER trigger's failed INSERT rolls back the whole UPDATE). **Confirmed directly, not inferred:** read the live constraint on Practice (it was missing both values), then reproduced it — inserted a real test transaction and voided it; the void succeeded only after the fix was applied. This predates Package 1 and this handoff entirely; it is a live, already-shipped regression, not new scope, flagged here because this migration already had to touch the same constraint. **Recommend checking whether this has caused any real failed transaction edits/voids or period-lock actions in production since `20260925030000` was released, since the constraint fix has not been applied to production by this session.**
 
-### Name (`properties.name`)
+## 2. Ownership ambiguity — one plain recommendation, not a raw column question
 
-**Verified:** the column is `not null` (`supabase/migrations/
-20260903173528_initial_schema.sql:11`). The only real UI consumer is
-`PropertyList.tsx:34-35`, which shows `propertyLabel(property)` (already
-address-preferring — `shared/propertyLabel.ts:13` returns
-`property.address ?? property.name`) plus a parenthetical `(name)` *only
-when* `property.name !== label`. No other file reads `properties.name`
-for display or logic (confirmed by repo-wide search this pass).
+**The rule, in one sentence:** a legacy `Organization type` selection (`properties.llc_id`) is a *historical reference*, never treated as confirmed ownership, until either (a) the property's real ownership-interest data unambiguously resolves to that same single owner, or (b) the account owner explicitly confirms it via a dedicated action. Nothing here infers, backfills, or bulk-converts.
 
-Two mechanisms are possible to satisfy the `not null` constraint once
-Name is no longer a required *input*; **neither is approved yet, both
-require a decision (§6):**
+**Every consumer of `properties.llc_id` must treat it as authoritative *only* under case (a) below, and as a non-authoritative historical label otherwise** — this is not optional per-consumer judgment, it's the one rule every one of the four real consumers (`PropertyIdentityHeader.tsx:73`, `PropertyProfileHistoryTab.tsx:16`, `PropertyProfileOverviewTab.tsx:73,116`'s `FinancialAccountsSection` scoping, and Quick Capture's account grouping which depends on it) must implement:
 
-- **Option A (recommended) — make the column nullable.** One migration
-  (`alter table properties alter column name drop not null`). Requires
-  updating exactly one consumer: `PropertyList.tsx:35`'s guard becomes
-  `property.name && property.name !== label` so a null name renders no
-  parenthetical instead of literally showing `(null)`. This is the
-  root-cause fix — Name becomes what it now actually is, an optional
-  annotation, at the schema level too.
-- **Option B — write a fallback value at save time.** No migration;
-  `createProperty` writes `input.name?.trim() || input.address` when the
-  user left Name blank. This reuses a value the user already entered on
-  the same form (not a new inferred fact), but leaves a real column
-  holding a synthetic copy of another field, which is exactly the kind
-  of redundant-copy the correction flagged as unwanted by default.
+| Case | What `property_ownership_interests` actually shows | `llc_id` treated as authoritative? | What the four consumers show |
+|---|---|---|---|
+| Zero owners | No rows at all | No | "No owner recorded" — plain, not an error |
+| Legacy-only | No rows; `llc_id` set from before the ownership-interests system existed | **No — this is the case the recommendation is about** | "Ownership not yet confirmed (previously recorded as: *[entity name]*)" — read-only, with a "Confirm this as the current owner" action available on the property's own Ownership box. Clicking it creates one real, explicit `property_ownership_interests` row (via the existing `replace_property_ownership_interests`, with its required reason) naming that same entity — a human decision, every time, never automatic, never bulk. |
+| One owner, allocation incomplete | One row, `allocation_status = 'incomplete'` | **No** — one entry with incomplete status is not proof of sole ownership (the exact case the handoff named: 48% incomplete could mean more owners are still being entered) | The one known owner, plus "additional owners may exist — allocation not yet marked complete" |
+| Owner kind unresolved | One or more rows reference an `llcs` row with `owner_kind is null` | No (kind is unresolved, not just count) | "Owner type unresolved" — shown plainly, never guessed as individual or entity |
+| 2+ current owners | 2+ rows | No | Every consumer shows/handles multiple owners explicitly — e.g. `FinancialAccountsSection` presents an owner/entity picker instead of silently scoping to one |
+| Transition back to exactly one | Was 2+, now exactly 1 row remains, `allocation_status = 'complete'` | **Yes** — this is the only case `llc_id` may be set/updated, and it's driven by real interest data, not a legacy pointer | The one confirmed owner |
 
-This document does not choose between them — see §6 decision 1.
+This table is the actual implementation contract for the four consumers — none of them may fall back to trusting `llc_id` in any row of this table except the last one. No consumer needs a fifth case invented; every property is in exactly one of these six states at read time.
 
-### `properties.llc_id` (single-entity compatibility pointer)
+**What this replaces from v2:** the earlier "one-time backfill: create a matching single ownership-interest row from the existing pointer" proposal is withdrawn. That was an automatic conversion of an unverified legacy association into confirmed ownership — precisely what's now ruled out. The Legacy-only row above is the corrected replacement: preserved, labeled, inspectable, and only ever promoted to real ownership by an explicit, individually-reasoned human action.
 
-**Verified consumers, exhaustive repo search this pass:**
-- `PropertyIdentityHeader.tsx:73` — display only (`llcDisplay(property.llc_id, llcOptions)`).
-- `PropertyProfileHistoryTab.tsx:16` — `useAuditLog(property.id, property.llc_id)`, entity-scoped audit-log filtering.
-- `PropertyProfileOverviewTab.tsx:73,116` — `FinancialAccountsSection` scoping (which financial accounts show as "this property's" vs. "shared account" for the property).
-- `useCaptureForm.ts:112,156` / `CaptureEntryDetailsForm.tsx:139,146` — Quick Capture's financial-account picker groups accounts as "This property" vs. "Shared accounts" using this same value, transitively depending on `FinancialAccountsSection`'s scoping logic.
-- `auditLogFormatting.ts:12` — labels a change to this column "Organization type" in the audit trail's generic field-diff renderer.
-- `PropertyForm.tsx:133-134` — the current single-owner picker, which this package's wizard replaces as the *write* path (§4).
+## 3. Contacts — unchanged from v2, still not owner identities
 
-**Not** a consumer, despite the name collision: `PropertyOwnershipInterestsSection.tsx:44`'s `i.llc_id` reads `property_ownership_interests.llc_id` (a different table, same column name) — unrelated to the compatibility pointer discussed here.
+No schema change. `contacts`/`contact_methods`/`contact_links` are reusable communication records; ownership interests reference `llcs` (which already models both entities and people — `llcs.owner_kind: 'individual' | 'entity' | null`, `llcsQueries.ts:24`). The legacy-contact reconciliation flow (select/create a contact, explicit role and link, explicit confirmation of exactly what transfers, retained-not-cleared original value, idempotent retry, now-real audit coverage per §1) is unchanged from v2 and uses only existing, standard patterns already established for this system — no new product question is being re-asked here.
 
-**Corrected proposal (§6 decision 2 — not approved):** `property_ownership_interests` remains the sole authoritative source of who owns a property. `properties.llc_id` is set (or updated) **only when there is currently exactly one active ownership interest** — an unambiguous case, not an inference from percentages. When a property has 2+ current owners, `llc_id` is left exactly as it was (never cleared, never set to a guessed "majority" owner, never left stale on a tie by a rule that pretends to resolve it) — the four consumers above must instead be updated to explicitly handle "multiple owners" (e.g. `FinancialAccountsSection` shows an explicit owner/entity picker instead of assuming one scope) rather than silently trusting a pointer that can't represent the real state. **Existing properties whose `llc_id` was set before `property_ownership_interests` existed** (a legacy single-owner pointer with no matching interest row yet) are preserved as-is and get a one-time backfill: create a matching single ownership-interest row from the existing pointer (percentage left null/unresolved, never assumed 100%) rather than bulk-clearing the pointer or leaving it silently orphaned from the new system.
+## 4. Layout, navigation, validation — unchanged from v2
 
-### Owner name / Contact phone / Contact email (flat legacy fields, `properties.owner_name/contact_phone/contact_email`)
+Batch B's literal four steps (Ownership → Property basics → Documents (optional) → Review), in place inside the existing `/properties` registry route, no new pages or nav item. Acquisition and Building Details remain explicitly *not* wizard steps — `PropertyForm.tsx` already renders them and is already wired into Overview's existing "Property information" Edit section (`PropertyProfileOverviewTab.tsx:77-95`); nothing new is built for them. Address/city/state/zip required at step 2 (Q01); Name now genuinely optional (§1); ownership needs at least one entry with an explicit `allocation_status`, never inferred from percentage math.
 
-**Corrected — nothing is cleared automatically, ever.** The creation
-wizard's new Ownership step stops *writing* to these three columns; it
-does not touch existing values on any record. For an existing property
-that already has legacy values, the property's Overview page gains an
-explicit "Reconcile legacy contact" action (not automatic, not tied to
-any audit event) that:
-1. Shows the existing legacy value(s) verbatim, read-only.
-2. Lets the user select an existing `contacts` row or create a new one.
-3. Requires an explicit role and an explicit link target (this property,
-   and/or the resolved owner entity, per `contact_links`' existing
-   shape — `contactsQueries.ts`).
-4. Shows an explicit confirmation screen naming exactly which legacy
-   value(s) will be copied into which new contact/method before
-   anything is written.
-5. On confirm: creates the contact/method/link row(s); the legacy
-   column is marked reconciled (a new nullable `properties.
-   legacy_contact_reconciled_at timestamptz` column, set once) but
-   **the original value is left in place, not blanked** — "reconciled"
-   is a status, not a deletion trigger. A user who wants the old value
-   gone does that as its own, separate, explicit edit later, same as
-   editing any other field.
-6. Retrying step 5 after a partial failure (e.g. contact created,
-   link insert failed) must detect the already-created contact via a
-   request-scoped idempotency key (the same mechanism as creation's
-   idempotency key, §5) rather than creating a duplicate contact.
-7. The action itself writes one audit-log entry for traceability — the
-   existing audit trigger records a field-diff automatically for
-   `properties` columns it already covers; the *new* `contacts`/
-   `contact_links` inserts are covered by their own existing audit path
-   already used elsewhere for those tables (unchanged, not new scope).
+## 5. Idempotent, account-scoped creation (corrected — the v2 mechanism didn't work)
 
-**Explicit non-behavior, per correction:** no automatic conversion of
-`owner_name` into an ownership interest or a percentage of anything.
-`contacts` are reusable communication records; ownership interests
-reference `llcs` (which already models both entities *and* people —
-`llcs.owner_kind: 'individual' | 'entity' | null`, `llcsQueries.ts:24`).
-A legacy `owner_name` string becoming an actual owner (an `llcs` row
-with `owner_kind='individual'`) is a *product decision a human makes*,
-not something this reconciliation action infers or performs.
+**The bug in v2, stated precisely:** `insert ... on conflict (idempotency_key) do nothing returning property_id` returns **zero rows** whenever there's an actual conflict — `DO NOTHING` means no row is touched, and `RETURNING` only ever reflects rows the statement actually affected. A retry with a reused key would have gotten an empty result and no way to find the property it was retrying — the opposite of what idempotency is for.
 
-### Ownership (percentage interests)
+**Corrected mechanism**, following the exact security precedent already established by `replace_property_ownership_interests` (`ownershipInterestsQueries.ts:213` / `20260925060000_ownership_interest_functions.sql:157-159`: `security definer` + an explicit `is_account_member()` check inside the function body, never trusting a caller-supplied id at face value):
 
-No schema change. Already real and already tested this session
-(`property_ownership_interests`, `replace_property_ownership_interests`
-RPC, `ownershipInterestsQueries.ts:213-227`). The wizard's step 1 is
-where the user *enters* this — held in client state only, not yet
-written to any table — and persisted at Save (§4/§5), not at step 1
-itself; see §5 for exactly when and how.
+```sql
+create or replace function create_property_with_ownership(
+  p_account_id uuid,
+  p_idempotency_key uuid,
+  p_property jsonb,        -- the property fields, same shape PropertyInput already sends
+  p_ownership_entries jsonb,
+  p_reason text,
+  p_allocation_status text
+)
+returns uuid -- the property id, whether newly created or already-existing
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_payload_hash text := encode(digest(p_property::text || p_ownership_entries::text, 'sha256'), 'hex');
+  v_request record;
+  v_property_id uuid;
+begin
+  if not is_account_member(p_account_id) then
+    raise exception 'Not authorized for this account.' using errcode = 'ZM002';
+  end if;
 
-### Contacts (people, multi-method)
+  -- Reserve-or-fetch in one statement, so a retry always gets back a
+  -- real row instead of nothing: DO UPDATE with a no-op self-assignment
+  -- forces RETURNING to yield the existing row on conflict, which plain
+  -- DO NOTHING can never do.
+  insert into property_creation_requests (idempotency_key, account_id, payload_hash, property_id, created_at)
+  values (p_idempotency_key, p_account_id, v_payload_hash, null, now())
+  on conflict (idempotency_key) do update
+    set idempotency_key = property_creation_requests.idempotency_key
+  returning * into v_request;
 
-No schema change. Already real (`contacts`/`contact_methods`/
-`contact_links`, `contactsQueries.ts`) and already consumed by the
-entity profile page. This package's optional contact-linking step in
-the wizard, and the legacy-reconciliation action above, are new *call
-sites* of this existing system — the system itself is not new work
-introduced by Package 1.
+  -- Keys cannot disclose another account's record: if this key was
+  -- already reserved by a different account, this is either a UUID
+  -- collision (astronomically unlikely) or a client bug/attempted probe
+  -- — refuse without revealing anything about the other account's row.
+  if v_request.account_id <> p_account_id then
+    raise exception 'Not authorized for this account.' using errcode = 'ZM002';
+  end if;
 
-### Acquisition (`purchase_price`, `purchase_date`, `purchase_method`) and Building Details (`square_footage`, `lot_size_value`/`unit`, `year_built`, `bedroom_count`, `bathroom_count`, `basement`, `garage_spaces`, `street_parking`, `parking_notes`, `property_tax_id`, `municipal_zoning_code`, `county_assessor_use_code`, `county`, `township`, `property_type`, `exterior_wall_materials`)
+  if v_request.property_id is not null then
+    -- Already fully completed by a prior call with this exact key.
+    if v_request.payload_hash <> v_payload_hash then
+      -- Same key, different payload — an explicit, named conflict, not
+      -- a silent "use whichever version" choice.
+      raise exception 'This request was already completed with different data. Start a new property instead of resubmitting changed data under the same request.' using errcode = 'ZM005';
+    end if;
+    return v_request.property_id;
+  end if;
 
-**Corrected — these are not wizard steps, and this package does not
-build a new section for them.** `PropertyForm.tsx` already renders every
-one of these fields in its "Purchase & valuation" and "Property
-details" groups, and that *exact same component* is already wired into
-the property's own Overview tab as the "Property information"
-`EditableSection`'s Edit state (`PropertyProfileOverviewTab.tsx:77-95`).
-Editing these fields after creation already works today, unchanged, via
-that existing Edit action — the Box interaction standard's normal
-view/Edit toggle. The wizard itself only touches Ownership, Property
-basics (address/city/state/zip/status), and optional Documents — Batch
-B's actual approved four steps, no more.
+  if v_request.payload_hash <> v_payload_hash then
+    raise exception 'This request is already in progress with different data.' using errcode = 'ZM005';
+  end if;
 
-### Documents (Deed, other acquisition/closing documents)
+  -- First real attempt for this key: create the property, then its
+  -- first ownership interest, in the same transaction as everything
+  -- above — atomic creation, not a claim, a property of using exactly
+  -- one function call for all of it.
+  insert into properties (account_id, name, address, city, state, zip, status /* ...rest of p_property */)
+  select p_account_id, p_property->>'name', p_property->>'address', p_property->>'city', p_property->>'state', p_property->>'zip', coalesce(p_property->>'status', 'active')
+  returning id into v_property_id;
 
-No schema change. Existing `documents`/`document_owner_links` tables and
-upload functions (`documentsQueries.ts`) are reused (§7 for the exact
-sequencing, which is not atomic with the database write and must not be
-described as if it were).
+  perform replace_property_ownership_interests(v_property_id, p_ownership_entries, p_reason, 0, p_allocation_status);
 
-No new tables are required. New migrations required: one small
-idempotency mechanism (§5), the `legacy_contact_reconciled_at` column
-above, and — only if Option A is chosen for Name — dropping that
-column's `not null` constraint. None of these are executed by this
-document.
+  update property_creation_requests set property_id = v_property_id where idempotency_key = p_idempotency_key;
 
-## 2. Legacy preservation
+  return v_property_id;
+end;
+$$;
+```
 
-- No existing `name`, `owner_name`, `contact_phone`, or `contact_email`
-  value is ever written to, blanked, or overwritten by anything in this
-  package. The only new write to these columns is the one-time,
-  user-initiated legacy-contact reconciliation above, and even that
-  never blanks the original value.
-- No existing `llc_id` value is bulk-cleared. A legacy single-owner
-  pointer with no matching `property_ownership_interests` row gets a
-  backfilled interest row, not a cleared pointer.
-- A brand-new account with zero properties, zero ownership interests,
-  and zero contacts must complete the wizard end to end with no
-  ZMR-specific assumption (Multi-tenant discipline).
+(The property-field list above is illustrative — the real implementation inserts every `PropertyInput` column, same as today's `createProperty`.) A new small table backs this:
 
-## 3. Layout and states
+```sql
+create table property_creation_requests (
+  idempotency_key uuid primary key,
+  account_id uuid not null references accounts(id) on delete cascade,
+  payload_hash text not null,
+  property_id uuid references properties(id),
+  created_at timestamptz not null default now()
+);
+alter table property_creation_requests enable row level security;
+create policy "members can see their own account's requests"
+  on property_creation_requests for select using (is_account_member(account_id));
+-- No client-facing insert/update policy: only the security-definer
+-- function above writes this table, same pattern as
+-- property_ownership_interests itself.
+```
 
-Batch B's literal four steps, rendered **in place inside the existing
-`/properties` registry route** (not new pages, not new URLs) — the same
-mechanism `usePropertyRegistry`'s `isCreating`/`isFormOpen` state
-already uses for today's single form; this package changes what renders
-inside that same in-place slot, not how it's reached.
+**What this resolves, explicitly:**
+- *Account-scoped, not caller-trusted:* `is_account_member(p_account_id)` is checked before anything else, exactly like every other write function in this schema (`ownershipInterestsQueries.ts`'s functions) — a caller cannot supply someone else's `account_id` and have it accepted.
+- *Same-key retries return the same completed property:* the reserve-or-fetch `INSERT ... ON CONFLICT ... DO UPDATE ... RETURNING` always yields a real row, whether freshly reserved or already-completed, so a genuine retry (identical payload) returns the same `property_id` every time.
+- *Concurrent requests with the same key:* the `property_creation_requests` row's primary key gives Postgres's own row-level locking for free — two simultaneous calls with the same key serialize on that `INSERT ... ON CONFLICT`, so only one can proceed to actually create the property; the second sees `property_id is not null` (if the first finished first) or blocks briefly and then sees it (if concurrent).
+- *Changed payload under the same key is handled explicitly:* a hash mismatch raises a named, distinct error (`ZM005`) rather than silently picking either version.
+- *Keys cannot disclose another account's record:* an `account_id` mismatch on the reserved row raises the same generic authorization error used everywhere else in this schema, never returning any detail about the other account's property.
+- *Atomic reservation/property/ownership/audit:* everything happens inside one `plpgsql` function call, one implicit transaction — no partial state is ever visible from outside it.
 
-1. **Ownership** — pick an existing owner (`llcs` row, any
-   `owner_kind`) or add one inline; direct-individual ownership stays
-   supported and unresolved until named (Q02, already approved — never
-   guessed). Percentage entry held in client state only.
-2. **Property basics** — address/city/state/zip (required), status,
-   optional Name. *Not* Acquisition or Building Details (§1).
-3. **Documents (optional)** — stage files client-side; nothing uploads
-   yet (§7).
-4. **Review** — every entered value shown read-only, empty fields
-   omitted (Empty field visibility rule). Save here is the one and only
-   persistence point for this flow (§5, §7).
+## 6. Document/Storage recovery (corrected — client-only "uploads once" is not evidence of anything)
 
-Editing an *existing* property never re-enters this wizard — it opens
-`PropertyForm`'s existing Edit state on Overview, exactly as today, for
-every field including Acquisition/Building Details.
+**The gap named in the handoff, confirmed real:** a client-side guarantee ("this file only gets uploaded once per selection") says nothing about what happens on a network timeout, a browser reload mid-upload, or the user re-selecting the same file after either. Without a server-side identity for each staged file, a retry can produce either a duplicate `documents` row or an orphaned Storage object with nothing pointing to it.
 
-## 4. Navigation
+**Design:**
+- Each file staged at the Documents step gets a client-generated `file_key` (a UUID) the moment it's selected, held alongside the `File` object in memory. The `file_key` — not a random value chosen at upload time — becomes the Storage object's own path segment: `${accountId}/properties/${idempotencyKey}/${file_key}-${originalFilename}`. Because the path is a deterministic function of (idempotency key, file key), re-running the exact same upload after a retry targets the exact same object, not a new one.
+- The idempotency key and each staged file's `{file_key, name, size}` (not the `File` object itself, which cannot survive a reload) are mirrored into `sessionStorage` the moment they're chosen. On a reload mid-wizard, the wizard resumes into the *same* creation attempt (same idempotency key) instead of silently starting a new one, and shows "You had selected: invoice.pdf (142 KB) — please re-attach it" for any file whose `File` object was lost to the reload — the user re-selects the actual bytes, the system re-uses the same `file_key`/path, and does not treat it as a new, sixth file.
+- Upload sequencing, after `create_property_with_ownership` returns a real `property_id` (§5): for each staged file, first check whether a `documents` row already exists for that exact `storage_path` (a plain `select` scoped by `account_id`) — if one does, this file was already fully uploaded and linked by a previous attempt; skip it. If not, upload to Storage, then insert the `documents` row, then insert its `property_id`/document-owner link, in that order — the same three-step, independently-erroring sequence already used by `documentsQueries.ts:uploadEntityDocument` and Quick Capture's own submit flow (`useCaptureForm.ts:384-483`), not an invented mechanism.
+- **Tested failure boundaries, each independently:**
+  - *Storage upload itself fails* (network drop): no `documents` row is created; a retry re-uploads to the same deterministic path (overwriting a possible partial object, which Supabase Storage's own upload semantics already handle safely — a failed/partial upload is never a complete object at that key).
+  - *Document row insert fails after a successful Storage upload*: the file now exists in Storage with nothing pointing to it yet. A retry's "does a documents row already exist for this path" check correctly says no, so it inserts the missing row — the file itself is never re-uploaded, since the deterministic path already holds it and the insert step doesn't depend on re-uploading.
+  - *Owner-link insert fails after a successful document-row insert*: same shape as the existing, already-shipped behavior in `uploadEntityDocument` — the document row is real, just not yet linked; a retry's per-file check sees the row exists and completes only the missing link step, rather than creating a second document row for the same file.
+- **Cleanup, verified-safe only:** an orphaned Storage object (uploaded, but no `documents` row ever completed for it — e.g. the user abandoned the wizard entirely after a partial upload) is only ever deleted by a process that (a) lists objects under the account's own `${accountId}/properties/` prefix, (b) confirms no `documents.storage_path` references that exact key, and (c) confirms the object is older than a fixed grace period (24 hours, chosen so an upload that's still genuinely in progress is never mistaken for abandoned) — never a blind delete based on naming pattern or age alone. This reuses the same "list, cross-check, then act" shape already implied by `getAccountStorageUsage` (`documentsQueries.ts`), not a new class of destructive operation.
+- **No duplicate saved property from an upload retry:** by construction — the property is created exactly once by §5's idempotency mechanism, before any upload begins; every retry of the Documents step operates against the already-existing `property_id`, never re-running property creation.
 
-No new route, no new top-level nav item (Navigation discipline rule).
-After a successful Save, lands on the new property's Overview tab,
-reusing Batch S1's existing navigation behavior unchanged
-(`usePropertyRegistry.ts`'s post-create `navigate(..., { state: {
-initialTab: 'overview' } })`).
+## 7. Permissions
 
-## 5. Validation
+Unchanged: every query stays `account_id`-scoped via RLS or an explicit `is_account_member()` check inside a `security definer` function (§5, §6) — no new role or tier introduced anywhere in this package.
 
-- Address/city/state/zip: required at step 2 (Q01, already approved).
-- Ownership: at least one entry required before Review; percentage
-  stays optional per entry (Q03); `allocation_status` stays an explicit
-  user checkbox, never computed from whether percentages sum to 100 —
-  this is the exact bug already fixed once for the existing Ownership
-  box (Batch S "Batch S executed" entry) and must not be reintroduced
-  here by a second, separate implementation of the same idea.
-- Name: per whichever option §6 decision 1 resolves to.
-- Every other field's existing validation (numeric/date fields, pick
-  lists) is unchanged — no column changes shape.
+## 8. Scope, stated plainly (corrected — do not let "editable" imply "fully built")
 
-## 6. Owner decisions still needed (the two settled approvals do not cover these)
+- Acquisition (`purchase_price`/`purchase_date`/`purchase_method`) and Building Details fields are editable today through `PropertyForm.tsx`, reused by Overview's Edit section. **This is not the same as Batch C's full approved scope** — reusable acquisition *contacts* (a role-linked person for the purchase, separate from the generic Ownership contacts) and dedicated closing-*document* grouping (a labeled "Closing documents" collection distinct from the generic Documents area) are **not built**, and Package 1 does not build them. They remain queued, unchanged status from the backlog matrix.
+- Overview's specialist-section grouping (Batch E/R's placement decisions) is unaffected by this package — Package 1 only touches creation and the four consumers named in §2, not how Overview's boxes are arranged.
+- No migration in this package touches Insurance, Financial accounts, Property tax, or Market/rent tables.
 
-1. **Name storage mechanism** — Option A (nullable column, one
-   consumer fix, recommended) vs. Option B (address fallback value,
-   no migration, but writes a redundant copy). See §1.
-2. **`llc_id` compatibility-pointer rule** — set only on a single
-   resolved owner, left untouched on 2+ owners, backfilled (not
-   cleared) for pre-existing legacy pointers; the four real consumers
-   listed in §1 need explicit multi-owner handling, not a guess. See §1.
-3. **Legacy-contact reconciliation flow** — the seven-step mechanism in
-   §1 (select/create, explicit role+link, explicit confirmation,
-   reconciled-not-cleared, idempotent retry, audit trace) is a proposal;
-   approve, revise, or replace it.
+## 9. Acceptance evidence required before this package is marked done
 
-Nothing above is executed, and no destructive/schema/data change
-happens on the strength of these being *proposed* — only once each is
-explicitly decided.
+- Empty-account case: a brand-new account completes all 4 steps with no ZMR-specific assumption.
+- Existing-record case: a property with legacy `owner_name`/`contact_phone`/`contact_email` and a legacy-only `llc_id` (no ownership-interest row) opens correctly, shows "Ownership not yet confirmed (previously recorded as: X)," and is a valid target for both the contact-reconciliation action and the explicit ownership-confirmation action — neither crashes, neither loses data, neither happens automatically.
+- All six §2 ownership-ambiguity cases, each individually re-verified against each of the four real `llc_id` consumers — not assumed consistent from one case tested.
+- Idempotency: same key + same payload (genuine retry) returns the same property twice, not two properties; same key + changed payload raises the named `ZM005` conflict; a key belonging to a different account is refused without disclosing anything about that account's data.
+- Upload recovery: a 3-file Documents step with a forced failure at each of the three boundaries named in §6, individually, each confirmed to leave the correct recoverable state and no duplicate property.
+- Full pass in Practice (real Supabase, real dashboard UI) — the same evidence standard every prior batch this session used.
 
-## 7. Concurrency, idempotency, and Storage (corrected — no false atomicity claims)
+## 10. Migration and release dependencies
 
-**Verified current state, not assumed:** `createProperty`
-(`propertiesQueries.ts:90-96`) is a single-table `insert`, with no
-transaction linking it to anything else. `replacePropertyOwnershipInterests`
-(`ownershipInterestsQueries.ts:213`) is a separate RPC call requiring an
-existing `property_id` — it cannot run in the same call as creation.
-Today's only anti-double-submit guard is the client-side `disabled=
-{saving}` on the Save button (`PropertyForm.tsx:476-479`) — a UI
-convenience, not a durable guarantee against a network retry, a slow
-response followed by a second click before the button visually
-disables, or two tabs.
+New migrations already written and verified against Practice this pass:
+1. `20260925090000_properties_name_nullable.sql` — applied, verified.
+2. `20260925100000_audit_trail_contacts.sql` — applied, verified; also fixes the pre-existing `financial_transactions`/`financial_periods` constraint regression (§1). **Not yet applied to production.**
 
-**Proposed fix (new migration, not yet executed):** a single Postgres
-function, `create_property_with_ownership(p_account_id, p_idempotency_key,
-p_property fields..., p_ownership_entries, p_reason, p_allocation_status)`,
-mirroring the existing pattern already used for
-`replace_property_ownership_interests` — one RPC, one implicit
-transaction, so the property row and its initial ownership interest(s)
-are created atomically or not at all. A new small table,
-`property_creation_requests(idempotency_key uuid primary key,
-account_id uuid, property_id uuid, created_at timestamptz)`, gives
-duplicate-safe retries: the client generates one UUID when the wizard
-starts step 1 and resends the same key on every Save attempt; the
-function does `insert ... on conflict (idempotency_key) do nothing
-returning property_id`, and a conflict means "already created, return
-the existing id" rather than creating a second property. This is
-implementation design needed to make the four-step flow safe, not new
-user-facing product scope, and it does require an explicit migration —
-stated plainly, not glossed over.
+New migrations still to be written (not yet applied anywhere):
+3. `create_property_with_ownership` function + `property_creation_requests` table (§5).
+4. `properties.legacy_contact_reconciled_at` nullable timestamp column (§3, unchanged from v2).
 
-**Storage is not part of that transaction, and is not claimed to be.**
-Per the existing, already-shipped pattern in
-`documentsQueries.ts:uploadEntityDocument` (upload to Storage, *then*
-insert the `documents` row, *then* insert the link row — three
-sequential steps, each independently erroring) and in Quick Capture's
-own submit flow (`useCaptureForm.ts:384-483`: create the row first,
-*then* upload staged files one at a time, tolerating a mid-list failure
-without rolling back the already-created row), Package 1's Documents
-step follows the same accepted shape:
-1. Files chosen at step 3 are held as in-memory `File[]` only (same
-   pattern as `useCaptureForm.ts:102`'s `files` state) — nothing is
-   uploaded, nothing exists in Storage yet, and Cancel at any step
-   before Save discards them with no cleanup needed because nothing was
-   ever written.
-2. At Review's Save: the atomic RPC above runs first (property +
-   ownership). Only once it returns a real `property_id` does upload
-   begin, file by file, into Storage, followed by each file's
-   `documents` row insert (existing `PropertyDeedUploadField`/
-   `usePropertyDeedDocument` path, unchanged).
-3. **Partial failure after the property already exists is a real,
-   possible, and acceptable state**, same as Quick Capture's own
-   accepted behavior today: if upload 2 of 3 fails, the property and
-   ownership are already saved and not rolled back; the error surfaces
-   with which file failed; the user lands on the new property's
-   Overview/Documents tab where the existing per-field Deed/document
-   upload controls let them retry the specific failed file directly —
-   no separate "resume wizard" mechanism is invented, because the
-   property already exists and its normal Edit-mode upload controls
-   already handle exactly this.
-4. A retried Save with the *same* idempotency key after the RPC
-   succeeded but before the client got a response (e.g. a dropped
-   connection) returns the existing property via the conflict path in
-   step 2's function — it does not create a duplicate property, and
-   does not re-run already-completed uploads twice, since the client
-   only ever uploads once per file selection, gated on getting a real
-   `property_id` back.
+No migration in this package touches `property_ownership_interests`, `contacts`, `contact_methods`, `contact_links` schema, or any Insurance/Financials/Tax table. Release gate unchanged: Practice verification against §9, the separate S3 visual-approval gate for any layout change, then a scoped production release proposal — no production deploy or migration is authorized by this document, and the two already-applied Practice migrations above have deliberately not been pushed to production.
 
-This explicitly does not promise "no migrations" (two are named above)
-and does not promise every downstream consumer is untouched (§1 lists
-exactly which ones need a change and why).
+## 11. Dependency-ordered packages after this one (unchanged from v2)
 
-## 8. Permissions
+Package 2 (Insurance O2–O7), Package 3 (Financial accounts N), Package 4 (Property tax P), Package 5 (Market/rent Q), Package 6 (Capture/History J–M) — boundaries only, unchanged.
 
-Unchanged: every query stays `account_id`-scoped via RLS; the new RPC
-and the legacy-reconciliation writes use the same account-scoped access
-pattern already enforced everywhere else. No new role or tier.
-
-## 9. Documents / history
-
-- The audit trail already covers `properties` field changes and the
-  `property_ownership_corrections` table for every ownership write —
-  this package's atomic creation function must call the same
-  correction-recording path `replace_property_ownership_interests`
-  already uses for its very first write (a "created" correction entry,
-  not a silent first row), so a property's ownership history reads
-  consistently from day one instead of starting with an unexplained gap.
-- The legacy-contact reconciliation action's own audit entry (§1 item 7)
-  is new call-site usage of existing audit paths, not new audit
-  infrastructure.
-
-## 10. Acceptance evidence required before this package is marked done
-
-- Empty-account case: a brand-new account completes all 4 steps with no
-  ZMR-specific assumption.
-- Existing-record case: a property created before this package (flat
-  legacy fields populated, no ownership-interest row, `llc_id` set) opens
-  correctly, shows the legacy line untouched, and is a valid target for
-  the reconciliation action and the `llc_id` backfill — neither crashes,
-  neither loses data.
-- Idempotency case: submitting Save twice with the same idempotency key
-  (simulating a retry) produces exactly one property and one ownership
-  interest set, not two.
-- Partial-upload-failure case: a 3-file Documents step where the second
-  upload is made to fail leaves the property and its first successfully
-  uploaded document intact, surfaces which file failed, and the
-  property's own Documents/Edit controls can complete the remaining
-  upload afterward.
-- `llc_id` compatibility-pointer case, both branches: a single-owner
-  property gets `llc_id` set to that owner; a 2-owner property leaves
-  `llc_id` at its prior value, and each of the four listed consumers is
-  individually re-verified against the 2-owner case, not assumed fine.
-- Full pass in Practice (real Supabase, real dashboard UI), same
-  evidence standard as every prior batch this session — no random
-  fixtures, no mock-only claims presented as integration evidence.
-
-## 11. Migration and release dependencies (stated explicitly, not omitted)
-
-New migrations this package requires, none yet written or applied:
-1. `create_property_with_ownership` Postgres function (atomic creation + first ownership write + its correction-audit entry).
-2. `property_creation_requests` table (idempotency key → property id).
-3. `properties.legacy_contact_reconciled_at` nullable timestamp column.
-4. Only if §6 decision 1 resolves to Option A: `alter table properties alter column name drop not null`, plus the one-line `PropertyList.tsx` consumer fix named in §1.
-
-No migration touches `property_ownership_interests`, `contacts`,
-`contact_methods`, `contact_links`, or any Insurance/Financials/Tax
-table. Release gate is unchanged from every prior batch: Practice
-verification against this section's acceptance evidence, the separate
-S3 visual-approval gate for any layout change, then a scoped production
-release proposal with its own compatibility/rollback check. No
-production deploy or migration is authorized by this document.
-
-## 12. Dependency-ordered packages after this one (boundaries only, unchanged from v1)
-
-- **Package 2 — Insurance O2–O7**: depends on this package's `contacts`
-  system only (already real, not newly built here); otherwise
-  independent.
-- **Package 3 — Financial accounts (Batch N)**: independent; note its
-  own eventual multi-owner-scoping question should reuse this package's
-  §1 `llc_id` consumer analysis rather than re-deriving it.
-- **Package 4 — Property tax (Batch P)**: independent.
-- **Package 5 — Market/rent history (Batch Q)**: independent.
-- **Package 6 — Capture/History (Batches J–M)**: still queued last, per
-  the owner's own sequencing across this entire session.
-
-## 13. Source-backed readiness checklist
+## 12. Concise readiness checklist
 
 | Item | State | Evidence |
 |---|---|---|
-| Structured ownership system real and tested | Yes | `ownershipInterestsQueries.ts`; Practice verification, Batch S |
-| Contacts system real | Yes | `contactsQueries.ts` |
-| `llcs` supports person-kind owners | Yes | `llcsQueries.ts:24`, `owner_kind` |
-| Current creation is a single non-atomic insert | Confirmed | `propertiesQueries.ts:90-96` |
-| Current duplicate-submit guard is client-only | Confirmed | `PropertyForm.tsx:476-479` |
-| Upload-then-link is the existing accepted pattern (not atomic with DB row) | Confirmed | `documentsQueries.ts:uploadEntityDocument`; `useCaptureForm.ts:384-483` |
-| Acquisition/Building Details already editable post-creation | Confirmed | `PropertyProfileOverviewTab.tsx:77-95` reuses `PropertyForm.tsx` |
-| `properties.name` is `not null` today | Confirmed | `20260903173528_initial_schema.sql:11` |
-| Only one real display consumer of `properties.name` | Confirmed | `PropertyList.tsx:34-35` |
-| Four `llc_id` consumers beyond the form itself | Confirmed | see §1 |
-| New migrations required | Yes, 3–4 listed | §11 |
-| S3 visual-approval gate | Still open | separate from this contract |
+| Name nullable, all consumers updated | Done, verified | Migration applied + build/lint/test clean; live insert with `name = null` verified on Practice |
+| Contacts/methods/links INSERT audit coverage | Done, verified | Migration applied; live test insert produced real audit rows on Practice |
+| Pre-existing `financial_transactions`/`financial_periods` audit-constraint regression | Found and fixed in Practice; **not yet in production** | Live constraint read before/after; live void-transaction test failed before the fix, succeeded after |
+| `llc_id` ambiguity | Resolved to one plain rule (§2), no auto-backfill | — |
+| Idempotency mechanism | Corrected, account-scoped, handles concurrent/changed-payload cases | Design only — not yet implemented (needs the function + table in §10 item 3) |
+| Upload/Storage recovery | Concrete, testable design against real failure boundaries | Design only — not yet implemented |
+| Scope honesty (Acquisition contacts, closing docs, Overview grouping) | Explicitly stated as out of scope | §8 |
+| S3 visual-approval gate | Still open | Separate from this contract |
+| Production changes | None made | Both applied migrations are Practice-only |
+
+**Genuinely unresolved product choices (only these remain):**
+1. Approve/revise the "Ownership not yet confirmed" wording and the "Confirm this as the current owner" action's exact placement (§2) — a labeling/UX choice, not a data-model question; the data-model rule itself (the six-case table) is not optional.
+2. Approve/revise the legacy-contact reconciliation flow's exact copy/placement (§3) — the mechanism itself follows existing patterns and is not being re-asked.
+3. Whether to apply the `financial_transactions`/`financial_periods` audit-constraint fix to production now, given it may be actively blocking real transaction edits/period locks today (§1) — this is a production decision this document is explicitly not authorized to make.

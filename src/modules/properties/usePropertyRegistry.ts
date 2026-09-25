@@ -12,7 +12,7 @@ import {
 } from './propertiesQueries'
 
 const BLANK_PROPERTY: PropertyInput = {
-  name: '',
+  name: null,
   llc_id: null,
   address: null,
   city: null,

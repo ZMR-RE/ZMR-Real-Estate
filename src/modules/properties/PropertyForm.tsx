@@ -102,14 +102,14 @@ export function PropertyForm({
 
         <div className="field-row">
           <div className="field">
-            <label htmlFor="name">
-              Name<span className="required-marker">*</span>
-            </label>
+            {/* Package 1 — no longer required: address (below) is the
+                real identifier. Existing values are shown and left
+                editable; a blank value is stored as null, not ''. */}
+            <label htmlFor="name">Name</label>
             <input
               id="name"
-              required
-              value={values.name}
-              onChange={(e) => setValues((prev) => ({ ...prev, name: e.target.value }))}
+              value={values.name ?? ''}
+              onChange={(e) => setValues((prev) => ({ ...prev, name: e.target.value || null }))}
             />
           </div>
 

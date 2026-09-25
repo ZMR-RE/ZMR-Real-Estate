@@ -4,11 +4,13 @@
 // property somehow has no address on file, rather than each caller
 // re-deciding that independently.
 export interface PropertyRef {
-  name: string
+  // Package 1 — no longer required at creation; address is the real
+  // identifier. A property can now genuinely have neither.
+  name: string | null
   address: string | null
 }
 
 export function propertyLabel(property: PropertyRef | null | undefined): string {
   if (!property) return '—'
-  return property.address ?? property.name
+  return property.address ?? property.name ?? '—'
 }
