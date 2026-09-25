@@ -15,7 +15,7 @@ import { US_STATES } from '../shared/usStates'
 // Every pick-list field (basement, street parking, municipal zoning
 // code, county assessor use code, purchase method, property type,
 // exterior wall materials) is shown as a plain select/checkbox with an
-// inline "(pick list in the real form)" note rather than wired to the
+// inline "(pick list)" note rather than wired to the
 // real PickListSelect/PickListCheckboxGroup components, since those pull
 // live account-scoped list data this static preview has no reason to
 // depend on — the point here is the layout, not re-testing the pick-list
@@ -32,22 +32,30 @@ import { US_STATES } from '../shared/usStates'
 // `form { max-width: 480px }` rule (src/index.css, "Forms" section) —
 // a rule every OTHER form in the app still uses. This preview's own
 // `<form>` carries an explicit inline `style={{ maxWidth: 960 }}` for
-// the same reason the real, already-shipped Insurance Edit form now has
-// its own dedicated `.insurance-policy-form { max-width: 960px }`
-// override (owner-approved, index.css) — this property form's own
-// equivalent width change is still pending its own visual approval, so
-// this preview keeps using an inline style rather than adding a real,
-// shipped CSS class ahead of that sign-off.
+// the same reason the real Insurance Edit form now has its own
+// dedicated `.insurance-policy-form { max-width: 960px }` override
+// (owner-approved, implemented locally, verified in Practice, not
+// deployed — index.css) — this property form's own equivalent width
+// change is still pending its own visual approval, so this preview
+// keeps using an inline style rather than adding a real CSS class ahead
+// of that sign-off.
 //
 // Revised this pass — no redundant required Name (matches the real,
-// now-shipped nullable-name change, propertiesQueries.ts/PropertyForm.tsx)
-// and the flat Owner name/Contact phone/Contact email fields are
-// replaced with the owner-approved "Review saved contact details"
-// action (label approved Sept 25 2026) — a button that would open a
-// review before saving, never silently confirm or replace the original
-// legacy value, per the Package 1 contract's §3 mechanism. The action
-// itself is not wired to anything real here (this preview still
-// doesn't save); only its presence and label are shown.
+// already-implemented nullable-name change, propertiesQueries.ts/
+// PropertyForm.tsx), re-labeled here as an optional legacy field rather
+// than removed outright, since this component represents the EXISTING-
+// property Edit context where a saved name must stay visible/editable,
+// not the creation flow (see PropertyCreationFlowPreview.tsx, which has
+// no Name field at all). The flat Owner name/Contact phone/Contact
+// email fields are replaced with the owner-approved "Review saved
+// contact details" action (label approved Sept 25 2026) — a button that
+// would open a review before saving, never silently confirm or replace
+// the original legacy value, per the Package 1 contract's §3 mechanism.
+// The action itself is not wired to anything real here (this preview
+// still doesn't save); only its presence and label are shown. No
+// engineering/status prose is rendered in the visible preview area
+// itself — that context lives here, in comments, and in the project's
+// own planning docs, not in the customer-facing screen.
 //
 // Nothing here saves: the Save button is disabled and onSubmit is
 // prevented with no network call. Some fields are shown populated and
@@ -114,22 +122,17 @@ export function PropertyFormGroupedPreview() {
             <div className="field-column">
               <div className="field">
                 <label>Photo</label>
-                <p className="field-hint">
-                  Upload widget in the real form (hidden entirely for a brand-new property, same as here) — not
-                  reproduced in this static preview.
-                </p>
+                <p className="field-hint">Upload — not available until the property is saved.</p>
               </div>
 
               <div className="field-row">
                 <div className="field">
-                  <label htmlFor="p-name">Name</label>
+                  <label htmlFor="p-name">Name (optional label)</label>
                   <input id="p-name" {...set('name')} />
-                  <p className="field-hint">No longer required — address identifies the property.</p>
                 </div>
                 <div className="field">
                   <label htmlFor="p-org">Organization type</label>
                   <input id="p-org" value="Individual ownership" readOnly />
-                  <p className="field-hint">Searchable picker + inline "add new" in the real form.</p>
                 </div>
               </div>
 
@@ -204,10 +207,7 @@ export function PropertyFormGroupedPreview() {
               </div>
               <div className="field">
                 <label>Deed document</label>
-                <p className="field-hint">
-                  Upload widget in the real form (hidden entirely for a brand-new property, same as here) — not
-                  reproduced in this static preview.
-                </p>
+                <p className="field-hint">Upload — not available until the property is saved.</p>
               </div>
             </div>
           </div>
@@ -256,7 +256,7 @@ export function PropertyFormGroupedPreview() {
                   <option value="partially_finished">Partially finished</option>
                   <option value="none">None</option>
                 </select>
-                <p className="field-hint">(pick list in the real form)</p>
+                <p className="field-hint">(pick list)</p>
               </div>
               <div className="field">
                 <label htmlFor="p-garage">Garage spaces</label>
@@ -274,7 +274,7 @@ export function PropertyFormGroupedPreview() {
                   <option value="restricted">Restricted</option>
                   <option value="none">None</option>
                 </select>
-                <p className="field-hint">(pick list in the real form)</p>
+                <p className="field-hint">(pick list)</p>
               </div>
               <div className="field">
                 <label htmlFor="p-parking-notes">Parking notes</label>
@@ -287,12 +287,12 @@ export function PropertyFormGroupedPreview() {
               <div className="field">
                 <label htmlFor="p-zoning">Municipal zoning code</label>
                 <input id="p-zoning" placeholder="(left blank in this preview)" {...set('municipal_zoning_code')} />
-                <p className="field-hint">(pick list in the real form)</p>
+                <p className="field-hint">(pick list)</p>
               </div>
               <div className="field">
                 <label htmlFor="p-assessor">County assessor use code</label>
                 <input id="p-assessor" placeholder="(left blank in this preview)" {...set('county_assessor_use_code')} />
-                <p className="field-hint">(pick list in the real form)</p>
+                <p className="field-hint">(pick list)</p>
               </div>
               <div className="field-row">
                 <div className="field">
@@ -307,12 +307,12 @@ export function PropertyFormGroupedPreview() {
               <div className="field">
                 <label htmlFor="p-purchase-method">Purchase method</label>
                 <input id="p-purchase-method" placeholder="(left blank in this preview)" {...set('purchase_method')} />
-                <p className="field-hint">(pick list in the real form)</p>
+                <p className="field-hint">(pick list)</p>
               </div>
               <div className="field">
                 <label htmlFor="p-property-type">Property type</label>
                 <input id="p-property-type" placeholder="(left blank in this preview)" {...set('property_type')} />
-                <p className="field-hint">(pick list in the real form)</p>
+                <p className="field-hint">(pick list)</p>
               </div>
             </div>
           </div>
@@ -332,7 +332,7 @@ export function PropertyFormGroupedPreview() {
                     {material}
                   </label>
                 ))}
-                <p className="field-hint">(pick-list checkbox group in the real form)</p>
+                <p className="field-hint">(pick-list checkbox group)</p>
               </div>
             </div>
           </div>
@@ -342,33 +342,6 @@ export function PropertyFormGroupedPreview() {
           Save (preview only — disabled, does not save)
         </button>
       </form>
-
-      <div className="preview-callouts">
-        <h4 className="property-details-title">Already resolved by owner approval, Sept 25 2026 (not re-flagged here)</h4>
-        <ul>
-          <li>
-            <strong>Two identifiers on one form.</strong> Resolved: Name is no longer required — address is the
-            real identifier (matches the shipped `properties.name` nullable-column change). The field above
-            reflects this, not the old required/asterisk state.
-          </li>
-          <li>
-            <strong>Two places to record ownership/contact info.</strong> Resolved in direction, this preview
-            shows the shape: the flat Owner name/Contact phone/Contact email inputs are replaced by "Review saved
-            contact details," which opens a review rather than exposing raw fields — original legacy values are
-            retained, never silently cleared or auto-confirmed (Package 1 contract §3).
-          </li>
-        </ul>
-        <h4 className="property-details-title" style={{ marginTop: 'var(--space-4)' }}>
-          Still pending your visual sign-off
-        </h4>
-        <ul>
-          <li>
-            This assembled layout itself — the two-column grouping direction and both action labels are approved;
-            what's still open is sign-off on this actual screen (and the separate four-step creation-flow
-            preview) as shown.
-          </li>
-        </ul>
-      </div>
     </div>
   )
 }

@@ -244,7 +244,7 @@ Package 2 (Insurance O2–O7), Package 3 (Financial accounts N), Package 4 (Prop
 | `llc_id` ambiguity | Resolved to one plain rule (§2), no auto-backfill | — |
 | Idempotency mechanism | Corrected, account-scoped, handles concurrent/changed-payload cases | Design only — not yet implemented (needs the function + table in §10 item 4) |
 | Upload/Storage recovery | Concrete, testable design against real failure boundaries | Design only — not yet implemented |
-| Insurance Edit width | **Implemented and shipped**, responsive (not fixed on phones) | §14; verified live at 960px/700px/390px, no overflow at any |
+| Insurance Edit width | **Implemented locally; verified in Practice; not deployed**, responsive (not fixed on phones) | §14; verified live at 960px/700px/390px, no overflow at any |
 | Owner-facing labels ("Review ownership", "Review saved contact details") | **Approved and applied** everywhere this contract and the visuals name the action | §10a |
 | Scope honesty (Acquisition contacts, closing docs, Overview grouping) | Explicitly stated as out of scope | §8 |
 | S3 / creation-flow visual-approval gate | Still open | §13 |
@@ -259,13 +259,13 @@ All captured live from the real running harness and tracked at
 `docs/planning/ownership-property/visuals/` (see that folder's own
 README for what each file shows in detail):
 
-- **Insurance Edit form, real and shipped**: `insurance-shipped-wide-960.jpg` / `-intermediate-700.jpg` / `-narrow-390.jpg` — confirms the responsive width at three real viewport sizes, not just the wide case, with no horizontal overflow at any of them (checked via `scrollWidth`/`clientWidth`, not eyeballed).
+- **Insurance Edit form, implemented locally, verified in Practice, not deployed**: `insurance-implemented-wide-960.jpg` / `-intermediate-700.jpg` / `-narrow-390.jpg` — confirms the responsive width at three real viewport sizes, not just the wide case, with no horizontal overflow at any of them (checked via `scrollWidth`/`clientWidth`, not eyeballed).
 - **S3 grouped Edit form, updated for the approved labels**: `s3-updated-desktop-identity-contacts.jpg`, `s3-updated-mobile-identity.jpg`, `s3-updated-mobile-review-contact-button.jpg` — Name no longer required, flat contact fields replaced by "Review saved contact details."
 - **Property-creation four-step flow, new this pass**: `creation-flow-step1-ownership.jpg` through `-step4-review.jpg` (desktop), `creation-flow-mobile-step1.jpg` (390px) — the separate flow this contract's §4 describes, distinct from the grouped Edit form above.
 
 Not yet approved: the assembled screens themselves (layout, exact copy in context, the creation-flow step indicator's mobile treatment, which the visuals README flags as a rough first pass worth a specific look).
 
-## 14. Insurance Edit width — implemented and shipped
+## 14. Insurance Edit width — implemented locally, verified in Practice, not deployed
 
 `.insurance-policy-form { max-width: 960px }` (`src/index.css`), scoped
 to this one class — verified as the form's sole real-world consumer
