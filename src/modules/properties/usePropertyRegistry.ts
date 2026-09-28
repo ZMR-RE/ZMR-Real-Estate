@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { useLlcs } from '../llcs/useLlcs'
 import { useHoldingCompanies } from '../holdingCompanies/useHoldingCompanies'
 import {
-  createProperty,
   listProperties,
   updateProperty,
   type Property,
@@ -49,7 +47,6 @@ const BLANK_PROPERTY: PropertyInput = {
 
 export function usePropertyRegistry() {
   const { accountId } = useAuth()
-  const navigate = useNavigate()
   const [properties, setProperties] = useState<Property[]>([])
   const { llcOptions, addLlc } = useLlcs(accountId)
   const { holdingCompanyOptions, addHoldingCompany } = useHoldingCompanies(accountId)
@@ -99,49 +96,41 @@ export function usePropertyRegistry() {
     setSelectedId(null)
   }
 
+  // Package 1 completion — this hook's own create path (createProperty,
+  // called directly, no idempotency/ownership) is now unreachable: the
+  // real UI never mounts PropertyForm with formPropertyId === null
+  // anymore (PropertyRegistry.tsx renders PropertyCreationWizard for
+  // that state instead). Rather than leave the branch in place as dead
+  // code a future caller could accidentally resurrect, save() now
+  // refuses outright when there's no selectedProperty to update —
+  // creation only ever happens through create_property_with_ownership
+  // (usePropertyCreationWizard.ts), never through this function, by
+  // construction, not just by the current callers' good behavior.
   const save = async (input: PropertyInput) => {
     if (!accountId) return
+    if (!selectedProperty) {
+      setError('This form only edits an existing property — use the property-creation wizard to add a new one.')
+      return
+    }
     setSaving(true)
 
-    if (selectedProperty) {
-      const result = await updateProperty(selectedProperty.id, input, selectedProperty.updated_at)
-      setSaving(false)
-      if (result.kind === 'conflict') {
-        // Surface the newer row WITHOUT refresh(): refresh() flips `loading`,
-        // and PropertyRegistry unmounts the form while loading, which would
-        // destroy the user's draft. The baseline (selectedProperty.updated_at)
-        // is left as-is so a retried Save is refused again.
-        setError(null)
-        setConflict(result.latest)
-        return
-      }
-      if (result.kind === 'not_found') {
-        setError('This property no longer exists or is no longer accessible.')
-        return
-      }
-      if (result.kind === 'error') {
-        setError(result.message)
-        return
-      }
-    } else {
-      const { data: created, error: saveError } = await createProperty(accountId, input)
-      setSaving(false)
-      if (saveError) {
-        setError(saveError.message)
-        return
-      }
+    const result = await updateProperty(selectedProperty.id, input, selectedProperty.updated_at)
+    setSaving(false)
+    if (result.kind === 'conflict') {
+      // Surface the newer row WITHOUT refresh(): refresh() flips `loading`,
+      // and PropertyRegistry unmounts the form while loading, which would
+      // destroy the user's draft. The baseline (selectedProperty.updated_at)
+      // is left as-is so a retried Save is refused again.
       setError(null)
-      setConflict(null)
-      setIsCreating(false)
-      setSelectedId(null)
-      // Batch S1 — a brand-new property has no KPI data yet (no
-      // transactions, no market value entered), so land on Overview,
-      // where the owner actually fills the property in, instead of
-      // usePropertyProfile's own default (KPI, for an existing
-      // property). Router state, not a query param or global flag, so
-      // it only ever affects this one navigation and plays correctly
-      // with back/forward (each history entry carries its own state).
-      if (created) navigate(`/properties/${created.id}`, { state: { initialTab: 'overview' } })
+      setConflict(result.latest)
+      return
+    }
+    if (result.kind === 'not_found') {
+      setError('This property no longer exists or is no longer accessible.')
+      return
+    }
+    if (result.kind === 'error') {
+      setError(result.message)
       return
     }
 

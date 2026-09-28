@@ -122,6 +122,78 @@ export async function listPropertyOwnershipInterests(accountId: string, property
   return { data: rows, error: null }
 }
 
+// Package 1 completion — the account-wide counterpart to
+// listPropertyOwnershipInterests/getPropertyOwnershipSummary above, for
+// callers that need ownership-authority resolved for MANY properties at
+// once (Quick Capture's property picker, and CaptureEntryDetailsForm's
+// one-instance-per-logged-entry list) rather than one already-selected
+// property. One round trip each, RLS-scoped by account_id the same as
+// every other query in this module — never a loop of N per-property
+// calls.
+export async function listAccountOwnershipInterests(accountId: string) {
+  const { data, error } = await supabase
+    .from('property_ownership_interests')
+    .select(PROPERTY_INTEREST_COLUMNS)
+    .eq('account_id', accountId)
+    .eq('is_current', true)
+
+  if (error || !data) return { data: null, error }
+
+  const rows: PropertyOwnershipInterest[] = data.map((row) => {
+    const owner = row.owner_name as unknown as { display_name: string | null; name: string; owner_kind: 'individual' | 'entity' | null } | null
+    return {
+      id: row.id,
+      property_id: row.property_id,
+      llc_id: row.llc_id,
+      owner_name: owner?.display_name ?? owner?.name ?? 'Unknown owner',
+      owner_kind: owner?.owner_kind ?? null,
+      percentage: row.percentage,
+      effective_date: row.effective_date,
+      end_date: row.end_date,
+      is_current: row.is_current,
+      recorded_at: row.recorded_at,
+    }
+  })
+  return { data: rows, error: null }
+}
+
+export async function listAccountOwnershipCompleteness(accountId: string) {
+  return supabase
+    .from('property_ownership_summary')
+    .select('property_id, completeness')
+    .eq('account_id', accountId)
+    .returns<{ property_id: string; completeness: OwnershipCompleteness }[]>()
+}
+
+// Pure — builds one OwnershipAuthority per property from the two bulk
+// fetches above, so a caller with many properties (Quick Capture) never
+// has to loop resolveOwnershipAuthority calls against per-property
+// network round trips. Two properties confirmed to the same owner
+// resolve to the same llcId here independently and correctly — nothing
+// about a shared owner needs special-casing, since each property's own
+// interests row set is evaluated on its own.
+export function buildOwnershipAuthorityMap(
+  properties: { id: string; llc_id: string | null }[],
+  interests: Pick<PropertyOwnershipInterest, 'property_id' | 'llc_id' | 'owner_kind'>[],
+  completenessRows: { property_id: string; completeness: OwnershipCompleteness }[],
+): Record<string, OwnershipAuthority> {
+  const interestsByProperty = new Map<string, Pick<PropertyOwnershipInterest, 'llc_id' | 'owner_kind'>[]>()
+  for (const row of interests) {
+    const list = interestsByProperty.get(row.property_id) ?? []
+    list.push(row)
+    interestsByProperty.set(row.property_id, list)
+  }
+  const completenessByProperty = new Map(completenessRows.map((r) => [r.property_id, r.completeness]))
+
+  const result: Record<string, OwnershipAuthority> = {}
+  for (const property of properties) {
+    const propertyInterests = interestsByProperty.get(property.id) ?? []
+    const completeness = completenessByProperty.get(property.id) ?? 'none'
+    result[property.id] = resolveOwnershipAuthority(propertyInterests, completeness, property.llc_id)
+  }
+  return result
+}
+
 // Every property this entity currently has a title interest in — the
 // entity profile's "Linked properties" panel, replacing the earlier plain
 // listPropertiesByLlc-only view with one that also carries percentage.

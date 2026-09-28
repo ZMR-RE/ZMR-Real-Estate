@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
-import { listContacts, createContact, createContactLink, addContactMethod, type Contact } from '../contacts/contactsQueries'
+import {
+  listContacts,
+  createContact,
+  createContactLink,
+  addContactMethod,
+  findContactLinkForScope,
+  findContactMethodByValue,
+  type Contact,
+} from '../contacts/contactsQueries'
 import { markLegacyContactReconciled } from './propertiesQueries'
 
 interface ReviewSavedContactDetailsModalProps {
@@ -72,18 +80,40 @@ export function ReviewSavedContactDetailsModal({
     }
 
     setSaving(true)
-    const { error: linkError } = await createContactLink(accountId, contactId, { propertyId }, role.trim() || null)
-    if (linkError) {
+
+    // Package 1 completion — idempotent retry: re-confirming the same
+    // reconciliation (reopening the modal and confirming again, or a
+    // genuine retry after a lost response) must never create a second
+    // link or a second copy of the same method. Checked immediately
+    // before each insert, not just once at the top, since a link and
+    // a method are independent boundaries that can each already exist
+    // from a prior attempt in any combination.
+    const { data: existingLink, error: linkLookupError } = await findContactLinkForScope(accountId, contactId, { propertyId })
+    if (linkLookupError) {
       setSaving(false)
-      setError(linkError.message)
+      setError(linkLookupError.message)
       return
+    }
+    if (!existingLink) {
+      const { error: linkError } = await createContactLink(accountId, contactId, { propertyId }, role.trim() || null)
+      if (linkError) {
+        setSaving(false)
+        setError(linkError.message)
+        return
+      }
     }
 
     if (transferPhone && legacyContactPhone) {
-      await addContactMethod(accountId, contactId, { method_type: 'phone', value: legacyContactPhone, label: 'From property record', is_preferred: false })
+      const { data: existingPhone } = await findContactMethodByValue(accountId, contactId, 'phone', legacyContactPhone)
+      if (!existingPhone) {
+        await addContactMethod(accountId, contactId, { method_type: 'phone', value: legacyContactPhone, label: 'From property record', is_preferred: false })
+      }
     }
     if (transferEmail && legacyContactEmail) {
-      await addContactMethod(accountId, contactId, { method_type: 'email', value: legacyContactEmail, label: 'From property record', is_preferred: false })
+      const { data: existingEmail } = await findContactMethodByValue(accountId, contactId, 'email', legacyContactEmail)
+      if (!existingEmail) {
+        await addContactMethod(accountId, contactId, { method_type: 'email', value: legacyContactEmail, label: 'From property record', is_preferred: false })
+      }
     }
 
     await markLegacyContactReconciled(propertyId)

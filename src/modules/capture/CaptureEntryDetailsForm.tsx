@@ -4,6 +4,11 @@ import { SearchableSelect, type SearchableSelectOption } from '../../shared/Sear
 import { formatAmountOnBlur, sanitizeAmountInput } from '../../shared/currencyInput'
 import { listUnits } from '../units/unitsQueries'
 import { listFinancialAccountsForEntry } from '../financialAccounts/financialAccountsQueries'
+import {
+  getPropertyOwnershipSummary,
+  listPropertyOwnershipInterests,
+  resolveOwnershipAuthority,
+} from '../llcs/ownershipInterestsQueries'
 import { listAllTenantsForProperty } from '../tenants/propertyTenantsQueries'
 import { listProspectiveTenantsForProperty, createProspectiveTenant, type ProspectiveTenantInput } from '../tenants/prospectiveTenantsQueries'
 import { ProspectiveTenantForm } from '../tenants/ProspectiveTenantForm'
@@ -134,9 +139,27 @@ export function CaptureEntryDetailsForm({
   // accounts (if any), grouped separately so it's clear at a glance
   // which account is property-specific vs. shared across sibling
   // properties.
-  const refreshFinancialAccountOptions = () => {
+  //
+  // Package 1 completion (contract §2, consumer #4) — entry.property.llc_id
+  // is a legacy pointer, not confirmed ownership; resolved via
+  // resolveOwnershipAuthority every time this runs (mount, and the
+  // picker's own onOpen) rather than trusted directly, so a stale/
+  // unconfirmed/multi-owner property never surfaces another entity's
+  // shared accounts. Only one CaptureEntryDetailsForm is ever mounted at
+  // a time (both callers gate rendering on editingId === entry.id), so
+  // switching which entry is being edited — i.e. switching properties —
+  // naturally re-resolves fresh on the next mount; nothing here assumes
+  // it's the only entry that exists.
+  const refreshFinancialAccountOptions = async () => {
     if (!accountId || entry.entry_type !== 'receipt') return
-    listFinancialAccountsForEntry(accountId, entry.property.id, entry.property.llc_id).then(({ data }) => {
+    const [{ data: interests }, { data: summary }] = await Promise.all([
+      listPropertyOwnershipInterests(accountId, entry.property.id),
+      getPropertyOwnershipSummary(accountId, entry.property.id),
+    ])
+    const authority = resolveOwnershipAuthority(interests ?? [], summary?.completeness ?? 'none', entry.property.llc_id)
+    const authoritativeLlcId = authority.authoritative ? authority.llcId : null
+
+    listFinancialAccountsForEntry(accountId, entry.property.id, authoritativeLlcId).then(({ data }) => {
       setFinancialAccountOptions(
         (data ?? [])
           .filter((a) => !a.archived)

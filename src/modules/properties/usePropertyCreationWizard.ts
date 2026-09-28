@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { AllocationStatus } from '../llcs/ownershipInterestsQueries'
 import { interpretOwnershipError } from '../llcs/ownershipInterestsQueries'
@@ -36,7 +36,13 @@ export interface StagedFile extends StagedFileMeta {
 }
 
 export interface PropertyCreationSaveResult {
-  kind: 'saved' | 'conflicting_retry' | 'error'
+  // 'saved_with_upload_errors' — the property/ownership are real and
+  // committed (never rolled back or duplicated by a retry), but one or
+  // more staged files did not finish uploading. The wizard stays open
+  // and the draft is kept specifically so "Retry uploads" can call
+  // save() again: the same idempotency key returns the same property
+  // instantly (no re-creation) and only the still-failed files retry.
+  kind: 'saved' | 'saved_with_upload_errors' | 'conflicting_retry' | 'error'
   propertyId?: string
   message?: string
 }
@@ -64,11 +70,23 @@ export function usePropertyCreationWizard(accountId: string | null) {
   )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Package 1 completion — a real race the first fault-injection pass
+  // surfaced: uploadStagedDocuments's own setStagedFiles calls (marking
+  // each file 'uploading' then 'uploaded') queue re-renders of the
+  // mirroring effect below; those can still be pending when save()'s own
+  // clearPropertyCreationDraft/navigate runs after all uploads resolve,
+  // so a stale queued write could silently resurrect the just-cleared
+  // draft in sessionStorage. This ref, set the moment the draft is
+  // cleared, makes the mirror a no-op from then on regardless of which
+  // stale render it was scheduled from — the draft, once cleared or
+  // cancelled, stays cleared.
+  const draftClearedRef = useRef(false)
 
   // Mirrors every change into sessionStorage so a reload resumes into
   // this exact attempt (same idempotency key) instead of silently
   // starting a new one.
   useEffect(() => {
+    if (draftClearedRef.current) return
     savePropertyCreationDraft(sessionStorage, {
       idempotencyKey: initialDraft.idempotencyKey,
       basics,
@@ -143,6 +161,7 @@ export function usePropertyCreationWizard(accountId: string | null) {
   const goToStep = (n: WizardStep) => setStep(n)
 
   const cancel = () => {
+    draftClearedRef.current = true
     clearPropertyCreationDraft(sessionStorage)
   }
 
@@ -151,10 +170,18 @@ export function usePropertyCreationWizard(accountId: string | null) {
   // prior attempt stopped at: Storage upload, documents row, owner
   // link. Each file's own state is independent — one file's failure
   // never blocks or duplicates another's.
-  const uploadStagedDocuments = async (propertyId: string, ownerIds: string[]) => {
+  // Returns whether every staged file finished uploaded — save() uses
+  // this (not the stagedFiles closure, which lags one render behind
+  // React's async setState) to decide whether it's actually safe to
+  // clear the draft and leave the wizard. A caller that ignored this and
+  // navigated away on any per-file failure would strand that file with
+  // no way back to it — the draft it needed to resume was already gone.
+  const uploadStagedDocuments = async (propertyId: string, ownerIds: string[]): Promise<boolean> => {
+    let allSucceeded = true
     for (const staged of stagedFiles) {
       if (staged.uploadStatus === 'uploaded') continue
       if (!staged.file) {
+        allSucceeded = false
         setStagedFiles((prev) =>
           prev.map((f) => (f.fileKey === staged.fileKey ? { ...f, uploadStatus: 'error', uploadError: 'Re-attach this file to finish uploading it.' } : f)),
         )
@@ -169,26 +196,40 @@ export function usePropertyCreationWizard(accountId: string | null) {
       if (!documentId) {
         const { error: uploadError } = await uploadPropertyDocumentFile(storagePath, staged.file)
         if (uploadError) {
+          allSucceeded = false
           setStagedFiles((prev) => prev.map((f) => (f.fileKey === staged.fileKey ? { ...f, uploadStatus: 'error', uploadError: uploadError.message } : f)))
           continue
         }
         const { data: inserted, error: insertError } = await insertPropertyDocumentRow(accountId!, propertyId, storagePath, staged.file.size)
         if (insertError) {
+          allSucceeded = false
           setStagedFiles((prev) => prev.map((f) => (f.fileKey === staged.fileKey ? { ...f, uploadStatus: 'error', uploadError: insertError.message } : f)))
           continue
         }
         documentId = inserted.id
       }
 
+      let allLinksSucceeded = true
       for (const ownerId of ownerIds) {
-        const { data: existingLink } = await findDocumentOwnerLink(accountId!, documentId, ownerId)
-        if (!existingLink) {
-          await linkPropertyDocumentToOwner(accountId!, documentId, ownerId)
+        const { data: existingLink, error: linkLookupError } = await findDocumentOwnerLink(accountId!, documentId, ownerId)
+        if (linkLookupError) {
+          allLinksSucceeded = false
+          continue
         }
+        if (!existingLink) {
+          const { error: linkError } = await linkPropertyDocumentToOwner(accountId!, documentId, ownerId)
+          if (linkError) allLinksSucceeded = false
+        }
+      }
+      if (!allLinksSucceeded) {
+        allSucceeded = false
+        setStagedFiles((prev) => prev.map((f) => (f.fileKey === staged.fileKey ? { ...f, uploadStatus: 'error', uploadError: 'The file uploaded but linking it to an owner failed — retry.' } : f)))
+        continue
       }
 
       setStagedFiles((prev) => prev.map((f) => (f.fileKey === staged.fileKey ? { ...f, uploadStatus: 'uploaded' } : f)))
     }
+    return allSucceeded
   }
 
   const save = async (): Promise<PropertyCreationSaveResult> => {
@@ -227,16 +268,30 @@ export function usePropertyCreationWizard(accountId: string | null) {
     // known here, so its document link is completed by the property's
     // own Documents tab afterward, not blocked on here.
     const ownerIds = wizardEntries.filter((e): e is Extract<WizardOwnershipEntry, { ownerId: string }> => 'ownerId' in e && !!e.ownerId).map((e) => e.ownerId)
+    let uploadsSucceeded = true
     if (stagedFiles.length > 0) {
       // A brand-new owner's id isn't known client-side (the server
       // mints it) — document links for that case are completed by the
       // Property Documents tab's own "Review saved contact details" /
       // ownership-linking pass after creation, not blocked here.
-      await uploadStagedDocuments(result.propertyId, ownerIds)
+      uploadsSucceeded = await uploadStagedDocuments(result.propertyId, ownerIds)
     }
 
-    clearPropertyCreationDraft(sessionStorage)
     setSaving(false)
+
+    if (!uploadsSucceeded) {
+      // The property is real and won't be duplicated by a retry (same
+      // idempotency key, same payload — createPropertyWithOwnership's
+      // own fast path returns this exact id again). Deliberately do NOT
+      // clear the draft or navigate: doing so here would strand the
+      // failed file with no way back to it, since the draft is what
+      // "Retry uploads" and a reload's re-attach prompt both depend on.
+      setError('One or more documents did not finish uploading. Retry from this screen before leaving.')
+      return { kind: 'saved_with_upload_errors', propertyId: result.propertyId }
+    }
+
+    draftClearedRef.current = true
+    clearPropertyCreationDraft(sessionStorage)
     // Batch S1's own rule, unchanged: a brand-new property has no KPI
     // data yet, so it lands on Overview instead of usePropertyProfile's
     // existing-property default (KPI). Same router-state mechanism

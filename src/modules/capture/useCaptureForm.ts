@@ -3,6 +3,11 @@ import { useAuth } from '../../shared/auth/AuthContext'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { hasAtMostTwoDecimalPlaces } from '../../shared/currencyInput'
 import { listProperties } from '../properties/propertiesQueries'
+import {
+  getPropertyOwnershipSummary,
+  listPropertyOwnershipInterests,
+  resolveOwnershipAuthority,
+} from '../llcs/ownershipInterestsQueries'
 import { listUnits } from '../units/unitsQueries'
 import { listFinancialAccountsForEntry } from '../financialAccounts/financialAccountsQueries'
 import { listAllTenantsForProperty, type PropertyTenantOption } from '../tenants/propertyTenantsQueries'
@@ -41,10 +46,10 @@ export function useCaptureForm(onCaptured?: () => void) {
   const { accountId, session } = useAuth()
   const { vendorOptions, addVendor, refreshVendorOptions } = useVendors(accountId)
   const [propertyOptions, setPropertyOptions] = useState<{ id: string; label: string }[]>([])
-  // Roadmap 7.40 — propertyId -> llc_id, so the Financial account picker
-  // knows whether the selected property belongs to an LLC (and can pull
-  // in that LLC's shared accounts) without widening propertyOptions'
-  // own {id, label} shape, which SearchableSelect elsewhere assumes.
+  // Roadmap 7.40 — propertyId -> the raw legacy llc_id column, kept only
+  // as the "legacy pointer" input to resolveOwnershipAuthority below. No
+  // longer read directly to decide shared-account scoping — see Package
+  // 1 completion's fix to refreshFinancialAccountOptions.
   const [propertyLlcIds, setPropertyLlcIds] = useState<Record<string, string | null>>({})
   const [propertiesLoading, setPropertiesLoading] = useState(true)
   const [entryType, setEntryType] = useState<EntryType | null>(null)
@@ -143,10 +148,26 @@ export function useCaptureForm(onCaptured?: () => void) {
   // property is selected, same pattern as Unit. Roadmap 7.40 — widened
   // to also include that property's LLC's shared accounts (if any),
   // grouped separately in the picker.
-  const refreshFinancialAccountOptions = () => {
+  //
+  // Package 1 completion (contract §2, consumer #4) — the LLC used for
+  // "shared accounts" scoping is no longer the raw legacy property.llc_id
+  // pointer. Resolved fresh via resolveOwnershipAuthority every time this
+  // runs (property change, and the picker's own onOpen) rather than from
+  // a cached map, so an ownership change made elsewhere while Capture
+  // stays open is picked up on the next open — not just on reload. An
+  // unconfirmed/legacy-only/multi-owner property now correctly shows
+  // only "This property" accounts, never a stale entity's shared ones.
+  const refreshFinancialAccountOptions = async () => {
     if (!accountId || !propertyId) return
-    const llcId = propertyLlcIds[propertyId] ?? null
-    listFinancialAccountsForEntry(accountId, propertyId, llcId).then(({ data }) => {
+    const legacyLlcId = propertyLlcIds[propertyId] ?? null
+    const [{ data: interests }, { data: summary }] = await Promise.all([
+      listPropertyOwnershipInterests(accountId, propertyId),
+      getPropertyOwnershipSummary(accountId, propertyId),
+    ])
+    const authority = resolveOwnershipAuthority(interests ?? [], summary?.completeness ?? 'none', legacyLlcId)
+    const authoritativeLlcId = authority.authoritative ? authority.llcId : null
+
+    listFinancialAccountsForEntry(accountId, propertyId, authoritativeLlcId).then(({ data }) => {
       setFinancialAccountOptions(
         (data ?? [])
           .filter((a) => !a.archived)

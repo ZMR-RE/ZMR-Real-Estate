@@ -1,5 +1,8 @@
 # Package 1 — Connected property creation & core setup (v3, final readiness)
 
+> **Approval update — September 28, 2026:** The owner approved the revised creation/Review and grouped Edit layouts with three required corrections: restore Documents Edit, make unknown shares readable, and use normal Save/Cancel with normal-size responsive verification. This supersedes visual-approval-pending statements below. Execute the approved connected scope in Practice using `ZMR-package-1-approved-build-prompt.txt`; production release remains separately gated.
+
+
 Supersedes v2 (`53b844f`). Corrected per
 `ZMR-package-1-final-readiness-handoff.txt`. The two settled product
 approvals (drop the redundant Name requirement; move to structured
@@ -277,3 +280,31 @@ scrollWidth === clientWidth`, i.e. no horizontal page overflow at any of
 them. Every existing field, value, validation rule, and the upload/
 document/view/Edit/Save/Cancel behavior are all unchanged — only the
 form's own width rule was touched. Documented in `DESIGN-SYSTEM.md`.
+
+## 15. Completion status — September 28, 2026 (corrects §12's "design only" rows)
+
+§12's table above was written before implementation and is now stale on
+two rows specifically — left in place as the historical readiness
+snapshot, corrected here rather than edited in place:
+
+| Item | §12's claim | Actual state now | Evidence |
+|---|---|---|---|
+| Idempotency mechanism | "Design only — not yet implemented" | **Implemented and tested against real Practice**, not just unit-reasoned | `create_property_with_ownership` (migration `20260928020000`), SQL-tested directly: empty-account creation, inline-new-owner creation, genuine retry (same key+payload → identical property, zero duplicates), changed-payload retry (`ZM005`), cross-account key reuse (`ZM002`, nothing disclosed), true concurrency (two simultaneous calls, same new key → one property, one new owner) |
+| Upload/Storage recovery | "Design only — not yet implemented" | **Implemented and fault-injection-tested against real Practice**, not just designed | Real document upload through the live wizard, with actual injected failures (via a test-only `window.fetch` intercept in the browser session — never a code-level switch in the shipped app) at two of the three named boundaries: Storage upload itself, and the documents-row insert. Both: property never duplicated, successful file(s) retained, failed file recovered correctly on retry (same deterministic Storage path re-used, no duplicate Storage object, no duplicate documents row), final state verified in Postgres. A real reload-mid-wizard → re-attach → Save cycle was also exercised live, end to end. The third boundary (owner-link insert) is code-reviewed against the identical check-before-insert pattern, not independently fault-injected this pass. |
+| Existing-contact reconciliation | Not in §12 (added after) | **Implemented and tested against real Practice, including a real bug found and fixed** | "Link to an existing contact" tested with a property's genuinely *persisted* (saved, not just typed) legacy owner_name/contact_phone/contact_email: the contact's own pre-existing method was preserved untouched, the two new methods were added correctly, and the legacy fields on `properties` were confirmed byte-for-byte unchanged after. A real retry-duplication bug was found live (confirming the completion handoff's own suspicion) and fixed: `findContactLinkForScope`/`findContactMethodByValue` now guard both inserts, re-verified live afterward with zero duplicates. Cross-account `contact_id` denial confirmed directly at the database level (`trg_contact_links_same_account`), not just inferred from the UI's own account-scoped picker. |
+| Quick Capture ownership-authority consumer (contract §2's 4th named consumer) | Not in §12 (added after) | **Implemented and tested against real Practice** | `useCaptureForm.ts`/`CaptureEntryDetailsForm.tsx` resolve ownership authority fresh (not from a cached/legacy pointer) before scoping the Financial-account picker's "Shared accounts" group. Live-tested: a legacy-only unconfirmed property correctly hides the shared account; the same LLC with `owner_kind` still unresolved also correctly hides it (never guessed); the same LLC once `owner_kind` and allocation are both resolved correctly shows it. |
+| Direct-creation bypass (`usePropertyRegistry.ts`) | Not in §12 (added after) | **Confirmed unreachable through the real UI and removed**, not just left in place | `PropertyRegistry.tsx` never renders the old create-via-`PropertyForm` path anymore (the wizard replaced it); the dead branch calling `createProperty` directly (no idempotency, no ownership) was deleted from `usePropertyRegistry.save()` and replaced with an explicit refusal if ever called without a property selected — creation can only happen through `create_property_with_ownership` now, by construction. |
+| New-owner `owner_kind` resolution | Not in §12 (added after) | **No new feature needed — verified live using the existing Entity Profile edit flow** | A test LLC created with `owner_kind = null` (the wizard's own inline-new-owner default, per the no-guess policy) was opened at its real Entity Profile, its existing "not yet confirmed" Identity field was set to a real value through the UI, and the save was confirmed in Postgres. |
+
+**What remains genuinely open:** production release (separately gated,
+unchanged); the third upload-recovery boundary (owner-link insert)
+fault-injected live rather than code-reviewed only; the reconciliation
+modal's "create new contact" path made idempotent against its own retry
+(only "link to existing" was fixed and re-verified — "create new"
+retried twice would still create two contacts, a smaller and disclosed
+gap); Quick Capture's own repeated-entity/shared-account case verified
+only via the shared unit-tested resolver, not a second live UI pass
+(the underlying per-property queries are identical to the live-tested
+single-property case, so this is judged low-risk, not zero-risk).
+OWN-I2's roadmap checkbox remains unchecked — see the approval register
+and work log for the exact reasoning.

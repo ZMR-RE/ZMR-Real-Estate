@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildOwnershipAuthorityMap,
   describeOrganizationType,
   interpretOwnershipError,
   resolveOwnershipAuthority,
@@ -261,3 +262,71 @@ describe('describeOrganizationType', () => {
     expect(describeOrganizationType({ case: 'transitioned_to_one', authoritative: true, llcId: 'llc-real' }, 'Jane Smith', null)).toBe('Jane Smith')
   })
 })
+
+// Package 1 completion — Quick Capture's multi-property consumer needs
+// authority resolved per property in one pass, not a loop of
+// per-property calls. This is the bulk equivalent of
+// resolveOwnershipAuthority, covering the exact cases the handoff named:
+// multiple properties at once, two properties sharing the same
+// confirmed owner (no duplication), a property with no interests row at
+// all, and a stale legacy llc_id that must never leak through.
+describe('buildOwnershipAuthorityMap', () => {
+  it('resolves a different case correctly for each of several properties in one pass', () => {
+    const properties = [
+      { id: 'p-none', llc_id: null },
+      { id: 'p-legacy', llc_id: 'llc-stale' },
+      { id: 'p-one-complete', llc_id: null },
+      { id: 'p-multiple', llc_id: null },
+    ]
+    const interests = [
+      propertyInterest('p-one-complete', 'llc-real', 'entity'),
+      propertyInterest('p-multiple', 'llc-a', 'entity'),
+      propertyInterest('p-multiple', 'llc-b', 'individual'),
+    ]
+    const completeness = [
+      { property_id: 'p-one-complete', completeness: 'complete' as const },
+      { property_id: 'p-multiple', completeness: 'complete' as const },
+    ]
+
+    const map = buildOwnershipAuthorityMap(properties, interests, completeness)
+
+    expect(map['p-none']).toEqual({ case: 'none', authoritative: false })
+    expect(map['p-legacy']).toEqual({ case: 'legacy_only', authoritative: false, legacyLlcId: 'llc-stale' })
+    expect(map['p-one-complete']).toEqual({ case: 'transitioned_to_one', authoritative: true, llcId: 'llc-real' })
+    expect(map['p-multiple']).toEqual({ case: 'multiple', authoritative: false })
+  })
+
+  it('two properties sharing the same confirmed owner both resolve to that owner, with no duplication or cross-contamination', () => {
+    const properties = [
+      { id: 'p1', llc_id: null },
+      { id: 'p2', llc_id: null },
+    ]
+    const interests = [propertyInterest('p1', 'llc-shared', 'entity'), propertyInterest('p2', 'llc-shared', 'entity')]
+    const completeness = [
+      { property_id: 'p1', completeness: 'complete' as const },
+      { property_id: 'p2', completeness: 'complete' as const },
+    ]
+
+    const map = buildOwnershipAuthorityMap(properties, interests, completeness)
+
+    expect(map['p1']).toEqual({ case: 'transitioned_to_one', authoritative: true, llcId: 'llc-shared' })
+    expect(map['p2']).toEqual({ case: 'transitioned_to_one', authoritative: true, llcId: 'llc-shared' })
+  })
+
+  it('a property with a legacy llc_id but real, unrelated confirmed ownership never leaks the stale pointer through', () => {
+    const properties = [{ id: 'p1', llc_id: 'llc-stale-unrelated' }]
+    const interests = [propertyInterest('p1', 'llc-real-current-owner', 'individual')]
+    const completeness = [{ property_id: 'p1', completeness: 'complete' as const }]
+
+    const map = buildOwnershipAuthorityMap(properties, interests, completeness)
+    const result = map['p1']
+    expect(result.authoritative).toBe(true)
+    if (result.authoritative) {
+      expect(result.llcId).toBe('llc-real-current-owner')
+    }
+  })
+})
+
+function propertyInterest(propertyId: string, llcId: string, ownerKind: 'individual' | 'entity' | null): Pick<PropertyOwnershipInterest, 'property_id' | 'llc_id' | 'owner_kind'> {
+  return { property_id: propertyId, llc_id: llcId, owner_kind: ownerKind }
+}
