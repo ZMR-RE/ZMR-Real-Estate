@@ -161,11 +161,37 @@ export async function updateProperty(id: string, input: PropertyInput, expectedU
   return latest ? { kind: 'conflict', latest } : { kind: 'not_found' }
 }
 
-// Package 1 §3 — the one place legacy_contact_reconciled_at is ever
-// written, called only from ReviewSavedContactDetailsModal after its own
-// explicit confirm step. Never touches owner_name/contact_phone/
-// contact_email — those stay exactly as entered, reconciled or not.
-export async function markLegacyContactReconciled(id: string) {
-  return supabase.from('properties').update({ legacy_contact_reconciled_at: new Date().toISOString() }).eq('id', id)
+// Release-readiness corrections (defect #1) — replaces the modal's prior
+// several separate calls (create/find contact, find-or-create link,
+// find-or-create each method, then an unconditional markLegacyContactReconciled)
+// with one atomic, idempotency-keyed RPC (reconcile_legacy_contact,
+// 20260929010000). Every requested change either all completes or none
+// does; legacy_contact_reconciled_at is only ever set by this function,
+// as a side effect of a genuinely completed reconciliation. Never touches
+// owner_name/contact_phone/contact_email — those stay exactly as entered.
+export type ReconcileLegacyContactMode = 'existing' | 'new'
+
+export interface ReconcileLegacyContactInput {
+  idempotencyKey: string
+  mode: ReconcileLegacyContactMode
+  existingContactId: string | null
+  newContactName: string | null
+  role: string | null
+  phone: string | null
+  email: string | null
+}
+
+export async function reconcileLegacyContact(accountId: string, propertyId: string, input: ReconcileLegacyContactInput) {
+  return supabase.rpc('reconcile_legacy_contact', {
+    p_account_id: accountId,
+    p_property_id: propertyId,
+    p_idempotency_key: input.idempotencyKey,
+    p_mode: input.mode,
+    p_existing_contact_id: input.existingContactId,
+    p_new_contact_name: input.newContactName,
+    p_role: input.role,
+    p_phone: input.phone,
+    p_email: input.email,
+  })
 }
 

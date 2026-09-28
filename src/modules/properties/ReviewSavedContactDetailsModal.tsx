@@ -1,15 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
-import {
-  listContacts,
-  createContact,
-  createContactLink,
-  addContactMethod,
-  findContactLinkForScope,
-  findContactMethodByValue,
-  type Contact,
-} from '../contacts/contactsQueries'
-import { markLegacyContactReconciled } from './propertiesQueries'
+import { listContacts, type Contact } from '../contacts/contactsQueries'
+import { reconcileLegacyContact } from './propertiesQueries'
 
 interface ReviewSavedContactDetailsModalProps {
   propertyId: string
@@ -46,6 +38,17 @@ export function ReviewSavedContactDetailsModal({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
+  // Release-readiness corrections (defect #1) — generated once when this
+  // modal instance mounts, never regenerated on a failed attempt. A retry
+  // (including two overlapping Confirm clicks firing before `saving`
+  // disables the button) carries the SAME idempotency key, so
+  // reconcile_legacy_contact's own reserve-or-fetch serializes them at
+  // the database row lock and only one ever does real work — this is
+  // what makes two simultaneous confirmations safe, not client-side
+  // disabling alone. Reopening the modal fresh (a genuinely separate
+  // attempt) gets a new key, exactly like the creation wizard's own
+  // idempotencyKey.
+  const [idempotencyKey] = useState(() => crypto.randomUUID())
 
   useEffect(() => {
     if (!accountId) return
@@ -55,69 +58,45 @@ export function ReviewSavedContactDetailsModal({
     })
   }, [accountId])
 
+  // Release-readiness corrections (defect #1) — a single atomic RPC call
+  // now does everything (resolve/create the contact, resolve/create the
+  // link, resolve/create each requested method, mark the property
+  // reconciled). `done` is set ONLY on that call's own success; every
+  // other path (validation, the RPC's own error) leaves `saving` false,
+  // `done` false, and every field exactly as the user left it, so a
+  // failed attempt can always be corrected and retried from the same
+  // state rather than losing what was typed.
   const handleConfirm = async () => {
     if (!accountId) return
-    setError(null)
-
-    let contactId = selectedContactId
-    if (mode === 'new') {
-      if (!newContactName.trim()) {
-        setError('Enter a name for the new contact.')
-        return
-      }
-      setSaving(true)
-      const { data: created, error: createError } = await createContact(accountId, { name: newContactName.trim(), notes: null })
-      if (createError || !created) {
-        setSaving(false)
-        setError(createError?.message ?? 'Could not create the contact.')
-        return
-      }
-      contactId = created.id
+    if (mode === 'new' && !newContactName.trim()) {
+      setError('Enter a name for the new contact.')
+      return
     }
-    if (!contactId) {
+    if (mode === 'existing' && !selectedContactId) {
       setError('Select an existing contact or create a new one.')
       return
     }
 
+    setError(null)
     setSaving(true)
 
-    // Package 1 completion — idempotent retry: re-confirming the same
-    // reconciliation (reopening the modal and confirming again, or a
-    // genuine retry after a lost response) must never create a second
-    // link or a second copy of the same method. Checked immediately
-    // before each insert, not just once at the top, since a link and
-    // a method are independent boundaries that can each already exist
-    // from a prior attempt in any combination.
-    const { data: existingLink, error: linkLookupError } = await findContactLinkForScope(accountId, contactId, { propertyId })
-    if (linkLookupError) {
-      setSaving(false)
-      setError(linkLookupError.message)
+    const { error: rpcError } = await reconcileLegacyContact(accountId, propertyId, {
+      idempotencyKey,
+      mode,
+      existingContactId: mode === 'existing' ? selectedContactId : null,
+      newContactName: mode === 'new' ? newContactName.trim() : null,
+      role: role.trim() || null,
+      phone: transferPhone && legacyContactPhone ? legacyContactPhone : null,
+      email: transferEmail && legacyContactEmail ? legacyContactEmail : null,
+    })
+
+    setSaving(false)
+
+    if (rpcError) {
+      setError(rpcError.message)
       return
     }
-    if (!existingLink) {
-      const { error: linkError } = await createContactLink(accountId, contactId, { propertyId }, role.trim() || null)
-      if (linkError) {
-        setSaving(false)
-        setError(linkError.message)
-        return
-      }
-    }
 
-    if (transferPhone && legacyContactPhone) {
-      const { data: existingPhone } = await findContactMethodByValue(accountId, contactId, 'phone', legacyContactPhone)
-      if (!existingPhone) {
-        await addContactMethod(accountId, contactId, { method_type: 'phone', value: legacyContactPhone, label: 'From property record', is_preferred: false })
-      }
-    }
-    if (transferEmail && legacyContactEmail) {
-      const { data: existingEmail } = await findContactMethodByValue(accountId, contactId, 'email', legacyContactEmail)
-      if (!existingEmail) {
-        await addContactMethod(accountId, contactId, { method_type: 'email', value: legacyContactEmail, label: 'From property record', is_preferred: false })
-      }
-    }
-
-    await markLegacyContactReconciled(propertyId)
-    setSaving(false)
     setDone(true)
   }
 

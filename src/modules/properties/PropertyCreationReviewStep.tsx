@@ -102,12 +102,23 @@ export function PropertyCreationReviewStep({
         </div>
         <div className="field-column">
           {stagedFiles.length > 0 ? (
-            stagedFiles.map((f) => (
-              <div key={f.fileKey} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>{f.name}</span>
-                <span>{formatSize(f.size)}</span>
-              </div>
-            ))
+            <>
+              {stagedFiles.map((f) => (
+                <div key={f.fileKey} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{f.name}</span>
+                  <span>{formatSize(f.size)}</span>
+                </div>
+              ))}
+              {/* Release-readiness corrections (defect #2) — every staged
+                  document is linked to every owner entered on this property;
+                  made visible here rather than happening silently, since the
+                  wizard has no separate per-file owner picker. */}
+              <p className="field-hint">
+                {ownershipEntries.length > 0
+                  ? `Will be linked to: ${ownershipEntries.map((row) => ownerDisplayName(row, llcOptions)).join(', ')}.`
+                  : 'No owner entered yet — these documents will be saved without an owner link.'}
+              </p>
+            </>
           ) : (
             <p className="field-hint">No documents staged.</p>
           )}

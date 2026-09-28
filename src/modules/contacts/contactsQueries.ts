@@ -109,31 +109,6 @@ export async function removeContactLink(id: string) {
   return supabase.from('contact_links').delete().eq('id', id)
 }
 
-// Package 1 completion — the boundary check "Review saved contact
-// details" needs before creating a link, so re-confirming the same
-// reconciliation (a genuine retry, e.g. after a lost response, or simply
-// reopening the modal and confirming again) completes idempotently
-// instead of creating a second identical link every time.
-export async function findContactLinkForScope(accountId: string, contactId: string, scope: ContactLinkScope) {
-  let query = supabase.from('contact_links').select('id').eq('account_id', accountId).eq('contact_id', contactId)
-  query = scope.propertyId ? query.eq('property_id', scope.propertyId) : query.eq('llc_id', scope.llcId ?? '')
-  return query.maybeSingle()
-}
-
-// Same idempotent-retry reasoning as findContactLinkForScope — a method
-// with the exact same (contact, type, value) is treated as already
-// transferred, never duplicated by re-confirming.
-export async function findContactMethodByValue(accountId: string, contactId: string, methodType: 'phone' | 'email', value: string) {
-  return supabase
-    .from('contact_methods')
-    .select('id')
-    .eq('account_id', accountId)
-    .eq('contact_id', contactId)
-    .eq('method_type', methodType)
-    .eq('value', value)
-    .maybeSingle()
-}
-
 export async function setContactLinkPrimary(id: string, isPrimaryContact: boolean) {
   return supabase.from('contact_links').update({ is_primary_contact: isPrimaryContact }).eq('id', id)
 }

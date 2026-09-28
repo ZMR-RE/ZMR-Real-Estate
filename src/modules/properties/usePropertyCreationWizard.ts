@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { AllocationStatus } from '../llcs/ownershipInterestsQueries'
-import { interpretOwnershipError } from '../llcs/ownershipInterestsQueries'
+import { interpretOwnershipError, listPropertyOwnershipInterests } from '../llcs/ownershipInterestsQueries'
 import {
   createPropertyWithOwnership,
   findPropertyDocumentByPath,
@@ -263,17 +263,25 @@ export function usePropertyCreationWizard(accountId: string | null) {
       return { kind: 'conflicting_retry', message: result.message }
     }
 
-    // Only owners the client already had a real id for — a brand-new
-    // owner's id is minted server-side inside the same call and isn't
-    // known here, so its document link is completed by the property's
-    // own Documents tab afterward, not blocked on here.
-    const ownerIds = wizardEntries.filter((e): e is Extract<WizardOwnershipEntry, { ownerId: string }> => 'ownerId' in e && !!e.ownerId).map((e) => e.ownerId)
     let uploadsSucceeded = true
     if (stagedFiles.length > 0) {
-      // A brand-new owner's id isn't known client-side (the server
-      // mints it) — document links for that case are completed by the
-      // Property Documents tab's own "Review saved contact details" /
-      // ownership-linking pass after creation, not blocked here.
+      // Release-readiness corrections (defect #2) — a brand-new owner's
+      // id is minted server-side inside createPropertyWithOwnership and
+      // was never known to this client-side wizardEntries list, so
+      // filtering that list (as this used to) permanently omitted every
+      // inline-created owner's document links with no way to complete
+      // them later. Instead, read back the property's own real,
+      // server-confirmed ownership interests — this includes every
+      // owner, existing or newly minted, by construction: it's the same
+      // row replace_property_ownership_interests just wrote inside the
+      // same transaction as the property itself.
+      const { data: ownershipInterests, error: ownershipLookupError } = await listPropertyOwnershipInterests(accountId, result.propertyId)
+      if (ownershipLookupError) {
+        setSaving(false)
+        setError('Property saved, but could not confirm its owners to link documents to. Retry from this screen.')
+        return { kind: 'saved_with_upload_errors', propertyId: result.propertyId }
+      }
+      const ownerIds = (ownershipInterests ?? []).map((interest) => interest.llc_id)
       uploadsSucceeded = await uploadStagedDocuments(result.propertyId, ownerIds)
     }
 
