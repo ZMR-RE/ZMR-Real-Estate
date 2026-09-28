@@ -1,9 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import {
+  describeOrganizationType,
   interpretOwnershipError,
+  resolveOwnershipAuthority,
   validateOwnershipEntriesClientSide,
   type OwnershipEntryInput,
+  type PropertyOwnershipInterest,
 } from './ownershipInterestsQueries'
+
+function interest(llcId: string, ownerKind: 'individual' | 'entity' | null): Pick<PropertyOwnershipInterest, 'llc_id' | 'owner_kind'> {
+  return { llc_id: llcId, owner_kind: ownerKind }
+}
 
 // These mirror, on the client side, the exact rules enforced server-side
 // by _validate_ownership_entries() in
@@ -159,5 +166,98 @@ describe('interpretOwnershipError', () => {
   it('falls back to unknown for an unrecognized or missing error code', () => {
     expect(interpretOwnershipError({ code: '23505', message: 'duplicate key' }).kind).toBe('unknown')
     expect(interpretOwnershipError(null).kind).toBe('unknown')
+  })
+})
+
+// Package 1 §2 — the six real states a property's ownership can be in,
+// and the one rule for when properties.llc_id (a legacy, pre-ownership-
+// interests pointer) may ever be trusted by a consumer. This is the
+// safety-critical part of the contract: a wrong answer here means a
+// consumer (Financial accounts scoping, the Organization type label,
+// History, Quick Capture grouping) could silently treat an unconfirmed
+// legacy association as real ownership.
+describe('resolveOwnershipAuthority', () => {
+  it('zero owners, no legacy pointer either — "none", never authoritative', () => {
+    expect(resolveOwnershipAuthority([], 'none', null)).toEqual({ case: 'none', authoritative: false })
+  })
+
+  it('zero owners but a legacy llc_id on file — "legacy_only", NOT authoritative even though a pointer exists', () => {
+    expect(resolveOwnershipAuthority([], 'none', 'llc-legacy')).toEqual({
+      case: 'legacy_only',
+      authoritative: false,
+      legacyLlcId: 'llc-legacy',
+    })
+  })
+
+  it('one owner, allocation incomplete — NOT authoritative (48% could mean more owners are still being entered)', () => {
+    expect(resolveOwnershipAuthority([interest('llc-a', 'entity')], 'incomplete', null)).toEqual({
+      case: 'one_incomplete',
+      authoritative: false,
+    })
+  })
+
+  it('one owner, complete, but that owner\'s kind is unresolved — "kind_unresolved" wins over completeness', () => {
+    expect(resolveOwnershipAuthority([interest('llc-a', null)], 'complete', null)).toEqual({
+      case: 'kind_unresolved',
+      authoritative: false,
+    })
+  })
+
+  it('two or more current owners — "multiple", never authoritative regardless of completeness', () => {
+    expect(resolveOwnershipAuthority([interest('llc-a', 'entity'), interest('llc-b', 'individual')], 'complete', null)).toEqual({
+      case: 'multiple',
+      authoritative: false,
+    })
+    expect(resolveOwnershipAuthority([interest('llc-a', 'entity'), interest('llc-b', 'individual')], 'incomplete', null).authoritative).toBe(
+      false,
+    )
+  })
+
+  it('transitioned back to exactly one, complete, kind resolved — the ONLY authoritative case, and the id comes from the real interest row', () => {
+    expect(resolveOwnershipAuthority([interest('llc-real-owner', 'individual')], 'complete', 'llc-stale-legacy-pointer')).toEqual({
+      case: 'transitioned_to_one',
+      authoritative: true,
+      llcId: 'llc-real-owner',
+    })
+  })
+
+  it('a legacy llc_id present alongside a resolved single complete owner never leaks into the result — only the real interest id is ever returned', () => {
+    const result = resolveOwnershipAuthority([interest('llc-real-owner', 'entity')], 'complete', 'llc-different-stale-pointer')
+    expect(result.authoritative).toBe(true)
+    if (result.authoritative) {
+      expect(result.llcId).toBe('llc-real-owner')
+      expect(result.llcId).not.toBe('llc-different-stale-pointer')
+    }
+  })
+})
+
+describe('describeOrganizationType', () => {
+  it('never asserts confirmed ownership for a legacy-only pointer — reads as unconfirmed, names the prior label', () => {
+    const text = describeOrganizationType({ case: 'legacy_only', authoritative: false, legacyLlcId: 'llc-x' }, null, 'Acme LLC')
+    expect(text).toBe('Ownership not yet confirmed (previously recorded as: Acme LLC)')
+  })
+
+  it('zero owners reads as a plain no-owner state, not an error', () => {
+    expect(describeOrganizationType({ case: 'none', authoritative: false }, null, null)).toBe('No owner recorded')
+  })
+
+  it('one incomplete owner shows that owner but flags more may exist', () => {
+    const text = describeOrganizationType({ case: 'one_incomplete', authoritative: false }, 'Jane Smith', null)
+    expect(text).toContain('Jane Smith')
+    expect(text).toMatch(/additional owners may exist/)
+  })
+
+  it('unresolved owner kind never guesses individual or entity', () => {
+    expect(describeOrganizationType({ case: 'kind_unresolved', authoritative: false }, 'Jane Smith', null)).toBe('Owner type unresolved')
+  })
+
+  it('multiple current owners never silently picks one to display', () => {
+    const text = describeOrganizationType({ case: 'multiple', authoritative: false }, 'Jane Smith', null)
+    expect(text).not.toContain('Jane Smith')
+    expect(text).toMatch(/Multiple owners/)
+  })
+
+  it('the one authoritative case shows the real confirmed owner plainly', () => {
+    expect(describeOrganizationType({ case: 'transitioned_to_one', authoritative: true, llcId: 'llc-real' }, 'Jane Smith', null)).toBe('Jane Smith')
   })
 })

@@ -140,8 +140,13 @@ of screens in the app.
 - **`.preview-steps`/`.preview-step`/`.preview-step--active`/`.preview-step--done`**
   (Batch S, devHarness-only) — a plain four-step indicator for the
   property-creation flow preview. Reuses existing tokens only, no new
-  color. Not a shipped component — the flow itself is still pending
-  visual approval.
+  color. Not a shipped component — kept for the devHarness-only preview
+  components, which remain a separate, still-unshipped surface.
+- **`.wizard-steps`/`.wizard-step`/`.wizard-step--active`/`.wizard-step--done`**
+  (Package 1, shipped) — the real step indicator for the property-
+  creation four-step wizard, once its layout cleared visual approval.
+  Identical rules/tokens to `.preview-step` above, kept as its own class
+  rather than reused since the two now have separate lifecycles.
 - **`.insurance-policy-form`** (owner-approved Insurance width fix) —
   the one named, deliberate exception to the plain-`form` 480px cap
   above: `max-width: 960px`, so its own 3-column `.field-group-row`

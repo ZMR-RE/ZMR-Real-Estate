@@ -14,6 +14,8 @@ import { PropertyTenantsOverview } from '../tenants/PropertyTenantsOverview'
 import { FinancialAccountsSection } from '../financialAccounts/FinancialAccountsSection'
 import { VendorEstimatesSection } from '../vendorEstimates/VendorEstimatesSection'
 import { PropertyOwnershipInterestsSection } from './PropertyOwnershipInterestsSection'
+import { usePropertyOwnershipInterests } from './usePropertyOwnershipInterests'
+import { resolveOwnershipAuthority } from '../llcs/ownershipInterestsQueries'
 import { PropertyForm } from './PropertyForm'
 import { PropertySaveConflictNotice } from './PropertySaveConflictNotice'
 import { PropertySummary } from './PropertySummary'
@@ -66,11 +68,20 @@ export function PropertyProfileOverviewTab({
   onKeepEditingAfterConflict,
   onDiscardDraftAndLoadLatest,
 }: PropertyProfileOverviewTabProps) {
+  // Package 1 §2 — property.llc_id is a legacy pointer, not confirmed
+  // ownership, except in the one case (a single, complete, kind-
+  // resolved current owner) resolveOwnershipAuthority names. Financial
+  // accounts scoping has real functional consequences (which account
+  // rows a user sees), so it must never fall back to the raw legacy
+  // pointer the way a display label safely could.
+  const { interests, completeness } = usePropertyOwnershipInterests(property.id)
+  const ownershipAuthority = resolveOwnershipAuthority(interests, completeness, property.llc_id)
+  const authoritativeLlcId = ownershipAuthority.authoritative ? ownershipAuthority.llcId : null
   // Roadmap 7.40 — the Financial accounts box also shows this LLC's
   // shared accounts (if any), distinguishably; llcOptions already
   // carries the same "Name (Holding Co)" label used everywhere else an
   // LLC is displayed, so no separate lookup/query is needed for it.
-  const llcLabel = property.llc_id ? (llcOptions.find((o) => o.id === property.llc_id)?.label ?? null) : null
+  const llcLabel = authoritativeLlcId ? (llcOptions.find((o) => o.id === authoritativeLlcId)?.label ?? null) : null
 
   return (
     <div className="property-overview-grid">
@@ -113,7 +124,7 @@ export function PropertyProfileOverviewTab({
 
       <PropertyOwnershipInterestsSection propertyId={property.id} llcOptions={llcOptions} />
 
-      <FinancialAccountsSection propertyId={property.id} llcId={property.llc_id} llcLabel={llcLabel} />
+      <FinancialAccountsSection propertyId={property.id} llcId={authoritativeLlcId} llcLabel={llcLabel} />
 
       <InsuranceLedger propertyId={property.id} />
 

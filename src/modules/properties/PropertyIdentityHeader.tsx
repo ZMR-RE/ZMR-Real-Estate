@@ -1,5 +1,5 @@
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
-import { NO_LLC_ID } from '../llcs/useLlcs'
+import { describeOrganizationType, type OwnershipAuthority } from '../llcs/ownershipInterestsQueries'
 import type { Property } from './propertiesQueries'
 import { PropertyPhoto } from './PropertyPhoto'
 import { PropertyLastUpdated } from './PropertyLastUpdated'
@@ -7,6 +7,12 @@ import { PropertyLastUpdated } from './PropertyLastUpdated'
 interface PropertyIdentityHeaderProps {
   property: Property
   llcOptions: SearchableSelectOption[]
+  ownershipAuthority: OwnershipAuthority
+  // Only meaningful for the 'one_incomplete'/'transitioned_to_one' cases
+  // — the current single owner's own label, resolved by the caller
+  // (PropertySummary) from the real ownership-interests row, never from
+  // property.llc_id.
+  currentOwnerLabel: string | null
 }
 
 const STATUS_LABELS: Record<Property['status'], string> = {
@@ -21,10 +27,8 @@ const STATUS_BADGE_VARIANTS: Record<Property['status'], string> = {
   sold: 'status-badge-accent',
 }
 
-function llcDisplay(llcId: string | null, llcOptions: SearchableSelectOption[]): string {
-  if (llcId === null) {
-    return llcOptions.find((o) => o.id === NO_LLC_ID)?.label ?? 'Individual ownership'
-  }
+function legacyLlcLabel(llcId: string | null, llcOptions: SearchableSelectOption[]): string | null {
+  if (llcId === null) return null
   return llcOptions.find((o) => o.id === llcId)?.label ?? llcId
 }
 
@@ -61,16 +65,20 @@ function formatCityStateZip(property: Property): string {
 // Roadmap 7.39 (4) — $/sq ft removed from this row entirely (it now
 // lives only on the KPI tab's Market & financial snapshot card,
 // MarketFinancialSnapshotCard.tsx — no duplication between the two).
-export function PropertyIdentityHeader({ property, llcOptions }: PropertyIdentityHeaderProps) {
+export function PropertyIdentityHeader({ property, llcOptions, ownershipAuthority, currentOwnerLabel }: PropertyIdentityHeaderProps) {
   const cityStateZip = formatCityStateZip(property)
+  const legacyLabel = legacyLlcLabel(property.llc_id, llcOptions)
 
   return (
     <div className="property-identity-header">
       <PropertyPhoto propertyId={property.id} address={property.address} cityStateZip={cityStateZip} />
       <div className="property-identity-meta">
         <div className="field">
+          {/* Package 1 §2 — never asserts confirmed ownership from
+              property.llc_id alone; see describeOrganizationType and
+              the six-case table it implements. */}
           <dt>Organization type</dt>
-          <dd>{llcDisplay(property.llc_id, llcOptions)}</dd>
+          <dd>{describeOrganizationType(ownershipAuthority, currentOwnerLabel, legacyLabel)}</dd>
         </div>
         <span className={`status-badge ${STATUS_BADGE_VARIANTS[property.status]}`}>
           {STATUS_LABELS[property.status]}

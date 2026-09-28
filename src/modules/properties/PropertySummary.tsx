@@ -8,6 +8,8 @@ import type { Property } from './propertiesQueries'
 import { PROPERTY_FIELD_GROUPS, hasFieldValue } from './propertyFieldGroups'
 import { PropertyFieldGroup } from './PropertyFieldGroup'
 import { PropertyIdentityHeader } from './PropertyIdentityHeader'
+import { usePropertyOwnershipInterests } from './usePropertyOwnershipInterests'
+import { resolveOwnershipAuthority } from '../llcs/ownershipInterestsQueries'
 import { PropertyPhysicalFactsStats, hasPhysicalFactsStats } from './PropertyPhysicalFactsStats'
 import { PropertyOwnershipSection } from './PropertyOwnershipSection'
 
@@ -88,9 +90,22 @@ export function PropertySummary({ property, llcOptions }: PropertySummaryProps) 
     })
   }, [accountId, property.id])
 
+  // Package 1 §2 — properties.llc_id is a legacy pointer that predates
+  // real ownership-interest records and must never be shown/trusted as
+  // confirmed ownership except in the one case (a single, complete,
+  // kind-resolved current owner) the contract's six-case table names.
+  const { interests, completeness } = usePropertyOwnershipInterests(property.id)
+  const ownershipAuthority = resolveOwnershipAuthority(interests, completeness, property.llc_id)
+  const currentOwnerLabel = interests.length === 1 ? interests[0].owner_name : null
+
   return (
     <div className="property-summary">
-      <PropertyIdentityHeader property={property} llcOptions={llcOptions} />
+      <PropertyIdentityHeader
+        property={property}
+        llcOptions={llcOptions}
+        ownershipAuthority={ownershipAuthority}
+        currentOwnerLabel={currentOwnerLabel}
+      />
 
       {PROPERTY_FIELD_GROUPS.map((group) => {
         const presentFields = group.fields

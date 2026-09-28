@@ -75,16 +75,23 @@ export interface Property {
   // Roadmap 7.39 (3) — Ownership subsection, inside Purchase & valuation.
   owner_name: string | null
   contact_phone: string | null
+  // Package 1 §3 — set only by the explicit "Review saved contact
+  // details" action (ReviewSavedContactDetailsModal.tsx). Null means
+  // not yet reconciled; never inferred, backfilled, or cleared here.
+  legacy_contact_reconciled_at: string | null
   // Batch I5 — the optimistic-concurrency token for updateProperty below.
   // Maintained by the properties_set_updated_at trigger
   // (20260925080000), never by client code.
   updated_at: string
 }
 
-export type PropertyInput = Omit<Property, 'id' | 'account_id' | 'updated_at'>
+// legacy_contact_reconciled_at is excluded here too — it is never part of
+// the general property-edit payload, only ever set by the dedicated
+// "Review saved contact details" action's own update call below.
+export type PropertyInput = Omit<Property, 'id' | 'account_id' | 'updated_at' | 'legacy_contact_reconciled_at'>
 
 const PROPERTY_COLUMNS =
-  'id, account_id, name, llc_id, address, city, state, zip, insurance_provider, insurance_policy_number, contact_email, purchase_price, status, purchase_date, property_type, purchase_method, property_tax_id, county, township, square_footage, lot_size, municipal_zoning_code, county_assessor_use_code, bedroom_count, bathroom_count, basement, garage_spaces, street_parking, parking_notes, lot_size_value, lot_size_unit, year_built, exterior_wall_materials, owner_name, contact_phone, updated_at'
+  'id, account_id, name, llc_id, address, city, state, zip, insurance_provider, insurance_policy_number, contact_email, purchase_price, status, purchase_date, property_type, purchase_method, property_tax_id, county, township, square_footage, lot_size, municipal_zoning_code, county_assessor_use_code, bedroom_count, bathroom_count, basement, garage_spaces, street_parking, parking_notes, lot_size_value, lot_size_unit, year_built, exterior_wall_materials, owner_name, contact_phone, legacy_contact_reconciled_at, updated_at'
 
 export async function listProperties(accountId: string) {
   return supabase.from('properties').select(PROPERTY_COLUMNS).eq('account_id', accountId).order('address')
@@ -152,5 +159,13 @@ export async function updateProperty(id: string, input: PropertyInput, expectedU
     .maybeSingle()
 
   return latest ? { kind: 'conflict', latest } : { kind: 'not_found' }
+}
+
+// Package 1 §3 — the one place legacy_contact_reconciled_at is ever
+// written, called only from ReviewSavedContactDetailsModal after its own
+// explicit confirm step. Never touches owner_name/contact_phone/
+// contact_email — those stay exactly as entered, reconciled or not.
+export async function markLegacyContactReconciled(id: string) {
+  return supabase.from('properties').update({ legacy_contact_reconciled_at: new Date().toISOString() }).eq('id', id)
 }
 

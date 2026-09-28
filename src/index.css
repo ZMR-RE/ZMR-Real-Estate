@@ -1297,6 +1297,38 @@ dd {
   color: var(--text-h);
 }
 
+/* Package 1 — the real, shipped step indicator for the property-creation
+   four-step wizard, once its layout cleared visual approval (a4df716 +
+   the three Sept 28 corrections). Same rules as .preview-step above
+   (same tokens, same shape) — a separate class rather than reusing
+   .preview-step because that one still backs the unrelated, still-
+   unshipped devHarness preview components, which keep their own
+   independent lifecycle. */
+.wizard-steps {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.wizard-step {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 3px solid var(--border);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.wizard-step--active {
+  border-bottom-color: var(--accent);
+  color: var(--text-h);
+}
+
+.wizard-step--done {
+  border-bottom-color: var(--accent-border);
+  color: var(--text-h);
+}
+
 /* INS-1 — a small muted clarifying line under a field, for a case where
    the label alone could be misread as asserting more than what's
    actually recorded (e.g. Insurance's premium having no stored basis

@@ -29,6 +29,11 @@ export interface PropertyOwnershipInterest {
   property_id: string
   llc_id: string
   owner_name: string
+  // Package 1 §2 — needed to detect the "owner kind unresolved" case
+  // (an owner whose llcs.owner_kind is still null) without a second
+  // query; carried straight through from the same embedded llcs row
+  // owner_name already reads display_name/name from.
+  owner_kind: 'individual' | 'entity' | null
   percentage: number | null
   effective_date: string | null
   end_date: string | null
@@ -79,7 +84,7 @@ export interface PropertyOwnershipCorrection {
 }
 
 const PROPERTY_INTEREST_COLUMNS =
-  'id, property_id, llc_id, owner_name:llcs(display_name, name), percentage, effective_date, end_date, is_current, recorded_at'
+  'id, property_id, llc_id, owner_name:llcs(display_name, name, owner_kind), percentage, effective_date, end_date, is_current, recorded_at'
 
 // Current owners for a property, most-recent-first among ties broken by
 // percentage — used by both the property's own Ownership section and
@@ -100,12 +105,13 @@ export async function listPropertyOwnershipInterests(accountId: string, property
   // depending on relationship direction); normalize to a flat display name
   // here so every caller gets a plain string, not a nested shape to unpack.
   const rows: PropertyOwnershipInterest[] = data.map((row) => {
-    const owner = row.owner_name as unknown as { display_name: string | null; name: string } | null
+    const owner = row.owner_name as unknown as { display_name: string | null; name: string; owner_kind: 'individual' | 'entity' | null } | null
     return {
       id: row.id,
       property_id: row.property_id,
       llc_id: row.llc_id,
       owner_name: owner?.display_name ?? owner?.name ?? 'Unknown owner',
+      owner_kind: owner?.owner_kind ?? null,
       percentage: row.percentage,
       effective_date: row.effective_date,
       end_date: row.end_date,
@@ -243,6 +249,65 @@ export async function replaceLlcMembershipInterests(
 }
 
 // --- Pure helpers (no Supabase import, no I/O — unit-testable in isolation) ---
+
+// Package 1 §2 — the one place every llc_id consumer resolves whether
+// properties.llc_id (a legacy, pre-ownership-interests pointer) may be
+// trusted, instead of each consumer re-deriving its own answer. Mirrors
+// the contract's six-case table exactly; only 'transitioned-to-one'
+// treats an owner as authoritative, and even then the authoritative id
+// comes from the real interest row, never from the (possibly stale)
+// properties.llc_id column itself.
+export type OwnershipAuthority =
+  | { case: 'none'; authoritative: false }
+  | { case: 'legacy_only'; authoritative: false; legacyLlcId: string }
+  | { case: 'one_incomplete'; authoritative: false }
+  | { case: 'kind_unresolved'; authoritative: false }
+  | { case: 'multiple'; authoritative: false }
+  | { case: 'transitioned_to_one'; authoritative: true; llcId: string }
+
+export function resolveOwnershipAuthority(
+  interests: Pick<PropertyOwnershipInterest, 'llc_id' | 'owner_kind'>[],
+  completeness: OwnershipCompleteness,
+  legacyLlcId: string | null,
+): OwnershipAuthority {
+  if (interests.length === 0) {
+    return legacyLlcId ? { case: 'legacy_only', authoritative: false, legacyLlcId } : { case: 'none', authoritative: false }
+  }
+  if (interests.some((i) => i.owner_kind === null)) {
+    return { case: 'kind_unresolved', authoritative: false }
+  }
+  if (interests.length >= 2) {
+    return { case: 'multiple', authoritative: false }
+  }
+  // Exactly one current interest.
+  if (completeness === 'complete') {
+    return { case: 'transitioned_to_one', authoritative: true, llcId: interests[0].llc_id }
+  }
+  return { case: 'one_incomplete', authoritative: false }
+}
+
+// Package 1 §2 — the "Organization type" line's own display text for
+// each of the six cases. ownerLabel is the current single owner's label
+// (only meaningful for 'one_incomplete'/'transitioned_to_one'; ignored
+// otherwise) and legacyLabel is the legacy llc_id's own label (only
+// meaningful for 'legacy_only') — both resolved by the caller from
+// llcOptions, since this function stays free of any UI-lookup concern.
+export function describeOrganizationType(authority: OwnershipAuthority, ownerLabel: string | null, legacyLabel: string | null): string {
+  switch (authority.case) {
+    case 'none':
+      return 'No owner recorded'
+    case 'legacy_only':
+      return `Ownership not yet confirmed (previously recorded as: ${legacyLabel ?? 'unknown'})`
+    case 'one_incomplete':
+      return `${ownerLabel ?? 'Unknown owner'} — additional owners may exist, allocation not yet marked complete`
+    case 'kind_unresolved':
+      return 'Owner type unresolved'
+    case 'multiple':
+      return 'Multiple owners — see Ownership section below'
+    case 'transitioned_to_one':
+      return ownerLabel ?? 'Unknown owner'
+  }
+}
 
 export interface OwnershipErrorInterpretation {
   kind: 'stale' | 'validation' | 'authorization' | 'not_found' | 'unknown'
