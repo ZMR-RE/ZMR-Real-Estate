@@ -20,7 +20,7 @@ made.
 | M3 edit/void/mobile/docs | Implemented, verified in Practice | Edit scrolls the form into view below the banner, focuses a heading naming the transaction, loads stored values; Save/Cancel return focus to that row's Edit button (new entry → "Add transaction"). Void shows inline details + retained-history explanation; "Keep it" wrote nothing; confirm voided. Show voided lists voided rows marked "Voided" (Documents/History only), totals and exports unchanged. Missing fields named in a summary and per field. Attachments show original filename + type + size + local date; opened via the existing signed link. Layout measured at 1400/900/390 px (below). |
 | M4 tenant payer | Implemented, verified in Practice; DB guard local only | Income offers Tenant / Vendor or other. Tenants listed per property from current **and past** leases with unit + lease dates (2018 lease listed). Switching property cleared the tenant with a visible explanation. Tenant income (2018 Rivera, 2025 Okafor) and vendor income saved, reloaded and reopened with the correct payer; stored as exactly one of vendor/tenant. Cross-account reference guard is a migration (see M6 dependency). |
 | M5 improvement consistency | Implemented, verified in Practice | One ledger definition (income / operating expense / capital improvement) used by Financials summary, tax CSV, P&L, Cash Flow and the property KPI. Screens and the downloaded CSV matched hand-computed figures (below). |
-| M6 closed-period protection | Implemented; **verified on local disposable Postgres only** | Not applied to hosted Practice: needs the coordinated window. See dependency. |
+| M6 closed-period protection | Implemented; applied to hosted Practice Sept 29, 2026; verified on hosted Supabase and local Postgres | See "Acceptance addendum" below. |
 
 ## Hand-computed fictional ledger vs. what the app showed
 
@@ -197,3 +197,131 @@ included: the CSV branch.
 - Intermediate widths were not in the checklist → measure 1400/900/390.
 
 No new global rule is proposed.
+
+
+## Acceptance addendum — September 29, 2026
+
+### Practice integration record
+
+- **Conflict check (read-only, 05:10 UTC):** no other active client sessions; the only writes
+  in the prior hour were T2's own cleanup voids; T1 assigned to the production backup, not
+  Practice. The main checkout's Supabase CLI link points at **production** and was not used; the
+  T2 worktree was separately linked to Practice (`gxgvrktzpxhtqklupvif`) through the CLI's
+  Keychain token (no database password handled). Every query went through a wrapper that
+  refuses to run unless that link is Practice.
+- **Preflight (read-only):** ledger 104 migrations (latest `20260929010000`); 0 cross-account
+  property/vendor/tenant/prospective-tenant references; 0 financial periods; 0 rows in locked
+  periods. Nothing incompatible — no repair needed.
+- **Window opened 05:11:26Z. Applied to Practice only:** `20260930100000_financial_period_closed_protection`
+  and `20260930110000_financial_transactions_same_account_refs`, each in one transaction with
+  its ledger row (ledger now 106). SQL stored as one statement block per version (a difference
+  from `supabase db push`, which splits statements). Production untouched.
+
+### Hosted Supabase evidence (Practice)
+
+- **Rules, 24/24 PASS**, run as the real `authenticated` role with Practice's own `auth.uid()`,
+  inside one transaction that ends by raising its results, so nothing persisted: closed-year
+  inserts (Jan 1 and Dec 31), neighbours in open years, edits, voids, date moves in and out,
+  API delete, deleting or re-yearing a locked period, reopen then edit, reopen by another
+  account (0 rows), insert into another account (RLS 42501), other-account tenant/vendor/property
+  references (ZM002), guard not callable as RPC. Account B fixtures existed only inside that
+  rolled-back transaction.
+- **Concurrency, 4/4**, two separate hosted sessions: lock waits for an in-flight write; a
+  write during an in-flight lock waits then is rejected; a write during a rolled-back reopen
+  is rejected; moving an existing row into a year being locked is rejected. Test periods
+  2013–2015 were reopened (audited) and removed; no test rows persisted.
+- **Residue check:** 0 periods, 0 test rows, Account B unchanged (0 properties/tenants/vendors/
+  transactions), moved row still dated 2025-05-05.
+
+### Browser acceptance on the migrated Practice database
+
+Review URL: **http://127.0.0.1:5191** (see "Review environment"). Real AppShell; viewport
+dimensions read from the page itself.
+
+| Viewport (full window, measured) | Result |
+|---|---|
+| 1440 × 723 (desktop) | No sideways scroll; list as table with wrapping actions |
+| 1024 × 723 (intermediate) | No sideways scroll, no overflowing table; list switches to stacked cards (content column ≈ 700 px, under the 760 px switch) |
+| 500 × 723 (Chrome's minimum window) | No sideways scroll; cards; all amounts and actions on screen; form fits, full-width buttons |
+| 390 px — **iframe reflow only**, not a full window | No sideways scroll; list controls all on screen |
+
+Workflow re-run after the migrations (fictional records, account A):
+M1 empty-list prompts for payment method and document type → created and selected. M2 Save and
+add another across 2018-02-01, 2018-12-31, 2019-01-01, 2025-06-30, 2025-04-20 (property + date
+carried, rest cleared). M4 tenant payer (Rivera, 2018 lease). M3 edit (focus, description change,
+audit row), void confirm, Show voided, attachment filename. M6 in the UI: with 2019 locked,
+edit → "Not saved: … locked financial period (2019)…" (draft kept), void → "Not voided: …",
+new 2019 entry → "Not saved: The 2019 financial period is locked…"; reopened through the UI.
+
+Reports vs. expected: 2018 P&L income 1,200.00, expenses 600.00, net 600.00; 2025 operating
+2,345.67, improvements 4,800.00, Cash Flow −7,145.67; Balance Sheet cash Maple −4,650.00,
+Cedar −2,345.67 ($0-start caveat shown). All matched.
+
+Exports: **downloaded** `~/Downloads/zmr-transactions-2025.csv` (list export, 2025, all
+properties, "Show voided" on): 2 rows, total 7,145.67, voided row absent. Generated-file contents
+captured in page (Chrome allows one automatic download per site without a prompt the tools
+can't answer): 2025 tax CSV (improvement in its own section, Cedar Taxes 2,345.67 only), 2018
+list (2 rows) and 2018 tax CSV (income 1,200.00, insurance 600.00), 2025 list filtered to Cedar
+(1 row, 2,345.67; voided Cedar row absent).
+
+Screenshots: `docs/planning/bookkeeping/m1-m6-screenshots/` (01–07 desktop 1440, 08–09
+intermediate 1024, 10–11 phone 500).
+
+Defect found in this pass: none in the application. Tooling causes found and documented: Chrome
+page zoom ≈67% on `localhost` (moved to 127.0.0.1); the test tab was a background tab in a shared
+window, so resizes only applied once it was brought forward (restored afterwards).
+
+### Review environment (reproducible, no committed credentials)
+
+`vite.review.config.ts` (committed) — real app, Practice only, `127.0.0.1:5191`. From any
+checkout of this branch:
+
+```
+ZMR_PRACTICE_ENV_DIR=/Users/janki/Projects/ZMR-Real-Estate/envs/practice \
+  npx vite --config vite.review.config.ts
+```
+
+`ZMR_PRACTICE_ENV_DIR` points at the existing, git-ignored `envs/practice/.env` (read in place,
+never copied). In a checkout that has no such file, create `envs/practice/.env` from
+`envs/practice/.env.example` yourself in your own terminal/editor (never pasted into chat):
+`VITE_PRACTICE_TARGET=true` plus the Practice project's URL and anon key; `supabaseClient.ts`
+refuses to start if the URL is production. Sign in at `http://127.0.0.1:5191` as the Practice
+test user (password kept outside the repo). The earlier untracked `vite.t2practice.config.ts`
+is removed.
+
+### Cleanup (re-verified)
+
+This pass: 6 acceptance transactions voided (retained with audit history); payment method
+"ZMR-TEST-T2 Checking (acceptance)" and document type "ZMR-TEST-T2 Invoice (acceptance)"
+archived; Maple 2018 lease restored for the test and re-archived; open 2019 period row created
+by the UI lock/reopen test removed (lock and reopen remain in the audit log). Account A: 0
+active transactions (30 voided across T2 sessions), 0 periods, 0 active pick-list test options,
+0 active leases; pre-existing records and Account B untouched. Browser left signed in to
+Practice at 127.0.0.1:5191 for owner review; the owner's own Chrome window was restored to its
+original size and active tab.
+
+### Remaining limitations
+
+- Transaction-list CSV has no payer/payment-method/treatment columns (the tax CSV does); list
+  export unchanged in this package.
+- Owner visual review of design at real device widths (including the 1024 px card layout) is
+  still an owner decision.
+- Earlier-listed limitations stand (keyboard selection in shared pickers, 26 other UTC "today"
+  instances, no audit row on create, Mortgage-module interest not in P&L, financialsQueries.ts
+  size).
+
+## Proposed release scope (excluding deferred CSV work)
+
+For a later owner-approved release — not deployed:
+
+1. Commits on `t2/manual-bookkeeping-m1-m6` from `a25377b` through the acceptance commit
+   (application code, `vite.review.config.ts`, tests, docs/evidence).
+2. Production migrations, in order, **before or with** the frontend:
+   `20260930100000_financial_period_closed_protection.sql`,
+   `20260930110000_financial_transactions_same_account_refs.sql`. Both forward-only; run the same
+   read-only preflight against production first (cross-account references, rows in locked
+   periods) and stop on any finding.
+3. Dependency: this branch's base includes T1's Package 1 code but not T1's unreleased
+   Practice-only migrations' production application — T1's release must land first or be
+   combined deliberately; do not release this over an unaligned production schema.
+4. Excluded: `t2/historical-import-dedup` (`e280ad9`) and any CSV import changes.
