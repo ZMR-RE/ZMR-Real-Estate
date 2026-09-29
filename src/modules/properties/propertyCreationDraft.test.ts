@@ -22,9 +22,26 @@ describe('propertyCreationDraft', () => {
     const storage = fakeStorage()
     const draft = createEmptyDraft('11111111-1111-1111-1111-111111111111')
     draft.basics.address = '300 New Construction Ave'
-    draft.stagedFiles.push({ fileKey: 'fk-1', name: 'invoice.pdf', size: 145000 })
+    draft.stagedFiles.push({ fileKey: 'fk-1', name: 'invoice.pdf', size: 145000, linkedOwnerRowKeys: [] })
     savePropertyCreationDraft(storage, draft)
     expect(loadPropertyCreationDraft(storage)).toEqual(draft)
+  })
+
+  it('backfills rowKey/linkedOwnerRowKeys on a draft saved before those fields existed, rather than discarding it', () => {
+    const storage = fakeStorage()
+    storage.setItem(
+      'zmr:property-creation-draft',
+      JSON.stringify({
+        idempotencyKey: '44444444-4444-4444-4444-444444444444',
+        basics: { address: '', city: '', state: '', zip: '', status: 'active' },
+        ownershipEntries: [{ mode: 'existing', ownerId: 'owner-1', percentageText: '' }],
+        allocationStatus: 'incomplete',
+        stagedFiles: [{ fileKey: 'fk-1', name: 'invoice.pdf', size: 145000 }],
+      }),
+    )
+    const resumed = loadPropertyCreationDraft(storage)
+    expect(typeof resumed?.ownershipEntries[0].rowKey).toBe('string')
+    expect(resumed?.stagedFiles[0].linkedOwnerRowKeys).toEqual([])
   })
 
   it('resumes into the same idempotency key across a simulated reload (same storage instance)', () => {

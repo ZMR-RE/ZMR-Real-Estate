@@ -92,7 +92,7 @@ export function usePropertyCreationWizard(accountId: string | null) {
       basics,
       ownershipEntries,
       allocationStatus,
-      stagedFiles: stagedFiles.map(({ fileKey, name, size }) => ({ fileKey, name, size })),
+      stagedFiles: stagedFiles.map(({ fileKey, name, size, linkedOwnerRowKeys }) => ({ fileKey, name, size, linkedOwnerRowKeys })),
     })
   }, [basics, ownershipEntries, allocationStatus, stagedFiles, initialDraft.idempotencyKey])
 
@@ -102,7 +102,7 @@ export function usePropertyCreationWizard(accountId: string | null) {
   // existing owner from the SearchableSelect, or via its own "+ Add
   // new" affordance (setOwnerRowMode below). Neither owner list nor
   // save logic ever assumes a row is complete just because it exists.
-  const addOwnerRow = () => setOwnershipEntries((prev) => [...prev, { mode: 'existing', percentageText: '' }])
+  const addOwnerRow = () => setOwnershipEntries((prev) => [...prev, { rowKey: crypto.randomUUID(), mode: 'existing', percentageText: '' }])
 
   const updateOwnerRow = (index: number, patch: Partial<OwnershipDraftEntry>) =>
     setOwnershipEntries((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)))
@@ -116,13 +116,28 @@ export function usePropertyCreationWizard(accountId: string | null) {
       prev.map((row, i) => (i === index ? { ...row, mode, ownerId: mode === 'existing' ? row.ownerId : undefined, newOwnerName: mode === 'new' ? (row.newOwnerName ?? '') : undefined } : row)),
     )
 
-  const removeOwnerRow = (index: number) => setOwnershipEntries((prev) => prev.filter((_, i) => i !== index))
+  // Removing a row also drops it from any staged file's own selection —
+  // a file must never keep pointing at a rowKey that no longer exists.
+  const removeOwnerRow = (index: number) => {
+    setOwnershipEntries((prev) => {
+      const removedKey = prev[index]?.rowKey
+      if (removedKey) {
+        setStagedFiles((files) => files.map((f) => ({ ...f, linkedOwnerRowKeys: f.linkedOwnerRowKeys.filter((k) => k !== removedKey) })))
+      }
+      return prev.filter((_, i) => i !== index)
+    })
+  }
 
   const addStagedFiles = (files: FileList | File[]) => {
+    // Release-readiness corrections (defect #2, owner-approved
+    // document-linking requirement) — property-only by default; nothing
+    // links to every current owner just by being staged. The user opts
+    // a file into specific owners explicitly, per file, on this step.
     const additions: StagedFile[] = Array.from(files).map((file) => ({
       fileKey: crypto.randomUUID(),
       name: file.name,
       size: file.size,
+      linkedOwnerRowKeys: [],
       file,
       uploadStatus: 'pending',
     }))
@@ -133,6 +148,17 @@ export function usePropertyCreationWizard(accountId: string | null) {
 
   const reattachStagedFile = (fileKey: string, file: File) =>
     setStagedFiles((prev) => prev.map((f) => (f.fileKey === fileKey ? { ...f, file, uploadStatus: 'pending' } : f)))
+
+  // Toggles a single (file, ownership-row) pairing — the only way a
+  // file's owner links change. Never touches any other file's selection.
+  const toggleStagedFileOwnerLink = (fileKey: string, rowKey: string) =>
+    setStagedFiles((prev) =>
+      prev.map((f) =>
+        f.fileKey === fileKey
+          ? { ...f, linkedOwnerRowKeys: f.linkedOwnerRowKeys.includes(rowKey) ? f.linkedOwnerRowKeys.filter((k) => k !== rowKey) : [...f.linkedOwnerRowKeys, rowKey] }
+          : f,
+      ),
+    )
 
   // Rows the user added but never finished (an "existing" row with no
   // owner picked yet) are dropped here rather than sent to the server —
@@ -176,7 +202,16 @@ export function usePropertyCreationWizard(accountId: string | null) {
   // clear the draft and leave the wizard. A caller that ignored this and
   // navigated away on any per-file failure would strand that file with
   // no way back to it — the draft it needed to resume was already gone.
-  const uploadStagedDocuments = async (propertyId: string, ownerIds: string[]): Promise<boolean> => {
+  //
+  // Release-readiness corrections (owner-approved document-linking
+  // requirement) — each file links only to the owners its own
+  // linkedOwnerRowKeys names, resolved through rowKeyToLlcId (built by
+  // save() from the property's real, committed ownership interests).
+  // unresolvedRowKeys are rowKeys save() could not confidently resolve
+  // (an inline-new-owner name collision) — a file selecting one of
+  // those is held as an error rather than silently falling back to
+  // "link to nothing" or "link to every owner."
+  const uploadStagedDocuments = async (propertyId: string, rowKeyToLlcId: Map<string, string>, unresolvedRowKeys: Set<string>): Promise<boolean> => {
     let allSucceeded = true
     for (const staged of stagedFiles) {
       if (staged.uploadStatus === 'uploaded') continue
@@ -208,6 +243,20 @@ export function usePropertyCreationWizard(accountId: string | null) {
         }
         documentId = inserted.id
       }
+
+      const unresolvedSelected = staged.linkedOwnerRowKeys.filter((k) => unresolvedRowKeys.has(k))
+      if (unresolvedSelected.length > 0) {
+        allSucceeded = false
+        setStagedFiles((prev) =>
+          prev.map((f) =>
+            f.fileKey === staged.fileKey
+              ? { ...f, uploadStatus: 'error', uploadError: 'Could not confirm which owner this links to — two new owners share the same name. Fix the ownership entries, then retry.' }
+              : f,
+          ),
+        )
+        continue
+      }
+      const ownerIds = staged.linkedOwnerRowKeys.map((k) => rowKeyToLlcId.get(k)).filter((id): id is string => !!id)
 
       let allLinksSucceeded = true
       for (const ownerId of ownerIds) {
@@ -265,24 +314,62 @@ export function usePropertyCreationWizard(accountId: string | null) {
 
     let uploadsSucceeded = true
     if (stagedFiles.length > 0) {
-      // Release-readiness corrections (defect #2) — a brand-new owner's
-      // id is minted server-side inside createPropertyWithOwnership and
-      // was never known to this client-side wizardEntries list, so
-      // filtering that list (as this used to) permanently omitted every
-      // inline-created owner's document links with no way to complete
-      // them later. Instead, read back the property's own real,
-      // server-confirmed ownership interests — this includes every
-      // owner, existing or newly minted, by construction: it's the same
-      // row replace_property_ownership_interests just wrote inside the
-      // same transaction as the property itself.
+      // Release-readiness corrections — a brand-new owner's id is minted
+      // server-side inside createPropertyWithOwnership and isn't known
+      // client-side until now, so each staged file's own explicit
+      // per-owner selections (rowKey-keyed, from the Documents step)
+      // must be resolved to real llc_ids from the property's own real,
+      // server-confirmed ownership interests — the same rows
+      // replace_property_ownership_interests just wrote inside the same
+      // transaction as the property itself — never expanded to "every
+      // current owner" as a fallback.
       const { data: ownershipInterests, error: ownershipLookupError } = await listPropertyOwnershipInterests(accountId, result.propertyId)
       if (ownershipLookupError) {
         setSaving(false)
         setError('Property saved, but could not confirm its owners to link documents to. Retry from this screen.')
         return { kind: 'saved_with_upload_errors', propertyId: result.propertyId }
       }
-      const ownerIds = (ownershipInterests ?? []).map((interest) => interest.llc_id)
-      uploadsSucceeded = await uploadStagedDocuments(result.propertyId, ownerIds)
+      const interests = ownershipInterests ?? []
+      const rowKeyToLlcId = new Map<string, string>()
+      const unresolvedRowKeys = new Set<string>()
+      // An 'existing' row already names its real id directly — no lookup
+      // needed, and no ambiguity possible.
+      const claimedByExisting = new Set<string>()
+      for (const row of ownershipEntries) {
+        if (row.mode === 'existing' && row.ownerId) {
+          rowKeyToLlcId.set(row.rowKey, row.ownerId)
+          claimedByExisting.add(row.ownerId)
+        }
+      }
+      // A 'new' row has no id until the server mints one; correlate by
+      // the exact name submitted, among interests not already claimed by
+      // an existing row's own id. Two new rows sharing the identical
+      // trimmed name are genuinely ambiguous — resolving one of them by
+      // process of elimination would be a guess dressed up as a match,
+      // so every row sharing a colliding name is left unresolved, not
+      // just the second one in submission order.
+      const newRows = ownershipEntries.filter((row) => row.mode === 'new')
+      const nameCounts = new Map<string, number>()
+      for (const row of newRows) {
+        const name = (row.newOwnerName ?? '').trim()
+        if (name) nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1)
+      }
+      const availableForNewRows = interests.filter((i) => !claimedByExisting.has(i.llc_id))
+      for (const row of newRows) {
+        const name = (row.newOwnerName ?? '').trim()
+        if (!name || (nameCounts.get(name) ?? 0) > 1) {
+          unresolvedRowKeys.add(row.rowKey)
+          continue
+        }
+        const matchIndex = availableForNewRows.findIndex((i) => i.owner_name.trim() === name)
+        if (matchIndex === -1) {
+          unresolvedRowKeys.add(row.rowKey)
+          continue
+        }
+        rowKeyToLlcId.set(row.rowKey, availableForNewRows[matchIndex].llc_id)
+        availableForNewRows.splice(matchIndex, 1)
+      }
+      uploadsSucceeded = await uploadStagedDocuments(result.propertyId, rowKeyToLlcId, unresolvedRowKeys)
     }
 
     setSaving(false)
@@ -328,6 +415,7 @@ export function usePropertyCreationWizard(accountId: string | null) {
     addStagedFiles,
     removeStagedFile,
     reattachStagedFile,
+    toggleStagedFileOwnerLink,
     goNext,
     goBack,
     goToStep,

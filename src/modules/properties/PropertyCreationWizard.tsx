@@ -81,9 +81,12 @@ export function PropertyCreationWizard({ onCancel }: PropertyCreationWizardProps
       {wizard.step === 3 && (
         <PropertyCreationDocumentsStep
           stagedFiles={wizard.stagedFiles}
+          ownershipEntries={wizard.ownershipEntries}
+          llcOptions={realOwnerOptions}
           onAddFiles={wizard.addStagedFiles}
           onRemoveFile={wizard.removeStagedFile}
           onReattachFile={wizard.reattachStagedFile}
+          onToggleOwnerLink={wizard.toggleStagedFileOwnerLink}
         />
       )}
       {wizard.step === 4 && (

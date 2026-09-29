@@ -1,4 +1,4 @@
-import type { OwnershipDraftEntry } from './propertyCreationDraft'
+import { ownerRowDisplayName, type OwnershipDraftEntry } from './propertyCreationDraft'
 import type { StagedFile } from './usePropertyCreationWizard'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 
@@ -19,11 +19,6 @@ interface PropertyCreationReviewStepProps {
   onEditBasics: () => void
   onEditOwnership: () => void
   onEditDocuments: () => void
-}
-
-function ownerDisplayName(row: OwnershipDraftEntry, llcOptions: SearchableSelectOption[]): string {
-  if (row.mode === 'new') return row.newOwnerName || '(new owner not yet named)'
-  return llcOptions.find((o) => o.id === row.ownerId)?.label ?? '(no owner selected)'
 }
 
 function formatSize(bytes: number): string {
@@ -80,7 +75,7 @@ export function PropertyCreationReviewStep({
             {ownershipEntries.length === 0 && <p className="empty-state">No owner entered yet.</p>}
             {ownershipEntries.map((row, i) => (
               <div key={i} className="field-row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span>{ownerDisplayName(row, llcOptions)}</span>
+                <span>{ownerRowDisplayName(row, llcOptions)}</span>
                 <span style={{ whiteSpace: 'nowrap', color: row.percentageText ? 'var(--text-h)' : 'var(--text)' }}>
                   {row.percentageText ? `${row.percentageText}%` : 'Percentage not yet entered'}
                 </span>
@@ -103,21 +98,21 @@ export function PropertyCreationReviewStep({
         <div className="field-column">
           {stagedFiles.length > 0 ? (
             <>
-              {stagedFiles.map((f) => (
-                <div key={f.fileKey} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{f.name}</span>
-                  <span>{formatSize(f.size)}</span>
-                </div>
-              ))}
-              {/* Release-readiness corrections (defect #2) — every staged
-                  document is linked to every owner entered on this property;
-                  made visible here rather than happening silently, since the
-                  wizard has no separate per-file owner picker. */}
-              <p className="field-hint">
-                {ownershipEntries.length > 0
-                  ? `Will be linked to: ${ownershipEntries.map((row) => ownerDisplayName(row, llcOptions)).join(', ')}.`
-                  : 'No owner entered yet — these documents will be saved without an owner link.'}
-              </p>
+              {/* Release-readiness corrections (owner-approved document-
+                  linking requirement) — each file's own explicit choice
+                  (from the Documents step), not a blanket "every owner"
+                  summary. */}
+              {stagedFiles.map((f) => {
+                const linkedNames = ownershipEntries.filter((row) => f.linkedOwnerRowKeys.includes(row.rowKey)).map((row) => ownerRowDisplayName(row, llcOptions))
+                return (
+                  <div key={f.fileKey} style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-3)' }}>
+                    <span>
+                      {f.name} <span className="field-hint">({formatSize(f.size)})</span>
+                    </span>
+                    <span style={{ whiteSpace: 'nowrap' }}>{linkedNames.length > 0 ? linkedNames.join(', ') : 'Property only'}</span>
+                  </div>
+                )
+              })}
             </>
           ) : (
             <p className="field-hint">No documents staged.</p>

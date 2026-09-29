@@ -77,9 +77,32 @@ create policy "members can manage their contact links"
 -- 20260922080000_audit_log_actor_source.sql) to these three tables,
 -- same mechanism already covering properties/llcs/mortgage_details, no
 -- new trigger function needed.
+--
+-- Release-readiness correction, September 29 2026 — this statement
+-- originally REPLACED the allow-list instead of extending it, silently
+-- dropping 'financial_transactions'/'financial_periods' (added earlier
+-- by 20260911100000/20260911110000). That is a real, already-shipped-
+-- to-Practice regression: Practice already has audit_log rows for both
+-- of those tables (19 financial_transactions, 1 financial_periods,
+-- confirmed read-only on production too — production carries far more
+-- and has never applied this migration yet). Postgres validates ALL
+-- existing rows when a CHECK constraint is (re)added unless NOT VALID
+-- is used — against a database that already has those rows, the
+-- original text below would fail outright on its own ALTER TABLE ADD
+-- CONSTRAINT statement, aborting this migration (and the whole push)
+-- before anything past it ever runs. On Practice the damage was already
+-- done and separately corrected forward by 20260925100000 (documented
+-- there, and in this contract's §1) — that already-applied history is
+-- left exactly as it happened, not rewritten. This statement is
+-- corrected here, before production's first-ever run of this file, so
+-- a fresh apply never narrows the list at all. Practice's own applied-
+-- migration ledger is keyed by version, not file content (confirmed:
+-- `supabase_migrations.schema_migrations.statements` still holds the
+-- original text verbatim), so this edit changes nothing about Practice's
+-- current state — it only changes what production will receive.
 alter table audit_log drop constraint audit_log_table_name_check;
 alter table audit_log add constraint audit_log_table_name_check
-  check (table_name in ('properties', 'llcs', 'mortgage_details', 'contacts', 'contact_methods', 'contact_links'));
+  check (table_name in ('properties', 'llcs', 'mortgage_details', 'financial_transactions', 'financial_periods', 'contacts', 'contact_methods', 'contact_links'));
 
 create trigger contacts_audit_log
   after update on contacts

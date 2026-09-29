@@ -1,11 +1,16 @@
 import { useRef } from 'react'
 import type { StagedFile } from './usePropertyCreationWizard'
+import { ownerRowDisplayName, type OwnershipDraftEntry } from './propertyCreationDraft'
+import type { SearchableSelectOption } from '../../shared/SearchableSelect'
 
 interface PropertyCreationDocumentsStepProps {
   stagedFiles: StagedFile[]
+  ownershipEntries: OwnershipDraftEntry[]
+  llcOptions: SearchableSelectOption[]
   onAddFiles: (files: FileList) => void
   onRemoveFile: (fileKey: string) => void
   onReattachFile: (fileKey: string, file: File) => void
+  onToggleOwnerLink: (fileKey: string, rowKey: string) => void
 }
 
 function formatSize(bytes: number): string {
@@ -21,7 +26,20 @@ function formatSize(bytes: number): string {
 // dropping it or treating the reselection as a sixth file — reattaching
 // reuses the same fileKey, so it lands at the same deterministic
 // storage path a retry would already be using.
-export function PropertyCreationDocumentsStep({ stagedFiles, onAddFiles, onRemoveFile, onReattachFile }: PropertyCreationDocumentsStepProps) {
+//
+// Release-readiness corrections (owner-approved document-linking
+// requirement) — a file is property-only by default; checking an owner
+// below is the only way to link it, and unchecking every owner returns
+// it to property-only. Nothing here auto-selects every current owner.
+export function PropertyCreationDocumentsStep({
+  stagedFiles,
+  ownershipEntries,
+  llcOptions,
+  onAddFiles,
+  onRemoveFile,
+  onReattachFile,
+  onToggleOwnerLink,
+}: PropertyCreationDocumentsStepProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const reattachInputRef = useRef<HTMLInputElement>(null)
   const reattachTargetRef = useRef<string | null>(null)
@@ -39,37 +57,61 @@ export function PropertyCreationDocumentsStep({ stagedFiles, onAddFiles, onRemov
                   key={f.fileKey}
                   style={{
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-3)',
+                    flexDirection: 'column',
+                    gap: 'var(--space-2)',
                     border: '1px solid var(--border)',
                     borderRadius: 'var(--radius-sm)',
                     padding: 'var(--space-2) var(--space-3)',
                   }}
                 >
-                  <span style={{ flex: 2 }}>{f.name}</span>
-                  <span style={{ flex: 1 }}>{formatSize(f.size)}</span>
-                  {f.file ? (
-                    <span
-                      className={`status-badge ${f.uploadStatus === 'uploaded' ? 'status-badge-success' : f.uploadStatus === 'error' ? 'status-badge-danger' : 'status-badge-neutral'}`}
-                      style={{ flex: 1 }}
-                    >
-                      {f.uploadStatus === 'uploaded' ? 'Uploaded' : f.uploadStatus === 'error' ? 'Failed — will retry on Save' : 'Ready to upload'}
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      style={{ flex: 1 }}
-                      onClick={() => {
-                        reattachTargetRef.current = f.fileKey
-                        reattachInputRef.current?.click()
-                      }}
-                    >
-                      Re-attach this file
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                    <span style={{ flex: 2 }}>{f.name}</span>
+                    <span style={{ flex: 1 }}>{formatSize(f.size)}</span>
+                    {f.file ? (
+                      <span
+                        className={`status-badge ${f.uploadStatus === 'uploaded' ? 'status-badge-success' : f.uploadStatus === 'error' ? 'status-badge-danger' : 'status-badge-neutral'}`}
+                        style={{ flex: 1 }}
+                      >
+                        {f.uploadStatus === 'uploaded' ? 'Uploaded' : f.uploadStatus === 'error' ? 'Failed — will retry on Save' : 'Ready to upload'}
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        style={{ flex: 1 }}
+                        onClick={() => {
+                          reattachTargetRef.current = f.fileKey
+                          reattachInputRef.current?.click()
+                        }}
+                      >
+                        Re-attach this file
+                      </button>
+                    )}
+                    <button type="button" onClick={() => onRemoveFile(f.fileKey)}>
+                      Remove
                     </button>
+                  </div>
+
+                  {/* Release-readiness corrections (owner-approved
+                      document-linking requirement) — property-only by
+                      default; checking a box here is the only way this
+                      file links to that specific owner. */}
+                  {ownershipEntries.length > 0 && (
+                    <div className="field">
+                      <label>Link to owner(s) (optional — leave unchecked to keep this file property-only)</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+                        {ownershipEntries.map((row) => (
+                          <label key={row.rowKey} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                            <input
+                              type="checkbox"
+                              checked={f.linkedOwnerRowKeys.includes(row.rowKey)}
+                              onChange={() => onToggleOwnerLink(f.fileKey, row.rowKey)}
+                            />
+                            {ownerRowDisplayName(row, llcOptions)}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   )}
-                  <button type="button" onClick={() => onRemoveFile(f.fileKey)}>
-                    Remove
-                  </button>
                 </div>
               ))}
             </div>
