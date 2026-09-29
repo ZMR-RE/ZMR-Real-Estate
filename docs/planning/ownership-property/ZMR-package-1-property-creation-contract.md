@@ -526,3 +526,67 @@ The owner is rotating production's database password directly through the Supaba
 **D. Who performs what:**
 - **Owner, personally, outside this session**: rotate the password (already underway); update any personal direct-connection tools per (B); decide and hold the encrypted backup's storage location and access.
 - **Could be done by this session, once approved**: the `supabase db dump --linked` commands (never touches the raw database password); the Storage-file enumeration/download (uses an authenticated app-level credential, not the database password); building and tearing down the isolated recovery-verification target. **None of this was executed this pass** — proposal only, pending approval.
+
+**§22 is superseded by §23 below on two points, both corrected after further verification: `supabase db dump --linked` cannot actually run in this environment at all (it requires Docker, which isn't installed — see §23), and its claimed default coverage was incomplete. §23 is the concrete, rehearsed plan; §22's narrative above is left in place as the historical record of what was proposed before that correction, not edited.**
+
+## 23. Corrected, executable backup procedure — rehearsed with real evidence, September 28, 2026 (nothing done against production)
+
+Two corrections to §22, verified from documentation and this environment's own actual tool inventory — not reasoned from unrelated commands, and without retrieving, printing, or replaying the exposed secret from §21/§22:
+
+1. **`supabase db dump`'s default coverage, verified against Supabase's own documentation**: the default dump contains no data and no custom roles, and — separately from anything this session inferred from `db query --linked` — **`supabase db dump` runs `pg_dump` inside a container.** This environment has no Docker (`docker` is not installed, confirmed directly) — **`supabase db dump` cannot run here at all, in any mode, regardless of the credential question.** §22's proposal built on it is not viable in this environment; not just incomplete, unusable.
+2. **The corrected procedure uses plain `pg_dump`/`pg_dumpall`/`psql` directly** (Homebrew-installed, confirmed present: `/opt/homebrew/opt/postgresql@17/bin/{pg_dump,pg_dumpall,psql,pg_restore}`, version 17.11 — matched to production's actual server version, confirmed via `select version()`: PostgreSQL 17.6; **the machine's default `pg_dump` is 16.15, the wrong major version for this server and not what the commands below use**). This path does need the real database password — supplied only via a `.pgpass` file the owner creates themselves, never a command-line flag, never typed to this session.
+
+**Rehearsed end-to-end against Practice** (real Supabase-hosted Postgres 17.6, already-designated fictional/test data — never production, and nothing in Practice was written to; every command below was a read against Practice, confirmed unchanged before/after: properties, llcs, and Storage-object counts identical). A second, separate disposable local Postgres 17.11 cluster served as the **isolated restore target** — built fresh, used once, fully torn down after, per the same technique already proven for the migration check (§19).
+
+**Exact commands (parameterized; `$PGPASSFILE`/`$PGHOST` etc. point at Practice for this rehearsal, at production for the real run):**
+
+```
+export PGPASSFILE=~/.pgpass   # owner-created, chmod 600, one line: host:port:db:user:password
+export PGHOST=<db host>       # db.jsrovnaxrtllvvavfqvq.supabase.co for the real run
+export PGPORT=5432
+export PGUSER=postgres
+export PGDATABASE=postgres
+PGDUMP=/opt/homebrew/opt/postgresql@17/bin/pg_dump
+PGDUMPALL=/opt/homebrew/opt/postgresql@17/bin/pg_dumpall
+DEST=~/ZMR-Backups-Private/<timestamp>        # staging; deleted after encryption
+
+$PGDUMPALL --roles-only                                          -f $DEST/01-roles.sql
+$PGDUMP --schema-only --schema=public --schema=supabase_migrations -f $DEST/02-schema-app.sql
+$PGDUMP --data-only   --schema=public --schema=supabase_migrations -f $DEST/03-data-app.sql
+$PGDUMP --schema-only --table=auth.users                          -f $DEST/04-schema-auth-users.sql
+$PGDUMP --data-only   --table=auth.users                          -f $DEST/05-data-auth-users.sql
+$PGDUMP --data-only   --table=storage.buckets --table=storage.objects -f $DEST/06-data-storage-metadata.sql
+# Storage files themselves: separate script, Storage API (account-level auth, not the database password),
+# enumerates every bucket/object, downloads each file's real bytes into $DEST/storage-files/,
+# and writes $DEST/storage-manifest.json ({storagePath, localFile, bytes, sha256} per file).
+```
+
+Every command above writes directly to a file via `-f`/the download script's own file writes — nothing is piped through `cat`, printed, or otherwise surfaced in this session's own output at any point; verification below uses line/row counts and checksums, never the dumped content itself.
+
+**Coverage, stated exactly — what's fully portable, what's reference-only, what's excluded:**
+
+| Piece | Command | Rehearsal result |
+|---|---|---|
+| Cluster roles (incl. password hashes) | `pg_dumpall --roles-only` | Captured (all 15 expected Supabase system roles plus project-specific ones, standard `CREATE`/`ALTER ROLE` syntax, **contains password hashes — confirmed present, 9 occurrences** — this file is exactly as sensitive as a raw credential and must never leave the encrypted archive). **Not independently replayed onto a bare cluster this pass** — this rehearsal's target had the same roles pre-created to unblock the schema/data steps; a full clean-cluster roles-only replay is a small remaining step worth doing before the real run, not skipped from difficulty, just not yet done. |
+| App schema (`public` + `supabase_migrations`) | `pg_dump --schema-only --schema=public --schema=supabase_migrations` | **Fully restored, verified**: 6,703 lines, exactly one expected/benign conflict (`public` schema already exists on any normal Postgres cluster) and zero other errors — every table, function, trigger, and RLS policy in this application's own schema replayed cleanly. |
+| App data | `pg_dump --data-only --schema=public --schema=supabase_migrations` | **Fully restored, verified.** pg_dump itself warned of circular foreign keys on `property_ownership_interests`/`llc_membership_interests` (a real, correctly-flagged property of this schema); resolved with `session_replication_role = replica` during load, a standard technique — restore then completed with zero errors. |
+| Migration history (`supabase_migrations.schema_migrations`) | included in the app schema/data dump above | **Verified exact**: 104/104 rows matched between source and restored target. |
+| `auth.users` (identity rows) | narrow single-table schema + data dump | **Restored successfully** (2/2 rows, joins to `account_members` resolved correctly) — but this is a Postgres-row restore only. **Explicitly not a Supabase Auth-service recovery**: session/JWT-signing infrastructure lives outside these plain tables and is not captured by any SQL dump. This distinction is not a caveat added after the fact — it was tested: the real `auth.users` table depends on Supabase-owned roles (`supabase_auth_admin` etc.) that had to be created first, confirming this table is genuinely coupled to platform-managed infrastructure, not a fully standalone table. |
+| `storage.buckets`/`storage.objects` (file metadata) | narrow data-only dump | **Captured as a reference manifest only — confirmed NOT independently restorable** into a vanilla Postgres target: the real table definitions depend on a Supabase-internal type (`storage.buckettype`) and trigger functions (`storage.protect_delete()`, `storage.update_updated_at_column()`) that are platform-managed, not part of the portable application schema. This is a genuine structural limitation, found by testing it, not assumed. In practice this file serves to tell a restore *which files should exist and where*, not to be SQL-replayed directly — actual recovery of Storage happens by re-uploading the real files (below) into a project where Supabase's own storage extension already exists. |
+| **Storage files (actual bytes)** | Storage API list+download, checksummed | **Fully verified, end to end.** 3 real Practice Storage objects (deliberately excluding the one file visibly labeled as T2's own in-progress work, to avoid any appearance of touching it) downloaded, checksummed (SHA-256), archived, AES-256-CBC-encrypted (PBKDF2, 200,000 iterations), decrypted, re-extracted, and re-checksummed — **all three checksums matched exactly before and after the full round trip.** A wrong passphrase was confirmed to fail decryption outright (not silently produce corrupt output), proving the encryption is real, not cosmetic. |
+
+**Encryption, destination, key recovery:**
+- Tool: `openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt` (LibreSSL 3.3.6, confirmed present as macOS's own system `/usr/bin/openssl` — **`gpg` is not installed on this machine and was not assumed**, per the instruction to verify prerequisites rather than assume a tool exists).
+- **Exact local destination**: `~/ZMR-Backups-Private/` — deliberately outside `~/Desktop`, `~/Documents`, and any other default macOS iCloud-sync location (this machine's own iCloud Desktop/Documents sync is confirmed off, but the destination is chosen to not depend on that setting), and outside this git repository entirely (never committed, never staged). The staging directory (`01-roles.sql` through the storage files) is deleted immediately after the `.tar.gz.enc` is produced — only the encrypted artifact persists on disk.
+- **Key recovery is owner-controlled, not this session's**: the encryption passphrase must be chosen and entered directly by the owner (this rehearsal used a clearly-labeled test-only placeholder passphrase, never a real one) and stored in the owner's own password manager — this session never generates, sees, or stores the real passphrase.
+
+**Restore checks actually run, and what they do/don't prove:**
+- **Postgres restore test (what was verified)**: schema replays cleanly; data replays cleanly (with the documented circular-FK handling); row counts match exactly across every table checked; multi-table joins (`account_members` → `accounts`/`auth.users`; `property_ownership_interests` → `properties`/`llcs`) return correct, real records — including, incidentally, T2's own live test records, confirming this reflects Practice's actual current state, not stale data.
+- **Not the same as full Supabase authentication/Storage recovery**: restoring `auth.users` rows does not restore a working sign-in flow (Auth-service state beyond the table), and restoring `storage.objects` rows does not restore file-serving (the files themselves are the real recovery unit for Storage, handled and verified separately above). This procedure recovers this account owner's actual business data with verified integrity; it is not a one-command full-Supabase-project clone, and this document does not claim it is.
+
+**Minimal private input required from the owner, and nothing else:**
+1. Create `~/.pgpass` themselves, directly in their own terminal, one line (`host:port:database:user:<the freshly-rotated password>`), `chmod 600` immediately — never pasted into this chat.
+2. Choose an encryption passphrase themselves and store it in their own password manager — never told to or generated by this session.
+3. Decide who runs the actual commands: the owner personally, or this session executing the exact commands above once `~/.pgpass` already exists (this session would never need to see, type, or be told the password itself — `pg_dump` reads `.pgpass` on its own, exactly as this session has already done, without incident, for Practice's own separate credential all session).
+
+**Not done, and not proposed as done**: no export of real production data, no upload anywhere, no plan purchase, no restore into production or into shared Practice, no migration, no deploy. Every command and every piece of evidence above came from Practice (already-designated fictional/test data) and two disposable local Postgres instances, both fully torn down; Practice's own property/LLC/Storage-object counts were confirmed unchanged before and after.
