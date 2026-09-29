@@ -65,7 +65,7 @@ and form do not.
 
 ## M6 / M4 migration dependency (needs coordination)
 
-Two forward migrations, not applied anywhere shared:
+Two forward migrations — applied to Practice only on Sept 29, 2026 (see Acceptance addendum); not applied to production:
 
 - `20260930100000_financial_period_closed_protection.sql` — locked periods
   enforced on INSERT/UPDATE/DELETE with OLD and NEW scope (move in/out,
