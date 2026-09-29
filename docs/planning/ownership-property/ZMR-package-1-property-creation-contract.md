@@ -481,3 +481,25 @@ The Chrome extension reconnected mid-session (Chrome's own process restarted —
 All test data (two properties, one LLC, five Storage objects, all `ZMR-TEST-`/`T1`-prefixed) removed and positively re-verified gone by direct re-query after — properties/llcs/storage-objects counts all back to the exact pre-test baseline, `property_creation_requests` at zero.
 
 **This closes the one item §19 left open.** Combined with §19's migration-safety reproduction and §16–18's earlier evidence, no further known gaps remain in this pass's own scope.
+
+## 21. Production backup/restore availability — confirmed via the actual dashboard, September 28, 2026
+
+§19's guidance ("WAL-G suggests a dashboard-level snapshot restore may exist... unconfirmed from here") is now resolved, not still open. `supabase backups list --project-ref jsrovnaxrtllvvavfqvq -o json` returned `"backups": []`, `"physical_backup_data": {}`, `"pitr_enabled": false` — a more precise read than the earlier summary view, showing zero enumerable backups rather than just "PITR off." The owner's browser already carried an authenticated Supabase dashboard session (no login performed by this session), so all three of the dashboard's own Database → Backups tabs were checked directly, read-only, no setting changed:
+
+- **Scheduled backups**: "Free Plan does not include project backups... Upgrade to the Pro Plan for up to 7 days of scheduled backups."
+- **Point in time**: "Point in Time Recovery is a Pro Plan add-on... Starts at $100/month."
+- **Restore to new project**: "requires Pro Plan and above... you need to upgrade to a Pro Plan and have physical backups enabled."
+
+**Plain statement: production currently has zero backup or restore capability of any kind.** This project is on the Free plan; every restore mechanism Supabase offers is gated behind Pro. This is not specific to this release — it has been true of this project generally, surfaced here because this release is the first to ask the question directly.
+
+**A real incident happened while checking this, disclosed in full rather than worked around:** `supabase db dump --linked --dry-run` — expected, per its own `--help` text, to only print the pg_dump script it *would* run — printed that script with production's real database password embedded in plain text (`PGPASSWORD=...`) directly into this session's own tool output. No dump was executed, nothing was read from or written to production by that command, and the password was never repeated, stored in any file, or placed in chat/this document — but it did enter this session's context, which this project's own credential-safety rules treat as something to disclose and remediate, not quietly move past. **Recommended: rotate production's database password** (Supabase dashboard → Project Settings → Database → Reset database password) as a precaution, independent of anything else in this release. This is a real Supabase CLI behavior worth knowing for any future session: `db dump --dry-run` is not the safe, credential-free operation its description implies.
+
+**Concrete pre-release proposal, for approval — not executed:**
+1. **Rotate the production database password first** (above), regardless of the rest of this decision.
+2. Before applying the 15-migration sequence, take one of:
+   - **(a) A temporary Pro-plan upgrade** for the release window (~$25/month prorated; includes daily backups immediately, PITR available as a further $100/month add-on if wanted) — real, tested, one-click Supabase-native recovery; downgrade afterward if not wanted ongoing.
+   - **(b) A manual logical backup** (`supabase db dump --linked -f <file>`, or `pg_dump`) taken by the owner directly (using the freshly-rotated password, entered only via masked terminal input, never through me) immediately before the release — zero additional cost, restores via `psql` replay rather than a dashboard button, and only covers whatever the dump captures (data as of that moment, schema included).
+3. Apply the 15 migrations (already verified safe on a disposable reproduction of production's exact pre-upgrade state, §19).
+4. Confirm the application still behaves correctly against the new schema before considering the backup/upgrade temporary-only.
+
+Given every migration in this batch is additive (§16), the realistic failure mode this backup guards against is not "the migrations corrupt data" (verified they don't) but genuinely unrelated incidents during the same release window — the backup is a general safety margin, not a signal this specific migration set is newly suspected unsafe. No option above was chosen or executed here; this is presented for the owner's decision.
