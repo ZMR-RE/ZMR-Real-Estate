@@ -20,6 +20,14 @@ interface PickListSelectProps {
   onChange: (value: string) => void
   required?: boolean
   placeholder?: string
+  // M1 — first-entry setup. When set and the list has no active choices,
+  // the field explains what to do and offers an "Add …" button that opens
+  // the same Manage panel; a value added from there is selected
+  // immediately. Omitted by every other screen, which keeps today's
+  // behavior unchanged.
+  emptySetup?: { explanation: string; addLabel: string }
+  invalid?: boolean
+  describedBy?: string
 }
 
 // A dropdown backed by an account-scoped pick list, with its "Manage
@@ -30,11 +38,35 @@ interface PickListSelectProps {
 // selected option (labeled "archived") so an existing record never
 // appears to silently lose or change its value — it just can't be
 // chosen again for new rows.
-export function PickListSelect({ id, listName, title, value, onChange, required, placeholder }: PickListSelectProps) {
+export function PickListSelect({
+  id,
+  listName,
+  title,
+  value,
+  onChange,
+  required,
+  placeholder,
+  emptySetup,
+  invalid,
+  describedBy,
+}: PickListSelectProps) {
   const { options, activeOptions, loading, error, saving, add, archive, restore } = usePickListOptions(listName)
   const [manageOpen, setManageOpen] = useState(false)
 
   const showArchivedCurrentValue = value !== '' && !activeOptions.some((o) => o.value === value)
+  const needsSetup = emptySetup !== undefined && !loading && activeOptions.length === 0 && value === ''
+
+  // Selecting what was just created only applies to the setup flow;
+  // cancelling ("Done" without adding) or a failed add selects nothing
+  // and leaves the surrounding form untouched.
+  const handleAdd = async (newValue: string) => {
+    const saved = await add(newValue)
+    if (saved && emptySetup) {
+      onChange(newValue.trim())
+      setManageOpen(false)
+    }
+    return saved
+  }
 
   return (
     <div className="pick-list-select">
@@ -43,6 +75,8 @@ export function PickListSelect({ id, listName, title, value, onChange, required,
         value={value}
         required={required}
         disabled={loading}
+        aria-invalid={invalid || undefined}
+        aria-describedby={describedBy}
         onChange={(e) => {
           if (e.target.value === MANAGE_OPTION_VALUE) {
             setManageOpen(true)
@@ -62,13 +96,21 @@ export function PickListSelect({ id, listName, title, value, onChange, required,
         ))}
         <option value={MANAGE_OPTION_VALUE}>{`+ Manage ${title.toLowerCase()}`}</option>
       </select>
+      {needsSetup && !manageOpen && (
+        <div className="pick-list-setup">
+          <p className="field-hint">{emptySetup.explanation}</p>
+          <button type="button" onClick={() => setManageOpen(true)}>
+            {emptySetup.addLabel}
+          </button>
+        </div>
+      )}
       <ManageOptionsPanel
         title={title}
         options={options}
         loading={loading}
         error={error}
         saving={saving}
-        onAdd={add}
+        onAdd={handleAdd}
         onArchive={archive}
         onRestore={restore}
         isOpen={manageOpen}

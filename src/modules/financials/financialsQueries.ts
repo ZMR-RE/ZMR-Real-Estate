@@ -88,16 +88,28 @@ export interface Transaction {
   description: string | null
   voided: boolean
   statement_reconciled: boolean
-  property: { id: string; name: string; address: string | null } | null
+  property: { id: string; name: string | null; address: string | null } | null
   reimbursement_source_id: string | null
 }
+
+// Who paid / was paid. At most one of vendor/tenant/prospective tenant
+// is ever stored (financial_transactions_payer_single_entity); every
+// save writes all three columns so switching payer kinds can never leave
+// two set. 'prospective_tenant' and 'none' exist only so an edit of a
+// Quick Capture-bridged transaction preserves what the bridge stored —
+// manual entry offers vendor (any entry) or tenant (income).
+export type TransactionPayer =
+  | { kind: 'vendor'; id: string }
+  | { kind: 'tenant'; id: string }
+  | { kind: 'prospective_tenant'; id: string; name: string }
+  | { kind: 'none' }
 
 export interface TransactionInput {
   propertyId: string
   entryType: EntryType
   category: Category
   subcategory: string | null
-  vendorId: string
+  payer: TransactionPayer
   unit: string | null
   paymentMethod: string
   repairOrImprovement: RepairOrImprovement | null
@@ -107,19 +119,38 @@ export interface TransactionInput {
   statementReconciled: boolean
 }
 
+export function payerColumns(payer: TransactionPayer) {
+  return {
+    vendor_id: payer.kind === 'vendor' ? payer.id : null,
+    tenant_id: payer.kind === 'tenant' ? payer.id : null,
+    prospective_tenant_id: payer.kind === 'prospective_tenant' ? payer.id : null,
+  }
+}
+
 export interface TransactionFilters {
   propertyId?: string | null
   year?: number | null
 }
 
+const TRANSACTION_COLUMNS =
+  'id, entry_type, category, subcategory, vendor:vendors(id, name, split_percentage, split_description), tenant:tenants(id, name), prospective_tenant:prospective_tenants(id, name), unit, payment_method, repair_or_improvement, amount, transaction_date, description, voided, statement_reconciled, property:properties(id, name, address), reimbursement_source_id'
+
+// Non-voided transactions — the only rows any total, report or export
+// counts. listVoidedTransactions is display-only ("Show voided").
 export async function listTransactions(accountId: string, filters: TransactionFilters = {}) {
+  return queryTransactions(accountId, filters, false)
+}
+
+export async function listVoidedTransactions(accountId: string, filters: TransactionFilters = {}) {
+  return queryTransactions(accountId, filters, true)
+}
+
+async function queryTransactions(accountId: string, filters: TransactionFilters, voided: boolean) {
   let query = supabase
     .from('financial_transactions')
-    .select(
-      'id, entry_type, category, subcategory, vendor:vendors(id, name, split_percentage, split_description), tenant:tenants(id, name), prospective_tenant:prospective_tenants(id, name), unit, payment_method, repair_or_improvement, amount, transaction_date, description, voided, statement_reconciled, property:properties(id, name, address), reimbursement_source_id',
-    )
+    .select(TRANSACTION_COLUMNS)
     .eq('account_id', accountId)
-    .eq('voided', false)
+    .eq('voided', voided)
     .order('transaction_date', { ascending: false })
 
   if (filters.propertyId) {
@@ -142,7 +173,7 @@ export async function createTransaction(accountId: string, recordedBy: string, i
       entry_type: input.entryType,
       category: input.category,
       subcategory: input.subcategory,
-      vendor_id: input.vendorId,
+      ...payerColumns(input.payer),
       unit: input.unit,
       payment_method: input.paymentMethod,
       repair_or_improvement: input.repairOrImprovement,
@@ -317,7 +348,7 @@ export async function updateTransaction(id: string, input: TransactionInput) {
       entry_type: input.entryType,
       category: input.category,
       subcategory: input.subcategory,
-      vendor_id: input.vendorId,
+      ...payerColumns(input.payer),
       unit: input.unit,
       payment_method: input.paymentMethod,
       repair_or_improvement: input.repairOrImprovement,

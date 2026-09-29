@@ -7,7 +7,7 @@ interface ManageOptionsPanelProps {
   loading: boolean
   error: string | null
   saving: boolean
-  onAdd: (value: string) => Promise<void>
+  onAdd: (value: string) => Promise<unknown>
   onArchive: (id: string) => Promise<void>
   onRestore: (id: string) => Promise<void>
   // Roadmap 1.30 — PickListSelect drives this panel's open state itself

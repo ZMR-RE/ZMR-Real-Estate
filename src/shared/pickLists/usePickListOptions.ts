@@ -28,17 +28,20 @@ export function usePickListOptions(listName: PickListName) {
 
   const activeOptions = options.filter((o) => o.active)
 
-  const add = async (value: string) => {
-    if (!accountId || !value.trim()) return
+  // Resolves true only when the option was actually saved, so a caller
+  // can act on success (M1: select the new choice) without guessing.
+  const add = async (value: string): Promise<boolean> => {
+    if (!accountId || !value.trim()) return false
     setSaving(true)
     const { error: saveError } = await addOption(accountId, listName, value)
     setSaving(false)
     if (saveError) {
       setError(saveError.message)
-      return
+      return false
     }
     setError(null)
     await refresh()
+    return true
   }
 
   const archive = async (id: string) => {

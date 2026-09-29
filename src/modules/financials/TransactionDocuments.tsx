@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
+import { formatDateOnly, todayLocalIsoDate } from '../../shared/dateFormat'
+import { attachmentFileName } from './transactionEntry'
 import {
   getDocumentSignedUrl,
   listDocumentsForTransaction,
@@ -89,9 +91,16 @@ export function TransactionDocuments({ transactionId, propertyId }: TransactionD
         <ul className="transaction-documents-list">
           {documents.map((doc) => (
             <li key={doc.id}>
+              {/* M3 — the original file name the user uploaded (stored
+                  path is never renamed), then type/size/date for context. */}
               <button type="button" onClick={() => handleView(doc.storage_path!)}>
-                {doc.category} ({(doc.file_size! / 1024).toFixed(1)} KB)
-              </button>
+                {attachmentFileName(doc.storage_path)}
+              </button>{' '}
+              <span className="field-hint">
+                {doc.category}
+                {doc.file_size != null ? ` · ${(doc.file_size / 1024).toFixed(1)} KB` : ''} · added{' '}
+                {formatDateOnly(todayLocalIsoDate(new Date(doc.uploaded_at)))}
+              </span>
             </li>
           ))}
         </ul>
@@ -105,6 +114,10 @@ export function TransactionDocuments({ transactionId, propertyId }: TransactionD
           value={category}
           onChange={setCategory}
           placeholder="Select document type…"
+          emptySetup={{
+            explanation: 'No document types are set up yet. Add one (for example “Receipt” or “Invoice”) to label attachments.',
+            addLabel: 'Add document type',
+          }}
         />
         <input
           key={resetKey}

@@ -1,3 +1,4 @@
+import { formatMoney } from '../financials/financialsCalculations'
 import type { CashFlow } from './reportsCalculations'
 
 interface CashFlowReportProps {
@@ -5,16 +6,14 @@ interface CashFlowReportProps {
   year: number
 }
 
-function money(amount: number): string {
-  return `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
+const money = formatMoney
 
 // Deliberately not the same number as P&L's net income: depreciation is
-// added back (a P&L expense that never left the bank account) and
-// mortgage principal is subtracted (money that left the bank account
-// without ever being a P&L expense) — see reportsCalculations.computeCashFlow.
+// added back, and mortgage principal and capital improvements are
+// subtracted (money that left the bank account without being P&L
+// expense) — see reportsCalculations.computeCashFlow.
 export function CashFlowReport({ cashFlow, year }: CashFlowReportProps) {
-  const { netIncome, depreciationAddBack, cashFromOperations, principalPaid, netCashFlow } = cashFlow
+  const { netIncome, depreciationAddBack, cashFromOperations, principalPaid, capitalImprovementsPaid, netCashFlow } = cashFlow
 
   return (
     <div>
@@ -38,6 +37,10 @@ export function CashFlowReport({ cashFlow, year }: CashFlowReportProps) {
             <tr>
               <td>− Mortgage principal paid</td>
               <td>{money(principalPaid)}</td>
+            </tr>
+            <tr>
+              <td>− Capital improvements paid</td>
+              <td>{money(capitalImprovementsPaid)}</td>
             </tr>
           </tbody>
           <tfoot>

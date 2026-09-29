@@ -159,6 +159,30 @@ of screens in the app.
   than what's actually recorded (e.g. a premium with no stored
   annual/installment basis yet). Not a validation error and not a
   required marker — purely informational.
+- **`.field-error`** (M3, manual bookkeeping) — inline validation message
+  directly under an invalid field (danger color, `--text-sm`), paired with
+  `aria-invalid`/`aria-describedby` on the input, which also gets a
+  danger border. A form shows one `[role=alert]` summary at the top
+  ("Not saved yet. Fix: …") plus one `.field-error` per field — never an
+  unexplained disabled Save.
+- **`PickListSelect` `emptySetup`** (M1) — opt-in first-use prompt for a
+  *required* pick list with no active choices: a `.field-hint`
+  explanation and an "Add …" button (`.pick-list-setup`) that opens the
+  same Manage panel; the value added there is selected. Screens that
+  don't pass `emptySetup` are unchanged.
+- **`.transaction-form-actions` / `.transaction-form-secondary-submit`**
+  (M2) — wrapping action row for a form with two submit paths (Save,
+  Save and add another). The second submit keeps the outlined secondary
+  look so each form still has exactly one primary (filled) action.
+- **`.transaction-list`** (M3) — the Financials transaction table.
+  `.transaction-list-wrap` lets text columns wrap and
+  `.transaction-list-action-group` wraps row actions inside their cell,
+  so nothing overflows the table card at desktop/intermediate widths. At
+  ≤600px each row becomes a stacked card: `thead` is hidden and every
+  cell shows its own `data-label` caption, so Amount and all actions are
+  visible without sideways scrolling. Deliberate, scoped exception to
+  the sticky-header rule at phone width only (a card list has no header
+  row to freeze); every other table keeps `.table-scroll` behavior.
 - **Buttons** — bare `<button>` is a secondary/outline button, still
   `--radius-sm` and regular weight. `button[type=submit]` is the primary
   action: filled `--accent`, `font-weight: 700`, and fully-rounded

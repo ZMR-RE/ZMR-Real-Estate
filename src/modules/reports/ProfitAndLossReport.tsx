@@ -1,3 +1,4 @@
+import { formatMoney } from '../financials/financialsCalculations'
 import type { ProfitAndLoss } from './reportsCalculations'
 
 interface ProfitAndLossReportProps {
@@ -5,9 +6,7 @@ interface ProfitAndLossReportProps {
   year: number
 }
 
-function money(amount: number): string {
-  return `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
+const money = formatMoney
 
 // Every standard Schedule E line is shown, even at $0 — matching the
 // real IRS form's layout, not just categories with activity this year.
@@ -19,7 +18,7 @@ export function ProfitAndLossReport({ profitAndLoss, year }: ProfitAndLossReport
   return (
     <div>
       <h2>Profit &amp; loss — {year}</h2>
-      <p>Schedule E format.</p>
+      <p>Schedule E format. Expenses flagged as capital improvements are not included here; they appear under Cash flow.</p>
 
       <h3>Income</h3>
       <div className="table-scroll">

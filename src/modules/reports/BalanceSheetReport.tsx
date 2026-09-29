@@ -1,12 +1,11 @@
+import { formatMoney } from '../financials/financialsCalculations'
 import type { BalanceSheet } from './reportsCalculations'
 
 interface BalanceSheetReportProps {
   balanceSheet: BalanceSheet
 }
 
-function money(amount: number): string {
-  return `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
+const money = formatMoney
 
 // "As of today" — cumulative since inception, not scoped to a tax year
 // (see reportsCalculations.computeBalanceSheet for why: assets and
@@ -22,7 +21,7 @@ export function BalanceSheetReport({ balanceSheet }: BalanceSheetReportProps) {
   return (
     <div>
       <h2>Balance sheet</h2>
-      <p>As of today. Property value + cash − mortgage balance = equity.</p>
+      <p>As of today. Property value + cash − mortgage balance = equity. Cash starts from $0 because opening balances aren’t recorded yet, so it is not a bank balance.</p>
 
       {propertiesMissingMarketValue > 0 && (
         <p role="alert">
