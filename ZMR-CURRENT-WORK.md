@@ -683,3 +683,15 @@ Continuation from `d66c3f6`, executed `ZMR-package-1-release-readiness-correctio
 **Learning, recorded once:** a verification script's own cleanup step deleted via the RLS-scoped client without checking each call's `.error`; `property_creation_requests` has no client-facing delete policy by design, so the deletes silently no-opped and the script's own "cleanup done" was wrong until re-verified and redone via direct psql. A testing-harness bug, not a shipped-code defect — no rule or shipped-code change needed, caught by the same re-verify-don't-trust-the-claim discipline this project's own cleanup rules already require.
 
 `npm run build`/`lint`/`test` clean (85/85), verified via a disposable clean-clone build before this pass's commit. Production untouched; all test data removed and re-verified gone.
+
+
+## T1 — second-pass verification, September 29, 2026 (labeled-terminal handoff)
+Continuation from `6eacdb0`, per `ZMR-terminal-assignments.md` and CLAUDE.md's new Labeled terminal coordination rule. No code changes — verification only; release candidate stays `6eacdb0`. Full detail in the contract's §19.
+
+Browser-based live verification of the Documents-step controls remains blocked — the Chrome extension stayed disconnected across this entire pass despite repeated checks; Chrome itself is running. Reported the precise fix needed (fully quit and relaunch Chrome, confirm the extension shows connected) rather than guessing or re-trying indefinitely.
+
+Upgraded the migration-safety proof from "Practice's ledger didn't re-run the edited file" (true but insufficient) to an actual controlled reproduction: built a disposable local Postgres (native Homebrew, no Docker), replayed all 90 real pre-Sept-25 migration files to reproduce production's exact pre-upgrade schema, inserted two fictional audit rows reproducing production's real hazard condition, then confirmed the *original* constraint statement fails exactly as diagnosed and the *corrected* 15-migration sequence applies cleanly with a final schema matching Practice's own confirmed state on seven separate points. Disposable database fully torn down after.
+
+Corrected the recovery guidance: PITR being off doesn't mean no restore path exists, only that this CLI's own restore command (PITR-timestamp-only) wouldn't serve production — WAL-G's presence suggests a dashboard-level snapshot restore may exist at the plan-tier level, unconfirmed from here; flagged for direct dashboard check rather than guessed either way. No restore attempted against production.
+
+Reviewed the bookkeeping report (T2-owned) against the requested four-way distinction and found two overclaims: "reachable" for CSV import conflated Practice/local-code confirmation with unverified production frontend deploy status; the P&L/Cash Flow "accurate" claim overstated a real but narrower fact (no opening-balance dependency ≠ verified correct — no test exists for `reportsCalculations.ts` at all). Proposed corrections recorded in the contract's §19 for T2/the owner to apply; not edited directly, per file ownership.
