@@ -177,12 +177,16 @@ of screens in the app.
 - **`.transaction-list`** (M3) — the Financials transaction table.
   `.transaction-list-wrap` lets text columns wrap and
   `.transaction-list-action-group` wraps row actions inside their cell,
-  so nothing overflows the table card at desktop/intermediate widths. At
-  ≤600px each row becomes a stacked card: `thead` is hidden and every
+  so nothing overflows the table card at desktop widths. When the list's
+  own container is ≤760px wide (a container query, so it accounts for the
+  sidebar) each row becomes a stacked card: `thead` is hidden and every
   cell shows its own `data-label` caption, so Amount and all actions are
   visible without sideways scrolling. Deliberate, scoped exception to
-  the sticky-header rule at phone width only (a card list has no header
-  row to freeze); every other table keeps `.table-scroll` behavior.
+  the sticky-header rule in the stacked layout only (a card list has no
+  header row to freeze); every other table keeps `.table-scroll` behavior.
+- **`.financials-summary-table`** (M5) — the Financials summary tables
+  (up to six money columns) let cells wrap instead of the global
+  `nowrap`, so they fit the content column at intermediate widths.
 - **Buttons** — bare `<button>` is a secondary/outline button, still
   `--radius-sm` and regular weight. `button[type=submit]` is the primary
   action: filled `--accent`, `font-weight: 700`, and fully-rounded

@@ -18,7 +18,7 @@ export function FinancialsSummary({ byPropertyAndCategory, byProperty, capitalIm
         <p className="empty-state">No activity for this filter.</p>
       ) : (
         <div className="table-scroll">
-          <table>
+          <table className="financials-summary-table">
             <thead>
               <tr>
                 <th>Property</th>
@@ -50,7 +50,7 @@ export function FinancialsSummary({ byPropertyAndCategory, byProperty, capitalIm
         <p className="empty-state">No activity for this filter.</p>
       ) : (
         <div className="table-scroll">
-          <table>
+          <table className="financials-summary-table">
             <thead>
               <tr>
                 <th>Property</th>
@@ -78,7 +78,7 @@ export function FinancialsSummary({ byPropertyAndCategory, byProperty, capitalIm
           <h2>Capital improvements</h2>
           <p className="field-hint">Not included in the expense categories above or in net operating income.</p>
           <div className="table-scroll">
-            <table>
+            <table className="financials-summary-table">
               <thead>
                 <tr>
                   <th>Property</th>

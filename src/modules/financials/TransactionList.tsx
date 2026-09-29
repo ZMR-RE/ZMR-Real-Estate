@@ -76,7 +76,7 @@ export function TransactionList({
   }
 
   return (
-    <div className="table-scroll">
+    <div className="table-scroll transaction-list-container">
       <table className="transaction-list">
         <thead>
           <tr>
@@ -166,7 +166,7 @@ export function TransactionList({
                 {confirmingVoidId === tx.id && (
                   <tr className="transaction-list-detail">
                     <td colSpan={COLUMN_COUNT}>
-                      <div className="transaction-void-confirm" role="group" aria-label="Confirm void">
+                      <section className="transaction-void-confirm" aria-label="Confirm void">
                         <p>
                           <strong>Void this transaction?</strong> {describeTransaction(tx, property)}
                         </p>
@@ -183,7 +183,7 @@ export function TransactionList({
                             Keep it
                           </button>
                         </div>
-                      </div>
+                      </section>
                     </td>
                   </tr>
                 )}

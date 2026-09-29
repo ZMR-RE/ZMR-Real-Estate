@@ -121,7 +121,7 @@ export function TransactionPayerField({
   }
 
   return (
-    <div className="transaction-payer" role="group" aria-labelledby="payer_label" aria-describedby={error ? errorId : undefined}>
+    <div className="transaction-payer" aria-describedby={error ? errorId : undefined}>
       <label id="payer_label">
         {entryType === 'income' ? 'Received from' : 'Paid to'}
         <span className="required-marker">*</span>

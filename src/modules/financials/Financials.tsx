@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SearchableSelect } from '../../shared/SearchableSelect'
 import { MileageRollup } from '../mileage/MileageRollup'
@@ -59,14 +59,21 @@ export function Financials() {
   })
 
   // M3 — sensible focus after the form closes: back to the row's Edit
-  // button for an edit, otherwise to "Add transaction".
+  // button for an edit, otherwise to "Add transaction". Applied in an
+  // effect once the form has actually unmounted (the target button only
+  // exists after that render), not on a timer.
   const addButtonRef = useRef<HTMLButtonElement>(null)
+  const pendingFocus = useRef<{ editedId: string | null } | null>(null)
   const returnFocus = (editedId: string | null) => {
-    requestAnimationFrame(() => {
-      const target = editedId ? document.querySelector<HTMLElement>(`[data-edit-transaction="${editedId}"]`) : null
-      ;(target ?? addButtonRef.current)?.focus()
-    })
+    pendingFocus.current = { editedId }
   }
+  useEffect(() => {
+    if (entry.entry.mode !== 'closed' || !pendingFocus.current) return
+    const { editedId } = pendingFocus.current
+    pendingFocus.current = null
+    const target = editedId ? document.querySelector<HTMLElement>(`[data-edit-transaction="${editedId}"]`) : null
+    ;(target ?? addButtonRef.current)?.focus()
+  })
   const editingId = entry.entry.mode === 'edit' ? entry.entry.transaction.id : null
   const editing = entry.entry.mode === 'edit' ? entry.entry.transaction : null
 

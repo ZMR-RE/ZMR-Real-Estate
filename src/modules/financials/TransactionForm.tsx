@@ -137,7 +137,6 @@ export function TransactionForm({
       </label>
       <div
         id="property_id"
-        role="group"
         aria-labelledby="property_label"
         aria-describedby={errors.propertyId ? errorId('propertyId') : undefined}
       >

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { listProperties } from '../properties/propertiesQueries'
@@ -64,13 +64,21 @@ export function useFinancials() {
   // query comes back.
   const yearOptions = useMemo(() => buildYearOptions(yearRange, new Date().getFullYear(), [year]), [yearRange, year])
 
+  // Only the most recently started load may update the list. Changing a
+  // filter and refreshing in the same tick (e.g. after saving a 2018
+  // entry while 2026 was shown) otherwise let a slower, stale response
+  // for the old filter land last and overwrite the correct one.
+  const loadSeq = useRef(0)
+
   const refresh = useCallback(async () => {
     if (!accountId) return
+    const seq = ++loadSeq.current
     setLoading(true)
     const [active, voided] = await Promise.all([
       listTransactions(accountId, { propertyId: propertyFilter, year }),
       showVoided ? listVoidedTransactions(accountId, { propertyId: propertyFilter, year }) : Promise.resolve(null),
     ])
+    if (seq !== loadSeq.current) return
     setLoading(false)
     const fetchError = active.error ?? voided?.error
     if (fetchError) {

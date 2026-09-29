@@ -2933,7 +2933,17 @@ select[aria-invalid='true'] {
   border-color: var(--danger);
 }
 
-/* M1 — first-use prompt under an empty required pick list. */
+/* M1 — first-use prompt under an empty required pick list. Only a
+   pick list showing the prompt wraps; every other .pick-list-select row
+   keeps its existing single-line layout. */
+.pick-list-select:has(.pick-list-setup) {
+  flex-wrap: wrap;
+}
+
+.pick-list-setup {
+  flex-basis: 100%;
+}
+
 .pick-list-setup button {
   margin-top: var(--space-2);
 }
@@ -2991,10 +3001,18 @@ button[type='submit'].transaction-form-secondary-submit:hover:not(:disabled) {
   margin: 0 0 var(--space-2);
 }
 
-/* Phone: each transaction becomes a stacked card with its own labels, so
-   amount and actions are visible without scrolling sideways (the shared
-   .table-scroll overflow stays available for every other table). */
-@media (max-width: 600px) {
+/* Narrow space: each transaction becomes a stacked card with its own
+   labels, so amount and actions are visible without scrolling sideways.
+   Keyed to the list's own width (container query), not the window: with
+   the sidebar open, a 900px window leaves the list ~570px, which is
+   already too narrow for seven columns. The shared .table-scroll
+   overflow stays available for every other table. */
+.transaction-list-container {
+  container-type: inline-size;
+  container-name: transaction-list;
+}
+
+@container transaction-list (max-width: 760px) {
   .transaction-list,
   .transaction-list tbody,
   .transaction-list tr,
@@ -3029,4 +3047,26 @@ button[type='submit'].transaction-form-secondary-submit:hover:not(:disabled) {
   .transaction-list td.transaction-list-amount {
     font-weight: 700;
   }
+}
+
+/* M5 summary tables have up to six money columns; let cells wrap so they
+   fit the content column at intermediate widths instead of overflowing. */
+.financials-summary-table th,
+.financials-summary-table td {
+  white-space: normal;
+  padding-left: var(--space-3);
+  padding-right: var(--space-3);
+}
+
+/* M3 — scrolling the entry form into view must not tuck its heading
+   under the sticky Practice banner / app nav. */
+.transaction-form h2 {
+  scroll-margin-top: calc(var(--practice-banner-height, 0px) + var(--space-6));
+}
+
+/* M4 — the payer field's label sits inside a wrapper, not directly in the
+   form's flex column, so it needs block display for the normal label
+   spacing to apply. */
+.transaction-payer > label {
+  display: block;
 }
