@@ -4,12 +4,13 @@
 `/Users/janki/Projects/ZMR-Real-Estate-T2`). **Base:** `a25377b` (main; no
 source/migration changes since `6eacdb0`). **Deferred CSV branch:**
 `t2/historical-import-dedup` at `e280ad9`, untouched and excluded.
-**Date:** September 28, 2026.
+**Date:** September 28–29, 2026. **Release candidate branch:** `t2/m1-m6-release-candidate` (on released main `e991c2e`).
 
 Status vocabulary: *implemented locally* · *verified in Practice (live UI)* ·
-*verified on local disposable Postgres only* · *not released*. Nothing here
-is released; no production change, migration or real business entry was
-made.
+*verified on hosted Practice* · *verified on local disposable Postgres* ·
+*not released*. M1–M6 is not released: no production migration, deploy or
+real business entry has been made for it. (Package 1, which this package
+builds on, **is** released — T1, `e991c2e`: app `6eacdb0`, 15 migrations.)
 
 ## Status by item
 
@@ -18,7 +19,7 @@ made.
 | M1 first-entry setup | Implemented, verified in Practice | Empty payment-method list showed explanation + "Add payment method"; Done without adding created nothing; adding "ZMR-TEST-T2 Checking" selected it and kept the draft (property, amount); prompt disappears once a choice exists. Same for document types ("ZMR-TEST-T2 Invoice"). |
 | M2 historical entry | Implemented, verified in Practice | Default date = local calendar (Sep 28 evening; UTC slice gave Sep 29). Save and add another kept only property + date, cleared payer/amount/category/payment/flag/description, focused Type. Confirmation names the saved entry and moves filters ("showing 2018"). Year filter now spans 2018–2026 from saved data. Network failure → "couldn't confirm whether this was saved", draft kept, filters unchanged, nothing written. |
 | M3 edit/void/mobile/docs | Implemented, verified in Practice | Edit scrolls the form into view below the banner, focuses a heading naming the transaction, loads stored values; Save/Cancel return focus to that row's Edit button (new entry → "Add transaction"). Void shows inline details + retained-history explanation; "Keep it" wrote nothing; confirm voided. Show voided lists voided rows marked "Voided" (Documents/History only), totals and exports unchanged. Missing fields named in a summary and per field. Attachments show original filename + type + size + local date; opened via the existing signed link. Layout measured at 1400/900/390 px (below). |
-| M4 tenant payer | Implemented, verified in Practice; DB guard local only | Income offers Tenant / Vendor or other. Tenants listed per property from current **and past** leases with unit + lease dates (2018 lease listed). Switching property cleared the tenant with a visible explanation. Tenant income (2018 Rivera, 2025 Okafor) and vendor income saved, reloaded and reopened with the correct payer; stored as exactly one of vendor/tenant. Cross-account reference guard is a migration (see M6 dependency). |
+| M4 tenant payer | Implemented, verified in Practice; same-account guard applied to Practice Sept 29 and verified on hosted Supabase | Income offers Tenant / Vendor or other. Tenants listed per property from current **and past** leases with unit + lease dates (2018 lease listed). Switching property cleared the tenant with a visible explanation. Tenant income (2018 Rivera, 2025 Okafor) and vendor income saved, reloaded and reopened with the correct payer; stored as exactly one of vendor/tenant. Cross-account reference guard: `20260930110000`, applied to Practice (see Acceptance addendum). |
 | M5 improvement consistency | Implemented, verified in Practice | One ledger definition (income / operating expense / capital improvement) used by Financials summary, tax CSV, P&L, Cash Flow and the property KPI. Screens and the downloaded CSV matched hand-computed figures (below). |
 | M6 closed-period protection | Implemented; applied to hosted Practice Sept 29, 2026; verified on hosted Supabase and local Postgres | See "Acceptance addendum" below. |
 
@@ -60,8 +61,9 @@ and form do not.
 - `npm run build` (tsc -b + vite): pass. oxlint on touched modules: no errors.
 - `supabase/tests/closed_period_protection/`: 35/35 rule checks, 4/4
   concurrency cases, plus a control run proving the race without the
-  advisory locks. Local Postgres 17 replaying all 106 migrations; not
-  hosted Supabase.
+  advisory locks. Local Postgres 17 replaying all 106 migrations. Hosted
+  Supabase (Practice) evidence is separate: 24/24 rules, 4/4 concurrency —
+  see Acceptance addendum.
 
 ## M6 / M4 migration dependency (needs coordination)
 
@@ -310,18 +312,79 @@ original size and active tab.
   instances, no audit row on create, Mortgage-module interest not in P&L, financialsQueries.ts
   size).
 
-## Proposed release scope (excluding deferred CSV work)
+## Release candidate (prepared, not deployed) — September 29, 2026
 
-For a later owner-approved release — not deployed:
+**Candidate:** tip of `t2/m1-m6-release-candidate`, built on released main `e991c2e` by
+cherry-picking the M1–M6 commits; the exact hash is given in the T2 report that delivers this
+file (a commit cannot contain its own hash). Contents vs. production's released app `6eacdb0`:
+M1–M6 application code, `vite.review.config.ts`, tests, the two migrations below, docs and
+screenshots. Main has no source changes after `6eacdb0` (docs only), so the released Package 1
+code is carried unchanged. **Excluded:** deferred CSV import (`t2/historical-import-dedup`,
+`e280ad9`) and T1's in-progress Capture work (uncommitted planning docs in the main checkout;
+no Capture source changes exist in any commit).
 
-1. Commits on `t2/manual-bookkeeping-m1-m6` from `a25377b` through the acceptance commit
-   (application code, `vite.review.config.ts`, tests, docs/evidence).
-2. Production migrations, in order, **before or with** the frontend:
-   `20260930100000_financial_period_closed_protection.sql`,
-   `20260930110000_financial_transactions_same_account_refs.sql`. Both forward-only; run the same
-   read-only preflight against production first (cross-account references, rows in locked
-   periods) and stop on any finding.
-3. Dependency: this branch's base includes T1's Package 1 code but not T1's unreleased
-   Practice-only migrations' production application — T1's release must land first or be
-   combined deliberately; do not release this over an unaligned production schema.
-4. Excluded: `t2/historical-import-dedup` (`e280ad9`) and any CSV import changes.
+### Migration dependencies
+
+- Requires production at ledger version `20260929010000` (Package 1, released) — confirmed.
+- Pending, in order: `20260930100000_financial_period_closed_protection`,
+  `20260930110000_financial_transactions_same_account_refs`. No other pending migration.
+- Apply **before** deploying the frontend (the UI works on either schema; protection only
+  exists once applied). Forward-only; tested rollback: `docs/planning/bookkeeping/M1-M6-rollback.sql`.
+
+### Production preflight (read-only, Sept 29 2026, main checkout's production link; single
+SELECTs only, counts and schema facts — no record contents read)
+
+| Check | Production |
+|---|---|
+| Ledger latest / count / T2 versions present | `20260929010000` / 104 / 0 |
+| Transactions (all / voided) | 1 / 1 |
+| Cross-account property, vendor, tenant, prospective-tenant refs | 0, 0, 0, 0 |
+| Dangling property refs; rows with more than one payer | 0; 0 |
+| Financial periods (all / locked); rows inside locked periods | 0 / 0; 0 |
+| Name collisions with new functions/triggers | 0 |
+| Existing lock guard | original BEFORE UPDATE trigger (same body hash as the repo file) |
+| `assert_same_account`, `is_account_member` present | yes, yes |
+| Other active client sessions; last transaction write | 0; 2026-09-22 |
+
+No incompatible records; nothing to repair.
+
+### Backup / recovery readiness
+
+- Production has no platform backups (Free plan; no PITR). The only backup is T1's encrypted
+  manual archive `~/ZMR-Backups-Private/20260928-231818.tar.gz.enc` (+ `.sha256`), taken
+  **before** Package 1's 15 migrations. Data has been static since (last transaction write
+  Sept 22), but the schema has changed, so it is not a current snapshot.
+- **Required before applying:** a fresh run of T1's approved manual-backup procedure (owner's
+  private passphrase and temporary password file; not something T2 runs without that input),
+  checksum verified.
+- **Rollback:** `M1-M6-rollback.sql` — drops the new triggers/functions and restores the original
+  guard verbatim with production's current grants; verified on a disposable database that the
+  post-rollback schema equals the pre-M6 schema (only local difference: the stand-in lacks
+  Supabase's default `anon` grant, which production has and the script restores). A frontend
+  rollback (re-publish Netlify deploy `6abbd0994476210ce1e87c1a`) does not revert the database;
+  the UI is compatible with either schema.
+
+### Proposed release steps (for owner approval)
+
+1. Fresh encrypted backup + checksum. 2. Re-run the read-only preflight; stop on any finding.
+3. `supabase db push` of the two migrations to production; confirm ledger 106 and the three
+triggers. 4. Clean-checkout build/test at the candidate hash; deploy it. 5. Read-only live
+check (Financials, Reports, one form open/cancel) creating no records.
+
+### Owner visual review (about five minutes; engineering checks are already done)
+
+Open **http://127.0.0.1:5191/financials** (Practice; already signed in in Chrome — in your main
+window, the 127.0.0.1 tab). Fictional records only; nothing you do there reaches production.
+
+1. **Entry form:** click **Add transaction**. Look at the Payment method prompt (shown when the
+   list is empty), the Received from / Paid to field (switch Type to Income to see Tenant /
+   Vendor or other), and the Save / Save and add another / Cancel buttons. Click Cancel.
+2. **Transaction list:** set Tax year to **2025**, tick **Show voided**. Check readability of the
+   table, the "Voided" marks and the Paid to / from column. Try a narrower window to see the
+   stacked layout.
+3. **Expanded / edit state:** on any row click **Documents** (attachment name shown), then
+   **History**, then **Edit** (form scrolls to the top with the transaction named); click Cancel.
+   Click **Void** to see the confirmation, then **Keep it**.
+
+Tell planning only about design/wording preferences. Reference screenshots:
+`docs/planning/bookkeeping/m1-m6-screenshots/` (01–07 desktop 1440, 08–09 1024, 10–11 phone 500).
