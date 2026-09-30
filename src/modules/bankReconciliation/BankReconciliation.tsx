@@ -21,6 +21,9 @@ export function BankReconciliation() {
     toggleTransaction,
     loading,
     error,
+    saveNotice,
+    listStale,
+    dismissSaveNotice,
     saving,
     result,
     hasEnteredBalances,
@@ -33,6 +36,19 @@ export function BankReconciliation() {
       <h2>Bank reconciliation</h2>
       <p>Match a bank/credit-card statement period against Financials transactions and surface any discrepancy.</p>
       {error && <p role="alert">{error}</p>}
+      {saveNotice && (
+        <div role="alert">
+          <p>{saveNotice}</p>
+          <button type="button" onClick={dismissSaveNotice}>
+            Dismiss
+          </button>
+        </div>
+      )}
+      {listStale && (
+        <p role="status" className="field-hint">
+          The list below may be out of date — it could not be reloaded after the last change.
+        </p>
+      )}
 
       <label htmlFor="bank_rec_property">Property</label>
       <SearchableSelect

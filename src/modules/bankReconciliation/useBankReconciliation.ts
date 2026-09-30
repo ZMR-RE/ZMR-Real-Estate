@@ -1,10 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { listProperties } from '../properties/propertiesQueries'
 import { listTransactions, type Transaction } from '../financials/financialsQueries'
 import { markTransactionsReconciled } from './bankReconciliationQueries'
-import { computeReconciliation, filterByPeriod, reconciliationShortfall } from './bankReconciliationCalculations'
+import { computeReconciliation, filterByPeriod } from './bankReconciliationCalculations'
+import {
+  INITIAL_RECONCILIATION_STATUS,
+  reconciliationStatusReducer,
+  reloadEvent,
+  saveThenReload,
+  type ReloadOutcome,
+} from './bankReconciliationStatus'
 
 function firstOfMonth(): string {
   const now = new Date()
@@ -26,7 +33,7 @@ export function useBankReconciliation() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [status, dispatch] = useReducer(reconciliationStatusReducer, INITIAL_RECONCILIATION_STATUS)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -36,27 +43,28 @@ export function useBankReconciliation() {
     })
   }, [accountId])
 
-  const refresh = useCallback(async () => {
+  // Loads the list and reports whether that worked; it never touches the
+  // messages itself (see bankReconciliationStatus.ts).
+  const loadList = useCallback(async (): Promise<ReloadOutcome> => {
     if (!accountId || !propertyId) {
       setTransactions([])
-      return
+      return { error: null }
     }
     setLoading(true)
     const { data, error: fetchError } = await listTransactions(accountId, { propertyId })
     setLoading(false)
-    if (fetchError) {
-      setError(fetchError.message)
-      return
-    }
-    setError(null)
+    if (fetchError) return { error: fetchError.message }
     const inPeriod = filterByPeriod(data ?? [], periodStart, periodEnd)
     setTransactions(inPeriod)
     setSelectedIds(new Set(inPeriod.filter((tx) => tx.statement_reconciled).map((tx) => tx.id)))
+    return { error: null }
   }, [accountId, propertyId, periodStart, periodEnd])
 
+  // Filter-triggered reload: records its own outcome only, so an
+  // unacknowledged save result stays on screen.
   useEffect(() => {
-    refresh()
-  }, [refresh])
+    loadList().then((outcome) => dispatch(reloadEvent(outcome)))
+  }, [loadList])
 
   const toggleTransaction = (id: string) => {
     setSelectedIds((prev) => {
@@ -93,18 +101,18 @@ export function useBankReconciliation() {
 
   const markReconciled = async () => {
     if (!accountId || unreconciledSelectedIds.length === 0) return
+    const requested = unreconciledSelectedIds
     setSaving(true)
-    const { data, error: saveError } = await markTransactionsReconciled(accountId, unreconciledSelectedIds)
-    setSaving(false)
-    if (saveError) {
-      setError(saveError.message)
-      return
-    }
-    // Reload first: the reload clears the message, so the save's own
-    // outcome (entries it could not match) is set after it, not before.
-    const shortfall = reconciliationShortfall(unreconciledSelectedIds, (data ?? []).map((r) => r.id as string))
-    await refresh()
-    if (shortfall) setError(shortfall)
+    await saveThenReload(
+      requested,
+      async () => {
+        const { data, error: saveError } = await markTransactionsReconciled(accountId, requested)
+        setSaving(false)
+        return { updatedIds: saveError ? null : (data ?? []).map((r) => r.id as string), error: saveError?.message ?? null }
+      },
+      loadList,
+      dispatch,
+    )
   }
 
   return {
@@ -123,7 +131,10 @@ export function useBankReconciliation() {
     selectedIds,
     toggleTransaction,
     loading,
-    error,
+    error: status.error,
+    saveNotice: status.saveNotice,
+    listStale: status.listStale,
+    dismissSaveNotice: () => dispatch({ type: 'noticeDismissed' }),
     saving,
     result,
     hasEnteredBalances,
