@@ -234,6 +234,21 @@ This was pulled ahead of Milestone 2 because the owner asked for it to be finish
   5. confirm an ordinary document can still be deleted.
 - The service role bypasses these policies, as with all Storage policies. The recorded digest is the detection backstop.
 
+## Review references and later changes (September 30)
+
+- **`4bd2078` is the owner's review reference** for the Rent ops workflow.
+  - It's served from the pinned worktree `../ZMR-Real-Estate-T4-review` at
+    http://127.0.0.1:5196/rent-invoices-review.html (a detached server).
+- **Later, separately identified changes:**
+  - `ae0d469`: Milestone 2 checkpoint. Tenancy & billing, Property billing
+    settings and Entity invoicing boxes, plus the invoice-code lock
+    migration `20261002150000`. Not yet browser-verified; it needs a backend.
+  - The entity branding proposal preview (see
+    `ZMR-T4-entity-branding-proposal.md`).
+- **The current Stage 1 PDF samples are not approved.** The owner wants
+  entity branding and the invoice layout settled first; proposals B1–B9
+  await numbered approval.
+
 ## Remaining milestones (estimates)
 
 | # | Work | Estimate |
