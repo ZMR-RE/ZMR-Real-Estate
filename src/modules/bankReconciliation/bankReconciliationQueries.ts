@@ -20,3 +20,13 @@ export async function markTransactionsReconciled(accountId: string, transactionI
     .in('id', transactionIds)
     .select('id')
 }
+
+// Read-only check of specific saved records (used to verify a save whose
+// outcome could not be confirmed), independent of the list on screen.
+export async function listReconciliationState(accountId: string, transactionIds: string[]) {
+  return supabase
+    .from('financial_transactions')
+    .select('id, statement_reconciled, voided')
+    .eq('account_id', accountId)
+    .in('id', transactionIds)
+}

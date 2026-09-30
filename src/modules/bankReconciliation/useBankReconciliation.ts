@@ -3,16 +3,18 @@ import { useAuth } from '../../shared/auth/AuthContext'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { listProperties } from '../properties/propertiesQueries'
 import { listTransactions, type Transaction } from '../financials/financialsQueries'
-import { markTransactionsReconciled } from './bankReconciliationQueries'
+import { listReconciliationState, markTransactionsReconciled } from './bankReconciliationQueries'
 import { computeReconciliation, filterByPeriod } from './bankReconciliationCalculations'
 import {
-  createLatestLoadGate,
+  createSelectionGate,
   INITIAL_RECONCILIATION_STATUS,
   loadLatest,
   reconciliationStatusReducer,
   reloadEvent,
   saveThenReload,
+  type ListSelection,
   type ReloadOutcome,
+  type VerifyOutcome,
 } from './bankReconciliationStatus'
 
 function firstOfMonth(): string {
@@ -37,7 +39,7 @@ export function useBankReconciliation() {
   const [loading, setLoading] = useState(false)
   const [status, dispatch] = useReducer(reconciliationStatusReducer, INITIAL_RECONCILIATION_STATUS)
   const [saving, setSaving] = useState(false)
-  const [loadGate] = useState(createLatestLoadGate)
+  const [loadGate] = useState(createSelectionGate)
 
   useEffect(() => {
     if (!accountId) return
@@ -46,42 +48,53 @@ export function useBankReconciliation() {
     })
   }, [accountId])
 
-  // Loads the list for the current property/period and reports the
-  // outcome; it never touches the messages itself. A response that arrives
-  // after a newer load started (the owner changed the selection) is
-  // ignored, so it cannot replace the current selection's list.
-  const loadList = useCallback(async (): Promise<ReloadOutcome> => {
-    if (!accountId || !propertyId) {
-      loadGate.begin()
-      setTransactions([])
-      return { status: 'loaded', reconciledIds: [] }
-    }
-    setLoading(true)
-    const outcome = await loadLatest(
-      loadGate,
-      async () => {
-        const { data, error } = await listTransactions(accountId, { propertyId })
-        return { data, error: error?.message ?? null }
-      },
-      (data) => {
-        const inPeriod = filterByPeriod(data ?? [], periodStart, periodEnd)
-        setTransactions(inPeriod)
-        setSelectedIds(new Set(inPeriod.filter((tx) => tx.statement_reconciled).map((tx) => tx.id)))
-        return inPeriod.filter((tx) => tx.statement_reconciled).map((tx) => tx.id)
-      },
-    )
-    if (outcome.status !== 'superseded') setLoading(false)
-    return outcome
-  }, [accountId, propertyId, periodStart, periodEnd, loadGate])
+  const selection = useMemo<ListSelection>(
+    () => ({ propertyId, periodStart, periodEnd }),
+    [propertyId, periodStart, periodEnd],
+  )
 
-  // Filter-triggered reload: records its own outcome only, so an
-  // unacknowledged save result stays on screen.
+  // Loads the list for one selection and reports the outcome; it never
+  // touches the messages itself. Its result populates the list only if it
+  // is for the selection the owner has NOW and no newer load for that
+  // selection started (see createSelectionGate).
+  const loadFor = useCallback(
+    async (sel: ListSelection): Promise<ReloadOutcome> => {
+      if (!accountId || !sel.propertyId) {
+        loadGate.begin(sel)
+        setTransactions([])
+        return { status: 'loaded', reconciledIds: [] }
+      }
+      const propertyForLoad = sel.propertyId
+      setLoading(true)
+      const outcome = await loadLatest(
+        loadGate,
+        sel,
+        async () => {
+          const { data, error } = await listTransactions(accountId, { propertyId: propertyForLoad })
+          return { data, error: error?.message ?? null }
+        },
+        (data) => {
+          const inPeriod = filterByPeriod(data ?? [], sel.periodStart, sel.periodEnd)
+          setTransactions(inPeriod)
+          setSelectedIds(new Set(inPeriod.filter((tx) => tx.statement_reconciled).map((tx) => tx.id)))
+          return inPeriod.filter((tx) => tx.statement_reconciled).map((tx) => tx.id)
+        },
+      )
+      if (outcome.status !== 'superseded') setLoading(false)
+      return outcome
+    },
+    [accountId, loadGate],
+  )
+
+  // Selection change: record it as current, then load it. Records only its
+  // own outcome, so an unacknowledged save result stays on screen.
   useEffect(() => {
-    loadList().then((outcome) => {
+    loadGate.select(selection)
+    loadFor(selection).then((outcome) => {
       const event = reloadEvent(outcome)
       if (event) dispatch(event)
     })
-  }, [loadList])
+  }, [selection, loadFor, loadGate])
 
   const toggleTransaction = (id: string) => {
     setSelectedIds((prev) => {
@@ -130,7 +143,20 @@ export function useBankReconciliation() {
           error: saveError ? { message: saveError.message, code: saveError.code, status } : null,
         }
       },
-      loadList,
+      // Verify the saved records themselves, whatever is on screen now.
+      async (): Promise<VerifyOutcome> => {
+        const { data, error } = await listReconciliationState(accountId, requested)
+        if (error) return { status: 'failed', error: error.message }
+        return {
+          status: 'checked',
+          reconciledIds: (data ?? []).filter((r) => r.statement_reconciled && !r.voided).map((r) => r.id as string),
+        }
+      },
+      // Reload whatever the owner has selected NOW (not the saved selection).
+      () => {
+        const current = loadGate.current()
+        return current ? loadFor(current) : Promise.resolve<ReloadOutcome>({ status: 'superseded' })
+      },
       dispatch,
     )
   }

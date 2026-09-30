@@ -25,6 +25,7 @@ export const UNCONFIRMED_SAVE_UNRESOLVED =
 export type ReconciliationEvent =
   | { type: 'saveFailed'; message: string }
   | { type: 'saveUnconfirmed'; message: string }
+  | { type: 'verifyFailed'; message: string }
   | { type: 'saved'; notice: string | null }
   | { type: 'reloadSucceeded' }
   | { type: 'reloadFailed'; message: string }
@@ -39,6 +40,9 @@ export function reconciliationStatusReducer(state: ReconciliationStatus, event: 
     case 'saveUnconfirmed':
       // The request may or may not have been recorded; never claim either.
       return { ...state, error: event.message, saveNotice: UNCONFIRMED_SAVE_CHECKING }
+    case 'verifyFailed':
+      // Checking the saved records failed; the list itself is unaffected.
+      return { ...state, error: event.message }
     case 'saved':
       // A new (or newly verified) save result supersedes the previous one.
       return { ...state, error: null, saveNotice: event.notice }
@@ -71,8 +75,9 @@ export interface SaveOutcome {
   error: SaveError | null
 }
 
-// A list load either applies to the current selection, fails, or was
-// overtaken by a newer load (a changed property/period) and is ignored.
+// A list load either applies to the current selection, fails, or is
+// ignored because it is not for the current selection or a newer load for
+// that selection started after it.
 export type ReloadOutcome =
   | { status: 'loaded'; reconciledIds: string[] }
   | { status: 'failed'; error: string }
@@ -96,11 +101,19 @@ function verifiedNotice(requestedIds: string[], reconciledIds: string[]): string
     : `The save could not be confirmed at first. After checking, ${n === 1 ? 'the selected transaction is' : `all ${n} selected transactions are`} marked as matched.`
 }
 
+// Checking the ORIGINAL saved records by id (not whatever list is on
+// screen): which of them are now matched and not voided.
+export type VerifyOutcome = { status: 'checked'; reconciledIds: string[] } | { status: 'failed'; error: string }
+
 // The exact sequence the hook runs when the owner saves a reconciliation.
+// verify() checks the saved records themselves; reloadCurrent() reloads
+// the list for whatever property/period is selected NOW, and its result is
+// shown only if it is still current when it returns.
 export async function saveThenReload(
   requestedIds: string[],
   save: () => Promise<SaveOutcome>,
-  reload: () => Promise<ReloadOutcome>,
+  verify: () => Promise<VerifyOutcome>,
+  reloadCurrent: () => Promise<ReloadOutcome>,
   dispatch: (event: ReconciliationEvent) => void,
 ): Promise<void> {
   const saved = await save()
@@ -109,46 +122,65 @@ export async function saveThenReload(
     return
   }
   if (saved.error) {
-    // Uncertain: verify against what the database now holds.
+    // Uncertain: check the saved records, independent of the list shown.
     dispatch({ type: 'saveUnconfirmed', message: saved.error.message })
-    const checked = await reload()
-    if (checked.status === 'loaded') {
+    const checked = await verify()
+    if (checked.status === 'checked') {
       dispatch({ type: 'saved', notice: verifiedNotice(requestedIds, checked.reconciledIds) })
-      dispatch({ type: 'reloadSucceeded' })
     } else {
-      // Not verified (failed, or the owner moved to another selection):
-      // say so instead of claiming an outcome.
       dispatch({ type: 'saved', notice: UNCONFIRMED_SAVE_UNRESOLVED })
-      const event = reloadEvent(checked)
-      if (event) dispatch(event)
+      dispatch({ type: 'verifyFailed', message: checked.error })
     }
-    return
+  } else {
+    dispatch({ type: 'saved', notice: reconciliationShortfall(requestedIds, saved.updatedIds ?? []) })
   }
-  dispatch({ type: 'saved', notice: reconciliationShortfall(requestedIds, saved.updatedIds ?? []) })
-  const event = reloadEvent(await reload())
+  const event = reloadEvent(await reloadCurrent())
   if (event) dispatch(event)
 }
 
-// Tracks the latest list load so an older response that arrives after a
-// newer one started (the owner changed property or period) is ignored.
-export function createLatestLoadGate() {
-  let latest = 0
+// Which property and period a list load is for.
+export interface ListSelection {
+  propertyId: string | null
+  periodStart: string
+  periodEnd: string
+}
+
+export const selectionKey = (s: ListSelection) => `${s.propertyId ?? ''}|${s.periodStart}|${s.periodEnd}`
+
+// Tracks the owner's CURRENT selection and, per selection, the newest load
+// started for it. A load's result may populate the list only if it is for
+// the current selection AND no newer load for that selection has started —
+// so neither an older load nor a later load for a previous selection (e.g. a
+// save's reload for P1 after the owner picked P2) can replace the list.
+export function createSelectionGate() {
+  let current: ListSelection | null = null
+  let seq = 0
+  const newestByKey = new Map<string, number>()
   return {
-    begin: () => ++latest,
-    isCurrent: (token: number) => token === latest,
+    select: (selection: ListSelection) => {
+      current = selection
+    },
+    current: () => current,
+    begin: (selection: ListSelection) => {
+      const id = ++seq
+      const key = selectionKey(selection)
+      newestByKey.set(key, id)
+      return { id, key }
+    },
+    isCurrent: (token: { id: number; key: string }) =>
+      current !== null && token.key === selectionKey(current) && newestByKey.get(token.key) === token.id,
   }
 }
 
-// One list load as the hook runs it: take a token, fetch, and apply the
-// result only if no newer load has started since. Returns which
-// transactions the applied list shows as matched (used to verify an
-// unconfirmed save).
+// One list load as the hook runs it: take a token for the selection it is
+// for, fetch, and apply the result only if it is still current.
 export async function loadLatest<T>(
-  gate: ReturnType<typeof createLatestLoadGate>,
+  gate: ReturnType<typeof createSelectionGate>,
+  selection: ListSelection,
   fetch: () => Promise<{ data: T | null; error: string | null }>,
   apply: (data: T | null) => string[],
 ): Promise<ReloadOutcome> {
-  const token = gate.begin()
+  const token = gate.begin(selection)
   const result = await fetch()
   if (!gate.isCurrent(token)) return { status: 'superseded' }
   if (result.error) return { status: 'failed', error: result.error }

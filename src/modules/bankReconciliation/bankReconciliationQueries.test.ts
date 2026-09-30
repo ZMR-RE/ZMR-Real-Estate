@@ -23,4 +23,14 @@ describe('markTransactionsReconciled', () => {
     expect(calls).toContainEqual(['in', ['id', ['t1', 't2']]])
     expect(calls).toContainEqual(['select', ['id']])
   })
+
+  it('the save check reads the original records by id, workspace-scoped, and writes nothing', async () => {
+    calls.length = 0
+    const { listReconciliationState } = await import('./bankReconciliationQueries')
+    await listReconciliationState('acct', ['t1', 't2'])
+    expect(calls).toContainEqual(['select', ['id, statement_reconciled, voided']])
+    expect(calls).toContainEqual(['eq', ['account_id', 'acct']])
+    expect(calls).toContainEqual(['in', ['id', ['t1', 't2']]])
+    expect(calls.some(([m]) => m === 'update')).toBe(false)
+  })
 })
