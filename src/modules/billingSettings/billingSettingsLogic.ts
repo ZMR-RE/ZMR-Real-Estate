@@ -1,4 +1,4 @@
-import type { BillingTermsInput, BillingTermsRow, EntityInvoicingInput } from './billingSettingsQueries'
+import type { BillingTermsInput, BillingTermsRow, ContinuityOption, EntityInvoicingInput } from './billingSettingsQueries'
 
 // Pure helpers for the billing settings boxes (no Supabase, no React).
 
@@ -23,6 +23,7 @@ export interface TermsFormValues {
   effectiveTo: string
   prorateRule: BillingTermsRow['prorate_rule']
   prorateNotes: string
+  continuesLeaseId: string
 }
 
 export function termsFormFrom(t: BillingTermsRow | null): TermsFormValues {
@@ -32,6 +33,7 @@ export function termsFormFrom(t: BillingTermsRow | null): TermsFormValues {
     effectiveTo: t?.effective_to ?? '',
     prorateRule: t?.prorate_rule ?? 'none',
     prorateNotes: t?.prorate_notes ?? '',
+    continuesLeaseId: t?.continues_lease_id ?? '',
   }
 }
 
@@ -49,6 +51,7 @@ export function termsInputFrom(v: TermsFormValues): BillingTermsInput {
     effective_to: v.effectiveTo || null,
     prorate_rule: v.prorateRule,
     prorate_notes: v.prorateNotes.trim() || null,
+    continues_lease_id: v.continuesLeaseId || null,
   }
 }
 
@@ -79,3 +82,13 @@ export function effectivePaymentInstructions(override: string | null, entityDefa
   if (inherited) return { text: inherited, source: `Inherited from ${entityName ?? 'the invoicing entity'}’s default (Branding & documents)` }
   return { text: null, source: null }
 }
+
+export function continuityLabel(o: ContinuityOption): string {
+  const names = o.lease_tenants.map((lt) => lt.tenant?.name).filter(Boolean).join(' & ')
+  const dates = `${o.start_date}${o.end_date ? ` to ${o.end_date}` : ' onward'}`
+  return `${o.property?.address ?? 'Property'} — ${o.unit?.unit_label ?? 'Unit'} · ${dates}${names ? ` · ${names}` : ''}`
+}
+
+// Only tenancies that started before this one can be continued from.
+export const continuityChoices = (all: ContinuityOption[], leaseId: string, startDate: string) =>
+  all.filter((o) => o.id !== leaseId && o.start_date < startDate)

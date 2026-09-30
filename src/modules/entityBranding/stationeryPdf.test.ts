@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { brandingInputFrom, stationeryFrom } from './brandingMapping'
 import { sampleInvoice, sampleReceipt } from './sampleDocuments'
 import { INVOICE_FIELDS, RECEIPT_FIELDS } from './stationeryFields'
-import { EMPTY_STATIONERY } from './stationeryLogic'
+import { EMPTY_STATIONERY, invoiceTotals } from './stationeryLogic'
 import { personLines, renderEntityDocument } from './stationeryPdf'
 import type { EntityIdentity } from './stationeryTypes'
 
@@ -29,12 +29,29 @@ describe('entity documents', () => {
     expect(out).toContain('On issue')
   })
 
-  it('earlier unpaid invoices appear only as references, outside the total', () => {
-    const inv = { ...sampleInvoice(null, null), priorUnpaid: [{ number: 'A-INV-000003', periodLabel: 'September 2026', outstanding: 1450 }] }
+  it('earlier unpaid: never a charge on this invoice; counted once in the labelled tenancy total', () => {
+    const base = sampleInvoice(null, null)
+    const inv = { ...base, priorUnpaid: [{ number: 'A-INV-000003', periodLabel: 'September 2026', outstanding: 1450 }, { number: 'A-INV-000004', periodLabel: 'October 2026', outstanding: 200.1 }] }
     const out = renderEntityDocument(jsPDF, entity, withBranding, { kind: 'invoice', data: inv }).output()
-    expect(out).toContain('NOT INCLUDED IN THIS TOTAL')
+    expect(out).toContain('NOT CHARGED AGAIN')
     expect(out).toContain('A-INV-000003')
+    expect(out).toMatch(/Amount due .{1,4} this invoice/)
     expect(out).toContain('$1,400.00')
+    expect(out).toContain('Total outstanding for this tenancy')
+    expect(out).toContain('$3,050.10')
+    expect(inv.lines).toEqual(base.lines)
+    // Through an explicit continuity link, the earlier tenancy is named.
+    const renewal = { ...base, priorUnpaid: [{ number: 'A-INV-000003', periodLabel: 'September 2026', outstanding: 1450, fromTenancy: '410 Example Street — Unit 1' }] }
+    const outR = renderEntityDocument(jsPDF, entity, withBranding, { kind: 'invoice', data: renewal }).output()
+    expect(outR).toContain('earlier tenancy, 410 Example Street')
+    expect(outR).toContain('the one it continues')
+    // Without earlier unpaid invoices there is one plain total.
+    const plain = renderEntityDocument(jsPDF, entity, withBranding, { kind: 'invoice', data: base }).output()
+    expect(plain).not.toContain('Total outstanding')
+  })
+
+  it('totals are exact to the cent', () => {
+    expect(invoiceTotals([{ amount: 0.1 }, { amount: 0.2 }], [{ outstanding: 0.3 }])).toEqual({ thisInvoice: 0.3, earlierUnpaid: 0.3, tenancyOutstanding: 0.6 })
   })
 
   it('without a logo the entity name starts on the top line (no reserved space); with one it moves below', () => {

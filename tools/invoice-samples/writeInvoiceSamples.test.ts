@@ -44,9 +44,30 @@ it.runIf(!!process.env.WRITE_INVOICE_SAMPLES)('writes owner-review invoice sampl
         ],
         amount_due: 1762.1,
         note: 'Rent is due by the 5th.',
-        prior_unpaid: [{ number: 'SRP-INV-000001', period_start: '2026-10-01', outstanding: 1020 }],
+        prior_unpaid: [{ number: 'SRP-INV-000001', period_start: '2026-10-01', outstanding: 1020, source: 'this_tenancy', tenancy_label: '27 Sample Road — Unit A' }],
+        balance: { this_invoice: 1762.1, earlier_unpaid: 1020, total_outstanding: 2782.1 },
       },
       null,
+      null,
+    ),
+  )
+  // 3. Renewal written as a new lease, explicitly linked on Tenancy & billing: the earlier
+  //    tenancy's unpaid invoice is named and counted once; this invoice's own amount is unchanged.
+  write(
+    dir,
+    'sample-3-issued-renewal-with-earlier-balance.pdf',
+    buildInvoiceRender(
+      {
+        ...snapshot,
+        period_start: '2027-01-01',
+        period_end: '2027-01-31',
+        due_date: '2027-01-01',
+        lines: [{ kind: 'rent', description: 'Rent — January 2027', amount: 1500 }],
+        amount_due: 1500,
+        prior_unpaid: [{ number: 'A-INV-000007', period_start: '2026-12-01', outstanding: 450, source: 'continued_tenancy', tenancy_label: '410 Example Street — Unit 1 (2026 lease)' }],
+        balance: { this_invoice: 1500, earlier_unpaid: 450, total_outstanding: 1950 },
+      },
+      { number: 'A-INV-000009', issuedAt: '2026-12-20T15:00:00Z' },
       null,
     ),
   )

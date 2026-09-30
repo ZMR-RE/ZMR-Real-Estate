@@ -93,13 +93,37 @@ export function InvoiceReviewPanel({ invoice, tenancy, issuers, workflow }: Invo
             ) : (
               <div className="field"><dt>How to pay</dt><dd className="invoice-callout">No payment instructions — add a default in the entity’s Branding &amp; documents, or this property’s own in Billing settings.</dd></div>
             )}
+            <div className="field"><dt>Amount due — this invoice</dt><dd>{formatMoney(Number(snap.balance.this_invoice))}</dd></div>
             {snap.prior_unpaid.length > 0 && (
-              <div className="field">
-                <dt>Earlier unpaid (reference only, not in this total)</dt>
-                <dd>{snap.prior_unpaid.map((p) => `${p.number} (${periodLabel(p.period_start)}): ${formatMoney(Number(p.outstanding))}`).join('; ')}</dd>
-              </div>
+              <>
+                <div className="field">
+                  <dt>Earlier unpaid — already billed, not charged again</dt>
+                  <dd>
+                    {snap.prior_unpaid.map((p) => (
+                      <span key={p.number} className="invoice-recipient">
+                        {p.number} ({periodLabel(p.period_start)}): {formatMoney(Number(p.outstanding))} remaining
+                        {p.source === 'continued_tenancy' && <span className="field-hint"> · earlier tenancy {p.tenancy_label} (linked on Tenancy &amp; billing)</span>}
+                      </span>
+                    ))}
+                  </dd>
+                </div>
+                <div className="field">
+                  <dt>{snap.prior_unpaid.some((p) => p.source === 'continued_tenancy') ? 'Total outstanding — this tenancy and the one it continues' : 'Total outstanding for this tenancy'}</dt>
+                  <dd>{formatMoney(Number(snap.balance.total_outstanding))}</dd>
+                </div>
+              </>
             )}
           </dl>
+          {snap.balance_review.length > 0 && (
+            <div className="invoice-callout" role="note">
+              <strong>Earlier balances not included — review who owes them:</strong>
+              <ul>
+                {snap.balance_review.map((r) => (
+                  <li key={r.number}>{r.number} ({periodLabel(r.period_start)}, {r.tenancy_label}): {formatMoney(Number(r.outstanding))} — {r.reason}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </>
       )}
 

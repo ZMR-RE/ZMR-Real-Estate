@@ -194,6 +194,34 @@ select t('rule on a tenancy that is ending', $q$insert into tenancy_charge_rules
 select a('lease end flags the rule for review', $q$(select count(*) = 1 from charge_rules_needing_review('a5000000-0000-0000-0000-000000000001','2026-12-15'))$q$);
 select a('open-ended tenancy: nothing to review', $q$(select count(*) = 0 from charge_rules_needing_review('a5000000-0000-0000-0000-000000000003','2027-01-15'))$q$);
 
+-- Earlier balances: referenced once, never charged; renewals only by explicit link
+set request.jwt.claim.sub = 'aaaaaaaa-0000-0000-0000-00000000000a';
+select id as l1dec from invoices where lease_id = :L1 and period_start = '2026-12-01' and created_via = 'assistant' \gset
+select a('replaced October invoice counted once (its revision), never the superseded original', $q$(select count(*) = 1 and min(p->>'number') = '$q$ || :'nr' || $q$' from jsonb_array_elements(invoice_print_snapshot('$q$ || :'l1dec' || $q$')->'prior_unpaid') p where p->>'period_start' = '2026-10-01')$q$);
+select a('totals: this invoice and total outstanding kept separate, sum exact', $q$(select (s->'balance'->>'this_invoice')::numeric = (s->>'amount_due')::numeric and (s->'balance'->>'total_outstanding')::numeric = (s->>'amount_due')::numeric + (select coalesce(sum((p->>'outstanding')::numeric), 0) from jsonb_array_elements(s->'prior_unpaid') p) from invoice_print_snapshot('$q$ || :'l1dec' || $q$') s)$q$);
+select a('earlier balances never become lines of this invoice', $q$not exists (select 1 from invoice_lines where invoice_id = '$q$ || :'l1dec' || $q$' and description like '%INV-%')$q$);
+-- A renewal written as a new lease (L6, same unit, same billed tenant)
+insert into leases (id, account_id, property_id, unit_id, rent_amount, start_date) values ('a5000000-0000-0000-0000-000000000006','a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-000000000001','a4000000-0000-0000-0000-000000000001',1500,'2027-01-01');
+insert into lease_tenants (account_id, lease_id, tenant_id, is_billing_recipient) values ('a0000000-0000-0000-0000-00000000000a','a5000000-0000-0000-0000-000000000006','a3000000-0000-0000-0000-000000000001',true);
+insert into lease_billing_terms (lease_id, account_id, due_day) values ('a5000000-0000-0000-0000-000000000006','a0000000-0000-0000-0000-00000000000a',1);
+select create_invoice_draft('a5000000-0000-0000-0000-000000000006', '2027-01-01') as l6jan \gset
+select a('without a link, a new tenancy shows no earlier balance (never inferred from the tenant)', $q$(select jsonb_array_length(s->'prior_unpaid') = 0 and jsonb_array_length(s->'balance_review') = 0 from invoice_print_snapshot('$q$ || :'l6jan' || $q$') s)$q$);
+select t('a tenancy can''t continue from itself', $q$update lease_billing_terms set continues_lease_id = lease_id where lease_id = 'a5000000-0000-0000-0000-000000000006'$q$, 'ZM302');
+select t('can''t continue from a later tenancy', $q$update lease_billing_terms set continues_lease_id = 'a5000000-0000-0000-0000-000000000006' where lease_id = 'a5000000-0000-0000-0000-000000000001'$q$, 'ZM302');
+select t('can''t continue from another account''s tenancy', $q$update lease_billing_terms set continues_lease_id = 'b5000000-0000-0000-0000-00000000000b' where lease_id = 'a5000000-0000-0000-0000-000000000006'$q$, 'ZM302');
+select t('owner links the renewal explicitly', $q$update lease_billing_terms set continues_lease_id = 'a5000000-0000-0000-0000-000000000001' where lease_id = 'a5000000-0000-0000-0000-000000000006'$q$, 'ok');
+select a('linked renewal: earlier tenancy''s unpaid invoices referenced, labelled, counted once', $q$(select count(*) > 0 and bool_and(p->>'source' = 'continued_tenancy') and count(distinct p->>'number') = count(*) from jsonb_array_elements(invoice_print_snapshot('$q$ || :'l6jan' || $q$')->'prior_unpaid') p)$q$);
+select a('linked renewal: this invoice''s own amount is unchanged (no new charge)', $q$(select (s->'balance'->>'this_invoice')::numeric = 1500 and (s->>'amount_due')::numeric = 1500 and (s->'balance'->>'total_outstanding')::numeric > 1500 from invoice_print_snapshot('$q$ || :'l6jan' || $q$') s)$q$);
+select t('an earlier tenancy is continued by at most one', $q$update lease_billing_terms set continues_lease_id = 'a5000000-0000-0000-0000-000000000001' where lease_id = 'a5000000-0000-0000-0000-000000000002'$q$, '23505');
+select update_invoice_draft(:'l6jan', 1, '{"billing_entity_id":"e2000000-0000-0000-0000-000000000002"}') as v6 \gset
+select a('different issuing entity: earlier invoices are a separate liability — review only, not in the total', $q$(select jsonb_array_length(s->'prior_unpaid') = 0 and jsonb_array_length(s->'balance_review') > 0 and (s->'balance'->>'total_outstanding')::numeric = 1500 and s->'balance_review'->0->>'reason' like 'Issued by a different entity%' from invoice_print_snapshot('$q$ || :'l6jan' || $q$') s)$q$);
+-- A linked tenancy with no billed tenant in common: uncertain responsibility
+insert into leases (id, account_id, property_id, unit_id, rent_amount, start_date) values ('a5000000-0000-0000-0000-000000000007','a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-000000000001','a4000000-0000-0000-0000-000000000002',1400,'2027-02-01');
+insert into lease_tenants (account_id, lease_id, tenant_id, is_billing_recipient) values ('a0000000-0000-0000-0000-00000000000a','a5000000-0000-0000-0000-000000000007','a3000000-0000-0000-0000-000000000005',true);
+insert into lease_billing_terms (lease_id, account_id, due_day, continues_lease_id) values ('a5000000-0000-0000-0000-000000000007','a0000000-0000-0000-0000-00000000000a',1,'a5000000-0000-0000-0000-000000000002');
+select create_invoice_draft('a5000000-0000-0000-0000-000000000007', '2027-02-01') as l7feb \gset
+select a('no billed tenant in common: flagged for review, not counted', $q$(select jsonb_array_length(s->'prior_unpaid') = 0 and jsonb_array_length(s->'balance_review') > 0 and s->'balance_review'->0->>'reason' like '%who owes it needs your review' and (s->'balance'->>'total_outstanding')::numeric = (s->>'amount_due')::numeric from invoice_print_snapshot('$q$ || :'l7feb' || $q$') s)$q$);
+
 -- No account-specific document pick-list rows are seeded
 set request.jwt.claim.sub = 'aaaaaaaa-0000-0000-0000-00000000000a';
 select a('no Invoices pick-list rows were seeded', $q$not exists (select 1 from pick_list_options where list_name = 'document_type' and value = 'Invoices')$q$);

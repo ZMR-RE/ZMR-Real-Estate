@@ -127,8 +127,8 @@ other validation.
 
 - reading: managers and viewers can still see invoices and settings;
 - other edits to the same records (property address, tenancy members);
-- recording payments — this is T2's rent-payment area. The owner should decide there whether
-  managers may record payments.
+- recording payments — existing behaviour, unchanged; recorded separately in
+  `ZMR-T4-existing-payment-recording-behavior.md` (not a proposal).
 
 **Evidence:**
 

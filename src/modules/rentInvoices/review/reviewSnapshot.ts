@@ -15,6 +15,12 @@ export function printSnapshot(db: MockDb, inv: MockRow): Record<string, unknown>
   const override = String(p.payment_instructions_override ?? '').trim()
   const entityDefault = String(b.payment_instructions ?? '').trim()
   const paid = (id: unknown) => db.payments.filter((x) => x.invoice_id === id).reduce((s, x) => s + Number(x.amount), 0)
+  const prior = db.invoices
+    .filter((o) => o.lease_id === inv.lease_id && o.state === 'issued' && o.number && o.id !== inv.id && o.id !== inv.revision_of && (o.period_start as string) < (inv.period_start as string))
+    .map((o) => ({ number: o.number, period_start: o.period_start, outstanding: Number(o.amount_due) - paid(o.id), source: 'this_tenancy', tenancy_label: `${p.address}${u ? ` — ${u.unit_label}` : ''}` }))
+    .filter((o) => o.outstanding > 0)
+    .sort((a, c) => String(a.period_start).localeCompare(String(c.period_start)))
+  const earlier = Math.round(prior.reduce((sum, o) => sum + o.outstanding, 0) * 100) / 100
   return {
     issuer: e
       ? { entity_id: e.id, legal_name: e.name, display_name: e.display_name, invoice_code: e.invoice_code, mailing_address: e.mailing_address, mailing_city: e.mailing_city, mailing_state: e.mailing_state, mailing_zip: e.mailing_zip }
@@ -49,11 +55,11 @@ export function printSnapshot(db: MockDb, inv: MockRow): Record<string, unknown>
     note: inv.visible_note ?? (String(b.default_invoice_note ?? '').trim() || null),
     revision: inv.revision,
     revision_of_number: inv.revision_of ? (find('invoices', inv.revision_of)?.number ?? null) : null,
-    prior_unpaid: db.invoices
-      .filter((o) => o.lease_id === inv.lease_id && o.state === 'issued' && o.number && o.id !== inv.id && o.id !== inv.revision_of && (o.period_start as string) < (inv.period_start as string))
-      .map((o) => ({ number: o.number, period_start: o.period_start, outstanding: Number(o.amount_due) - paid(o.id) }))
-      .filter((o) => o.outstanding > 0)
-      .sort((a, c) => String(a.period_start).localeCompare(String(c.period_start))),
+    // This tenancy only: the review data has no continuity links (the SQL's
+    // invoice_balance_references handles those and is what the DB checks test).
+    prior_unpaid: prior,
+    balance_review: [],
+    balance: { this_invoice: inv.amount_due, earlier_unpaid: earlier, total_outstanding: Math.round((Number(inv.amount_due) + earlier) * 100) / 100 },
   }
 }
 

@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { EditableSection } from '../../shared/EditableSection'
 import './billingSettings.css'
-import { dueDayLabel, PRORATE_LABEL, termsFormFrom, validateTerms, type TermsFormValues } from './billingSettingsLogic'
-import { termsOf, type TenancyRow } from './billingSettingsQueries'
+import { continuityChoices, continuityLabel, dueDayLabel, PRORATE_LABEL, termsFormFrom, validateTerms, type TermsFormValues } from './billingSettingsLogic'
+import { termsOf, type ContinuityOption, type TenancyRow } from './billingSettingsQueries'
 import { TenancyChargeRulesBox } from './TenancyChargeRulesBox'
 import { useTenancyBilling } from './useTenancyBilling'
 
@@ -18,7 +18,7 @@ interface TenancyBillingSectionProps {
 // terms and recipients are edited here. One charge per tenancy and month —
 // co-tenants share it.
 export function TenancyBillingSection({ tenantId }: TenancyBillingSectionProps) {
-  const { tenancies, loading, error, saving, save } = useTenancyBilling(tenantId)
+  const { tenancies, loading, error, saving, save, continuityOptions, loadContinuityOptions } = useTenancyBilling(tenantId)
   if (loading) return null
   if (tenancies.length === 0) return null
 
@@ -27,7 +27,7 @@ export function TenancyBillingSection({ tenantId }: TenancyBillingSectionProps) 
       {error && <p className="billing-callout billing-callout--error" role="alert">{error}</p>}
       {tenancies.map((t) => (
         <div key={t.id}>
-          <TenancyBillingBox key={`${t.id}-${termsOf(t)?.version ?? 0}`} tenancy={t} saving={saving} onSave={save} />
+          <TenancyBillingBox key={`${t.id}-${termsOf(t)?.version ?? 0}`} tenancy={t} saving={saving} onSave={save} continuityOptions={continuityOptions} onEditStart={loadContinuityOptions} />
           <TenancyChargeRulesBox leaseId={t.id} propertyId={t.property_id} where={`${t.property?.address ?? 'Property'} — ${t.unit?.unit_label ?? 'Unit'}`} />
         </div>
       ))}
@@ -39,9 +39,11 @@ interface BoxProps {
   tenancy: TenancyRow
   saving: boolean
   onSave: (t: TenancyRow, v: TermsFormValues, recipients: Record<string, boolean>) => Promise<boolean>
+  continuityOptions: ContinuityOption[]
+  onEditStart: () => void
 }
 
-function TenancyBillingBox({ tenancy: t, saving, onSave }: BoxProps) {
+function TenancyBillingBox({ tenancy: t, saving, onSave, continuityOptions, onEditStart }: BoxProps) {
   const terms = termsOf(t)
   const [values, setValues] = useState<TermsFormValues>(() => termsFormFrom(terms))
   const [recipients, setRecipients] = useState<Record<string, boolean>>(() => Object.fromEntries(t.lease_tenants.map((lt) => [lt.id, lt.is_billing_recipient])))
@@ -72,6 +74,12 @@ function TenancyBillingBox({ tenancy: t, saving, onSave }: BoxProps) {
         {terms?.effective_from && <div className="field"><dt>Bill from</dt><dd>{terms.effective_from}</dd></div>}
         {terms?.effective_to && <div className="field"><dt>Bill until</dt><dd>{terms.effective_to}</dd></div>}
         {terms?.prorate_notes && <div className="field"><dt>Prorating notes</dt><dd>{terms.prorate_notes}</dd></div>}
+        {terms?.continues_lease_id && (
+          <div className="field">
+            <dt>Billing continues from</dt>
+            <dd>{(() => { const o = continuityOptions.find((x) => x.id === terms.continues_lease_id); return o ? continuityLabel(o) : 'An earlier tenancy' })()}</dd>
+          </div>
+        )}
       </dl>
     </>
   )
@@ -115,6 +123,15 @@ function TenancyBillingBox({ tenancy: t, saving, onSave }: BoxProps) {
       <input id={`to-${t.id}`} type="date" value={values.effectiveTo} onChange={(e) => setValues({ ...values, effectiveTo: e.target.value })} />
       <p className="field-hint">Leave blank to follow the lease’s start ({t.start_date}) and end{t.end_date ? ` (${t.end_date})` : ''} dates.</p>
 
+      <label htmlFor={`cont-${t.id}`}>Billing continues from</label>
+      <select id={`cont-${t.id}`} value={values.continuesLeaseId} onChange={(e) => setValues({ ...values, continuesLeaseId: e.target.value })}>
+        <option value="">Not a continuation</option>
+        {continuityChoices(continuityOptions, t.id, t.start_date).map((o) => <option key={o.id} value={o.id}>{continuityLabel(o)}</option>)}
+      </select>
+      <p className="field-hint">
+        Only for a renewal or other continuation of the same billing relationship. When set, this tenancy’s invoices list that tenancy’s unpaid invoices from the same entity as earlier balances — never as new charges — and include them once in the total outstanding. Nothing is linked automatically; if the billed tenants differ, the balance is flagged for your review instead of counted.
+      </p>
+
       {touched && errors.length > 0 && <ul className="billing-errors" role="alert">{errors.map((er) => <li key={er}>{er}</li>)}</ul>}
       <div className="billing-actions">
         <button type="submit" disabled={saving}>Save</button>
@@ -129,5 +146,16 @@ function TenancyBillingBox({ tenancy: t, saving, onSave }: BoxProps) {
     setTouched(false)
   }
 
-  return <EditableSection title={`Tenancy & billing — ${where}`} defaultOpen view={view} edit={edit} onEditStart={reset} />
+  return (
+    <EditableSection
+      title={`Tenancy & billing — ${where}`}
+      defaultOpen
+      view={view}
+      edit={edit}
+      onEditStart={() => {
+        reset()
+        onEditStart()
+      }}
+    />
+  )
 }

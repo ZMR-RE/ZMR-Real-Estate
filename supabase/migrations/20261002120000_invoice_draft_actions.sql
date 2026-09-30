@@ -158,10 +158,58 @@ returns table (rule_id uuid, description text, service_period_start date) langua
                     where s.rule_id = r.id and s.service_period_start = (p_period_start - interval '1 month')::date)
 $$;
 
+-- Earlier unpaid invoices an invoice may REFERENCE (never charge again).
+-- Scope: this tenancy's earlier issued invoices, plus — only through
+-- explicit billing-continuity links (lease_billing_terms.continues_lease_id)
+-- — the issued invoices of the tenancies it continues. Each invoice is
+-- listed once with its remaining balance (amount due − payments); replaced
+-- (superseded), cancelled and unissued invoices never count, and neither
+-- does the invoice this one revises.
+--   counted = true  → included in the printed total outstanding
+--   counted = false → shown to the owner for review only, with the reason:
+--     issued by a different entity (a separate liability), or a linked
+--     tenancy with no billed tenant in common (who owes it is uncertain).
+create or replace function invoice_balance_references(p_id uuid)
+returns table (invoice_id uuid, number text, period_start date, outstanding numeric, source text, tenancy_label text, counted boolean, reason text)
+language sql stable set search_path = public as $$
+  with recursive inv as (select * from invoices where id = p_id),
+  chain(lease_id, depth) as (
+    select inv.lease_id, 0 from inv where inv.lease_id is not null
+    union all
+    select t.continues_lease_id, chain.depth + 1
+    from chain join lease_billing_terms t on t.lease_id = chain.lease_id
+    where t.continues_lease_id is not null and chain.depth < 50),
+  billed as (select (r->>'tenant_id')::uuid as tenant_id from inv, jsonb_array_elements(inv.recipients) r)
+  select o.id, o.number, o.period_start, o.amount_due - coalesce(pd.paid, 0),
+         case when c.depth = 0 then 'this_tenancy' else 'continued_tenancy' end,
+         pr.address || coalesce(' — ' || un.unit_label, ''),
+         o.billing_entity_id = i.billing_entity_id and (c.depth = 0 or sh.shared),
+         case when o.billing_entity_id is distinct from i.billing_entity_id
+                then 'Issued by a different entity — a separate liability, not included'
+              when c.depth > 0 and not sh.shared
+                then 'Earlier tenancy has no billed tenant in common with this invoice — who owes it needs your review'
+         end
+  from inv i
+  join chain c on true
+  join invoices o on o.lease_id = c.lease_id
+  join leases l on l.id = c.lease_id
+  join properties pr on pr.id = l.property_id
+  left join units un on un.id = l.unit_id
+  left join lateral (select sum(amount) as paid from payments where invoice_id = o.id) pd on true
+  left join lateral (select exists (select 1 from lease_tenants lt join billed b on b.tenant_id = lt.tenant_id
+                                    where lt.lease_id = c.lease_id and lt.is_billing_recipient) as shared) sh on true
+  where o.state = 'issued' and o.number is not null and o.id <> i.id
+    and o.id is distinct from i.revision_of
+    and (c.depth > 0 or o.period_start < i.period_start)
+    and o.amount_due - coalesce(pd.paid, 0) > 0
+  order by c.depth desc, o.period_start
+$$;
+
 -- Everything the invoice would print, from the records as they are NOW:
 -- issuer identity, branding (incl. logo version), effective payment
 -- instructions (property override, else entity default), recipients,
--- rental, lines, dates, note and earlier unpaid invoices (references only).
+-- rental, lines, dates, note, earlier unpaid invoices (references only, see
+-- invoice_balance_references) and the two totals.
 -- Approval records this; issue refuses if it has changed since.
 create or replace function invoice_print_snapshot(p_id uuid) returns jsonb language plpgsql stable set search_path = public as $$
 declare inv invoices; e llcs; b entity_document_branding; lv entity_logo_versions; pr properties; u units; l leases; v_orig text;
@@ -198,12 +246,23 @@ begin
     'note', coalesce(inv.visible_note, nullif(trim(b.default_invoice_note), '')),
     'revision', inv.revision, 'revision_of_number', v_orig,
     'prior_unpaid', (
-      select coalesce(jsonb_agg(jsonb_build_object('number', o.number, 'period_start', o.period_start, 'outstanding', o.amount_due - coalesce(pd.paid, 0)) order by o.period_start), '[]')
-      from invoices o
-      left join lateral (select sum(amount) as paid from payments where invoice_id = o.id) pd on true
-      where o.lease_id = inv.lease_id and o.state = 'issued' and o.number is not null and o.id <> inv.id
-        and o.id is distinct from inv.revision_of and o.period_start < inv.period_start
-        and o.amount_due - coalesce(pd.paid, 0) > 0)
+      select coalesce(jsonb_agg(jsonb_build_object('number', r.number, 'period_start', r.period_start, 'outstanding', r.outstanding,
+                                                   'source', r.source, 'tenancy_label', r.tenancy_label)
+                                order by r.source = 'this_tenancy', r.period_start, r.number), '[]')
+      from invoice_balance_references(inv.id) r where r.counted),
+    'balance_review', (
+      select coalesce(jsonb_agg(jsonb_build_object('number', r.number, 'period_start', r.period_start, 'outstanding', r.outstanding,
+                                                   'tenancy_label', r.tenancy_label, 'reason', r.reason)
+                                order by r.period_start, r.number), '[]')
+      from invoice_balance_references(inv.id) r where not r.counted),
+    -- The two printed totals, kept distinct: this invoice's own charges,
+    -- and the total outstanding (this invoice + each counted earlier
+    -- remaining balance, once).
+    'balance', (
+      select jsonb_build_object('this_invoice', inv.amount_due,
+                                'earlier_unpaid', coalesce(sum(r.outstanding), 0),
+                                'total_outstanding', inv.amount_due + coalesce(sum(r.outstanding), 0))
+      from invoice_balance_references(inv.id) r where r.counted)
   );
 end $$;
 

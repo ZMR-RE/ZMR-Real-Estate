@@ -13,6 +13,7 @@ export interface BillingTermsRow {
   effective_to: string | null
   prorate_rule: 'none' | 'daily' | 'manual'
   prorate_notes: string | null
+  continues_lease_id: string | null
   version: number
 }
 
@@ -38,7 +39,7 @@ export function termsOf(row: TenancyRow): BillingTermsRow | null {
 }
 
 const TENANCY_COLUMNS =
-  'id, account_id, property_id, rent_amount, start_date, end_date, archived, unit:units(unit_label), property:properties(address), lease_tenants(id, is_billing_recipient, tenant:tenants(id, name, email)), lease_billing_terms(lease_id, frequency, due_day, effective_from, effective_to, prorate_rule, prorate_notes, version)'
+  'id, account_id, property_id, rent_amount, start_date, end_date, archived, unit:units(unit_label), property:properties(address), lease_tenants(id, is_billing_recipient, tenant:tenants(id, name, email)), lease_billing_terms!lease_billing_terms_lease_id_fkey(lease_id, frequency, due_day, effective_from, effective_to, prorate_rule, prorate_notes, continues_lease_id, version)'
 
 export async function listTenantTenancies(tenantId: string) {
   const links = await supabase.from('lease_tenants').select('lease_id').eq('tenant_id', tenantId).returns<{ lease_id: string }[]>()
@@ -54,6 +55,27 @@ export interface BillingTermsInput {
   effective_to: string | null
   prorate_rule: 'none' | 'daily' | 'manual'
   prorate_notes: string | null
+  continues_lease_id: string | null
+}
+
+export interface ContinuityOption {
+  id: string
+  start_date: string
+  end_date: string | null
+  unit: { unit_label: string } | null
+  property: { address: string | null } | null
+  lease_tenants: { tenant: { name: string } | null }[]
+}
+
+// The account's tenancies, for choosing which earlier tenancy a tenancy's
+// billing continues from (explicit owner choice; nothing is suggested).
+export async function listContinuityOptions(accountId: string) {
+  return supabase
+    .from('leases')
+    .select('id, start_date, end_date, unit:units(unit_label), property:properties(address), lease_tenants(tenant:tenants(name))')
+    .eq('account_id', accountId)
+    .order('start_date', { ascending: false })
+    .returns<ContinuityOption[]>()
 }
 
 // Insert the tenancy's first terms, or update them only if nobody changed

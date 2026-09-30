@@ -93,7 +93,12 @@ export function buildInvoiceRender(
       lines,
       paymentInstructions: s.payment_instructions.text,
       note: s.note ?? '',
-      priorUnpaid: s.prior_unpaid.map((p) => ({ number: p.number, periodLabel: periodLabel(p.period_start), outstanding: Number(p.outstanding) })),
+      priorUnpaid: s.prior_unpaid.map((p) => ({
+        number: p.number,
+        periodLabel: periodLabel(p.period_start),
+        outstanding: Number(p.outstanding),
+        fromTenancy: p.source === 'continued_tenancy' ? p.tenancy_label : null,
+      })),
     },
     filename: invoiceFilename(issued?.number ?? null, s.period_start, unit),
     total: Math.round(lines.reduce((sum, l) => sum + l.amount, 0) * 100) / 100,
@@ -118,6 +123,8 @@ const PART_LABEL: Record<string, string> = {
   revision: 'revision',
   revision_of_number: 'revision',
   prior_unpaid: 'earlier unpaid invoices listed',
+  balance_review: 'earlier balances needing review',
+  balance: 'total outstanding',
 }
 
 const canonical = (v: unknown): unknown =>

@@ -65,7 +65,13 @@ export interface PrintSnapshot {
   note: string | null
   revision: number
   revision_of_number: string | null
-  prior_unpaid: { number: string; period_start: string; outstanding: number }[]
+  // Earlier unpaid invoices counted in the total outstanding — references
+  // only, never charges on this invoice (invoice_balance_references).
+  prior_unpaid: { number: string; period_start: string; outstanding: number; source: 'this_tenancy' | 'continued_tenancy'; tenancy_label: string }[]
+  // Earlier balances NOT counted, for the owner's review (different entity,
+  // or a linked tenancy with no billed tenant in common). Never printed.
+  balance_review: { number: string; period_start: string; outstanding: number; tenancy_label: string; reason: string }[]
+  balance: { this_invoice: number; earlier_unpaid: number; total_outstanding: number }
 }
 
 export type IssuedSnapshot = PrintSnapshot & { number: string; issued_at: string }

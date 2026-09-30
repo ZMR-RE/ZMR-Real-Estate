@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { termsInputFrom, type TermsFormValues } from './billingSettingsLogic'
-import { listTenantTenancies, saveBillingTerms, setBillingRecipient, termsOf, type TenancyRow } from './billingSettingsQueries'
+import { listContinuityOptions, listTenantTenancies, saveBillingTerms, setBillingRecipient, termsOf, type ContinuityOption, type TenancyRow } from './billingSettingsQueries'
 
 // RP1 — the tenant's tenancies with their billing terms and recipients.
 // Saving terms is version-checked: if someone changed them since this box
@@ -12,6 +12,14 @@ export function useTenancyBilling(tenantId: string) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [continuityOptions, setContinuityOptions] = useState<ContinuityOption[]>([])
+
+  // Tenancies belong to the lease module: re-read whenever Edit opens.
+  const loadContinuityOptions = useCallback(async () => {
+    if (!accountId) return
+    const { data } = await listContinuityOptions(accountId)
+    setContinuityOptions(data ?? [])
+  }, [accountId])
 
   const refresh = useCallback(async () => {
     const { data, error: e } = await listTenantTenancies(tenantId)
@@ -22,7 +30,8 @@ export function useTenancyBilling(tenantId: string) {
 
   useEffect(() => {
     refresh()
-  }, [refresh])
+    loadContinuityOptions()
+  }, [refresh, loadContinuityOptions])
 
   // Returns true when saved.
   const save = async (tenancy: TenancyRow, values: TermsFormValues, recipients: Record<string, boolean>): Promise<boolean> => {
@@ -34,9 +43,11 @@ export function useTenancyBilling(tenantId: string) {
     if (result.error) {
       setSaving(false)
       setError(
-        result.error.code === 'PGRST116' || result.error.code === '23505'
+        result.error.code === 'PGRST116'
           ? 'These billing terms changed since you opened them. The latest values are shown — review and edit again.'
-          : result.error.message,
+          : result.error.code === '23505'
+            ? 'That earlier tenancy is already continued by another tenancy. Each can be continued only once.'
+            : result.error.message,
       )
       await refresh()
       return false
@@ -57,5 +68,5 @@ export function useTenancyBilling(tenantId: string) {
     return true
   }
 
-  return { tenancies, loading, error, saving, save }
+  return { tenancies, loading, error, saving, save, continuityOptions, loadContinuityOptions }
 }

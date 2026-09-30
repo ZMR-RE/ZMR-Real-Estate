@@ -19,7 +19,7 @@ describe('billing settings logic', () => {
 
   it('round-trips terms without inventing values', () => {
     const input = termsInputFrom({ ...termsFormFrom(null), dueDay: '31', prorateRule: 'daily' })
-    expect(input).toEqual({ due_day: 31, effective_from: null, effective_to: null, prorate_rule: 'daily', prorate_notes: null })
+    expect(input).toEqual({ due_day: 31, effective_from: null, effective_to: null, prorate_rule: 'daily', prorate_notes: null, continues_lease_id: null })
   })
 
   it('validates entity invoicing like the database', () => {

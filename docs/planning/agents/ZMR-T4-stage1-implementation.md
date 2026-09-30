@@ -267,6 +267,46 @@ This was pulled ahead of Milestone 2 because the owner asked for it to be finish
 - It is checked first in every action and backed by table triggers for direct writes.
 - The DB checks run a manager, a viewer and another account's owner against each action (31 checks), then confirm nothing changed and memberships are untouched.
 
+## Invoice totals and earlier balances (September 30)
+
+**Owner requirement, as stated September 30.**
+
+- Show this invoice separately from earlier unpaid invoices.
+- Earlier invoices never become new charges.
+- An account-wide total must count each earlier remaining balance exactly once.
+- An explicitly linked renewal may carry the earlier balance within the same billing relationship and entity.
+- Never infer the link from tenant identity, and never combine unrelated liabilities.
+- Flag uncertain responsibility for review.
+
+**Built:**
+
+- **The link.** `lease_billing_terms.continues_lease_id` is owner-set on Tenancy & billing ("Billing continues from").
+  - It must point to an earlier tenancy in the same account (ZM302).
+  - It can't form a loop (ZM303).
+  - Each earlier tenancy can be continued at most once (unique).
+  - It is owner-only through the existing billing-terms trigger.
+  - Nothing is linked automatically.
+- **Which earlier invoices count.** `invoice_balance_references(invoice)` walks this tenancy plus its explicit links. It takes issued, numbered invoices with a remaining balance (amount due − payments), and excludes superseded, cancelled and unissued invoices and the invoice being revised.
+  - Invoices issued by the same entity, on this tenancy or on a linked tenancy that shares a billed tenant, are **counted**.
+  - Anything else is **review only**, with a reason: "different entity — separate liability" or "no billed tenant in common — who owes it needs your review". These are shown to the owner and never printed or counted.
+- **Snapshot.** The print snapshot carries `prior_unpaid` (counted), `balance_review` (not counted) and `balance {this_invoice, earlier_unpaid, total_outstanding}`.
+- **What prints.** "Amount due — this invoice" (the invoice's own lines), then a separate, smaller line: "Total outstanding for this tenancy" — or "… this tenancy and the one it continues" when a link applies. The earlier-invoices block is headed "already billed, not charged again on this invoice" and names the earlier tenancy.
+- **Evidence.** 13 new DB checks; the suite is at 158/158 with a passing self-test. They cover:
+  - a replaced invoice counted once (the revision, not the superseded original);
+  - totals exact, and no earlier balance ever becoming a line;
+  - no link, no carry-over, even for the same tenant;
+  - link refusals: self, later tenancy, other account, second successor;
+  - a linked renewal counted once, with the invoice's own amount unchanged;
+  - a different entity going to review only;
+  - no shared billed tenant going to review only.
+
+  Plus unit tests for the renderer and new sample PDFs (samples 2 and 3).
+
+**Not verified:**
+
+- PostgREST's embed hint `lease_billing_terms!lease_billing_terms_lease_id_fkey` has not been run against real PostgREST (it's needed now that two foreign keys point to `leases`). This is a Practice check.
+- The review page's simulated backend models this-tenancy earlier balances only, not links.
+
 ## Release verification (Practice, before any production step)
 
 Each item must be observed on Practice through the dashboard, not inferred from disposable-DB checks.
@@ -298,7 +338,7 @@ These are recorded so they aren't mistaken for approvals.
 - Phone-width check of the new "What prints" block and the billing-rules box wasn't re-run; the browser session couldn't resize below desktop width.
 - The billing-rules box isn't on the simulated review page, because that page shows Rent ops only. It is verified by unit checks, the 23 DB rule checks and a type-check, not in a browser.
 - The frontend doesn't know the member's role (it isn't in the shared auth context), so non-owners see action buttons and get the refusal message. Hiding the buttons needs a shared auth change, not made here.
-- Recording payments stays open to non-owners (T2's area); this is flagged in the register for an owner decision.
+- Recording payments: existing behaviour, unchanged, recorded separately in `ZMR-T4-existing-payment-recording-behavior.md`.
 
 ## Remaining milestones (estimates)
 

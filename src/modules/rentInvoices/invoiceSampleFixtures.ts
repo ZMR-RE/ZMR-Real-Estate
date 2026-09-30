@@ -44,6 +44,8 @@ export const snapshot: PrintSnapshot = {
   revision: 1,
   revision_of_number: null,
   prior_unpaid: [],
+  balance_review: [],
+  balance: { this_invoice: 1460, earlier_unpaid: 0, total_outstanding: 1460 },
 }
 
 export const issued: RentInvoiceRow = {

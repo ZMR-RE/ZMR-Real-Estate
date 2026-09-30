@@ -62,11 +62,21 @@ create table lease_billing_terms (
   -- manual = the owner enters the partial-month amount on the draft
   prorate_rule text not null default 'none' check (prorate_rule in ('none', 'daily', 'manual')),
   prorate_notes text,
+  -- Billing continuity (owner-set, never inferred): this tenancy's billing
+  -- continues from an earlier tenancy — e.g. a renewal written as a new
+  -- lease. Only through this explicit link can an invoice show that earlier
+  -- tenancy's unpaid balance (as a reference, never a new charge), and only
+  -- for invoices issued by the same entity to a shared billed tenant.
+  continues_lease_id uuid references leases(id) on delete restrict,
   version integer not null default 1,
   updated_at timestamptz not null default now(),
   updated_by uuid references auth.users(id),
-  constraint lease_billing_terms_dates check (effective_to is null or effective_from is null or effective_to >= effective_from)
+  constraint lease_billing_terms_dates check (effective_to is null or effective_from is null or effective_to >= effective_from),
+  constraint lease_billing_terms_not_self check (continues_lease_id is distinct from lease_id)
 );
+-- A tenancy is continued by at most one later tenancy, so an earlier
+-- balance can't appear in two billing relationships.
+create unique index lease_billing_terms_one_successor on lease_billing_terms (continues_lease_id) where continues_lease_id is not null;
 
 alter table lease_billing_terms enable row level security;
 
@@ -80,6 +90,22 @@ returns trigger language plpgsql set search_path = public as $$
 begin
   if not exists (select 1 from leases where id = new.lease_id and account_id = new.account_id) then
     raise exception 'Billing terms must belong to the same account as the lease' using errcode = 'ZM301';
+  end if;
+  if new.continues_lease_id is not null then
+    if not exists (select 1 from leases p join leases c on c.id = new.lease_id
+                   where p.id = new.continues_lease_id and p.account_id = new.account_id and p.start_date < c.start_date) then
+      raise exception 'Billing can only continue from an earlier tenancy in the same account' using errcode = 'ZM302';
+    end if;
+    -- No loops: walking back from the earlier tenancy must never reach this one.
+    if exists (
+      with recursive back(lease_id, depth) as (
+        select new.continues_lease_id, 1
+        union all
+        select t.continues_lease_id, back.depth + 1 from back join lease_billing_terms t on t.lease_id = back.lease_id
+        where t.continues_lease_id is not null and back.depth < 50)
+      select 1 from back where lease_id = new.lease_id) then
+      raise exception 'That link would make the tenancies continue from each other' using errcode = 'ZM303';
+    end if;
   end if;
   if tg_op = 'UPDATE' then
     new.version = old.version + 1;
