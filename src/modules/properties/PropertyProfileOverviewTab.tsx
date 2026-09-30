@@ -14,6 +14,7 @@ import { PropertyTenantsOverview } from '../tenants/PropertyTenantsOverview'
 import { FinancialAccountsSection } from '../financialAccounts/FinancialAccountsSection'
 import { VendorEstimatesSection } from '../vendorEstimates/VendorEstimatesSection'
 import { PropertyOwnershipInterestsSection } from './PropertyOwnershipInterestsSection'
+import { PropertyBillingSettingsSection } from '../billingSettings/PropertyBillingSettingsSection'
 import { usePropertyOwnershipInterests } from './usePropertyOwnershipInterests'
 import { resolveOwnershipAuthority } from '../llcs/ownershipInterestsQueries'
 import { PropertyForm } from './PropertyForm'
@@ -123,6 +124,8 @@ export function PropertyProfileOverviewTab({
       />
 
       <PropertyOwnershipInterestsSection propertyId={property.id} llcOptions={llcOptions} />
+
+      <PropertyBillingSettingsSection propertyId={property.id} />
 
       <FinancialAccountsSection propertyId={property.id} llcId={authoritativeLlcId} llcLabel={llcLabel} />
 

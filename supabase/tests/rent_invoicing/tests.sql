@@ -96,6 +96,9 @@ select a('cancelled invoice keeps number', $q$(select state = 'cancelled' and nu
 select t('sequence start locked after issuance', $q$select set_document_sequence_start('e1000000-0000-0000-0000-000000000001','invoice',500)$q$, 'ZM339');
 select t('sequence start settable before issuance', $q$select set_document_sequence_start('e3000000-0000-0000-0000-000000000003','invoice',120)$q$, 'ok');
 select t('sequence start can be corrected before issuance', $q$select set_document_sequence_start('e3000000-0000-0000-0000-000000000003','invoice',121)$q$, 'ok');
+select t('invoice code locked once the entity has issued', $q$update llcs set invoice_code = 'EX' where id = 'e1000000-0000-0000-0000-000000000001'$q$, 'ZM347');
+select t('invoice code editable before first issue', $q$update llcs set invoice_code = 'PX' where id = 'e3000000-0000-0000-0000-000000000003'$q$, 'ok');
+update llcs set invoice_code = null where id = 'e3000000-0000-0000-0000-000000000003';
 select t('invoice code format enforced', $q$update llcs set invoice_code = 'bad code' where id = 'e3000000-0000-0000-0000-000000000003'$q$, '23514');
 select t('invoice codes unique per account', $q$update llcs set invoice_code = 'A' where id = 'e3000000-0000-0000-0000-000000000003'$q$, '23505');
 select t('billing entity from another account refused', $q$update properties set billing_entity_id = 'eb000000-0000-0000-0000-00000000000b' where id = 'a1000000-0000-0000-0000-000000000003'$q$, 'ZM300');

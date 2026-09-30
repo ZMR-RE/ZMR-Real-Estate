@@ -1,0 +1,75 @@
+/* Billing settings boxes (T4 Stage 1, RP1/RP2). Module stylesheet — kept out
+   of the shared index.css. Existing tokens plus the owner-approved light
+   yellow for "needs review" (same values as rentInvoices.css; proposed for
+   promotion to index.css :root). */
+
+.billing-callout {
+  --billing-review-bg: #fff7d1;
+  --billing-review-border: #e6c85a;
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-h);
+  background: var(--billing-review-bg);
+  border: 1px solid var(--billing-review-border);
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .billing-callout {
+    --billing-review-bg: rgba(242, 201, 76, 0.16);
+    --billing-review-border: rgba(242, 201, 76, 0.5);
+  }
+}
+
+:root[data-theme='dark'] .billing-callout {
+  --billing-review-bg: rgba(242, 201, 76, 0.16);
+  --billing-review-border: rgba(242, 201, 76, 0.5);
+}
+
+.billing-callout ul {
+  margin: var(--space-1) 0;
+  padding-left: 18px;
+}
+
+.billing-callout--error {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+}
+
+.billing-form {
+  max-width: 560px;
+}
+
+.billing-fieldset {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.billing-fieldset legend {
+  padding: 0 var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.billing-errors {
+  margin: var(--space-3) 0 0;
+  padding-left: 18px;
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
+.billing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+@media (max-width: 600px) {
+  .billing-fieldset label {
+    min-height: 44px;
+  }
+}

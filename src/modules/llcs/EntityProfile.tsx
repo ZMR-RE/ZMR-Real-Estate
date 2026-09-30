@@ -13,6 +13,7 @@ import { EntityMembershipSection } from './EntityMembershipSection'
 import { EntityDocumentsPanel } from './EntityDocumentsPanel'
 import { useEntityProfile } from './useEntityProfile'
 import { useLlcs } from './useLlcs'
+import { EntityInvoicingSection } from '../billingSettings/EntityInvoicingSection'
 
 const OWNER_KIND_LABEL: Record<string, string> = {
   individual: 'Individual',
@@ -162,6 +163,8 @@ export function EntityProfile() {
       />
 
       <EntityMembershipSection llcId={entity.id} llcOptions={llcOptions} />
+
+      <EntityInvoicingSection entityId={entity.id} />
 
       <CollapsibleSection title="Documents">
         <EntityDocumentsPanel llcId={entity.id} />
