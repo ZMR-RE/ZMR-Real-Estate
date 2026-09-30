@@ -175,7 +175,10 @@ $$;
 create or replace function require_owner_for_branding() returns trigger
 language plpgsql set search_path = public as $$
 begin
-  if not is_account_owner(case when tg_op = 'DELETE' then old.account_id else new.account_id end) then
+  -- Dashboard sign-ins (authenticated/anon) must be the owner. Server-side
+  -- maintenance roles are outside dashboard access control, as with RLS.
+  if current_user in ('authenticated', 'anon')
+     and not is_account_owner(case when tg_op = 'DELETE' then old.account_id else new.account_id end) then
     raise exception 'Only the portfolio owner can change branding & documents in this release'
       using errcode = 'ZM370',
             hint = 'Your access to this portfolio doesn''t include document settings. Ask the owner to make this change.';
