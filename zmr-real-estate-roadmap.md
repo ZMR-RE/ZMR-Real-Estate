@@ -667,9 +667,10 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 ## 4. Phase 4 — Intelligence Layer
 - [ ] 4.1 AI reconciliation agent — auto-match captured items to the right property/expense/task
 - [ ] 4.2 Performance Benchmarking — property income/ROI vs. market or national averages, keep-vs-sell signal
-- [ ] 4.3 AI agent: automated invoice generation — first-workflow
-      recommendation (not approved) and preview: see 11.1's September 30
-      reconciliation. Draft-only; the owner approves every invoice.
+- [ ] 4.3 AI agent: automated invoice generation — Stage 1 (manual,
+      owner-started drafting; owner approves and issues every invoice) is
+      approved and in progress: see 11.1 and
+      docs/planning/agents/ZMR-T4-stage1-implementation.md.
 - [ ] 4.4 AI agent: automated receipt generation and payment tracking —
       shown only as an unconfigured concept row in the 11.1 preview.
 - [ ] 4.5 AI agent: bookkeeping automation (categorization, reconciliation matching)
@@ -2953,6 +2954,12 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
       production change. Nav rename pending shared-file coordination (no
       renewed approval needed). This checkbox stays unchecked until the
       real feature is built and verified.
+      RP1–RP7 (verbatim) approved as the overall specification; Stage 1
+      (connected manual invoice drafting + PDF review, explicit issuance
+      with entity numbering) approved Sep 30 and in progress on branch
+      agents/stage1-invoicing — milestone 1 (database layer, document/PDF
+      layer, disposable-DB evidence) done locally; screens, Practice
+      verification pending. See docs/planning/agents/ZMR-T4-stage1-implementation.md.
       Genuinely open owner choices: overpayment handling, activation
       threshold/who activates, review-by deadline, PDF content, delivery
       mailbox. Everything else is either a business setting entered in

@@ -81,12 +81,38 @@ coordinated shared-file edits, but no renewed approval. See the addendum.
   - Each duty has its own on/off switch.
   - Delivery stays locked off until a mailbox exists and sending is approved.
 
-### 4. RP1–RP7
+### 4. RP1–RP7 — the approved overall specification (verbatim, received Sep 30)
 
-Approved by the owner. **The verbatim wording is not available to this
-terminal.** It isn't in any readable checkout and wasn't included in the
-relayed prompts. T4 has not reconstructed it. The addendum has a placeholder
-for the planning conversation to fill in.
+```
+RP1 — Tenant and tenancy
+Tenant profile → Tenancy & billing: Linked property/unit, co-tenants, billing recipients, rent, frequency, due day, effective dates and prorating instructions. One charge per tenancy/period by default, not per co-tenant.
+RP2 — Billing entity
+Property → Billing settings; reusable entity profile: Explicit invoicing entity, display/legal name, address, reply-to address and payment instructions. Preserve these on issued documents even if settings later change.
+RP3 — Agent workload
+Agents → Rent & Payments Assistant → Workload: Assigned tenancies, active/paused status, next task, unpaid balance, missing fields and pending approvals. Tenant-specific invoice/receipt notes and template overrides, without duplicating the agent.
+RP4 — Payment evidence
+Rent ops → Payments; mailbox connection in Settings: Source email/reference, payer, amount, currency, payment date, reported status, owner confirmation and allocations across charges. Support partial payments, reversals and duplicate detection.
+RP5 — Invoices and receipts
+Rent ops: Unique document numbers, billing period, itemized charges/credits, payment allocations, balance, PDF, approval and delivery history. Changing an issued invoice creates an auditable revision or adjustment—not a silent replacement.
+RP6 — Reminders and late fees
+Tenancy & billing → Collection rules: Grace period, fee method/cap, timing, exceptions and approved rule source. Missing information blocks fees. During training, require owner approval of the proposed fee, revised invoice and message.
+RP7 — Portfolio rent overview
+Rent ops: All properties together, filterable by entity/property/tenant/period. Show outstanding, partially paid, overdue and paid invoices; confirmed payments separately from reported-but-unconfirmed payments. Financials uses linked payment records so income is not entered twice.
+```
+
+**Stage 1 is the slice currently authorized** for implementation; see
+[`ZMR-T4-stage1-implementation.md`](ZMR-T4-stage1-implementation.md).
+Other rules approved with it:
+
+- Structured dashboard records supply billing values, never repeated
+  inference from lease PDFs.
+- A missing payment email is not proof of nonpayment.
+- Approved filenames: `A-INV-000001_2026-10_Unit-1.pdf` and
+  `A-RCT-000001_2026-10-03_Unit-1.pdf`. The unit label only, with no
+  property address; the preview's older examples that included the address
+  are superseded.
+- Uniqueness of numbers across manual and agent paths is enforced **in the
+  database**.
 
 ### 5. Shared records
 
@@ -249,36 +275,10 @@ These are values, not product decisions. The feature needs a field for each
 5. **Delivery**, when sending is approved: which mailbox sends for each
    entity, and whether reminders go by email.
 
-## Checks run (T4, branch `agents/workspace-preview`)
+## Checks run
 
-**Automated:**
-- `npx vitest run src/modules/automations`: 40/40 pass, across two files.
-  They cover:
-  - colour tiers;
-  - priority ordering before pagination, the total count, and 25/50/100 pages;
-  - stable selection;
-  - the single store;
-  - every field that clears approval, and the internal-note exemption;
-  - edit-during-run conflicts;
-  - per-entity six-digit sequences and filenames;
-  - independent invoice and receipt sequences;
-  - simultaneous assistant and owner issuance, with no duplicate number;
-  - revisions;
-  - cancelled numbers never reused;
-  - re-issue consuming no number;
-  - the run lock;
-  - duplicate notice linking;
-  - explicit splits only (an empty split applies nothing), with validation;
-  - once-per-month drafting.
-- The full suite, `npm run build`, `tsc -b --noEmit`, lint, and a clean-clone
-  build of the commit: results are in the T4 commit report.
-
-**Real browser** (earlier passes on this branch; re-checked after this revision
-where noted in the report):
-- the light-yellow row, and the soft-red selected row keeping its tint;
-- approval clearing;
-- issue and revise, and cancel with the number kept;
-- a split payment recorded once;
-- duplicate linking;
-- ordering and paging;
-- widths of 390 and 900px with no overflow.
+- **Preview (`f52bd86`):** 40/40 preview tests; full suite 124/124;
+  build, type-check and lint clean; clean-clone build; browser checks at
+  390 and 900px.
+- **Stage 1:** evidence is recorded in
+  [`ZMR-T4-stage1-implementation.md`](ZMR-T4-stage1-implementation.md).

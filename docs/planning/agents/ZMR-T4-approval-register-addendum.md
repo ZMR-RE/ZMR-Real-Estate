@@ -11,20 +11,26 @@ that work is overwritten. The owner of those edits should append the section
 below, verbatim, to the end of the register, after committing their own
 changes.
 
-## RP1–RP7 wording — not available to T4
+## RP1–RP7 wording — received September 30, 2026
 
-The owner approved RP1–RP7. **Their exact wording is not in any file this
-terminal can read.** I searched:
+The verbatim text was relayed to T4 with the Stage 1 approval. It replaces the earlier placeholder and is also recorded in `ZMR-T4-agents-workspace-preview.md`.
 
-- the main checkout, including uncommitted files;
-- the T1, T2 and T2-foundation worktrees;
-- this worktree.
-
-The only references to RP1–RP7 are T4's own. They were not included in the
-prompts relayed to T4. T4 has **not** reconstructed or inferred them.
-
-Needed from the planning conversation: the verbatim RP1–RP7 text, pasted into
-this addendum, the register and the T4 specification (`ZMR-T4-agents-workspace-preview.md`, section "RP1–RP7").
+```
+RP1 — Tenant and tenancy
+Tenant profile → Tenancy & billing: Linked property/unit, co-tenants, billing recipients, rent, frequency, due day, effective dates and prorating instructions. One charge per tenancy/period by default, not per co-tenant.
+RP2 — Billing entity
+Property → Billing settings; reusable entity profile: Explicit invoicing entity, display/legal name, address, reply-to address and payment instructions. Preserve these on issued documents even if settings later change.
+RP3 — Agent workload
+Agents → Rent & Payments Assistant → Workload: Assigned tenancies, active/paused status, next task, unpaid balance, missing fields and pending approvals. Tenant-specific invoice/receipt notes and template overrides, without duplicating the agent.
+RP4 — Payment evidence
+Rent ops → Payments; mailbox connection in Settings: Source email/reference, payer, amount, currency, payment date, reported status, owner confirmation and allocations across charges. Support partial payments, reversals and duplicate detection.
+RP5 — Invoices and receipts
+Rent ops: Unique document numbers, billing period, itemized charges/credits, payment allocations, balance, PDF, approval and delivery history. Changing an issued invoice creates an auditable revision or adjustment—not a silent replacement.
+RP6 — Reminders and late fees
+Tenancy & billing → Collection rules: Grace period, fee method/cap, timing, exceptions and approved rule source. Missing information blocks fees. During training, require owner approval of the proposed fee, revised invoice and message.
+RP7 — Portfolio rent overview
+Rent ops: All properties together, filterable by entity/property/tenant/period. Show outstanding, partially paid, overdue and paid invoices; confirmed payments separately from reported-but-unconfirmed payments. Financials uses linked payment records so income is not entered twice.
+```
 
 ---
 
@@ -43,7 +49,7 @@ Approved (owner statements relayed to T4; see docs/planning/agents/ZMR-T4-agents
 - One rent-cycle specialist named "Rent & Payments Assistant" (name approved), covering invoices,
   payment-notification review, partial payments, receipts, reminders and delivery, with per-tenant workload
   assignments; no separate agents by default; no unconfigured examples in the operational directory.
-- RP1–RP7 approved. Verbatim wording: [TO BE INSERTED from the planning conversation — not available to T4].
+- RP1–RP7 approved as the overall specification (verbatim text in docs/planning/agents/ZMR-T4-agents-workspace-preview.md and the T4 addendum).
 - Shared records: Rent ops, agent Workload and Approvals reference the same invoice/payment/receipt records;
   no parallel agent ledger or document copies. Draft edits appear everywhere; issued PDFs and delivery history
   preserved through explicit revisions; edits made while an agent is working are detected.
@@ -58,8 +64,16 @@ Approved (owner statements relayed to T4; see docs/planning/agents/ZMR-T4-agents
   events preserved; no duplicate financial entries; payment splits are explicit owner-confirmed proposals (no
   automatic order such as oldest-first is approved).
 
-Not authorized by these decisions: mailbox connection, sending, schedule activation, schema/migration
-deployment, production changes. Nav rename requires shared-file coordination (AppShell.tsx, App.tsx route
+Stage 1 implementation approved (Sep 30): connected, manual invoice drafting and PDF review — dashboard fields
+to draft invoices from structured tenancy and issuer records; persisted drafts and approvals; reviewable PDFs;
+integration with Rent ops and the assistant's Workload on the same records; explicit owner-approved issuance with
+entity-specific numbering, without implying delivery or payment. Outside Stage 1: mailbox processing, payment
+receipt issuance, reminders, late fees, schedules, sending; no competing accounting records or T2-owned
+functionality; no production deployment. Shared Practice writes wait for the current window handoff (held by T2).
+Approved filenames: A-INV-000001_2026-10_Unit-1.pdf and A-RCT-000001_2026-10-03_Unit-1.pdf. Structured dashboard
+records supply billing values (never inferred from lease PDFs); a missing payment email is not proof of nonpayment.
+
+Not authorized by these decisions: mailbox connection, sending, schedule activation, production changes. Nav rename requires shared-file coordination (AppShell.tsx, App.tsx route
 label, Automations placeholder, Action Queue "Automations" tab, CLAUDE.md Navigation discipline list) — not
 renewed product approval. T4 → T2 rent-payment dependency proposal pending T2 review:
 docs/planning/agents/ZMR-T4-to-T2-rent-payment-dependency-proposal.md.
