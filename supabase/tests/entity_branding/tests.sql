@@ -44,3 +44,19 @@ select a('control: ordinary document still deletable', $q$(select count(*) = 0 f
 set request.jwt.claim.sub = 'bbbbbbbb-0000-0000-0000-00000000000b';
 select a('other account sees no branding or logos', $q$(select count(*) from entity_document_branding) + (select count(*) from entity_logo_versions) = 0$q$);
 select t('other account cannot brand A''s entity', $q$insert into entity_document_branding (entity_id, account_id) values ('e1000000-0000-0000-0000-000000000001','b0000000-0000-0000-0000-00000000000b')$q$, 'ZM350');
+
+-- Owner-only (approved September 30, 2026): members who are not the owner
+-- can read but not change branding, logos or logo files.
+set request.jwt.claim.sub = 'cccccccc-0000-0000-0000-00000000000c';
+select a('manager can read the entity''s branding', $q$(select count(*) = 1 from entity_document_branding)$q$);
+select t('manager cannot change branding', $q$update entity_document_branding set document_phone = '(555) 010-0000' where entity_id = 'e1000000-0000-0000-0000-000000000001'$q$, 'ZM370');
+select t('manager cannot add a logo version', $q$insert into entity_logo_versions (account_id, entity_id, storage_path, sha256, format, width, height, byte_size) values ('a0000000-0000-0000-0000-00000000000a','e1000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-00000000000a/entity-branding/e1000000-0000-0000-0000-000000000001/m.png', repeat('a',64), 'PNG', 240, 80, 431)$q$, 'ZM370');
+select t('manager cannot upload a logo file', $q$insert into storage.objects (bucket_id, name) values ('documents', 'a0000000-0000-0000-0000-00000000000a/entity-branding/e1000000-0000-0000-0000-000000000001/m.png')$q$, '42501');
+set request.jwt.claim.sub = 'dddddddd-0000-0000-0000-00000000000d';
+select t('viewer cannot change branding', $q$update entity_document_branding set website = 'x.example.test' where entity_id = 'e1000000-0000-0000-0000-000000000001'$q$, 'ZM370');
+set request.jwt.claim.sub = 'bbbbbbbb-0000-0000-0000-00000000000b';
+select a('non-member change affects nothing (not visible)', $q$(select count(*) = 0 from entity_document_branding)$q$);
+set request.jwt.claim.sub = 'aaaaaaaa-0000-0000-0000-00000000000a';
+select a('branding unchanged by refused attempts', $q$(select document_phone is null and website is null from entity_document_branding where entity_id = 'e1000000-0000-0000-0000-000000000001')$q$);
+reset role;
+select a('memberships untouched (owner, manager, viewer as set up)', $q$(select count(*) = 3 from account_members where account_id = 'a0000000-0000-0000-0000-00000000000a' and (user_id, role) in (('aaaaaaaa-0000-0000-0000-00000000000a'::uuid,'owner'),('cccccccc-0000-0000-0000-00000000000c'::uuid,'manager'),('dddddddd-0000-0000-0000-00000000000d'::uuid,'viewer')))$q$);

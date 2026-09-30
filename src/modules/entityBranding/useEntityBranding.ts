@@ -81,7 +81,12 @@ export function useEntityBranding(initialEntityId: string | null) {
       const up = await uploadLogoVersion(accountId, entityId, pending.file, pending.format, pending.width, pending.height)
       if (up.error || !up.data) {
         setSaving(false)
-        setError(up.error?.message ?? 'The logo couldn’t be stored.')
+        // Storage refuses a non-owner's upload with a generic policy error.
+        setError(
+          up.error && /row-level security/i.test(up.error.message)
+            ? 'Only the portfolio owner can change branding & documents in this release.'
+            : up.error?.message ?? 'The logo couldn’t be stored.',
+        )
         return false
       }
       logoId = up.data.id
