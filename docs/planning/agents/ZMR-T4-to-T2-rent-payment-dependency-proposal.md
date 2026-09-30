@@ -55,6 +55,29 @@ The design keeps T2's existing model and reuses T2's own allocation pattern.
    - A likely match offers "Link as evidence" first.
    - Recording anyway requires an explicit confirmation.
 
+## Issuing entity ↔ T2's responsible entity (coordination note, Sep 30)
+
+Both are **explicit records in the same entity table (`llcs`), never ownership guesses**:
+
+- **T4 invoice.** `invoices.billing_entity_id` is the issuing entity.
+  - Its default is copied at drafting from `properties.billing_entity_id`, which the owner sets explicitly under Property › Billing settings.
+  - The owner may change it on a draft.
+  - It's frozen, with a snapshot, at issue.
+  - A property with no billing entity blocks drafting. It is never derived from `property_ownership_interests`.
+- **T2 transaction and account.** `financial_transactions.responsible_entity_id` and `financial_accounts.responsible_entity_id` are the explicit responsible entity, also never inferred from ownership percentages (T2 proposal line 316).
+
+**Rule proposed for the later payment link** (not built in Stage 1):
+
+- A rent income row linked to invoice allocations takes `responsible_entity_id = invoices.billing_entity_id`. This is a copied, explicit value.
+- The deposit account's `responsible_entity_id` must equal it. Otherwise the link is refused, matching T2's cross-entity rejection.
+- Neither side back-fills the other's entity by guessing.
+
+**Naming stays distinct on purpose.**
+
+- The "issuing entity" is the entity named on the document.
+- The "responsible entity" is the entity whose books carry the income.
+- For rent they are the same entity by this rule. If a future case needs them to differ (for example, a manager issuing on an owner's behalf), that's an owner decision, not a silent default.
+
 ## Ownership boundary
 
 | Owned by | Scope |

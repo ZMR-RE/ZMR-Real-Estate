@@ -80,18 +80,89 @@ export async function setSequenceStart(entityId: string, docType: 'invoice' | 'r
   return supabase.rpc('set_document_sequence_start', { p_entity_id: entityId, p_doc_type: docType, p_next_value: nextValue })
 }
 
-// Store an issued invoice's PDF once, linked to that invoice revision. The
-// database refuses a PDF for a draft and refuses later changes/removal.
+export interface TenancyOptionRow {
+  id: string
+  property_id: string
+  start_date: string
+  end_date: string | null
+  unit: { unit_label: string } | null
+  property: { address: string | null } | null
+  lease_tenants: { is_billing_recipient: boolean; tenant: { id: string; name: string } | null }[]
+}
+
+export async function listTenancyOptions(accountId: string) {
+  return supabase
+    .from('leases')
+    .select('id, property_id, start_date, end_date, unit:units(unit_label), property:properties(address), lease_tenants(is_billing_recipient, tenant:tenants(id, name))')
+    .eq('account_id', accountId)
+    .eq('archived', false)
+    .returns<TenancyOptionRow[]>()
+}
+
+export interface IssuerRow {
+  id: string
+  name: string
+  display_name: string | null
+  invoice_code: string | null
+  mailing_address: string | null
+  mailing_city: string | null
+  mailing_state: string | null
+  mailing_zip: string | null
+  billing_reply_to_email: string | null
+  payment_instructions: string | null
+}
+
+export async function listIssuers(accountId: string) {
+  return supabase
+    .from('llcs')
+    .select('id, name, display_name, invoice_code, mailing_address, mailing_city, mailing_state, mailing_zip, billing_reply_to_email, payment_instructions')
+    .eq('account_id', accountId)
+    .eq('archived', false)
+    .order('name')
+    .returns<IssuerRow[]>()
+}
+
+export async function getInvoice(id: string) {
+  return supabase.from('invoices').select(INVOICE_COLUMNS).eq('id', id).single().returns<RentInvoiceRow>()
+}
+
+async function sha256Hex(data: ArrayBuffer): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+// Store an issued invoice's PDF once, linked to that invoice revision, with
+// the bytes' SHA-256 recorded in the invoice's immutable history. The
+// database refuses a PDF for a draft; Storage policies refuse later
+// overwrite or deletion of the stored object.
 export async function attachIssuedInvoicePdf(inv: RentInvoiceRow, filename: string, pdf: Blob) {
   const path = `${inv.account_id}/${inv.property_id}/Invoices/${filename}`
+  const bytes = await pdf.arrayBuffer()
   const upload = await supabase.storage.from('documents').upload(path, pdf, { contentType: 'application/pdf', upsert: false })
   if (upload.error) return { error: upload.error }
-  return supabase.from('documents').insert({
-    account_id: inv.account_id,
-    property_id: inv.property_id,
-    category: 'Invoices',
-    storage_path: path,
-    file_size: pdf.size,
-    invoice_id: inv.id,
-  })
+  return supabase.rpc('attach_invoice_pdf', { p_invoice_id: inv.id, p_storage_path: path, p_file_size: bytes.byteLength, p_sha256: await sha256Hex(bytes) })
+}
+
+export interface StoredInvoicePdf {
+  storage_path: string
+  sha256: string | null
+}
+
+export async function getStoredInvoicePdf(invoiceId: string) {
+  return supabase
+    .from('invoice_events')
+    .select('detail')
+    .eq('invoice_id', invoiceId)
+    .eq('event', 'pdf_attached')
+    .maybeSingle()
+    .returns<{ detail: { storage_path: string; sha256: string } } | null>()
+}
+
+// Opens the STORED bytes (not a re-render) and checks them against the
+// digest recorded at attachment. Returns a short-lived URL to show.
+export async function openStoredInvoicePdf(storagePath: string, expectedSha256: string | null) {
+  const file = await supabase.storage.from('documents').download(storagePath)
+  if (file.error || !file.data) return { error: file.error ?? new Error('The stored PDF could not be read.') }
+  const matches = expectedSha256 ? (await sha256Hex(await file.data.arrayBuffer())) === expectedSha256 : null
+  return { url: URL.createObjectURL(file.data), matches }
 }

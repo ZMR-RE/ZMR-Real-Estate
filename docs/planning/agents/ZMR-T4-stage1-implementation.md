@@ -56,8 +56,9 @@ invoice.
 
 ## Milestone 1: database and document layer (done locally, not yet committed)
 
-**Migrations.** Five new files, `supabase/migrations/20261002100000` to
-`20261002130000`. They are dated after every other terminal's pending
+**Migrations.** Six new files, `supabase/migrations/20261002100000` to
+`20261002140000` (the last is the PDF storage protection, added in the
+Milestone 3 pass). They are dated after every other terminal's pending
 migrations and use error codes ZM300–ZM344.
 
 1. `billing_entities_and_tenancy_terms`
@@ -151,22 +152,97 @@ It was not run on Practice or production.
 - **Unit tests:** the document model and PDF (8), plus the full suite; see the
   commit report.
 
-### Known consequence, handled in Milestone 3
+### Old "Create invoice" form
 
-Once these migrations are applied, Rent ops' existing "Create invoice" form
-(a direct insert) is refused by design. Milestone 3 replaces it with the
-draft → approve → issue flow. **Don't apply these migrations to Practice
-before Milestone 3.**
+Once these migrations are applied, Rent ops' old "Create invoice" form (a
+direct insert) is refused by design. Milestone 3 has now replaced it; the
+old-client behaviour is rehearsed below.
+
+## Milestone 3 (Rent ops replacement workflow): implemented locally
+
+This was pulled ahead of Milestone 2 because the owner asked for it to be finished before any shared migration.
+
+**The screen: Rent ops › "Invoices to review"** (`src/modules/rentInvoices/`, wired in `rentOps/RentOps.tsx`)
+
+- **+ New invoice**
+  - Pick a tenancy (refreshed each time the picker opens) and a month.
+  - Missing information is listed in light yellow with links to where it's fixed; nothing is guessed.
+  - Save creates a **draft only**.
+- **Review panel** (box standard)
+  - View-only facts, with Edit top-right.
+  - Approve, Issue… and Reject… sit beside Edit.
+  - Edit covers the due date, issuer, recipient, email, lines (charges and credits), the visible note and the internal note.
+  - A warning appears *before* saving any change that would clear an approval.
+  - The PDF preview is exactly what would be issued, loaded on request.
+- **Issue…**
+  - The confirmation names the entity's next number.
+  - It states that nothing is sent and no payment is recorded.
+  - On issue, the PDF is rendered from the stored snapshot, uploaded once, and linked through `attach_invoice_pdf` with its SHA-256.
+- **Issued invoices** (the existing Rent ops list)
+  - Number column.
+  - Drafts never appear there, so they never get a payment status.
+  - Superseded and cancelled invoices are dimmed and labelled.
+  - "Record payment" only on live issued invoices.
+  - Earlier invoices are shown as "Earlier invoice (unnumbered)".
+- **Opening a numbered invoice**
+  - Shows the **stored** PDF, checked against the recorded fingerprint.
+  - Offers Revise (the original stays until the revision is issued) and Cancel… (reason required; the number is kept).
+- The old direct-insert `InvoiceForm.tsx` and `createInvoice` are removed.
+
+**Review page** (simulated backend, clearly labelled):
+
+- `npx vite --config vite.rent-invoices-review.config.ts` → `http://127.0.0.1:5196/rent-invoices-review.html`.
+- It's the real Rent ops screen in the real AppShell, but `supabaseClient` and `AuthContext` are replaced by `src/modules/rentInvoices/review/`:
+  - an in-memory store with fictional fixtures;
+  - a JavaScript mirror of the database actions;
+  - an in-memory Storage that refuses overwrites.
+- There is no database and no network. The SQL remains the source of truth.
+
+**Browser-checked on the review page:**
+
+- Draft → approve → issue gave SRP-INV-000001; the stored PDF matched its fingerprint.
+- The New invoice blockers for an incomplete tenancy show four yellow items with fix links; the already-invoiced month is refused; November is drafted.
+- Approval is kept by an internal-note edit and cleared by a visible-note edit (with a warning before save).
+- Revise creates a draft revision.
+- Cancel needs a reason and keeps the number.
+- The issued list shows statuses.
+- 390px: no sideways scroll; every control at least 44px.
+- 900px: no sideways scroll (wide tables now scroll inside their box).
+
+**Bug found and fixed:** the issued panel opened before the PDF finished storing, showing "No stored PDF yet". Issue now stores the PDF before reopening, and "Store PDF" appears only when the file is actually missing.
+
+## Old clients (the currently deployed dashboard): rehearsed
+
+`supabase/tests/rent_invoicing/old_client.sql` replays the deployed client's exact statements against the Stage 1 database, as a signed-in member:
+
+- Old "Create invoice" is refused (`ZM311`) with the message "Invoices are now created and changed through the review-and-issue flow. Reload the dashboard to continue — nothing was saved." Nothing is written.
+- Old invoice list query: every column it reads still exists, and it works.
+- Old "Record payment" on existing invoices still works.
+- A stale tab **would list drafts** (it can't filter by state). This is display only: recording a payment against a draft is refused (`ZM316`).
+
+**Release order implied:** database first, then the frontend immediately after. The gap only affects creating invoices (safely refused, with a reload instruction).
+
+## Issued PDF bytes: protected in design, not yet proven on hosted Storage
+
+- `attach_invoice_pdf` is the only way to link a PDF. It checks the path and records the SHA-256 and size in the immutable `invoice_events`. The screen re-checks the stored bytes against that digest whenever it opens them.
+- Restrictive policies on `storage.objects` (documents bucket) stop members deleting or overwriting any object that a `documents` row links to an invoice. Other documents are unaffected; the control object in `storage.sql` passes.
+- **Limit of the evidence:** the disposable Postgres proves the policy SQL, **not** that hosted Supabase Storage enforces it on its API. Before release, verify in Practice (after T2's window handoff):
+  1. upload an issued PDF;
+  2. try to overwrite it (`upsert`) as a member;
+  3. try to delete it through the Storage API;
+  4. confirm both are refused and the bytes still match the recorded digest;
+  5. confirm an ordinary document can still be deleted.
+- The service role bypasses these policies, as with all Storage policies. The recorded digest is the detection backstop.
 
 ## Remaining milestones (estimates)
 
 | # | Work | Estimate |
 |---|---|---|
 | 2 | Dashboard fields: Tenant profile › Tenancy & billing box (terms, recipients); Property › Billing settings box; Entity profile › Invoicing box (code, reply-to, payment instructions, sequence start) | 8–10 h |
-| 3 | Rent ops: replace direct creation with draft/approve/issue; drafts never show a payment status; numbers; PDF preview and stored issued PDF; revise and cancel; edit conflicts | 8–10 h |
+| 3 | ~~Rent ops replacement workflow~~ **done locally**, see above | — |
 | 4 | Agents screen (real module at the Automations route): assistant, assignments, Workload (next task, balance, missing fields with links, pending approvals), Approvals, runs | 7–9 h |
 | 5 | Practice verification (after T2's window handoff); empty-account and export checks; mobile; clean clone; T3 review | 5–6 h |
-|   | **Total remaining** | **≈ 28–35 h** |
+|   | **Total remaining** | **≈ 20–25 h** |
 
 ## Dependencies and coordination
 

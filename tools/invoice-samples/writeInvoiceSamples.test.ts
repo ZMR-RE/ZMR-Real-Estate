@@ -18,4 +18,19 @@ it.runIf(!!process.env.WRITE_INVOICE_SAMPLES)('writes owner-review invoice sampl
     { ...draftContext, unitLabel: 'Unit 1', issuer: issued.issuer_snapshot! },
   )
   writeFileSync(`${dir}/${draftModel.filename}`, Buffer.from(renderInvoicePdf(jsPDF, draftModel).output('arraybuffer')))
+  // Co-tenants billed as ONE charge; partial first month prorated daily.
+  const coTenant = buildInvoiceDocument(
+    {
+      ...issued,
+      id: 'inv-2',
+      number: 'A-INV-000002',
+      due_date: '2026-10-31',
+      recipient_snapshot: { name: 'Jordan Sample & Sam Sample', email: 'jordan@example.com', property_address: '410 Example Street', unit_label: 'Unit 2' },
+      visible_note: 'Welcome to Unit 2! Your first month is prorated from your move-in date.',
+      issued_at: '2026-10-16T14:00:00Z',
+      invoice_lines: [{ id: 'l3', line_kind: 'prorated_rent', description: 'Rent — Oct 15–Oct 31, 2026 (17 of 31 days)', amount: 765, sort_order: 0 }],
+    },
+    null,
+  )
+  writeFileSync(`${dir}/${coTenant.filename}`, Buffer.from(renderInvoicePdf(jsPDF, coTenant).output('arraybuffer')))
 })

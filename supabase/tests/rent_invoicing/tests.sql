@@ -110,11 +110,17 @@ update llcs set invoice_code = 'PP' where id = 'e3000000-0000-0000-0000-00000000
 select issue_invoice(:'inv5', :v) as n5 \gset
 select a('configured start used: PP-INV-000121', $q$'$q$ || :'n5' || $q$' = 'PP-INV-000121'$q$);
 
--- Preserved PDFs
-select t('PDF attaches to issued invoice', $q$insert into documents (account_id, property_id, category, storage_path, file_size, invoice_id) values ('a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-000000000002','Invoices','a/SRP-INV-000001.pdf',1,'$q$ || :'inv3' || $q$')$q$, 'ok');
+-- Preserved PDFs: one path (attach_invoice_pdf) with a recorded digest
+\set SHA '''0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'''
+select t('direct PDF link refused', $q$insert into documents (account_id, property_id, category, storage_path, file_size, invoice_id) values ('a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-000000000002','Invoices','a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Invoices/x.pdf',1,'$q$ || :'inv3' || $q$')$q$, 'ZM315');
+select t('attach needs a SHA-256 digest', $q$select attach_invoice_pdf('$q$ || :'inv3' || $q$', 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Invoices/SRP-INV-000001_2026-10_Unit-A.pdf', 5000, 'not-a-hash')$q$, 'ZM345');
+select t('attach refuses a path outside the invoice''s property', $q$select attach_invoice_pdf('$q$ || :'inv3' || $q$', 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000001/Invoices/x.pdf', 5000, $q$ || quote_literal(:SHA) || $q$)$q$, 'ZM346');
+select t('PDF attaches to issued invoice', $q$select attach_invoice_pdf('$q$ || :'inv3' || $q$', 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Invoices/SRP-INV-000001_2026-10_Unit-A.pdf', 5000, $q$ || quote_literal(:SHA) || $q$)$q$, 'ok');
+select t('only one PDF per invoice revision', $q$select attach_invoice_pdf('$q$ || :'inv3' || $q$', 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Invoices/again.pdf', 5000, $q$ || quote_literal(:SHA) || $q$)$q$, '23505');
 select t('issued PDF cannot be deleted', $q$delete from documents where invoice_id = '$q$ || :'inv3' || $q$'$q$, 'ZM314');
 select t('issued PDF cannot be relinked', $q$update documents set storage_path = 'moved.pdf' where invoice_id = '$q$ || :'inv3' || $q$'$q$, 'ZM314');
-select a('pdf_attached event', $q$exists (select 1 from invoice_events where invoice_id = '$q$ || :'inv3' || $q$' and event = 'pdf_attached')$q$);
+select a('digest recorded in the immutable history', $q$exists (select 1 from invoice_events where invoice_id = '$q$ || :'inv3' || $q$' and event = 'pdf_attached' and detail->>'sha256' = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' and (detail->>'file_size')::int = 5000)$q$);
+select t('history rows cannot be edited', $q$update invoice_events set detail = '{}' where invoice_id = '$q$ || :'inv3' || $q$'$q$, 'ZM313');
 
 -- Assistant: same records, skips instead of guessing, one run at a time
 select ensure_rent_payments_agent('a0000000-0000-0000-0000-00000000000a') as ag \gset

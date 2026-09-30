@@ -1,15 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
-import { propertyLabel } from '../../shared/propertyLabel'
-import { listProperties } from '../properties/propertiesQueries'
-import {
-  createInvoice,
-  listInvoices,
-  recordPayment,
-  type Invoice,
-  type InvoiceInput,
-  type PaymentInput,
-} from './rentOpsQueries'
+import { listInvoices, recordPayment, type Invoice, type PaymentInput } from './rentOpsQueries'
 
 export type InvoiceStatus = 'pending' | 'overdue' | 'partial' | 'paid-on-time' | 'paid-late'
 
@@ -37,19 +28,10 @@ export function invoiceStatus(invoice: Invoice, today = new Date()): InvoiceStat
 export function useRentOps() {
   const { accountId } = useAuth()
   const [invoices, setInvoices] = useState<Invoice[]>([])
-  const [propertyOptions, setPropertyOptions] = useState<{ id: string; label: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false)
   const [paymentTargetId, setPaymentTargetId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-
-  useEffect(() => {
-    if (!accountId) return
-    listProperties(accountId).then(({ data }) => {
-      setPropertyOptions((data ?? []).map((p) => ({ id: p.id, label: propertyLabel(p) })))
-    })
-  }, [accountId])
 
   const refresh = useCallback(async () => {
     if (!accountId) return
@@ -68,23 +50,9 @@ export function useRentOps() {
     refresh()
   }, [refresh])
 
-  const startCreatingInvoice = () => setIsCreatingInvoice(true)
-  const cancelCreatingInvoice = () => setIsCreatingInvoice(false)
-
-  const saveInvoice = async (input: InvoiceInput) => {
-    if (!accountId) return
-    setSaving(true)
-    const { error: saveError } = await createInvoice(accountId, input)
-    setSaving(false)
-    if (saveError) {
-      setError(saveError.message)
-      return
-    }
-    setError(null)
-    setIsCreatingInvoice(false)
-    await refresh()
-  }
-
+  // Invoices are created through the review-and-issue workflow
+  // (rentInvoices/useInvoiceWorkflow); this hook keeps the issued list and
+  // payments.
   const startRecordingPayment = (invoiceId: string) => setPaymentTargetId(invoiceId)
   const cancelRecordingPayment = () => setPaymentTargetId(null)
 
@@ -104,15 +72,11 @@ export function useRentOps() {
 
   return {
     invoices,
-    propertyOptions,
     loading,
     error,
-    isCreatingInvoice,
     paymentTargetId,
     saving,
-    startCreatingInvoice,
-    cancelCreatingInvoice,
-    saveInvoice,
+    refresh,
     startRecordingPayment,
     cancelRecordingPayment,
     savePayment,

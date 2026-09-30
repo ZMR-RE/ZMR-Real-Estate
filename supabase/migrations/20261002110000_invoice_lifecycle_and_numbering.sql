@@ -139,7 +139,10 @@ begin
     return old;
   end if;
   if not invoice_op_active() then
-    raise exception 'Invoices change only through the invoice actions (draft, edit, approve, issue, revise, cancel)' using errcode = 'ZM311';
+    -- Also what an out-of-date dashboard tab sees if it tries the old direct
+    -- "Create invoice" insert: a clear instruction, nothing saved.
+    raise exception 'Invoices are now created and changed through the review-and-issue flow. Reload the dashboard to continue — nothing was saved.'
+      using errcode = 'ZM311';
   end if;
   if tg_op = 'UPDATE' and old.state in ('issued', 'superseded', 'cancelled', 'rejected') then
     if (to_jsonb(new) - frozen) <> (to_jsonb(old) - frozen)
@@ -177,14 +180,13 @@ begin
     raise exception 'An issued invoice PDF is preserved and cannot be changed or removed' using errcode = 'ZM314';
   end if;
   if tg_op in ('INSERT', 'UPDATE') and new.invoice_id is not null then
+    if not invoice_op_active() then
+      raise exception 'Invoice PDFs are attached only through attach_invoice_pdf' using errcode = 'ZM315';
+    end if;
     if not exists (select 1 from invoices where id = new.invoice_id and account_id = new.account_id
                    and state in ('issued', 'superseded', 'cancelled') and number is not null) then
       raise exception 'A PDF can only be attached to an issued, numbered invoice in the same account' using errcode = 'ZM315';
     end if;
-    perform set_config('app.invoice_op', 'on', true);
-    insert into invoice_events (account_id, invoice_id, event, detail)
-      values (new.account_id, new.invoice_id, 'pdf_attached', jsonb_build_object('storage_path', new.storage_path));
-    perform set_config('app.invoice_op', 'off', true);
   end if;
   return coalesce(new, old);
 end $$;
