@@ -20,12 +20,16 @@ insert into financial_transactions (id, account_id, property_id, entry_type, cat
  ('c0000000-0000-0000-0000-000000000006','a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-0000000000a1','expense','repairs','Checking',60,'2025-10-06'),
  ('c0000000-0000-0000-0000-000000000007','a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-0000000000a1','expense','repairs','Checking',70,'2025-10-07'),
  ('c0000000-0000-0000-0000-000000000008','a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-0000000000a1','expense','repairs','Checking',80,'2025-10-08'),
+ ('c0000000-0000-0000-0000-000000000011','a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-0000000000a1','expense','repairs','Checking',11,'2025-10-11'),
+ ('c0000000-0000-0000-0000-000000000012','a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-0000000000a1','expense','repairs','Checking',12,'2025-10-12'),
+ ('c0000000-0000-0000-0000-000000000013','a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-0000000000a1','expense','repairs','Checking',13,'2025-10-13'),
  ('cb000000-0000-0000-0000-000000000001','b0000000-0000-0000-0000-00000000000b','b1000000-0000-0000-0000-0000000000b1','expense','repairs','Checking',90,'2025-10-09');
 -- A LEGACY conflict (voided and matched before the safeguard existed),
 -- seeded with triggers bypassed to model pre-existing production data.
 set session_replication_role = replica;
 insert into financial_transactions (id, account_id, property_id, entry_type, category, payment_method, amount, transaction_date, voided, voided_at, statement_reconciled) values
  ('c0000000-0000-0000-0000-000000000009','a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-0000000000a1','expense','repairs','Checking',99,'2025-09-09',true,now(),true),
+ ('c0000000-0000-0000-0000-000000000010','a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-0000000000a1','expense','repairs','Checking',97,'2025-09-10',true,now(),true),
  ('cb000000-0000-0000-0000-000000000009','b0000000-0000-0000-0000-00000000000b','b1000000-0000-0000-0000-0000000000b1','expense','repairs','Checking',98,'2025-09-08',true,now(),true);
 set session_replication_role = origin;
 create or replace function t(name text, stmt text, expect text) returns void language plpgsql as $$

@@ -10,7 +10,9 @@ create table storage.objects (id uuid primary key default gen_random_uuid(), buc
 alter table storage.objects enable row level security;
 create function storage.foldername(name text) returns text[] language sql immutable as $$ select string_to_array(name, '/') $$;
 grant usage on schema public, auth, storage, extensions to anon, authenticated, service_role;
-alter default privileges in schema public grant all on tables to authenticated, service_role;
+-- Mirror hosted Supabase: new public tables/views are granted to anon too
+-- (row-level security still applies).
+alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
 alter default privileges in schema public grant all on sequences to authenticated, service_role;
 alter default privileges in schema public grant execute on functions to authenticated, service_role;
 grant execute on function auth.uid() to authenticated;
