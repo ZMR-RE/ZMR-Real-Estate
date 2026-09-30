@@ -157,3 +157,42 @@ create policy "entity logo files are permanent (no delete)"
 create policy "entity logo files are permanent (no overwrite)"
   on storage.objects as restrictive for update to authenticated
   using (bucket_id <> 'documents' or name not like '%/entity-branding/%');
+
+-- Owner-only (owner-approved September 30, 2026): only the portfolio OWNER
+-- changes what an entity's documents print. Other members keep read access.
+-- "Owner" is the existing account_members.role; no membership is changed.
+-- Triggers (not restrictive RLS) so a refused edit raises a clear error
+-- instead of silently changing nothing. Error code ZM370 (shared with the
+-- invoicing release, 20261002160000, which repeats this same helper).
+create or replace function is_account_owner(target_account_id uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from account_members
+    where account_id = target_account_id and user_id = auth.uid() and role = 'owner'
+  );
+$$;
+
+create or replace function require_owner_for_branding() returns trigger
+language plpgsql set search_path = public as $$
+begin
+  if not is_account_owner(case when tg_op = 'DELETE' then old.account_id else new.account_id end) then
+    raise exception 'Only the portfolio owner can change branding & documents in this release'
+      using errcode = 'ZM370',
+            hint = 'Your access to this portfolio doesn''t include document settings. Ask the owner to make this change.';
+  end if;
+  return case when tg_op = 'DELETE' then old else new end;
+end $$;
+
+create trigger a0_owner_only before insert or update or delete on entity_document_branding
+  for each row execute function require_owner_for_branding();
+create trigger a0_owner_only before insert or update or delete on entity_logo_versions
+  for each row execute function require_owner_for_branding();
+
+create policy "entity logo files are uploaded by the owner"
+  on storage.objects as restrictive for insert to authenticated
+  with check (
+    bucket_id <> 'documents'
+    or name not like '%/entity-branding/%'
+    or case when split_part(name, '/', 1) ~ '^[0-9a-fA-F-]{36}$'
+            then public.is_account_owner(split_part(name, '/', 1)::uuid) else false end
+  );

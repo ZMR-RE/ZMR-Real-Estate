@@ -74,3 +74,10 @@
   - live preview of unsaved edits;
   - Save persists;
   - switching to an unbranded entity shows standard colours.
+
+## Owner-only changes (owner-approved September 30, 2026)
+
+- Only the portfolio **owner** (existing `account_members.role = 'owner'`) can change branding, add logo versions or upload logo files. Managers and viewers keep read access; non-members see nothing. Refusals raise ZM370 with a plain-language message (a refused logo upload shows the same message in the form).
+- No membership is created, changed or backfilled; no invitation or manager/viewer workflow is built.
+- Evidence: `supabase/tests/entity_branding/run.sh` — 27/27 including manager/viewer/non-member denial and "branding and memberships unchanged after refused attempts"; `selftest.sh` proves an intentional failure makes the runner exit 1.
+- Release check to add: confirm on Practice that the reserved test-verification login's membership is `owner` **before** relying on it for branding verification. If it is not, report it — do not change the membership to make a test pass.
