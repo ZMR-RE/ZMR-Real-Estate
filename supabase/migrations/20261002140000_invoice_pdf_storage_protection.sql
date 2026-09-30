@@ -21,6 +21,7 @@ declare inv invoices; v_doc uuid;
 begin
   select * into inv from invoices where id = p_invoice_id;
   if inv.id is null then raise exception 'Invoice not found' using errcode = 'ZM323'; end if;
+  perform invoice_require_owner(inv.account_id);
   if p_sha256 !~ '^[0-9a-f]{64}$' then
     raise exception 'A SHA-256 digest (64 lowercase hex characters) is required' using errcode = 'ZM345';
   end if;

@@ -5,8 +5,8 @@
 PSQL="/opt/homebrew/opt/postgresql@17/bin/psql -h 127.0.0.1 -p 55434 -U postgres -d zmr -X -q -t -A"
 pre="set role authenticated; set request.jwt.claim.sub='aaaaaaaa-0000-0000-0000-00000000000a';"
 OWNER=$($PSQL -c "$pre select create_invoice_draft('a5000000-0000-0000-0000-000000000001','2026-11-01');")
-ASSIST=$($PSQL -c "select id from invoices where lease_id='a5000000-0000-0000-0000-000000000002' and period_start='2026-12-01' and created_via='assistant';")
-[ -z "$ASSIST" ] && ASSIST=$($PSQL -c "$pre select create_invoice_draft('a5000000-0000-0000-0000-000000000002','2026-12-01','assistant');")
+# The assistant's December draft for the same entity (created by the trusted run in tests.sql).
+ASSIST=$($PSQL -c "select id from invoices where lease_id='a5000000-0000-0000-0000-000000000001' and period_start='2026-12-01' and created_via='assistant';")
 for id in $OWNER $ASSIST; do $PSQL -c "$pre select approve_invoice('$id', (select version from invoices where id='$id'));" >/dev/null; done
 ts() { date +%H:%M:%S; }
 echo "C1: owner issue holds the transaction 3s; assistant issue starts 1s later"

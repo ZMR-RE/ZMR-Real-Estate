@@ -3,18 +3,27 @@
 \set QUIET on
 insert into auth.users (id, email) values
  ('aaaaaaaa-0000-0000-0000-00000000000a', 't4-a@example.test'),
- ('bbbbbbbb-0000-0000-0000-00000000000b', 't4-b@example.test');
+ ('bbbbbbbb-0000-0000-0000-00000000000b', 't4-b@example.test'),
+ ('cccccccc-0000-0000-0000-00000000000c', 't4-manager@example.test'),
+ ('dddddddd-0000-0000-0000-00000000000d', 't4-viewer@example.test');
 insert into accounts (id, name) values ('a0000000-0000-0000-0000-00000000000a', 'T4 A'), ('b0000000-0000-0000-0000-00000000000b', 'T4 B');
 insert into account_members (account_id, user_id, role) values
  ('a0000000-0000-0000-0000-00000000000a', 'aaaaaaaa-0000-0000-0000-00000000000a', 'owner'),
- ('b0000000-0000-0000-0000-00000000000b', 'bbbbbbbb-0000-0000-0000-00000000000b', 'owner');
+ ('b0000000-0000-0000-0000-00000000000b', 'bbbbbbbb-0000-0000-0000-00000000000b', 'owner'),
+ ('a0000000-0000-0000-0000-00000000000a', 'cccccccc-0000-0000-0000-00000000000c', 'manager'),
+ ('a0000000-0000-0000-0000-00000000000a', 'dddddddd-0000-0000-0000-00000000000d', 'viewer');
 
 -- Entities: A-code, SRP-code, and one with no code yet.
-insert into llcs (id, account_id, name, display_name, invoice_code, mailing_address, mailing_city, mailing_state, mailing_zip, billing_reply_to_email, payment_instructions) values
- ('e1000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-00000000000a', 'Example Holdings LLC', 'Example Holdings', 'A', '100 Main St', 'Springfield', 'IL', '62701', 'billing@example.test', 'Zelle to billing@example.test'),
- ('e2000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-00000000000a', 'Sample Road Properties LLC', null, 'SRP', null, null, null, null, null, null),
- ('e3000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-00000000000a', 'Placeholder Partners LLC', null, null, null, null, null, null, null, null),
- ('eb000000-0000-0000-0000-00000000000b', 'b0000000-0000-0000-0000-00000000000b', 'B Entity LLC', null, 'A', null, null, null, null, null, null);
+insert into llcs (id, account_id, name, display_name, invoice_code, mailing_address, mailing_city, mailing_state, mailing_zip) values
+ ('e1000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-00000000000a', 'Example Holdings LLC', 'Example Holdings', 'A', '100 Main St', 'Springfield', 'IL', '62701'),
+ ('e2000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-00000000000a', 'Sample Road Properties LLC', null, 'SRP', null, null, null, null),
+ ('e3000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-00000000000a', 'Placeholder Partners LLC', null, null, null, null, null, null),
+ ('eb000000-0000-0000-0000-00000000000b', 'b0000000-0000-0000-0000-00000000000b', 'B Entity LLC', null, 'A', null, null, null, null);
+
+-- Issuer contact details and default payment instructions come from the
+-- entity's Branding & documents settings (20261001190000).
+insert into entity_document_branding (entity_id, account_id, reply_to_email, payment_instructions, heading_color) values
+ ('e1000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-00000000000a', 'billing@example.test', 'Zelle to billing@example.test', '#1F4E79');
 
 insert into properties (id, account_id, address, billing_entity_id) values
  ('a1000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-00000000000a', '410 Example Street', 'e1000000-0000-0000-0000-000000000001'),
@@ -29,13 +38,13 @@ insert into units (id, account_id, property_id, unit_label, status) values
  ('a4000000-0000-0000-0000-000000000004', 'a0000000-0000-0000-0000-00000000000a', 'a1000000-0000-0000-0000-000000000003', 'Main', 'Occupied'),
  ('b4000000-0000-0000-0000-00000000000b', 'b0000000-0000-0000-0000-00000000000b', 'b1000000-0000-0000-0000-00000000000b', 'Main', 'Occupied');
 
-insert into tenants (id, account_id, name, email) values
- ('a3000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-00000000000a', 'Riley Example', 'riley@example.test'),
- ('a3000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-00000000000a', 'Jordan Sample', 'jordan@example.test'),
- ('a3000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-00000000000a', 'Sam Sample', null),
- ('a3000000-0000-0000-0000-000000000004', 'a0000000-0000-0000-0000-00000000000a', 'Casey Placeholder', 'casey@example.test'),
- ('a3000000-0000-0000-0000-000000000005', 'a0000000-0000-0000-0000-00000000000a', 'Morgan Demo', null),
- ('b3000000-0000-0000-0000-00000000000b', 'b0000000-0000-0000-0000-00000000000b', 'B Tenant', null);
+insert into tenants (id, account_id, name, email, phone) values
+ ('a3000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-00000000000a', 'Riley Example', 'riley@example.test', '(555) 010-1111'),
+ ('a3000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-00000000000a', 'Jordan Sample', 'jordan@example.test', null),
+ ('a3000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-00000000000a', 'Sam Sample', null, '(555) 010-3333'),
+ ('a3000000-0000-0000-0000-000000000004', 'a0000000-0000-0000-0000-00000000000a', 'Casey Placeholder', 'casey@example.test', null),
+ ('a3000000-0000-0000-0000-000000000005', 'a0000000-0000-0000-0000-00000000000a', 'Morgan Demo', null, null),
+ ('b3000000-0000-0000-0000-00000000000b', 'b0000000-0000-0000-0000-00000000000b', 'B Tenant', null, null);
 
 -- L1 full year; L2 starts mid-October (daily prorating), co-tenants;
 -- L3 on the SRP property; L4 incomplete (no rent, no terms, no entity).

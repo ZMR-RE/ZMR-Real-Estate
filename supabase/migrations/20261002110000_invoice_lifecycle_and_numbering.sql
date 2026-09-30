@@ -43,12 +43,21 @@ alter table invoices
   add column cancelled_by uuid references auth.users(id),
   add column cancelled_at timestamptz,
   add column cancel_reason text,
+  -- Display name of the billed people (also written to legacy billed_to).
   add column recipient_name text,
-  add column recipient_email text,
+  -- Billed people as printed: [{tenant_id, name, email, phone}], taken from
+  -- their tenant profiles when drafted; refreshed only by an explicit action.
+  add column recipients jsonb not null default '[]',
   add column visible_note text,
   add column internal_note text,
-  add column issuer_snapshot jsonb,
-  add column recipient_snapshot jsonb,
+  -- Everything the approved document would print (issuer, branding, payment
+  -- instructions, recipients, rental, lines, dates, note). Issue refuses if
+  -- the current print content differs from this — approval covers the exact
+  -- printed document.
+  add column approved_snapshot jsonb,
+  -- The approved snapshot, frozen at issue: later settings changes never
+  -- alter an issued invoice.
+  add column issued_snapshot jsonb,
   add column created_via text not null default 'owner' check (created_via in ('owner', 'assistant')),
   add column agent_run_id uuid,
   add column updated_at timestamptz not null default now();
@@ -127,6 +136,22 @@ create policy "members can read and write their document sequences" on document_
 create or replace function invoice_op_active() returns boolean language sql stable as $$
   select coalesce(current_setting('app.invoice_op', true), '') = 'on'
 $$;
+
+-- Owner-only invoicing (owner-approved September 30, 2026). Every invoice
+-- action calls this first, before any other check, so a non-owner always
+-- gets the same clear refusal. is_account_owner() reads the existing
+-- account_members.role (defined in 20261001190000). Server-side
+-- maintenance roles are outside dashboard access control, as with RLS.
+-- Table triggers in 20261002160000 back this up for direct writes.
+create or replace function invoice_require_owner(p_account_id uuid) returns void
+language plpgsql stable set search_path = public as $$
+begin
+  if current_user in ('authenticated', 'anon') and not is_account_owner(p_account_id) then
+    raise exception 'Only the portfolio owner can change invoicing in this release'
+      using errcode = 'ZM370',
+            hint = 'Your access to this portfolio doesn''t include invoicing changes. Ask the owner to make this change.';
+  end if;
+end $$;
 
 create or replace function invoices_guard() returns trigger language plpgsql set search_path = public as $$
 declare

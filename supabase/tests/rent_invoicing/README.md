@@ -10,3 +10,17 @@ minimal Supabase stand-ins (auth/storage schemas and roles).
 2. `./concurrency.sh` — after run.sh: an owner-created and an assistant-created invoice of the
    same entity issued concurrently; the entity sequence lock must serialize them.
 3. Tear down: `/opt/homebrew/opt/postgresql@17/bin/pg_ctl -D data stop -m fast && rm -rf data`.
+
+## Pass/fail accounting (T3 finding)
+
+`run.sh` runs `tests.sql`, `storage.sql`, `old_client.sql` and `owner_only.sql`, prints only
+non-passing lines and a `RESULT:` line, and exits 0 only when:
+
+- nothing failed; and
+- the PASS count equals the number of checks written.
+
+A check that silently doesn't run is a failure. `./selftest.sh <repo-root>` injects one
+intentional failing check and succeeds only if `run.sh` then exits 1.
+
+These are disposable-database checks. They prove the policy logic, not hosted Storage; the
+release verification covers that (see `docs/planning/agents/ZMR-T4-stage1-implementation.md`).

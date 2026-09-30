@@ -54,6 +54,20 @@ create policy "members can manage their agent assignments" on agent_assignments 
 create policy "members can manage their agent runs" on agent_runs for all
   using (is_account_member(account_id)) with check (is_account_member(account_id));
 
+-- Runs are written only by run_assistant_invoice_drafts (trusted
+-- provenance): no client can insert a run or mark a draft as the
+-- assistant's.
+create or replace function agent_runs_guard() returns trigger language plpgsql set search_path = public as $$
+begin
+  if coalesce(current_setting('app.agent_op', true), '') <> 'on' then
+    raise exception 'Assistant runs are recorded only by the assistant''s run action' using errcode = 'ZM356';
+  end if;
+  return coalesce(new, old);
+end $$;
+
+create trigger agent_runs_guard before insert or update or delete on agent_runs
+  for each row execute function agent_runs_guard();
+
 create or replace function agent_assignments_integrity() returns trigger language plpgsql set search_path = public as $$
 begin
   if not exists (select 1 from agents where id = new.agent_id and account_id = new.account_id)
@@ -90,29 +104,46 @@ returns uuid language plpgsql set search_path = public as $$
 declare
   a agents; r agent_runs; asg record;
   v_blockers text[]; v_invoice uuid;
-  v_drafted jsonb := '[]'; v_skipped jsonb := '[]';
+  v_drafted jsonb := '[]'; v_skipped jsonb := '[]'; v_unresolved jsonb := '[]';
 begin
   select * into a from agents where id = p_agent_id;
-  if a.id is null then raise exception 'Assistant not found' using errcode = 'ZM342'; end if;
+  -- Workspace validation: the caller must belong to the assistant's account
+  -- (RLS already hides others'; checked explicitly as well).
+  if a.id is null or not is_account_member(a.account_id) then
+    raise exception 'Assistant not found' using errcode = 'ZM342';
+  end if;
+  perform invoice_require_owner(a.account_id);
   if a.status = 'paused' then raise exception 'The assistant is paused' using errcode = 'ZM343'; end if;
+  perform set_config('app.agent_op', 'on', true);
   begin
     insert into agent_runs (account_id, agent_id, kind, period_start) values (a.account_id, a.id, 'draft_invoices', p_period_start)
       returning * into r;
   exception when unique_violation then
     raise exception 'A run is already in progress for this assistant' using errcode = 'ZM344';
   end;
-  for asg in select * from agent_assignments where agent_id = a.id and status = 'active' order by created_at loop
+  for asg in
+    select aa.*, l.account_id as lease_account from agent_assignments aa join leases l on l.id = aa.lease_id
+     where aa.agent_id = a.id and aa.status = 'active' order by aa.created_at
+  loop
+    if asg.lease_account <> a.account_id then
+      v_skipped := v_skipped || jsonb_build_object('lease_id', asg.lease_id, 'blockers', '["other_workspace"]'::jsonb);
+      continue;
+    end if;
     v_blockers := get_invoice_draft_blockers(asg.lease_id, p_period_start);
     if cardinality(v_blockers) > 0 then
       v_skipped := v_skipped || jsonb_build_object('lease_id', asg.lease_id, 'blockers', to_jsonb(v_blockers));
     else
-      v_invoice := create_invoice_draft(asg.lease_id, p_period_start, 'assistant', r.id, asg.invoice_note, null);
+      v_invoice := invoicing_internal.create_draft_core(asg.lease_id, p_period_start, 'assistant', r.id, asg.invoice_note, null);
       v_drafted := v_drafted || jsonb_build_object('lease_id', asg.lease_id, 'invoice_id', v_invoice);
     end if;
+    v_unresolved := v_unresolved || coalesce((select jsonb_agg(jsonb_build_object('lease_id', asg.lease_id, 'rule_id', u.rule_id,
+                                                'description', u.description, 'service_period_start', u.service_period_start))
+                                              from unresolved_variable_charges(asg.lease_id, p_period_start) u), '[]');
   end loop;
   update agent_runs set finished_at = now(),
-         outcome = case when jsonb_array_length(v_skipped) > 0 then 'completed_with_skips' else 'completed' end,
-         summary = jsonb_build_object('drafted', v_drafted, 'skipped', v_skipped)
+         outcome = case when jsonb_array_length(v_skipped) > 0 or jsonb_array_length(v_unresolved) > 0 then 'completed_with_skips' else 'completed' end,
+         summary = jsonb_build_object('drafted', v_drafted, 'skipped', v_skipped, 'unresolved_variable_charges', v_unresolved)
    where id = r.id;
+  perform set_config('app.agent_op', 'off', true);
   return r.id;
 end $$;

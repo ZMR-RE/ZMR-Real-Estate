@@ -99,3 +99,44 @@ Checked on September 30, 2026 across main, T1, T2 and T2-foundation.
 3. Verify with a clean-clone build.
 
 No product approval is needed; the owner has settled the rename.
+
+## Owner-only invoicing — approved September 30, 2026
+
+**Approval (verbatim scope from the owner's T4 prompt).** Owner-only invoice functionality
+for this release. Enforce portfolio ownership on invoice mutations and related settings in
+the backend. No invitations or manager/viewer workflows. Use existing ownership records; do
+not silently change memberships. Record the approval and test denial for unauthorized callers.
+
+**What "owner" means.** The existing `account_members.role = 'owner'`. Nothing creates,
+changes or backfills a membership.
+
+**Covered (refused with ZM370 for a manager or viewer):**
+
+- every invoice action: draft, edit, approve, reject, issue, revise, cancel;
+- attaching an issued PDF, and uploading into a property's `Invoices` folder;
+- the first-number setting, the entity invoice code and the property's invoicing entity;
+- the property's payment-instructions override and the tenancy billing-recipient flag;
+- tenancy billing terms, billing rules and statements;
+- assistant assignments, runs and the assistant record;
+- entity branding & documents: settings, logo versions and logo files.
+
+Direct API writes are covered by table triggers. Every action checks ownership before any
+other validation.
+
+**Not covered (unchanged):**
+
+- reading: managers and viewers can still see invoices and settings;
+- other edits to the same records (property address, tenancy members);
+- recording payments — this is T2's rent-payment area. The owner should decide there whether
+  managers may record payments.
+
+**Evidence:**
+
+- `supabase/tests/rent_invoicing/owner_only.sql`: 29 checks. A manager, a viewer and another
+  account's owner attempt each action. The checks also confirm that no invoice, event or
+  setting changed afterwards and that memberships are untouched.
+- `supabase/tests/entity_branding/tests.sql`: 8 owner-only checks.
+
+**Release check.** On Practice, confirm the reserved test-verification login is an `owner`
+before using it for invoice or branding verification. If it isn't, report it; don't change
+the membership.

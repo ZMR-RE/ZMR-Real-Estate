@@ -17,12 +17,16 @@ alter table llcs add constraint llcs_invoice_code_format
 -- An account's codes must be distinct so document numbers can't collide
 -- across its entities.
 create unique index llcs_invoice_code_unique on llcs (account_id, invoice_code) where invoice_code is not null;
-alter table llcs add column billing_reply_to_email text;
-alter table llcs add column payment_instructions text;
+-- Reply-to email, contact details and the entity's DEFAULT payment
+-- instructions live in entity_document_branding (20261001190000, the
+-- independently releasable branding migration) — not duplicated here.
 
 -- RP2 — Property → Billing settings: the EXPLICIT invoicing entity. Never
 -- derived from ownership; null until the owner chooses.
 alter table properties add column billing_entity_id uuid references llcs(id) on delete restrict;
+-- Explicit per-property payment instructions. Null = inherit the invoicing
+-- entity's default (entity_document_branding.payment_instructions).
+alter table properties add column payment_instructions_override text;
 
 create or replace function enforce_property_billing_entity_account()
 returns trigger language plpgsql set search_path = public as $$
@@ -89,9 +93,7 @@ create trigger lease_billing_terms_touch
   before insert or update on lease_billing_terms
   for each row execute function lease_billing_terms_touch();
 
--- System document category for issued invoice PDFs (same additive pattern as
--- 20260924050000's 'Lease renewal' task type).
-insert into pick_list_options (account_id, list_name, value)
-select a.id, 'document_type', 'Invoices'
-from accounts a
-on conflict (account_id, list_name, value) do nothing;
+-- No account-specific pick-list rows are seeded here. Issued invoice PDFs are
+-- identified by documents.invoice_id and stored with the fixed system
+-- category 'Invoices' (see attach_invoice_pdf); the account's editable
+-- document-type pick list is left untouched.
