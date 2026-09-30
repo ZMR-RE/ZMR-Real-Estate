@@ -19,6 +19,14 @@ OUT=$( { run "$D/tests.sql"; bash "$D/concurrency.sh";
      && [ "$($P -At -c "select count(*) from financial_transactions where voided and statement_reconciled")" = 2 ]; then
     echo "PASS read-only diagnostic lists both workspaces' legacy conflicts and changes nothing"
   else echo "FAIL read-only diagnostic"; fi; } )
+# Rollback script: removes the rule and view, leaves every row as it was.
+BEFORE=$($P -At -c "select md5(string_agg(t::text, '|' order by id)) from financial_transactions t")
+$P -v ON_ERROR_STOP=1 -f "$REPO/supabase/rollback/20260929020000_void_reconcile_safeguard_down.sql" >/dev/null 2>&1
+AFTER=$($P -At -c "select md5(string_agg(t::text, '|' order by id)) from financial_transactions t")
+GONE=$($P -At -c "select count(*) from pg_trigger where tgname = 'financial_transactions_void_reconcile'")
+if [ "$BEFORE" = "$AFTER" ] && [ "$GONE" = 0 ]; then OUT="$OUT
+PASS rollback removes the rule and view and changes no transaction rows"; else OUT="$OUT
+FAIL rollback"; fi
 echo "$OUT"
 PASS=$(grep -c '^PASS' <<<"$OUT"); FAIL=$(grep -c '^FAIL' <<<"$OUT")
 echo "== $PASS passed, $FAIL failed"
