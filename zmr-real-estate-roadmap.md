@@ -667,8 +667,11 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 ## 4. Phase 4 — Intelligence Layer
 - [ ] 4.1 AI reconciliation agent — auto-match captured items to the right property/expense/task
 - [ ] 4.2 Performance Benchmarking — property income/ROI vs. market or national averages, keep-vs-sell signal
-- [ ] 4.3 AI agent: automated invoice generation
-- [ ] 4.4 AI agent: automated receipt generation and payment tracking
+- [ ] 4.3 AI agent: automated invoice generation — first-workflow
+      recommendation (not approved) and preview: see 11.1's September 30
+      reconciliation. Draft-only; the owner approves every invoice.
+- [ ] 4.4 AI agent: automated receipt generation and payment tracking —
+      shown only as an unconfigured concept row in the 11.1 preview.
 - [ ] 4.5 AI agent: bookkeeping automation (categorization, reconciliation matching)
 
 ## 5. Phase 5 — Productization (deferred until Phases 1–4 are proven on your own two properties)
@@ -2914,6 +2917,46 @@ Numbering: phases are whole numbers (0, 1, 2...). Items within a phase are decim
 
 ## 11. Phase 11 — Automations / Agent Roster
 - [ ] 11.1 Automations nav section: agent-roster pattern adapted from My Earth Market's Operations Hub (named agent profiles, health-state, training/active/paused status, dependency on which module, audit log) — adapted for ZMR's multi-tenant/RLS model, not a direct copy-paste
+      RECONCILED September 30, 2026 (T4) — requirements recorded, NOT
+      built. Detail, field map and remaining open items:
+      docs/planning/agents/ZMR-T4-agents-workspace-preview.md (register
+      addendum and T4→T2 payment proposal alongside it).
+      Owner-approved (Sep 30):
+      - Workspace named "Agents": directory left, selected profile right
+        (side-by-side remains the approved direction; current layout
+        accepted temporarily). Priority ordering before pagination;
+        total count; 25/50/100 pages; stable selection.
+      - Row colour: light yellow = human review needed (including missing
+        billing information); soft red = failure/disconnection/overdue;
+        otherwise neutral; selection keeps the colour.
+      - One rent-cycle specialist, "Rent & Payments Assistant", with
+        per-tenant workload assignments; no unconfigured examples. RP1–RP7
+        approved — verbatim wording not available to T4 (placeholder in
+        the addendum).
+      - Shared records across Rent ops / Workload / Approvals; no parallel
+        ledger or document copies; explicit revisions preserve issued PDFs
+        and delivery history; edits during an agent run detected.
+      - Any change to recipient, visible email/PDF content or attachments
+        invalidates approval; only a strictly internal note is exempt.
+      - Numbering: per issuing entity, independent invoice and receipt
+        sequences, six digits ({CODE}-INV-000001 / {CODE}-RCT-000001),
+        -R{n} revisions, files {number}_{period or date}_{unit}.pdf;
+        continuous, no annual reset; assigned at issuance; cancelled
+        numbers never reused; issuance protected per entity × document
+        type across every creation path. Entity codes configurable.
+      - Payment emails are evidence only; separate payment events; no
+        duplicate financial entries; payment splits are explicit
+        owner-confirmed proposals (no automatic order approved).
+      Status: non-saving, fictional-data preview committed on branch
+      agents/workspace-preview (agents-preview.html, port 5193). No schema
+      deployment, mailbox connection, sending, schedule activation or
+      production change. Nav rename pending shared-file coordination (no
+      renewed approval needed). This checkbox stays unchecked until the
+      real feature is built and verified.
+      Genuinely open owner choices: overpayment handling, activation
+      threshold/who activates, review-by deadline, PDF content, delivery
+      mailbox. Everything else is either a business setting entered in
+      the dashboard later or architecture for T2/T4 to resolve (see doc).
 
 ## 12. Phase 12 — Settings & Account Administration
 - [x] 12.1 Settings area (account-level, separate from main nav flow): houses Chart of Accounts management, pick-list management (8.1), security (2FA, password reset), and future billing/tier management — FOUNDATIONAL PASS per scope: `/settings` page built, linked from the account/profile menu, housing Chart of Accounts (moved out of Financials & Tax) and centralized pick-list management (8.1), verified live. Security (2FA, password reset) still lives in T4's separate "Account & Security" profile-menu panel (12.2) built before this page existed — T4 may want to move that panel's content into Settings now that it has a real home; billing/tier management still future work (Phase 5)
