@@ -100,8 +100,11 @@ export function useBankReconciliation() {
       setError(saveError.message)
       return
     }
-    setError(reconciliationShortfall(unreconciledSelectedIds, (data ?? []).map((r) => r.id as string)))
+    // Reload first: the reload clears the message, so the save's own
+    // outcome (entries it could not match) is set after it, not before.
+    const shortfall = reconciliationShortfall(unreconciledSelectedIds, (data ?? []).map((r) => r.id as string))
     await refresh()
+    if (shortfall) setError(shortfall)
   }
 
   return {
