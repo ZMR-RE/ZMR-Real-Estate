@@ -48,7 +48,11 @@ export interface BilledPerson {
 
 export interface InvoiceDoc {
   number: string
-  issueDate: string
+  // null until issued (drafts print "On issue").
+  issueDate: string | null
+  // Printed under the title when set, e.g. "DRAFT — NOT ISSUED" or
+  // "REVISED — REPLACES A-INV-000001".
+  status?: string | null
   dueDate: string
   periodLabel: string
   billTo: BilledPerson[]

@@ -87,10 +87,17 @@ export function renderEntityDocument(JsPdf: JsPdfCtor, entity: EntityIdentity, s
   font('bold', 22)
   setText(colors.heading)
   doc.text(isInvoice ? 'INVOICE' : 'RECEIPT', R, top, { align: 'right' })
-  const facts: [number, string, string][] = isInvoice
-    ? [[6, 'Invoice no.', d.data.number], [7, 'Issue date', longDate(d.data.issueDate)], [8, 'Due date', longDate(d.data.dueDate)], [9, 'Billing period', d.data.periodLabel]]
-    : [[6, 'Receipt no.', d.data.number], [7, 'Payment date', longDate(d.data.paymentDate)]]
   let fy = top + 20
+  const status = isInvoice ? d.data.status?.trim() : null
+  if (status) {
+    font('bold', 9)
+    setText(colors.highlight)
+    doc.text(status, R, fy, { align: 'right' })
+    fy += 16
+  }
+  const facts: [number, string, string][] = isInvoice
+    ? [[6, 'Invoice no.', d.data.number], [7, 'Issue date', d.data.issueDate ? longDate(d.data.issueDate) : 'On issue'], [8, 'Due date', longDate(d.data.dueDate)], [9, 'Billing period', d.data.periodLabel]]
+    : [[6, 'Receipt no.', d.data.number], [7, 'Payment date', longDate(d.data.paymentDate)]]
   for (const [n, label, value] of facts) {
     font('normal', 9)
     setText(colors.secondary)

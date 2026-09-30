@@ -23,6 +23,12 @@ describe('entity documents', () => {
     expect(out).toContain('Sample Tenant Two')
   })
 
+  it('a draft prints its status and "On issue" instead of an issue date', () => {
+    const out = renderEntityDocument(jsPDF, entity, withBranding, { kind: 'invoice', data: { ...sampleInvoice(null, null), issueDate: null, status: 'DRAFT — NOT ISSUED' } }).output()
+    expect(out).toContain('DRAFT')
+    expect(out).toContain('On issue')
+  })
+
   it('earlier unpaid invoices appear only as references, outside the total', () => {
     const inv = { ...sampleInvoice(null, null), priorUnpaid: [{ number: 'A-INV-000003', periodLabel: 'September 2026', outstanding: 1450 }] }
     const out = renderEntityDocument(jsPDF, entity, withBranding, { kind: 'invoice', data: inv }).output()
