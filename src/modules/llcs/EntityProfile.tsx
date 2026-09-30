@@ -163,6 +163,13 @@ export function EntityProfile() {
 
       <EntityMembershipSection llcId={entity.id} llcOptions={llcOptions} />
 
+      <CollapsibleSection title="Branding & documents">
+        <p>
+          Logo, document colours, contact details, payment instructions and document defaults for invoices and receipts this entity issues.{' '}
+          <Link to={`/settings?tab=entities&entity=${entity.id}`}>Open Branding & documents</Link>
+        </p>
+      </CollapsibleSection>
+
       <CollapsibleSection title="Documents">
         <EntityDocumentsPanel llcId={entity.id} />
       </CollapsibleSection>
