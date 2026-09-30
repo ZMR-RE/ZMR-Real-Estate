@@ -132,7 +132,7 @@ other validation.
 
 **Evidence:**
 
-- `supabase/tests/rent_invoicing/owner_only.sql`: 29 checks. A manager, a viewer and another
+- `supabase/tests/rent_invoicing/owner_only.sql`: 31 checks. A manager, a viewer and another
   account's owner attempt each action. The checks also confirm that no invoice, event or
   setting changed afterwards and that memberships are untouched.
 - `supabase/tests/entity_branding/tests.sql`: 8 owner-only checks.

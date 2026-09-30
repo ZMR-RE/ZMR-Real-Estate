@@ -80,12 +80,28 @@ export async function listBillingEntities(accountId: string) {
   return supabase.from('llcs').select('id, name, display_name, invoice_code').eq('account_id', accountId).eq('archived', false).order('name').returns<EntityOption[]>()
 }
 
-export async function getPropertyBillingEntity(propertyId: string) {
-  return supabase.from('properties').select('id, billing_entity_id').eq('id', propertyId).single().returns<{ id: string; billing_entity_id: string | null }>()
+export interface PropertyBillingRow {
+  id: string
+  billing_entity_id: string | null
+  payment_instructions_override: string | null
 }
 
-export async function setPropertyBillingEntity(propertyId: string, entityId: string | null) {
-  return supabase.from('properties').update({ billing_entity_id: entityId }).eq('id', propertyId).select('id, billing_entity_id').single()
+export async function getPropertyBilling(propertyId: string) {
+  return supabase.from('properties').select('id, billing_entity_id, payment_instructions_override').eq('id', propertyId).single().returns<PropertyBillingRow>()
+}
+
+export async function setPropertyBilling(propertyId: string, input: Omit<PropertyBillingRow, 'id'>) {
+  return supabase.from('properties').update(input).eq('id', propertyId).select('id').single()
+}
+
+// The entity's default instructions (Branding & documents), to show what a
+// property inherits when it has no override of its own.
+export async function getEntityDefaultPaymentInstructions(entityId: string) {
+  return supabase
+    .from('entity_document_branding')
+    .select('payment_instructions')
+    .eq('entity_id', entityId)
+    .maybeSingle<{ payment_instructions: string | null }>()
 }
 
 export interface EntityInvoicingRow {
@@ -93,15 +109,12 @@ export interface EntityInvoicingRow {
   name: string
   display_name: string | null
   invoice_code: string | null
-  billing_reply_to_email: string | null
-  payment_instructions: string | null
-  mailing_address: string | null
 }
 
 export async function getEntityInvoicing(entityId: string) {
   return supabase
     .from('llcs')
-    .select('id, name, display_name, invoice_code, billing_reply_to_email, payment_instructions, mailing_address')
+    .select('id, name, display_name, invoice_code')
     .eq('id', entityId)
     .single()
     .returns<EntityInvoicingRow>()
@@ -117,10 +130,10 @@ export async function getInvoiceSequence(entityId: string) {
     .returns<{ next_value: number; first_issued_at: string | null } | null>()
 }
 
+// Reply-to email, contact details and the DEFAULT payment instructions live
+// in the entity's Branding & documents (entity_document_branding).
 export interface EntityInvoicingInput {
   invoice_code: string | null
-  billing_reply_to_email: string | null
-  payment_instructions: string | null
 }
 
 export async function updateEntityInvoicing(entityId: string, input: EntityInvoicingInput) {

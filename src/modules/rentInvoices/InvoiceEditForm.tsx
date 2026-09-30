@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { buildPatch, editValuesFrom, patchIsMaterial, validateEdit, type InvoiceEditValues, type LineDraft } from './invoiceWorkflowLogic'
+import { formatMoney } from './invoiceDocument'
+import { buildPatch, editValuesFrom, patchIsMaterial, ruleLinesOf, validateEdit, type InvoiceEditValues, type LineDraft } from './invoiceWorkflowLogic'
 import type { InvoicePatch, IssuerRow } from './rentInvoicesQueries'
 import type { RentInvoiceRow } from './rentInvoiceTypes'
 
@@ -16,7 +17,8 @@ const KIND_LABEL: Record<LineDraft['line_kind'], string> = { rent: 'Rent', prora
 export function InvoiceEditForm({ invoice, issuers, busy, onSave, onCancel }: InvoiceEditFormProps) {
   const [v, setV] = useState<InvoiceEditValues>(() => editValuesFrom(invoice))
   const [touched, setTouched] = useState(false)
-  const errors = validateEdit(v)
+  const ruleLines = ruleLinesOf(invoice)
+  const errors = validateEdit(v, ruleLines.reduce((sum, l) => sum + Number(l.amount), 0), ruleLines.length)
   const patch = buildPatch(invoice, v)
   const clearsApproval = invoice.state === 'approved' && patchIsMaterial(patch)
   const setLine = (i: number, change: Partial<LineDraft>) => setV({ ...v, lines: v.lines.map((l, j) => (j === i ? { ...l, ...change } : l)) })
@@ -42,13 +44,33 @@ export function InvoiceEditForm({ invoice, issuers, busy, onSave, onCancel }: In
       </select>
       {invoice.revision_of && <p className="field-hint">A revision keeps its original issuer and number.</p>}
 
-      <label htmlFor="inv-recipient">Bill to</label>
-      <input id="inv-recipient" value={v.recipientName} onChange={(e) => setV({ ...v, recipientName: e.target.value })} />
-      <label htmlFor="inv-email">Recipient email</label>
-      <input id="inv-email" type="email" value={v.recipientEmail} onChange={(e) => setV({ ...v, recipientEmail: e.target.value })} />
+      <fieldset className="invoice-lines-editor">
+        <legend>Bill to</legend>
+        {invoice.recipients.length > 0 ? (
+          <ul className="invoice-recipient-list">
+            {invoice.recipients.map((r) => (
+              <li key={r.tenant_id}>{r.name}{[r.email, r.phone].filter(Boolean).length > 0 && <span className="field-hint"> · {[r.email, r.phone].filter(Boolean).join(' · ')}</span>}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="field-hint">No billed tenants on this draft.</p>
+        )}
+        <label className="invoice-checkbox">
+          <input type="checkbox" checked={v.refreshRecipients} onChange={(e) => setV({ ...v, refreshRecipients: e.target.checked })} />
+          Refresh from tenant profiles on save
+        </label>
+        <p className="field-hint">Names, emails and phones come from the billed tenants’ profiles (Tenancy &amp; billing chooses who is billed). Edit them there, then refresh.</p>
+      </fieldset>
 
       <fieldset className="invoice-lines-editor">
         <legend>Lines</legend>
+        {ruleLines.map((l) => (
+          <div key={l.id} className="invoice-line-edit invoice-line-edit--rule">
+            <span>{l.description}</span>
+            <span>{formatMoney(Number(l.amount))}</span>
+            <span className="field-hint">From a billing rule — change it on the tenancy</span>
+          </div>
+        ))}
         {v.lines.map((line, i) => (
           <div key={i} className="invoice-line-edit">
             <select aria-label={`Line ${i + 1} type`} value={line.line_kind} onChange={(e) => setLine(i, { line_kind: e.target.value as LineDraft['line_kind'] })}>

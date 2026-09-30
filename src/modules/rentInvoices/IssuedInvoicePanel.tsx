@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
-import { buildInvoiceDocument } from './invoiceDocument'
-import { formatMoney } from './invoicePdf'
+import { formatMoney, periodLabel } from './invoiceDocument'
 import { InvoicePdfPreview } from './InvoicePdfPreview'
 import { STATE_LABEL } from './invoiceWorkflowLogic'
 import type { RentInvoiceRow } from './rentInvoiceTypes'
@@ -19,8 +18,10 @@ export function IssuedInvoicePanel({ invoice, workflow }: IssuedInvoicePanelProp
   const [cancelling, setCancelling] = useState(false)
   const [reason, setReason] = useState('')
   const [hasStoredPdf, setHasStoredPdf] = useState<boolean | null>(null)
-  const model = buildInvoiceDocument(invoice, null)
+  const doc = workflow.selectedDoc?.invoiceId === invoice.id ? workflow.selectedDoc : null
+  const snap = invoice.issued_snapshot
   const live = invoice.state === 'issued'
+  const issuerName = snap?.issuer ? snap.issuer.display_name?.trim() || snap.issuer.legal_name : ''
 
   const actions = live ? (
     <span className="invoice-decision-actions">
@@ -30,16 +31,16 @@ export function IssuedInvoicePanel({ invoice, workflow }: IssuedInvoicePanelProp
   ) : undefined
 
   return (
-    <CollapsibleSection title={`${model.number} · ${model.property.address} — ${model.property.unit} · ${model.periodLabel}`} defaultOpen headerActions={actions}>
+    <CollapsibleSection title={`${invoice.number} · ${snap?.rental.property_address ?? ''} — ${snap?.rental.unit_label ?? ''} · ${periodLabel(invoice.period_start)}`} defaultOpen headerActions={actions}>
       <dl className="field-grid invoice-review-facts">
         <div className="field"><dt>Status</dt><dd>{STATE_LABEL[invoice.state]}</dd></div>
-        <div className="field"><dt>Amount</dt><dd>{formatMoney(model.total)}</dd></div>
+        <div className="field"><dt>Amount</dt><dd>{formatMoney(Number(invoice.amount_due))}</dd></div>
         <div className="field"><dt>Due date</dt><dd>{invoice.due_date}</dd></div>
-        <div className="field"><dt>Issued by</dt><dd>{model.issuer.name}</dd></div>
+        {issuerName && <div className="field"><dt>Issued by</dt><dd>{issuerName}</dd></div>}
       </dl>
       {cancelling && (
         <div className="invoice-confirm" role="alertdialog" aria-label="Confirm cancel">
-          <p>Cancelling keeps {model.number} and its PDF on record; the number is never reused. Nothing is sent.</p>
+          <p>Cancelling keeps {invoice.number} and its PDF on record; the number is never reused. Nothing is sent.</p>
           <label htmlFor="inv-cancel-reason">Reason<span className="required-marker">*</span></label>
           <input id="inv-cancel-reason" value={reason} onChange={(e) => setReason(e.target.value)} />
           <div className="invoice-form-actions">
@@ -48,11 +49,18 @@ export function IssuedInvoicePanel({ invoice, workflow }: IssuedInvoicePanelProp
           </div>
         </div>
       )}
-      <InvoicePdfPreview key={workflow.pdfNonce} model={model} issuedInvoiceId={invoice.id} onStoredChecked={setHasStoredPdf} />
+      {doc?.render ? (
+        <InvoicePdfPreview key={workflow.pdfNonce} model={doc.render} issuedInvoiceId={invoice.id} onStoredChecked={setHasStoredPdf} />
+      ) : (
+        <p className="field-hint">{doc?.problem ?? 'Preparing PDF…'}</p>
+      )}
       {hasStoredPdf === false && (
-        <button type="button" className="invoice-compact-button" disabled={workflow.busy} onClick={() => workflow.storePdf(invoice)}>
-          Store PDF
-        </button>
+        <p className="invoice-callout" role="status">
+          This issued invoice has no stored PDF yet. Storing it doesn’t change the number or anything on the invoice.{' '}
+          <button type="button" className="invoice-compact-button" disabled={workflow.busy} onClick={() => workflow.storePdf(invoice)}>
+            Store PDF
+          </button>
+        </p>
       )}
     </CollapsibleSection>
   )

@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { EditableSection } from '../../shared/EditableSection'
-import { buildInvoiceDocument } from './invoiceDocument'
-import { formatMoney } from './invoicePdf'
+import { formatMoney, paymentInstructionsSource, periodLabel } from './invoiceDocument'
 import { InvoiceEditForm } from './InvoiceEditForm'
 import { InvoicePdfPreview } from './InvoicePdfPreview'
-import { draftContextFrom, STATE_LABEL } from './invoiceWorkflowLogic'
+import { STATE_LABEL } from './invoiceWorkflowLogic'
 import type { IssuerRow, TenancyOptionRow } from './rentInvoicesQueries'
 import type { RentInvoiceRow } from './rentInvoiceTypes'
 import type { InvoiceWorkflow } from './useInvoiceWorkflow'
@@ -17,22 +16,27 @@ interface InvoiceReviewPanelProps {
 }
 
 // One invoice record under review: view-only by default, Edit top-right,
-// decision actions beside it. The PDF preview is rendered from exactly
-// what would be issued.
+// decision actions beside it. Everything shown under "What prints" and the
+// PDF preview come from the database's print snapshot — the same content
+// approval records and issue re-checks.
 export function InvoiceReviewPanel({ invoice, tenancy, issuers, workflow }: InvoiceReviewPanelProps) {
   const [confirm, setConfirm] = useState<'issue' | 'reject' | null>(null)
   const [reason, setReason] = useState('')
   const issuer = issuers.find((i) => i.id === invoice.billing_entity_id)
-  const context = draftContextFrom(issuer, tenancy?.property?.address ?? '', tenancy?.unit?.unit_label ?? '')
-  const model = context ? buildInvoiceDocument(invoice, context) : null
-  const approvalValid = invoice.state === 'approved' && invoice.approved_material_version === invoice.material_version
+  const doc = workflow.selectedDoc?.invoiceId === invoice.id && workflow.selectedDoc.version === invoice.version ? workflow.selectedDoc : null
+  const snap = doc?.snapshot ?? null
+  const changed = doc?.changedSinceApproval ?? []
+  const approvalValid = invoice.state === 'approved' && invoice.approved_material_version === invoice.material_version && changed.length === 0
+  const instructionsSource = snap ? paymentInstructionsSource(snap) : null
   const issueBlocker = !issuer ? 'Choose the issuing entity (Edit).' : !issuer.invoice_code ? `${issuer.display_name || issuer.name} has no invoice code yet — add one on its entity profile (Invoicing).` : null
   const nextNumber = issuer?.invoice_code ? `${issuer.invoice_code}-INV-…` : null
 
   const actions = (
     <span className="invoice-decision-actions">
-      {invoice.state === 'draft' && (
-        <button type="button" className="invoice-compact-button invoice-compact-button--primary" disabled={workflow.busy} onClick={() => workflow.approve(invoice)}>Approve</button>
+      {(invoice.state === 'draft' || (invoice.state === 'approved' && changed.length > 0)) && (
+        <button type="button" className="invoice-compact-button invoice-compact-button--primary" disabled={workflow.busy || !doc || !!doc.problem} onClick={() => workflow.approve(invoice)}>
+          {invoice.state === 'approved' ? 'Approve again' : 'Approve'}
+        </button>
       )}
       {approvalValid && (
         <button type="button" className="invoice-compact-button invoice-compact-button--primary" disabled={workflow.busy || !!issueBlocker} onClick={() => setConfirm('issue')}>Issue…</button>
@@ -45,21 +49,64 @@ export function InvoiceReviewPanel({ invoice, tenancy, issuers, workflow }: Invo
     <div className="invoice-review">
       <dl className="field-grid invoice-review-facts">
         <div className="field"><dt>Status</dt><dd>{STATE_LABEL[invoice.state]}</dd></div>
-        <div className="field"><dt>Billing month</dt><dd>{model?.periodLabel}</dd></div>
+        <div className="field"><dt>Billing month</dt><dd>{periodLabel(invoice.period_start)}</dd></div>
         <div className="field"><dt>Due date</dt><dd>{invoice.due_date}</dd></div>
         <div className="field"><dt>Amount</dt><dd>{formatMoney(Number(invoice.amount_due))}</dd></div>
-        {invoice.recipient_name && <div className="field"><dt>Bill to</dt><dd>{invoice.recipient_name}</dd></div>}
-        {invoice.recipient_email && <div className="field"><dt>Recipient email</dt><dd>{invoice.recipient_email}</dd></div>}
         <div className="field"><dt>Issuing entity</dt><dd>{issuer ? issuer.display_name || issuer.name : 'Not chosen'}</dd></div>
         {invoice.internal_note && <div className="field"><dt>Internal note (never sent)</dt><dd>{invoice.internal_note}</dd></div>}
         <div className="field"><dt>Created by</dt><dd>{invoice.created_via === 'assistant' ? 'Rent & Payments Assistant' : 'You'}</dd></div>
       </dl>
-      {invoice.state === 'approved' && issueBlocker && <p className="invoice-callout">{issueBlocker}</p>}
+      {changed.length > 0 && (
+        <p className="invoice-callout" role="status">
+          Changed since you approved it: {changed.join(', ')}. Review the preview and approve again before issuing.
+        </p>
+      )}
+      {invoice.state === 'approved' && changed.length === 0 && issueBlocker && <p className="invoice-callout">{issueBlocker}</p>}
+
+      {snap && (
+        <>
+          <h3 className="property-field-group-title">What prints</h3>
+          <dl className="field-grid invoice-review-facts">
+            {snap.recipients.length > 0 ? (
+              <div className="field">
+                <dt>Bill to</dt>
+                <dd>
+                  {snap.recipients.map((r) => (
+                    <span key={r.tenant_id} className="invoice-recipient">
+                      {r.name}
+                      {[r.email, r.phone].filter(Boolean).length > 0 && <span className="field-hint"> · {[r.email, r.phone].filter(Boolean).join(' · ')}</span>}
+                    </span>
+                  ))}
+                </dd>
+              </div>
+            ) : (
+              <div className="field"><dt>Bill to</dt><dd className="invoice-callout">No billed tenants — choose one under the tenant’s Tenancy &amp; billing.</dd></div>
+            )}
+            {snap.payment_instructions.text ? (
+              <div className="field">
+                <dt>How to pay</dt>
+                <dd>
+                  {snap.payment_instructions.text}
+                  {instructionsSource && <span className="field-hint invoice-source">{instructionsSource}</span>}
+                </dd>
+              </div>
+            ) : (
+              <div className="field"><dt>How to pay</dt><dd className="invoice-callout">No payment instructions — add a default in the entity’s Branding &amp; documents, or this property’s own in Billing settings.</dd></div>
+            )}
+            {snap.prior_unpaid.length > 0 && (
+              <div className="field">
+                <dt>Earlier unpaid (reference only, not in this total)</dt>
+                <dd>{snap.prior_unpaid.map((p) => `${p.number} (${periodLabel(p.period_start)}): ${formatMoney(Number(p.outstanding))}`).join('; ')}</dd>
+              </div>
+            )}
+          </dl>
+        </>
+      )}
 
       {confirm === 'issue' && (
         <div className="invoice-confirm" role="alertdialog" aria-label="Confirm issue">
           <p>
-            Issuing assigns {issuer?.display_name || issuer?.name}’s next invoice number ({nextNumber}) and stores the PDF permanently.
+            Issuing assigns {issuer?.display_name || issuer?.name}’s next invoice number ({nextNumber}) and stores the PDF exactly as approved.
             It can’t be edited afterwards — only revised or cancelled. <strong>Nothing is sent and no payment is recorded.</strong>
           </p>
           <div className="invoice-form-actions">
@@ -79,14 +126,14 @@ export function InvoiceReviewPanel({ invoice, tenancy, issuers, workflow }: Invo
         </div>
       )}
 
-      {model ? <InvoicePdfPreview model={model} /> : <p className="empty-state">Choose the issuing entity to preview the PDF.</p>}
+      {doc?.render ? <InvoicePdfPreview model={doc.render} /> : <p className="empty-state">{doc?.problem ?? 'Preparing preview…'}</p>}
     </div>
   )
 
   return (
     <EditableSection
       key={`${invoice.id}-${invoice.version}`}
-      title={`${tenancy ? `${tenancy.property?.address} — ${tenancy.unit?.unit_label}` : 'Invoice'} · ${model?.periodLabel ?? invoice.period_start}`}
+      title={`${tenancy ? `${tenancy.property?.address} — ${tenancy.unit?.unit_label}` : 'Invoice'} · ${periodLabel(invoice.period_start)}`}
       defaultOpen
       secondaryActions={actions}
       onEditStart={workflow.refreshOptions}

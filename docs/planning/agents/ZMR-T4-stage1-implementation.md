@@ -249,6 +249,57 @@ This was pulled ahead of Milestone 2 because the owner asked for it to be finish
   entity branding and the invoice layout settled first; proposals B1–B9
   await numbered approval.
 
+## T3 correction on `4bd2078` (September 30) and owner-only invoicing
+
+**Implemented locally and checked; not visually reviewed by the owner; not released.**
+
+| T3 finding | What changed | Evidence |
+|---|---|---|
+| Approval must cover exactly what prints | `invoice_print_snapshot` builds everything printed (issuer, branding and logo version, payment instructions with their source, recipients, rental, lines, note, earlier unpaid). Approval stores it; issue refuses with ZM348, naming what changed; the issued invoice keeps the approved snapshot. The review screen shows "Changed since you approved it" with **Approve again**. | DB checks: branding phone change → ZM348; property override → ZM348; new entity code → ZM348; later settings change leaves the issued snapshot alone. Browser check on the review page. |
+| Revisions with payments | `revise_invoice` refuses with ZM349 and explains that payments would need moving, which this release doesn't do. No payment migration was built. | DB check. |
+| Assistant provenance | Drafts are created only through `invoicing_internal.create_draft_core`. The public action is always `owner`. The assistant path is only its run, which checks membership and ownership of the assistant's account. Direct `agent_runs` writes are refused (ZM356), and so is passing `'assistant'` to the public action. | DB checks. |
+| Test runner | `run.sh` counts PASS/FAIL against the number of checks written, exits 1 on any failure or a check that didn't run, and `selftest.sh` proves detection. It caught two real issues this session: a missing-amount billing rule passing the shape check, and a check that silently didn't run. | 145/145; self-test OK; concurrency A-INV-000004/000005 with no duplicates. |
+| PDF existence and retry | Added to the release verification list below. | The retry was browser-checked on the review page with `?fail-upload=1`. |
+
+**Owner-only invoicing (owner-approved September 30).** Recorded in the approval register addendum.
+
+- ZM370 applies to every invoice action, invoicing setting, billing rule, assistant record and invoice-PDF upload for anyone who is not the account's owner.
+- It is checked first in every action and backed by table triggers for direct writes.
+- The DB checks run a manager, a viewer and another account's owner against each action (31 checks), then confirm nothing changed and memberships are untouched.
+
+## Release verification (Practice, before any production step)
+
+Each item must be observed on Practice through the dashboard, not inferred from disposable-DB checks.
+
+1. **PDF exists.** After issuing a test invoice, open it. "Stored PDF — matches the fingerprint recorded at issue" must show. Download the file and compare its SHA-256 with the `pdf_attached` event.
+2. **PDF is protected.** As the owner, try deleting and overwriting that object through the Storage API; both must be refused. Confirm an ordinary document in the same bucket can still be deleted (control).
+3. **Visible retry.** Make the upload fail (for example, go offline in DevTools just before confirming Issue).
+   - The invoice must show as issued with its number and the "PDF isn't stored yet … Store PDF" message.
+   - Retrying must store the PDF under the same number.
+   - Reloading before retrying must still offer "Store PDF".
+4. **Owner-only.** Confirm the reserved test-verification login's membership is `owner`; if it isn't, report it rather than change it. If Practice has a non-owner member, their invoice actions must be refused with the owner-only message.
+5. **Hosted Storage.** Confirm the Storage policies behave as in the local stand-in, including a non-owner upload into `/Invoices/` being refused.
+
+## Routine implementation choices (not owner decisions)
+
+These are recorded so they aren't mistaken for approvals.
+
+- Recipients are copied from tenant profiles when a draft is made. A later profile edit doesn't change a draft until "Refresh from tenant profiles" is saved; that refresh counts as a material change.
+- Lines from billing rules can't be edited on the invoice; they change on the tenancy. Manual lines stay editable.
+- Drafts print "DRAFT — NOT ISSUED", "Assigned on issue" and "On issue". A revision prints "REVISED — REPLACES <number>".
+- Approving an already-approved invoice again is allowed; it refreshes the recorded snapshot.
+- A statement document is linked from the property's existing documents; uploading happens in Documents.
+- Ending a billing rule keeps it on record (status `ended`); nothing is deleted.
+- Old sample PDFs were replaced by snapshot-rendered samples: `samples/sample-1-issued-with-logo_A-INV-000001.pdf` and `samples/sample-2-draft-no-logo_co-tenants.pdf`.
+
+## Known gaps (this correction)
+
+- Workload editing of billing rules isn't wired: the real Agents screen doesn't exist yet (the rename is pending coordination). `TenancyChargeRulesBox` is built to be reused there.
+- Phone-width check of the new "What prints" block and the billing-rules box wasn't re-run; the browser session couldn't resize below desktop width.
+- The billing-rules box isn't on the simulated review page, because that page shows Rent ops only. It is verified by unit checks, the 23 DB rule checks and a type-check, not in a browser.
+- The frontend doesn't know the member's role (it isn't in the shared auth context), so non-owners see action buttons and get the refusal message. Hiding the buttons needs a shared auth change, not made here.
+- Recording payments stays open to non-owners (T2's area); this is flagged in the register for an owner decision.
+
 ## Remaining milestones (estimates)
 
 | # | Work | Estimate |

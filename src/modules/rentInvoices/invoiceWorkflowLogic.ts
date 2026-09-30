@@ -1,5 +1,5 @@
-import type { InvoiceLineInput, InvoicePatch, IssuerRow, TenancyOptionRow } from './rentInvoicesQueries'
-import type { DraftContext, InvoiceLineKind, RentInvoiceRow } from './rentInvoiceTypes'
+import type { InvoiceLineInput, InvoicePatch, TenancyOptionRow } from './rentInvoicesQueries'
+import type { InvoiceLineKind, InvoiceLineRow, RentInvoiceRow } from './rentInvoiceTypes'
 
 // Pure helpers for the Rent ops invoice workflow (no Supabase, no React).
 
@@ -19,24 +19,12 @@ export function nextMonth(today: Date): string {
   return d.toISOString().slice(0, 7)
 }
 
-export function draftContextFrom(issuer: IssuerRow | undefined, propertyAddress: string, unitLabel: string): DraftContext | null {
-  if (!issuer) return null
-  return {
-    issuer: {
-      legal_name: issuer.name,
-      display_name: issuer.display_name,
-      invoice_code: issuer.invoice_code,
-      mailing_address: issuer.mailing_address,
-      mailing_city: issuer.mailing_city,
-      mailing_state: issuer.mailing_state,
-      mailing_zip: issuer.mailing_zip,
-      reply_to: issuer.billing_reply_to_email,
-      payment_instructions: issuer.payment_instructions,
-    },
-    propertyAddress,
-    unitLabel,
-  }
-}
+// Lines from tenancy billing rules are maintained by the rules (and kept by
+// the database on edit); only manual lines are edited on the invoice.
+export const isRuleLine = (l: Pick<InvoiceLineRow, 'rule_id'>): boolean => l.rule_id !== null
+
+const sortedLines = (inv: RentInvoiceRow) => [...inv.invoice_lines].sort((a, b) => a.sort_order - b.sort_order)
+export const ruleLinesOf = (inv: RentInvoiceRow) => sortedLines(inv).filter(isRuleLine)
 
 export interface LineDraft {
   line_kind: InvoiceLineKind
@@ -47,8 +35,7 @@ export interface LineDraft {
 export interface InvoiceEditValues {
   dueDate: string
   issuerId: string
-  recipientName: string
-  recipientEmail: string
+  refreshRecipients: boolean
   visibleNote: string
   internalNote: string
   lines: LineDraft[]
@@ -58,27 +45,25 @@ export function editValuesFrom(inv: RentInvoiceRow): InvoiceEditValues {
   return {
     dueDate: inv.due_date,
     issuerId: inv.billing_entity_id ?? '',
-    recipientName: inv.recipient_name ?? '',
-    recipientEmail: inv.recipient_email ?? '',
+    refreshRecipients: false,
     visibleNote: inv.visible_note ?? '',
     internalNote: inv.internal_note ?? '',
-    lines: [...inv.invoice_lines].sort((a, b) => a.sort_order - b.sort_order).map((l) => ({ line_kind: l.line_kind, description: l.description, amount: Number(l.amount).toFixed(2) })),
+    lines: sortedLines(inv).filter((l) => !isRuleLine(l)).map((l) => ({ line_kind: l.line_kind, description: l.description, amount: Number(l.amount).toFixed(2) })),
   }
 }
 
-export function validateEdit(v: InvoiceEditValues): string[] {
+export function validateEdit(v: InvoiceEditValues, ruleTotal = 0, ruleLineCount = 0): string[] {
   const errors: string[] = []
   if (!v.dueDate) errors.push('Due date is required.')
-  if (v.lines.length === 0) errors.push('Add at least one line.')
+  if (v.lines.length + ruleLineCount === 0) errors.push('Add at least one line.')
   v.lines.forEach((l, i) => {
     const n = Number(l.amount)
     if (!l.description.trim()) errors.push(`Line ${i + 1} needs a description.`)
     if (l.amount.trim() === '' || !Number.isFinite(n)) errors.push(`Line ${i + 1} needs an amount.`)
     else if (l.line_kind === 'credit' ? n >= 0 : n < 0) errors.push(`Line ${i + 1}: credits are negative, charges are positive.`)
   })
-  const total = v.lines.reduce((s, l) => s + (Number(l.amount) || 0), 0)
+  const total = v.lines.reduce((s, l) => s + (Number(l.amount) || 0), 0) + ruleTotal
   if (total < 0) errors.push('Credits can’t exceed the charges.')
-  if (v.recipientEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.recipientEmail.trim())) errors.push('Recipient email doesn’t look valid.')
   return errors
 }
 
@@ -89,8 +74,7 @@ export function buildPatch(inv: RentInvoiceRow, v: InvoiceEditValues): InvoicePa
   const patch: InvoicePatch = {}
   if (v.dueDate !== before.dueDate) patch.due_date = v.dueDate
   if (v.issuerId !== before.issuerId) patch.billing_entity_id = v.issuerId || null
-  if (v.recipientName.trim() !== before.recipientName) patch.recipient_name = v.recipientName.trim() || null
-  if (v.recipientEmail.trim() !== before.recipientEmail) patch.recipient_email = v.recipientEmail.trim() || null
+  if (v.refreshRecipients) patch.refresh_recipients = true
   if (v.visibleNote.trim() !== before.visibleNote) patch.visible_note = v.visibleNote.trim() || null
   if (v.internalNote.trim() !== before.internalNote) patch.internal_note = v.internalNote.trim() || null
   const norm = (ls: LineDraft[]): InvoiceLineInput[] => ls.map((l) => ({ line_kind: l.line_kind, description: l.description.trim(), amount: Math.round(Number(l.amount) * 100) / 100 }))

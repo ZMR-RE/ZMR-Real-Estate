@@ -73,3 +73,31 @@
     min-height: 44px;
   }
 }
+.billing-source { display: block; }
+
+/* Tenancy billing rules — reuse the shared tokens; the review colour is the
+   same light yellow as .billing-callout (owner colour decision). */
+.charge-rule-list { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: grid; gap: var(--space-2); }
+.charge-rule {
+  --billing-review-bg: #fff7d1;
+  --billing-review-border: #e6c85a;
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-h);
+  font-size: var(--text-md);
+}
+.charge-rule:hover { background: var(--accent-bg); }
+.charge-rule--review, .charge-rule--review:hover { background: var(--billing-review-bg); border-color: var(--billing-review-border); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .charge-rule {
+    --billing-review-bg: rgba(242, 201, 76, 0.16);
+    --billing-review-border: rgba(242, 201, 76, 0.5);
+  }
+}
+.charge-rule-flag { font-size: var(--text-sm); color: var(--warning); }
+.charge-rule-statements { margin: 0; padding-left: var(--space-4); font-size: var(--text-sm); color: var(--text); }
+.charge-rule-actions button { min-height: 44px; }
+.charge-rule-form { border-top: 1px solid var(--border); padding-top: var(--space-3); margin-top: var(--space-2); }

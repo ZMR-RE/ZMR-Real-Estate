@@ -1,62 +1,65 @@
 import { jsPDF } from 'jspdf'
 import { describe, expect, it } from 'vitest'
-import { buildInvoiceDocument, invoiceFilename, unitSlug } from './invoiceDocument'
-import { renderInvoicePdf } from './invoicePdf'
-import { draftContext, issued } from './invoiceSampleFixtures'
+import { renderEntityDocument } from '../entityBranding/stationeryPdf'
+import { buildInvoiceRender, changedSinceApproval, invoiceFilename, paymentInstructionsSource, unitSlug } from './invoiceDocument'
+import { snapshot } from './invoiceSampleFixtures'
 
-describe('invoice document model', () => {
-  it('renders an issued invoice only from its snapshots', () => {
-    const m = buildInvoiceDocument(issued, draftContext)
-    expect(m.isDraft).toBe(false)
-    expect(m.number).toBe('A-INV-000001')
-    expect(m.issuer.paymentInstructions).toMatch(/^Zelle/)
-    expect(m.property.unit).toBe('Unit 1')
-    expect(m.lines.map((l) => l.amount)).toEqual([1450, -50])
-    expect(m.total).toBe(1400)
-    expect(m.filename).toBe('A-INV-000001_2026-10_Unit-1.pdf')
+const pdfText = (r: ReturnType<typeof buildInvoiceRender>) => renderEntityDocument(jsPDF, r.entity, r.stationery, { kind: 'invoice', data: r.doc }).output()
+
+describe('invoice document from the print snapshot', () => {
+  it('an issued invoice prints its number, issue date, recipients and snapshotted instructions', () => {
+    const r = buildInvoiceRender(snapshot, { number: 'A-INV-000001', issuedAt: '2026-09-25T15:00:00Z' }, null)
+    expect(r.isDraft).toBe(false)
+    expect(r.filename).toBe('A-INV-000001_2026-10_Unit-1.pdf')
+    expect(r.total).toBe(1460)
+    const out = pdfText(r)
+    expect(out).toContain('A-INV-000001')
+    expect(out).toContain('September 25, 2026')
+    expect(out).toContain('riley@example.com')
+    expect(out).toContain('Zelle to billing@example.com')
+    expect(out).toContain('Pest control')
+    expect(out).not.toMatch(/\bsent\b/i)
   })
 
-  it('never prints the internal note', () => {
-    expect(JSON.stringify(buildInvoiceDocument(issued, null))).not.toContain('never printed')
+  it('a draft has no number and says so', () => {
+    const r = buildInvoiceRender(snapshot, null, null)
+    expect(r.filename).toBe('DRAFT_2026-10_Unit-1.pdf')
+    const out = pdfText(r)
+    expect(out).toContain('DRAFT')
+    expect(out).toContain('Assigned on issue')
+    expect(out).toContain('On issue')
   })
 
-  it('marks a draft, gives it no number and uses current values', () => {
-    const m = buildInvoiceDocument({ ...issued, state: 'approved', number: null, issuer_snapshot: null, recipient_snapshot: null, issued_at: null }, draftContext)
-    expect(m.isDraft).toBe(true)
-    expect(m.number).toBeNull()
-    expect(m.issueDate).toBeNull()
-    expect(m.issuer.paymentInstructions).toBe('CHANGED LATER')
-    expect(m.filename).toBe('DRAFT_2026-10_Unit-2.pdf')
+  it('a revision says which number it replaces', () => {
+    const out = pdfText(buildInvoiceRender({ ...snapshot, revision: 2, revision_of_number: 'A-INV-000001' }, { number: 'A-INV-000001-R2', issuedAt: '2026-10-02T00:00:00Z' }, null))
+    expect(out).toContain('REPLACES A-INV-000001')
   })
 
-  it('refuses to render an issued invoice without snapshots', () => {
-    expect(() => buildInvoiceDocument({ ...issued, issuer_snapshot: null }, draftContext)).toThrow()
+  it('names where the payment instructions come from', () => {
+    expect(paymentInstructionsSource(snapshot)).toMatch(/Example Holdings’s default/)
+    expect(paymentInstructionsSource({ ...snapshot, payment_instructions: { text: 'x', source: 'property' } })).toMatch(/property’s own/)
+    expect(paymentInstructionsSource({ ...snapshot, payment_instructions: { text: null, source: null } })).toBeNull()
+  })
+
+  it('refuses to show an invoice with no issuing entity', () => {
+    expect(() => buildInvoiceRender({ ...snapshot, issuer: null }, null, null)).toThrow(/issuing entity/)
+  })
+
+  it('reports what printed content changed since approval, in plain words', () => {
+    expect(changedSinceApproval(snapshot, snapshot)).toEqual([])
+    const changed = changedSinceApproval(snapshot, {
+      ...snapshot,
+      payment_instructions: { text: 'Check to the site office', source: 'property' },
+      recipients: [{ ...snapshot.recipients[0], phone: null }],
+    })
+    expect(changed).toEqual(['payment instructions', 'billed tenants or their contact details'])
+    // Same values with keys in a different order are equal.
+    const reordered = { lines: snapshot.lines.map((l) => ({ amount: l.amount, description: l.description, kind: l.kind })) }
+    expect(changedSinceApproval(snapshot, { ...snapshot, ...reordered })).toEqual([])
   })
 
   it('follows the approved filename convention', () => {
-    expect(invoiceFilename('A-INV-000001', '2026-10-01', 'Unit 1')).toBe('A-INV-000001_2026-10_Unit-1.pdf')
     expect(invoiceFilename('A-INV-000001-R2', '2026-10-01', 'Apt #3B')).toBe('A-INV-000001-R2_2026-10_Apt-3B.pdf')
     expect(unitSlug('  ')).toBe('Unit')
-  })
-})
-
-describe('invoice PDF', () => {
-  const text = (m: ReturnType<typeof buildInvoiceDocument>) => renderInvoicePdf(jsPDF, m).output()
-
-  it('contains the number, amounts and payment instructions, and never claims sent or paid', () => {
-    const out = text(buildInvoiceDocument(issued, null))
-    expect(out).toContain('A-INV-000001')
-    expect(out).toContain('$1,450.00')
-    expect(out).toContain('$1,400.00')
-    expect(out).toContain('Zelle to billing@example.com')
-    expect(out).not.toMatch(/\bpaid\b(?! payable)/i)
-    expect(out).not.toMatch(/\bsent\b(?! and)/i)
-  })
-
-  it('marks drafts clearly', () => {
-    const out = text(buildInvoiceDocument({ ...issued, state: 'draft', number: null, issuer_snapshot: null, recipient_snapshot: null, issued_at: null }, draftContext))
-    expect(out).toContain('DRAFT')
-    expect(out).toContain('Not numbered')
-    expect(out).toContain('not issued and not sent')
   })
 })

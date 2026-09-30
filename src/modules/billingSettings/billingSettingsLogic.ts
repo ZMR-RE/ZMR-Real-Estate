@@ -60,7 +60,6 @@ export function normalizeInvoiceCode(raw: string): string {
 export function validateEntityInvoicing(input: EntityInvoicingInput, startNumber: string, startEditable: boolean): string[] {
   const errors: string[] = []
   if (input.invoice_code && !/^[A-Z0-9]{1,8}$/.test(input.invoice_code)) errors.push('Invoice code: 1–8 letters or digits, no spaces.')
-  if (input.billing_reply_to_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.billing_reply_to_email)) errors.push('Reply-to email doesn’t look valid.')
   if (startEditable && startNumber.trim() !== '' && (!/^\d+$/.test(startNumber.trim()) || Number(startNumber) < 1)) errors.push('Starting number must be a whole number of 1 or more.')
   return errors
 }
@@ -70,4 +69,13 @@ export function previewInvoiceNumber(code: string | null, next: number): string 
   if (!code) return null
   const digits = String(next)
   return `${code}-INV-${digits.padStart(Math.max(6, digits.length), '0')}`
+}
+
+// Which payment instructions a property's invoices print, and why.
+export function effectivePaymentInstructions(override: string | null, entityDefault: string | null, entityName: string | null) {
+  const own = override?.trim() || null
+  if (own) return { text: own, source: 'This property’s own instructions (overrides the entity default)' }
+  const inherited = entityDefault?.trim() || null
+  if (inherited) return { text: inherited, source: `Inherited from ${entityName ?? 'the invoicing entity'}’s default (Branding & documents)` }
+  return { text: null, source: null }
 }

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import type { InvoiceDocumentModel } from './invoiceDocument'
+import type { InvoiceRender } from './invoiceDocument'
 import { invoicePdfBlob } from './invoicePdf'
 import { getStoredInvoicePdf, openStoredInvoicePdf } from './rentInvoicesQueries'
 
 interface InvoicePdfPreviewProps {
-  model: InvoiceDocumentModel
+  model: InvoiceRender
   // Issued invoices: show the STORED file (checked against its recorded
   // digest), not a fresh render.
   issuedInvoiceId?: string
@@ -43,7 +43,7 @@ export function InvoicePdfPreview({ model, issuedInvoiceId, onStoredChecked }: I
         }
         return
       }
-      const blob = await invoicePdfBlob(JSON.parse(contentKey) as InvoiceDocumentModel)
+      const blob = await invoicePdfBlob(JSON.parse(contentKey) as InvoiceRender)
       if (!alive) return
       created = URL.createObjectURL(blob)
       setUrl(created)

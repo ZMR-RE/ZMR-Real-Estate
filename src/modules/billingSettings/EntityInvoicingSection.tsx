@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { EditableSection } from '../../shared/EditableSection'
 import './billingSettings.css'
 import { normalizeInvoiceCode, previewInvoiceNumber, validateEntityInvoicing } from './billingSettingsLogic'
@@ -8,13 +9,14 @@ interface EntityInvoicingSectionProps {
   entityId: string
 }
 
-// Entity profile → Invoicing (RP2): what this entity prints on invoices it
-// issues, and its own continuous invoice numbering. Name and address come
-// from the entity's Identity box.
+// Entity profile → Invoicing (RP2): the entity's invoice code and its own
+// continuous numbering. Name and address come from the Identity box; logo,
+// colours, reply-to/contact details and default payment instructions from
+// Branding & documents (one home for each, never duplicated here).
 export function EntityInvoicingSection({ entityId }: EntityInvoicingSectionProps) {
   const [entity, setEntity] = useState<EntityInvoicingRow | null>(null)
   const [seq, setSeq] = useState<{ next_value: number; first_issued_at: string | null } | null>(null)
-  const [form, setForm] = useState({ code: '', replyTo: '', instructions: '', start: '' })
+  const [form, setForm] = useState({ code: '', start: '' })
   const [touched, setTouched] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -33,11 +35,7 @@ export function EntityInvoicingSection({ entityId }: EntityInvoicingSectionProps
   if (!entity) return null
   const started = !!seq?.first_issued_at
   const next = seq?.next_value ?? 1
-  const input = {
-    invoice_code: normalizeInvoiceCode(form.code) || null,
-    billing_reply_to_email: form.replyTo.trim() || null,
-    payment_instructions: form.instructions.trim() || null,
-  }
+  const input = { invoice_code: normalizeInvoiceCode(form.code) || null }
   const errors = validateEntityInvoicing(input, form.start, !started)
   const preview = previewInvoiceNumber(entity.invoice_code, next)
 
@@ -47,9 +45,10 @@ export function EntityInvoicingSection({ entityId }: EntityInvoicingSectionProps
       <dl className="field-grid">
         {entity.invoice_code && <div className="field"><dt>Invoice code</dt><dd>{entity.invoice_code}</dd></div>}
         {preview && <div className="field"><dt>Next invoice number</dt><dd>{preview}</dd></div>}
-        {entity.billing_reply_to_email && <div className="field"><dt>Reply-to email</dt><dd>{entity.billing_reply_to_email}</dd></div>}
-        {entity.payment_instructions && <div className="field"><dt>Payment instructions</dt><dd>{entity.payment_instructions}</dd></div>}
       </dl>
+      <p className="field-hint">
+        Logo, colours, contact details and default payment instructions: <Link to={`/settings?tab=entities&entity=${entityId}`}>Branding &amp; documents</Link>.
+      </p>
     </>
   )
 
@@ -84,11 +83,6 @@ export function EntityInvoicingSection({ entityId }: EntityInvoicingSectionProps
           <p className="field-hint">Only if you’re continuing existing numbering. Fixed once the first invoice is issued; numbers are never reused.</p>
         </>
       )}
-      <label htmlFor={`reply-${entityId}`}>Reply-to email</label>
-      <input id={`reply-${entityId}`} type="email" value={form.replyTo} onChange={(e) => setForm({ ...form, replyTo: e.target.value })} />
-      <label htmlFor={`pay-${entityId}`}>Payment instructions</label>
-      <textarea id={`pay-${entityId}`} value={form.instructions} onChange={(e) => setForm({ ...form, instructions: e.target.value })} />
-      <p className="field-hint">Printed on invoices. Issued invoices keep the details they were issued with.</p>
       {touched && errors.length > 0 && <ul className="billing-errors" role="alert">{errors.map((er) => <li key={er}>{er}</li>)}</ul>}
       {error && <p className="billing-callout billing-callout--error" role="alert">{error}</p>}
       <div className="billing-actions">
@@ -104,7 +98,7 @@ export function EntityInvoicingSection({ entityId }: EntityInvoicingSectionProps
       view={view}
       edit={edit}
       onEditStart={() => {
-        setForm({ code: entity.invoice_code ?? '', replyTo: entity.billing_reply_to_email ?? '', instructions: entity.payment_instructions ?? '', start: '' })
+        setForm({ code: entity.invoice_code ?? '', start: '' })
         setTouched(false)
         setError(null)
         refresh()

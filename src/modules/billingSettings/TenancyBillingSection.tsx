@@ -4,6 +4,7 @@ import { EditableSection } from '../../shared/EditableSection'
 import './billingSettings.css'
 import { dueDayLabel, PRORATE_LABEL, termsFormFrom, validateTerms, type TermsFormValues } from './billingSettingsLogic'
 import { termsOf, type TenancyRow } from './billingSettingsQueries'
+import { TenancyChargeRulesBox } from './TenancyChargeRulesBox'
 import { useTenancyBilling } from './useTenancyBilling'
 
 const MONEY = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
@@ -25,7 +26,10 @@ export function TenancyBillingSection({ tenantId }: TenancyBillingSectionProps) 
     <>
       {error && <p className="billing-callout billing-callout--error" role="alert">{error}</p>}
       {tenancies.map((t) => (
-        <TenancyBillingBox key={`${t.id}-${termsOf(t)?.version ?? 0}`} tenancy={t} saving={saving} onSave={save} />
+        <div key={t.id}>
+          <TenancyBillingBox key={`${t.id}-${termsOf(t)?.version ?? 0}`} tenancy={t} saving={saving} onSave={save} />
+          <TenancyChargeRulesBox leaseId={t.id} propertyId={t.property_id} where={`${t.property?.address ?? 'Property'} — ${t.unit?.unit_label ?? 'Unit'}`} />
+        </div>
       ))}
     </>
   )

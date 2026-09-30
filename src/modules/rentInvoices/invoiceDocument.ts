@@ -1,38 +1,29 @@
-import type { DraftContext, IssuerSnapshot, RentInvoiceRow } from './rentInvoiceTypes'
+import { EMPTY_STATIONERY } from '../entityBranding/stationeryLogic'
+import type { EntityIdentity, InvoiceDoc, Stationery, StationeryLogo } from '../entityBranding/stationeryTypes'
+import type { PrintSnapshot } from './rentInvoiceTypes'
 
-// Builds the one document model both the on-screen review and the PDF use.
-// An ISSUED invoice is rendered only from its stored snapshots, so later
-// changes to entity or tenant settings never alter it. A draft is rendered
-// from current values and is always marked DRAFT with no number.
+// Turns the database's print snapshot into the entity-document renderer's
+// inputs (entityBranding/stationeryPdf). The snapshot is the ONLY source:
+// a draft previews the current snapshot, an issued invoice prints the one
+// it was approved and issued with — later settings changes never alter it.
 // Nothing here states that the invoice was sent or paid.
 
-export interface InvoiceDocumentModel {
+export interface InvoiceRender {
   isDraft: boolean
-  title: string
-  number: string | null
-  revision: number
-  issuer: { name: string; legalName: string; addressLines: string[]; replyTo: string | null; paymentInstructions: string | null }
-  billTo: { name: string; email: string | null }
-  property: { address: string; unit: string }
-  issueDate: string | null
-  dueDate: string
-  periodLabel: string
-  lines: { description: string; amount: number }[]
-  total: number
-  note: string | null
+  entity: EntityIdentity
+  stationery: Stationery
+  doc: InvoiceDoc
   filename: string
+  total: number
 }
 
 const DATE = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
 const MONTH = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+const MONEY = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
 
-export function formatLongDate(isoDate: string): string {
-  return DATE.format(new Date(`${isoDate.slice(0, 10)}T00:00:00Z`))
-}
-
-export function periodLabel(periodStart: string): string {
-  return MONTH.format(new Date(`${periodStart.slice(0, 10)}T00:00:00Z`))
-}
+export const formatMoney = (value: number): string => MONEY.format(value)
+export const formatLongDate = (isoDate: string): string => DATE.format(new Date(`${isoDate.slice(0, 10)}T00:00:00Z`))
+export const periodLabel = (periodStart: string): string => MONTH.format(new Date(`${periodStart.slice(0, 10)}T00:00:00Z`))
 
 // Approved convention: A-INV-000001_2026-10_Unit-1.pdf (unit label only —
 // no tenant name, since the file travels as an attachment).
@@ -44,45 +35,96 @@ export function invoiceFilename(number: string | null, periodStart: string, unit
   return `${number ?? 'DRAFT'}_${periodStart.slice(0, 7)}_${unitSlug(unitLabel)}.pdf`
 }
 
-function addressLines(i: Pick<IssuerSnapshot, 'mailing_address' | 'mailing_city' | 'mailing_state' | 'mailing_zip'>): string[] {
-  const cityLine = [i.mailing_city, [i.mailing_state, i.mailing_zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')
-  return [i.mailing_address, cityLine].filter((x): x is string => !!x && x.trim() !== '')
+// Where the effective payment instructions come from, in words.
+export function paymentInstructionsSource(s: PrintSnapshot): string | null {
+  const entity = s.issuer ? s.issuer.display_name?.trim() || s.issuer.legal_name : 'the invoicing entity'
+  if (s.payment_instructions.source === 'property') return 'This property’s own instructions (overrides the entity default)'
+  if (s.payment_instructions.source === 'entity') return `${entity}’s default (Branding & documents)`
+  return null
 }
 
-export function buildInvoiceDocument(inv: RentInvoiceRow, draft: DraftContext | null): InvoiceDocumentModel {
-  const issued = inv.state === 'issued' || inv.state === 'superseded' || inv.state === 'cancelled'
-  if (issued && (!inv.issuer_snapshot || !inv.recipient_snapshot || !inv.number)) {
-    throw new Error('An issued invoice must be rendered from its stored snapshots.')
-  }
-  if (!issued && !draft) throw new Error('A draft preview needs the current issuer and unit details.')
-
-  const issuer = issued ? inv.issuer_snapshot! : draft!.issuer
-  const recipient = issued
-    ? inv.recipient_snapshot!
-    : { name: inv.recipient_name, email: inv.recipient_email, property_address: draft!.propertyAddress, unit_label: draft!.unitLabel }
-  const unit = recipient.unit_label ?? ''
-  const lines = [...inv.invoice_lines].sort((a, b) => a.sort_order - b.sort_order).map((l) => ({ description: l.description, amount: Number(l.amount) }))
-
+export function buildInvoiceRender(
+  s: PrintSnapshot,
+  issued: { number: string; issuedAt: string } | null,
+  logo: StationeryLogo | null,
+): InvoiceRender {
+  if (!s.issuer) throw new Error('Choose the issuing entity before the invoice can be shown.')
+  const b = s.branding
+  const unit = s.rental.unit_label ?? ''
+  const status = !issued
+    ? 'DRAFT — NOT ISSUED'
+    : s.revision > 1 && s.revision_of_number
+      ? `REVISED — REPLACES ${s.revision_of_number}`
+      : null
+  const lines = s.lines.map((l) => ({ description: l.description, amount: Number(l.amount) }))
   return {
     isDraft: !issued,
-    title: inv.state === 'cancelled' ? 'Invoice — cancelled' : inv.revision > 1 ? 'Invoice — revised' : 'Invoice',
-    number: issued ? inv.number : null,
-    revision: inv.revision,
-    issuer: {
-      name: issuer.display_name?.trim() || issuer.legal_name,
-      legalName: issuer.legal_name,
-      addressLines: addressLines(issuer),
-      replyTo: issuer.reply_to,
-      paymentInstructions: issuer.payment_instructions,
+    entity: {
+      legalName: s.issuer.legal_name,
+      displayName: s.issuer.display_name,
+      mailingAddress: s.issuer.mailing_address,
+      mailingCity: s.issuer.mailing_city,
+      mailingState: s.issuer.mailing_state,
+      mailingZip: s.issuer.mailing_zip,
     },
-    billTo: { name: recipient.name ?? '', email: recipient.email },
-    property: { address: recipient.property_address ?? '', unit },
-    issueDate: issued && inv.issued_at ? inv.issued_at.slice(0, 10) : null,
-    dueDate: inv.due_date,
-    periodLabel: periodLabel(inv.period_start),
-    lines,
-    total: Math.round(lines.reduce((s, l) => s + l.amount, 0) * 100) / 100,
-    note: inv.visible_note,
-    filename: invoiceFilename(issued ? inv.number : null, inv.period_start, unit),
+    stationery: {
+      ...EMPTY_STATIONERY,
+      logo,
+      colors: {
+        ...(b.heading_color ? { heading: b.heading_color } : {}),
+        ...(b.accent_color ? { accent: b.accent_color } : {}),
+        ...(b.highlight_color ? { highlight: b.highlight_color } : {}),
+        ...(b.secondary_color ? { secondary: b.secondary_color } : {}),
+      },
+      contact: { replyTo: b.reply_to_email ?? '', phone: b.document_phone ?? '', website: b.website ?? '' },
+      paymentInstructions: s.payment_instructions.text ?? '',
+      // The note is already resolved in the snapshot (invoice note, else the
+      // entity default), so no renderer-side default applies.
+      defaults: { ...EMPTY_STATIONERY.defaults, paperSize: b.paper_size, showLegalName: b.show_legal_name, documentFooter: b.document_footer ?? '', invoiceNote: '' },
+    },
+    doc: {
+      number: issued ? issued.number : 'Assigned on issue',
+      issueDate: issued ? issued.issuedAt.slice(0, 10) : null,
+      status,
+      dueDate: s.due_date,
+      periodLabel: periodLabel(s.period_start),
+      billTo: s.recipients.map((r) => ({ name: r.name, email: r.email, phone: r.phone })),
+      rental: { address: s.rental.property_address ?? '', unit },
+      lines,
+      paymentInstructions: s.payment_instructions.text,
+      note: s.note ?? '',
+      priorUnpaid: s.prior_unpaid.map((p) => ({ number: p.number, periodLabel: periodLabel(p.period_start), outstanding: Number(p.outstanding) })),
+    },
+    filename: invoiceFilename(issued?.number ?? null, s.period_start, unit),
+    total: Math.round(lines.reduce((sum, l) => sum + l.amount, 0) * 100) / 100,
   }
+}
+
+// Printed-content comparison for the approval (mirrors issue_invoice's
+// ZM348 check): which parts differ between the approved and current
+// snapshot, in the owner's words.
+const PART_LABEL: Record<string, string> = {
+  issuer: 'issuing entity details',
+  branding: 'branding (logo, colours, contact details, footer)',
+  payment_instructions: 'payment instructions',
+  recipients: 'billed tenants or their contact details',
+  rental: 'rental address or unit',
+  period_start: 'billing month',
+  period_end: 'billing month',
+  due_date: 'due date',
+  lines: 'lines',
+  amount_due: 'amount',
+  note: 'note',
+  revision: 'revision',
+  revision_of_number: 'revision',
+  prior_unpaid: 'earlier unpaid invoices listed',
+}
+
+const canonical = (v: unknown): unknown =>
+  Array.isArray(v) ? v.map(canonical) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, canonical((v as Record<string, unknown>)[k])])) : typeof v === 'number' ? Number(v) : v
+
+export function changedSinceApproval(approved: PrintSnapshot, current: PrintSnapshot): string[] {
+  const keys = new Set([...Object.keys(approved), ...Object.keys(current)])
+  const parts = [...keys].filter((k) => JSON.stringify(canonical((approved as unknown as Record<string, unknown>)[k])) !== JSON.stringify(canonical((current as unknown as Record<string, unknown>)[k])))
+  return [...new Set(parts.map((k) => PART_LABEL[k] ?? k))]
 }

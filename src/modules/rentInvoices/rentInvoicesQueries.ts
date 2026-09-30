@@ -1,12 +1,13 @@
 import { supabase } from '../../shared/supabaseClient'
-import type { RentInvoiceRow } from './rentInvoiceTypes'
+import type { StationeryLogo } from '../entityBranding/stationeryTypes'
+import type { PrintSnapshot, RentInvoiceRow } from './rentInvoiceTypes'
 
 // Every Supabase call for Stage 1 invoicing. Writes go ONLY through the
 // database actions (direct table writes are refused by invoices_guard), so
 // the owner's Rent ops path and the assistant path follow identical rules.
 
 const INVOICE_COLUMNS =
-  'id, account_id, property_id, lease_id, billing_entity_id, state, number, revision, revision_of, version, material_version, approved_material_version, period_start, period_end, amount_due, due_date, recipient_name, recipient_email, visible_note, internal_note, issuer_snapshot, recipient_snapshot, issued_at, created_via, invoice_lines(id, line_kind, description, amount, sort_order)'
+  'id, account_id, property_id, lease_id, billing_entity_id, state, number, revision, revision_of, version, material_version, approved_material_version, period_start, period_end, amount_due, due_date, recipient_name, recipients, visible_note, internal_note, approved_snapshot, issued_snapshot, issued_at, created_via, invoice_lines(id, line_kind, description, amount, sort_order, rule_id, statement_id)'
 
 export interface InvoiceLineInput {
   line_kind: 'rent' | 'prorated_rent' | 'charge' | 'credit'
@@ -17,11 +18,12 @@ export interface InvoiceLineInput {
 export interface InvoicePatch {
   due_date?: string
   billing_entity_id?: string | null
-  recipient_name?: string | null
-  recipient_email?: string | null
   visible_note?: string | null
   internal_note?: string | null
+  // Manual lines only; billing-rule lines are kept by the database.
   lines?: InvoiceLineInput[]
+  // Re-read the billed tenants' names/emails/phones from their profiles.
+  refresh_recipients?: true
 }
 
 export async function listTenancyInvoices(leaseIds: string[]) {
@@ -49,7 +51,16 @@ export async function getDraftBlockers(leaseId: string, periodStart: string) {
 }
 
 export async function createInvoiceDraft(leaseId: string, periodStart: string, manualAmount: number | null = null) {
-  return supabase.rpc('create_invoice_draft', { p_lease_id: leaseId, p_period_start: periodStart, p_created_via: 'owner', p_manual_amount: manualAmount })
+  // Always the owner's draft: provenance isn't a client choice (assistant
+  // drafts come only from the assistant's run).
+  return supabase.rpc('create_invoice_draft', { p_lease_id: leaseId, p_period_start: periodStart, p_manual_amount: manualAmount })
+}
+
+// What the invoice would print right now (issuer, branding, payment
+// instructions and their source, recipients, lines, earlier unpaid).
+export async function getPrintSnapshot(id: string) {
+  const r = await supabase.rpc('invoice_print_snapshot', { p_id: id })
+  return { data: (r.data ?? null) as PrintSnapshot | null, error: r.error }
 }
 
 export async function updateInvoiceDraft(id: string, expectedVersion: number, patch: InvoicePatch) {
@@ -104,22 +115,10 @@ export interface IssuerRow {
   name: string
   display_name: string | null
   invoice_code: string | null
-  mailing_address: string | null
-  mailing_city: string | null
-  mailing_state: string | null
-  mailing_zip: string | null
-  billing_reply_to_email: string | null
-  payment_instructions: string | null
 }
 
 export async function listIssuers(accountId: string) {
-  return supabase
-    .from('llcs')
-    .select('id, name, display_name, invoice_code, mailing_address, mailing_city, mailing_state, mailing_zip, billing_reply_to_email, payment_instructions')
-    .eq('account_id', accountId)
-    .eq('archived', false)
-    .order('name')
-    .returns<IssuerRow[]>()
+  return supabase.from('llcs').select('id, name, display_name, invoice_code').eq('account_id', accountId).eq('archived', false).order('name').returns<IssuerRow[]>()
 }
 
 export async function getInvoice(id: string) {
@@ -135,7 +134,7 @@ async function sha256Hex(data: ArrayBuffer): Promise<string> {
 // the bytes' SHA-256 recorded in the invoice's immutable history. The
 // database refuses a PDF for a draft; Storage policies refuse later
 // overwrite or deletion of the stored object.
-export async function attachIssuedInvoicePdf(inv: RentInvoiceRow, filename: string, pdf: Blob) {
+export async function attachIssuedInvoicePdf(inv: Pick<RentInvoiceRow, 'id' | 'account_id' | 'property_id'>, filename: string, pdf: Blob) {
   const path = `${inv.account_id}/${inv.property_id}/Invoices/${filename}`
   const bytes = await pdf.arrayBuffer()
   const upload = await supabase.storage.from('documents').upload(path, pdf, { contentType: 'application/pdf', upsert: false })
@@ -165,4 +164,20 @@ export async function openStoredInvoicePdf(storagePath: string, expectedSha256: 
   if (file.error || !file.data) return { error: file.error ?? new Error('The stored PDF could not be read.') }
   const matches = expectedSha256 ? (await sha256Hex(await file.data.arrayBuffer())) === expectedSha256 : null
   return { url: URL.createObjectURL(file.data), matches }
+}
+
+// The logo version an invoice snapshot names, as the renderer needs it.
+// The file is checked against the digest recorded with the logo version.
+export async function loadSnapshotLogo(logo: NonNullable<PrintSnapshot['branding']['logo']>): Promise<{ data: StationeryLogo | null; error: Error | null }> {
+  const file = await supabase.storage.from('documents').download(logo.storage_path)
+  if (file.error || !file.data) return { data: null, error: new Error('The entity logo couldn’t be loaded.') }
+  const bytes = await file.data.arrayBuffer()
+  if ((await sha256Hex(bytes)) !== logo.sha256) return { data: null, error: new Error('The stored logo doesn’t match the version recorded for this invoice.') }
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const r = new FileReader()
+    r.onload = () => resolve(String(r.result))
+    r.onerror = () => reject(r.error)
+    r.readAsDataURL(file.data!)
+  })
+  return { data: { dataUrl, format: logo.format, width: logo.width, height: logo.height, name: logo.storage_path.split('/').pop() ?? 'logo' }, error: null }
 }

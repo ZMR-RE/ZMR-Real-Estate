@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dueDayLabel, normalizeInvoiceCode, ordinal, previewInvoiceNumber, termsFormFrom, termsInputFrom, validateEntityInvoicing, validateTerms } from './billingSettingsLogic'
+import { dueDayLabel, effectivePaymentInstructions, normalizeInvoiceCode, ordinal, previewInvoiceNumber, termsFormFrom, termsInputFrom, validateEntityInvoicing, validateTerms } from './billingSettingsLogic'
 
 describe('billing settings logic', () => {
   it('labels due days, flagging month-end days', () => {
@@ -24,10 +24,15 @@ describe('billing settings logic', () => {
 
   it('validates entity invoicing like the database', () => {
     expect(normalizeInvoiceCode(' srp ')).toBe('SRP')
-    expect(validateEntityInvoicing({ invoice_code: 'BAD CODE', billing_reply_to_email: null, payment_instructions: null }, '', true)).toHaveLength(1)
-    expect(validateEntityInvoicing({ invoice_code: 'A', billing_reply_to_email: 'x', payment_instructions: null }, '', true)).toContain('Reply-to email doesn’t look valid.')
-    expect(validateEntityInvoicing({ invoice_code: 'A', billing_reply_to_email: null, payment_instructions: null }, '0', true)).toHaveLength(1)
-    expect(validateEntityInvoicing({ invoice_code: 'A', billing_reply_to_email: null, payment_instructions: null }, '0', false)).toEqual([])
+    expect(validateEntityInvoicing({ invoice_code: 'BAD CODE' }, '', true)).toHaveLength(1)
+    expect(validateEntityInvoicing({ invoice_code: 'A' }, '0', true)).toHaveLength(1)
+    expect(validateEntityInvoicing({ invoice_code: 'A' }, '0', false)).toEqual([])
+  })
+
+  it('labels where a property’s payment instructions come from', () => {
+    expect(effectivePaymentInstructions('Site office', 'Zelle', 'Example Holdings')).toEqual({ text: 'Site office', source: expect.stringMatching(/own instructions/) })
+    expect(effectivePaymentInstructions('  ', 'Zelle', 'Example Holdings')).toEqual({ text: 'Zelle', source: expect.stringMatching(/Inherited from Example Holdings’s default/) })
+    expect(effectivePaymentInstructions(null, null, 'Example Holdings')).toEqual({ text: null, source: null })
   })
 
   it('previews six-digit numbers without truncating', () => {
