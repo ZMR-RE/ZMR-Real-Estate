@@ -6,7 +6,9 @@ import { listTransactions, type Transaction } from '../financials/financialsQuer
 import { markTransactionsReconciled } from './bankReconciliationQueries'
 import { computeReconciliation, filterByPeriod } from './bankReconciliationCalculations'
 import {
+  createLatestLoadGate,
   INITIAL_RECONCILIATION_STATUS,
+  loadLatest,
   reconciliationStatusReducer,
   reloadEvent,
   saveThenReload,
@@ -35,6 +37,7 @@ export function useBankReconciliation() {
   const [loading, setLoading] = useState(false)
   const [status, dispatch] = useReducer(reconciliationStatusReducer, INITIAL_RECONCILIATION_STATUS)
   const [saving, setSaving] = useState(false)
+  const [loadGate] = useState(createLatestLoadGate)
 
   useEffect(() => {
     if (!accountId) return
@@ -43,27 +46,41 @@ export function useBankReconciliation() {
     })
   }, [accountId])
 
-  // Loads the list and reports whether that worked; it never touches the
-  // messages itself (see bankReconciliationStatus.ts).
+  // Loads the list for the current property/period and reports the
+  // outcome; it never touches the messages itself. A response that arrives
+  // after a newer load started (the owner changed the selection) is
+  // ignored, so it cannot replace the current selection's list.
   const loadList = useCallback(async (): Promise<ReloadOutcome> => {
     if (!accountId || !propertyId) {
+      loadGate.begin()
       setTransactions([])
-      return { error: null }
+      return { status: 'loaded', reconciledIds: [] }
     }
     setLoading(true)
-    const { data, error: fetchError } = await listTransactions(accountId, { propertyId })
-    setLoading(false)
-    if (fetchError) return { error: fetchError.message }
-    const inPeriod = filterByPeriod(data ?? [], periodStart, periodEnd)
-    setTransactions(inPeriod)
-    setSelectedIds(new Set(inPeriod.filter((tx) => tx.statement_reconciled).map((tx) => tx.id)))
-    return { error: null }
-  }, [accountId, propertyId, periodStart, periodEnd])
+    const outcome = await loadLatest(
+      loadGate,
+      async () => {
+        const { data, error } = await listTransactions(accountId, { propertyId })
+        return { data, error: error?.message ?? null }
+      },
+      (data) => {
+        const inPeriod = filterByPeriod(data ?? [], periodStart, periodEnd)
+        setTransactions(inPeriod)
+        setSelectedIds(new Set(inPeriod.filter((tx) => tx.statement_reconciled).map((tx) => tx.id)))
+        return inPeriod.filter((tx) => tx.statement_reconciled).map((tx) => tx.id)
+      },
+    )
+    if (outcome.status !== 'superseded') setLoading(false)
+    return outcome
+  }, [accountId, propertyId, periodStart, periodEnd, loadGate])
 
   // Filter-triggered reload: records its own outcome only, so an
   // unacknowledged save result stays on screen.
   useEffect(() => {
-    loadList().then((outcome) => dispatch(reloadEvent(outcome)))
+    loadList().then((outcome) => {
+      const event = reloadEvent(outcome)
+      if (event) dispatch(event)
+    })
   }, [loadList])
 
   const toggleTransaction = (id: string) => {
@@ -106,9 +123,12 @@ export function useBankReconciliation() {
     await saveThenReload(
       requested,
       async () => {
-        const { data, error: saveError } = await markTransactionsReconciled(accountId, requested)
+        const { data, error: saveError, status } = await markTransactionsReconciled(accountId, requested)
         setSaving(false)
-        return { updatedIds: saveError ? null : (data ?? []).map((r) => r.id as string), error: saveError?.message ?? null }
+        return {
+          updatedIds: saveError ? null : (data ?? []).map((r) => r.id as string),
+          error: saveError ? { message: saveError.message, code: saveError.code, status } : null,
+        }
       },
       loadList,
       dispatch,

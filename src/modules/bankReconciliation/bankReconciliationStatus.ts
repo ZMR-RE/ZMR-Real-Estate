@@ -1,11 +1,12 @@
 import { reconciliationShortfall } from './bankReconciliationCalculations'
 
-// What the reconciliation screen tells the owner, kept as three separate
-// facts so no outcome can overwrite another:
+// What the reconciliation screen tells the owner, kept as separate facts so
+// no outcome can overwrite another:
 //   error      — the latest failure (saving, or loading the list)
-//   saveNotice — the last save's own result (entries it could not match);
-//                stays until the owner dismisses it or saves again, so a
-//                reload triggered by changing the filters never erases it
+//   saveNotice — the last save's own result: entries it could not match, or
+//                that it could not be confirmed. Stays until the owner
+//                dismisses it or saves again, so a reload triggered by
+//                changing the filters never erases it
 //   listStale  — the list on screen is older than the last change because
 //                it could not be reloaded
 export interface ReconciliationStatus {
@@ -16,8 +17,14 @@ export interface ReconciliationStatus {
 
 export const INITIAL_RECONCILIATION_STATUS: ReconciliationStatus = { error: null, saveNotice: null, listStale: false }
 
+export const UNCONFIRMED_SAVE_CHECKING =
+  'Could not confirm whether the save was recorded. Checking what the list now shows…'
+export const UNCONFIRMED_SAVE_UNRESOLVED =
+  'Could not confirm whether the save was recorded. Reload the list and check the selected transactions before saving again.'
+
 export type ReconciliationEvent =
   | { type: 'saveFailed'; message: string }
+  | { type: 'saveUnconfirmed'; message: string }
   | { type: 'saved'; notice: string | null }
   | { type: 'reloadSucceeded' }
   | { type: 'reloadFailed'; message: string }
@@ -26,10 +33,14 @@ export type ReconciliationEvent =
 export function reconciliationStatusReducer(state: ReconciliationStatus, event: ReconciliationEvent): ReconciliationStatus {
   switch (event.type) {
     case 'saveFailed':
-      // Nothing was written, so the list on screen is still accurate.
+      // The database refused the write, so nothing was recorded and the
+      // list on screen is still accurate.
       return { ...state, error: event.message }
+    case 'saveUnconfirmed':
+      // The request may or may not have been recorded; never claim either.
+      return { ...state, error: event.message, saveNotice: UNCONFIRMED_SAVE_CHECKING }
     case 'saved':
-      // A new save supersedes the previous save's result.
+      // A new (or newly verified) save result supersedes the previous one.
       return { ...state, error: null, saveNotice: event.notice }
     case 'reloadSucceeded':
       return { ...state, error: null, listStale: false }
@@ -40,24 +51,52 @@ export function reconciliationStatusReducer(state: ReconciliationStatus, event: 
   }
 }
 
+export interface SaveError {
+  message: string
+  code?: string | null
+  status?: number | null
+}
+
+// A save error is DEFINITE only when the database itself refused the write
+// (an SQLSTATE or PostgREST code: the statement was rolled back) or the
+// request was rejected as a client error (4xx). A network failure, gateway
+// timeout or other 5xx without a database code may have committed.
+export function isDefiniteRefusal(error: SaveError): boolean {
+  if (error.code && /^([0-9A-Z]{5}|PGRST\d+)$/.test(error.code)) return true
+  return typeof error.status === 'number' && error.status >= 400 && error.status < 500
+}
+
 export interface SaveOutcome {
   updatedIds: string[] | null
-  error: string | null
+  error: SaveError | null
 }
 
-export interface ReloadOutcome {
-  error: string | null
+// A list load either applies to the current selection, fails, or was
+// overtaken by a newer load (a changed property/period) and is ignored.
+export type ReloadOutcome =
+  | { status: 'loaded'; reconciledIds: string[] }
+  | { status: 'failed'; error: string }
+  | { status: 'superseded' }
+
+// The one mapping from a load's outcome to its event, used by the save
+// sequence below and by the hook's filter-triggered reload alike. A
+// superseded load reports nothing: the newer load reports its own outcome.
+export const reloadEvent = (outcome: ReloadOutcome): ReconciliationEvent | null =>
+  outcome.status === 'loaded'
+    ? { type: 'reloadSucceeded' }
+    : outcome.status === 'failed'
+      ? { type: 'reloadFailed', message: outcome.error }
+      : null
+
+function verifiedNotice(requestedIds: string[], reconciledIds: string[]): string {
+  const shortfall = reconciliationShortfall(requestedIds, reconciledIds)
+  const n = requestedIds.length
+  return shortfall
+    ? `The save could not be confirmed at first. After checking: ${shortfall}`
+    : `The save could not be confirmed at first. After checking, ${n === 1 ? 'the selected transaction is' : `all ${n} selected transactions are`} marked as matched.`
 }
 
-// The one mapping from a list reload's outcome to its event, used by the
-// save sequence below and by the hook's filter-triggered reload alike.
-export const reloadEvent = (outcome: ReloadOutcome): ReconciliationEvent =>
-  outcome.error ? { type: 'reloadFailed', message: outcome.error } : { type: 'reloadSucceeded' }
-
-// The exact sequence the hook runs when the owner saves a reconciliation:
-// save, record the save's own result, then reload the list and record
-// whether that worked. Each outcome is its own event, so a reload (failed
-// or not) never replaces the save result, and vice versa.
+// The exact sequence the hook runs when the owner saves a reconciliation.
 export async function saveThenReload(
   requestedIds: string[],
   save: () => Promise<SaveOutcome>,
@@ -65,10 +104,53 @@ export async function saveThenReload(
   dispatch: (event: ReconciliationEvent) => void,
 ): Promise<void> {
   const saved = await save()
+  if (saved.error && isDefiniteRefusal(saved.error)) {
+    dispatch({ type: 'saveFailed', message: saved.error.message })
+    return
+  }
   if (saved.error) {
-    dispatch({ type: 'saveFailed', message: saved.error })
+    // Uncertain: verify against what the database now holds.
+    dispatch({ type: 'saveUnconfirmed', message: saved.error.message })
+    const checked = await reload()
+    if (checked.status === 'loaded') {
+      dispatch({ type: 'saved', notice: verifiedNotice(requestedIds, checked.reconciledIds) })
+      dispatch({ type: 'reloadSucceeded' })
+    } else {
+      // Not verified (failed, or the owner moved to another selection):
+      // say so instead of claiming an outcome.
+      dispatch({ type: 'saved', notice: UNCONFIRMED_SAVE_UNRESOLVED })
+      const event = reloadEvent(checked)
+      if (event) dispatch(event)
+    }
     return
   }
   dispatch({ type: 'saved', notice: reconciliationShortfall(requestedIds, saved.updatedIds ?? []) })
-  dispatch(reloadEvent(await reload()))
+  const event = reloadEvent(await reload())
+  if (event) dispatch(event)
+}
+
+// Tracks the latest list load so an older response that arrives after a
+// newer one started (the owner changed property or period) is ignored.
+export function createLatestLoadGate() {
+  let latest = 0
+  return {
+    begin: () => ++latest,
+    isCurrent: (token: number) => token === latest,
+  }
+}
+
+// One list load as the hook runs it: take a token, fetch, and apply the
+// result only if no newer load has started since. Returns which
+// transactions the applied list shows as matched (used to verify an
+// unconfirmed save).
+export async function loadLatest<T>(
+  gate: ReturnType<typeof createLatestLoadGate>,
+  fetch: () => Promise<{ data: T | null; error: string | null }>,
+  apply: (data: T | null) => string[],
+): Promise<ReloadOutcome> {
+  const token = gate.begin()
+  const result = await fetch()
+  if (!gate.isCurrent(token)) return { status: 'superseded' }
+  if (result.error) return { status: 'failed', error: result.error }
+  return { status: 'loaded', reconciledIds: apply(result.data) }
 }
