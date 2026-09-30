@@ -2,10 +2,11 @@ import path from 'node:path'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-// NON-SAVING ENTITY BRANDING PROPOSAL PREVIEW server (T4). Same mock aliases
-// as vite.harness.config.ts — no real network call or database write is
-// possible (the page uses no backend at all). Own entry
-// (entity-branding-preview.html), own port 5197, bound to 127.0.0.1.
+// ENTITY BRANDING & DOCUMENTS REVIEW server (T4) — the real Settings screen
+// with a SIMULATED backend: shared/supabaseClient and shared/auth/AuthContext
+// are replaced by src/modules/entityBranding/review/ for this whole bundle (no
+// URL, no key, no network). Own entry (entity-branding-review.html), own port
+// 5198, bound to 127.0.0.1.
 const rootDir = import.meta.dirname
 
 export default defineConfig({
@@ -27,18 +28,18 @@ export default defineConfig({
       // crashed the harness with "useAuth must be used within an
       // AuthProvider" the moment a component using PickListSelect
       // rendered. This exhaustive list is the fix.
-      { find: '../../shared/supabaseClient', replacement: path.resolve(rootDir, 'src/devHarness/mockSupabaseClient.ts') },
-      { find: '../supabaseClient', replacement: path.resolve(rootDir, 'src/devHarness/mockSupabaseClient.ts') },
-      { find: '../../shared/auth/AuthContext', replacement: path.resolve(rootDir, 'src/devHarness/mockAuthContext.tsx') },
-      { find: '../auth/AuthContext', replacement: path.resolve(rootDir, 'src/devHarness/mockAuthContext.tsx') },
-      { find: './auth/AuthContext', replacement: path.resolve(rootDir, 'src/devHarness/mockAuthContext.tsx') },
-      { find: './shared/auth/AuthContext', replacement: path.resolve(rootDir, 'src/devHarness/mockAuthContext.tsx') },
+      { find: '../../shared/supabaseClient', replacement: path.resolve(rootDir, 'src/modules/entityBranding/review/reviewSupabaseClient.ts') },
+      { find: '../supabaseClient', replacement: path.resolve(rootDir, 'src/modules/entityBranding/review/reviewSupabaseClient.ts') },
+      { find: '../../shared/auth/AuthContext', replacement: path.resolve(rootDir, 'src/modules/entityBranding/review/reviewAuthContext.tsx') },
+      { find: '../auth/AuthContext', replacement: path.resolve(rootDir, 'src/modules/entityBranding/review/reviewAuthContext.tsx') },
+      { find: './auth/AuthContext', replacement: path.resolve(rootDir, 'src/modules/entityBranding/review/reviewAuthContext.tsx') },
+      { find: './shared/auth/AuthContext', replacement: path.resolve(rootDir, 'src/modules/entityBranding/review/reviewAuthContext.tsx') },
     ],
   },
   root: rootDir,
   build: {
     rollupOptions: {
-      input: path.resolve(rootDir, 'entity-branding-preview.html'),
+      input: path.resolve(rootDir, 'entity-branding-review.html'),
     },
   },
   server: {
@@ -46,8 +47,8 @@ export default defineConfig({
     // dev` (default 5173) — deliberately does not read/override any of
     // that server's own settings.
     host: '127.0.0.1',
-    port: 5197,
+    port: 5198,
     strictPort: true,
-    open: '/entity-branding-preview.html',
+    open: '/entity-branding-review.html',
   },
 })

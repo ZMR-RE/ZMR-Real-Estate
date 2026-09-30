@@ -1,6 +1,8 @@
 import type { ColorRole, Stationery } from './stationeryTypes'
 
-// Pure colour and layout helpers for the stationery preview.
+// Pure colour and layout helpers for entity stationery (mirrors the
+// database rule in 20261001190000: text roles and labels on the accent band
+// need 4.5:1 contrast).
 
 export type Rgb = [number, number, number]
 
@@ -90,6 +92,7 @@ export function fitLogo(width: number, height: number, maxW = 150, maxH = 48): {
 export const EMPTY_STATIONERY: Stationery = {
   logo: null,
   colors: {},
-  contact: { phone: '', website: '' },
+  contact: { replyTo: '', phone: '', website: '' },
+  paymentInstructions: '',
   defaults: { paperSize: 'letter', showLegalName: true, invoiceNote: '', documentFooter: '', receiptNote: '' },
 }

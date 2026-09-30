@@ -1,4 +1,5 @@
-/* NON-SAVING entity branding proposal preview (T4). Existing tokens only. */
+/* Settings › Entities › Branding & documents (T4). Module stylesheet, kept out of
+   the shared index.css. Existing tokens only. */
 
 .branding-notice {
   padding: var(--space-2) var(--space-4);

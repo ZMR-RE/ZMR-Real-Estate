@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ChartOfAccounts } from '../chartOfAccounts/ChartOfAccounts'
 import { ManageOptionsPanel } from '../../shared/pickLists/ManageOptionsPanel'
 import { useSettingsPickLists } from './useSettingsPickLists'
@@ -8,13 +9,15 @@ import { ThemeToggle } from './ThemeToggle'
 import { OrganizationTypesSection } from '../llcs/OrganizationTypesSection'
 import { HoldingCompaniesSection } from '../holdingCompanies/HoldingCompaniesSection'
 import { VendorsSection } from '../vendors/VendorsSection'
+import { EntityBrandingSettings } from '../entityBranding/EntityBrandingSettings'
 
-type SettingsTab = 'bookkeeping' | 'pickLists' | 'organizations' | 'accountSecurity' | 'appearance' | 'vendors'
+type SettingsTab = 'bookkeeping' | 'pickLists' | 'organizations' | 'entities' | 'accountSecurity' | 'appearance' | 'vendors'
 
 const TABS: { key: SettingsTab; label: string }[] = [
   { key: 'bookkeeping', label: 'Bookkeeping' },
   { key: 'pickLists', label: 'Pick lists' },
   { key: 'organizations', label: 'Organizations' },
+  { key: 'entities', label: 'Entities' },
   { key: 'accountSecurity', label: 'Account & Security' },
   { key: 'appearance', label: 'Appearance & App' },
   { key: 'vendors', label: 'Vendors' },
@@ -66,7 +69,11 @@ const PICK_LIST_GROUPS: { title: string; lists: string[] }[] = [
 // Vendors each hold one already-full-width component (a table or list),
 // so forcing a second column there would cramp rather than help.
 export function Settings() {
-  const [tab, setTab] = useState<SettingsTab>('bookkeeping')
+  // ?tab=entities&entity=<id> — the entity profile's "Branding & documents"
+  // link opens straight to that entity.
+  const [params] = useSearchParams()
+  const requested = params.get('tab') as SettingsTab | null
+  const [tab, setTab] = useState<SettingsTab>(requested && TABS.some((t) => t.key === requested) ? requested : 'bookkeeping')
   const pickLists = useSettingsPickLists()
 
   const pickListByTitle = new Map(pickLists.map((list) => [list.title, list]))
@@ -122,6 +129,8 @@ export function Settings() {
           <HoldingCompaniesSection />
         </div>
       )}
+
+      {tab === 'entities' && <EntityBrandingSettings initialEntityId={params.get('entity')} />}
 
       {tab === 'accountSecurity' && <AccountSecuritySection />}
 
