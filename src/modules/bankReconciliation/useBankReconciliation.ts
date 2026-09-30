@@ -4,7 +4,7 @@ import { propertyLabel } from '../../shared/propertyLabel'
 import { listProperties } from '../properties/propertiesQueries'
 import { listTransactions, type Transaction } from '../financials/financialsQueries'
 import { markTransactionsReconciled } from './bankReconciliationQueries'
-import { computeReconciliation, filterByPeriod } from './bankReconciliationCalculations'
+import { computeReconciliation, filterByPeriod, reconciliationShortfall } from './bankReconciliationCalculations'
 
 function firstOfMonth(): string {
   const now = new Date()
@@ -94,13 +94,13 @@ export function useBankReconciliation() {
   const markReconciled = async () => {
     if (!accountId || unreconciledSelectedIds.length === 0) return
     setSaving(true)
-    const { error: saveError } = await markTransactionsReconciled(accountId, unreconciledSelectedIds)
+    const { data, error: saveError } = await markTransactionsReconciled(accountId, unreconciledSelectedIds)
     setSaving(false)
     if (saveError) {
       setError(saveError.message)
       return
     }
-    setError(null)
+    setError(reconciliationShortfall(unreconciledSelectedIds, (data ?? []).map((r) => r.id as string)))
     await refresh()
   }
 
