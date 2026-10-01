@@ -24,9 +24,12 @@ export interface MortgageDetails {
   // 'loan_type' and its 8 owner-approved seeded starting values.
   // Optional, never backfilled for an existing mortgage.
   loan_type: string | null
+  // Balance integrity (20261004100000): bumped by every balance change. A balance reset must quote the version
+  // the form was opened with, so a stale form can't overwrite a newer balance.
+  balance_version: number
 }
 
-export type MortgageDetailsInput = Omit<MortgageDetails, 'id' | 'property_id'>
+export type MortgageDetailsInput = Omit<MortgageDetails, 'id' | 'property_id' | 'balance_version'>
 
 // voided = false — a voided mortgage is never "the" active mortgage for a
 // property (roadmap 9.20); the property_id unique index was relaxed to a
@@ -36,7 +39,7 @@ export async function getMortgageDetails(propertyId: string) {
   return supabase
     .from('mortgage_details')
     .select(
-      'id, property_id, lender_name, original_loan_amount, current_balance, interest_rate, monthly_payment, loan_start_date, term_years, escrow_balance, loan_number, loan_type',
+      'id, property_id, lender_name, original_loan_amount, current_balance, interest_rate, monthly_payment, loan_start_date, term_years, escrow_balance, loan_number, loan_type, balance_version',
     )
     .eq('property_id', propertyId)
     .eq('voided', false)
@@ -55,8 +58,41 @@ export async function createMortgageDetails(
     .single()
 }
 
-export async function updateMortgageDetails(id: string, input: MortgageDetailsInput) {
-  return supabase.from('mortgage_details').update(input).eq('id', id).select().single()
+// Loan details only. The balances are never sent here: the database refuses a balance change outside
+// resetMortgageBalance (balance integrity, 20261004100000).
+export async function updateMortgageDetails(
+  id: string,
+  details: Omit<MortgageDetailsInput, 'current_balance' | 'escrow_balance'>,
+) {
+  return supabase.from('mortgage_details').update(details).eq('id', id).select().single()
+}
+
+// Versioned balance reset (a manual edit or a statement confirmation). Refused with ZM5M5 when the balance changed
+// since expectedVersion was read; a same-value reset is a deliberate confirmation.
+export async function resetMortgageBalance(
+  mortgageId: string,
+  expectedVersion: number,
+  principal: number | null,
+  escrow: number | null,
+) {
+  return supabase.rpc('reset_mortgage_balance', {
+    p_mortgage_id: mortgageId,
+    p_expected_version: expectedVersion,
+    p_principal: principal,
+    p_escrow: escrow,
+  })
+}
+
+export interface VoidResult {
+  outcome: string
+  voided: boolean
+}
+
+// The only void path (roadmap 9.20 + balance integrity): the database decides whether the balance can be safely
+// reversed, records the outcome, and opens an Action Queue balance review when it can't.
+export async function voidMortgageActivity(kind: 'payment' | 'escrow', id: string) {
+  const { data, error } = await supabase.rpc('void_mortgage_activity', { p_kind: kind, p_id: id })
+  return { data: (data ?? null) as VoidResult | null, error }
 }
 
 // The only "removal" path for a mortgage record (roadmap 9.20) — never a
@@ -81,9 +117,10 @@ export interface MortgagePayment {
   principal_amount: string
   interest_amount: string
   voided: boolean
+  void_outcome: string | null
 }
 
-export type MortgagePaymentInput = Omit<MortgagePayment, 'id' | 'property_id' | 'voided'>
+export type MortgagePaymentInput = Omit<MortgagePayment, 'id' | 'property_id' | 'voided' | 'void_outcome'>
 
 // Fetches voided rows too (not just active), same as
 // listMortgageEscrowTransactions — the list stays the full history with
@@ -92,7 +129,7 @@ export type MortgagePaymentInput = Omit<MortgagePayment, 'id' | 'property_id' | 
 export async function listMortgagePayments(propertyId: string) {
   return supabase
     .from('mortgage_payments')
-    .select('id, property_id, payment_date, amount, principal_amount, interest_amount, voided')
+    .select('id, property_id, payment_date, amount, principal_amount, interest_amount, voided, void_outcome')
     .eq('property_id', propertyId)
     .order('payment_date', { ascending: false })
     .returns<MortgagePayment[]>()
@@ -112,19 +149,6 @@ export async function createMortgagePayment(
     .single()
 }
 
-// The only "removal" path for a payment (matches mortgage_details/
-// mortgage_escrow_transactions, roadmap 9.20) — never a hard DELETE. Does
-// not reverse the payment's earlier effect on mortgage_details.current_balance
-// (that trigger only ever runs on INSERT) — voiding corrects the record
-// going forward, it isn't a balance-adjustment tool.
-export async function voidMortgagePayment(id: string) {
-  return supabase
-    .from('mortgage_payments')
-    .update({ voided: true, voided_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single()
-}
 
 export type EscrowTransactionType = 'deposit' | 'disbursement'
 
@@ -136,9 +160,10 @@ export interface MortgageEscrowTransaction {
   amount: string
   description: string | null
   voided: boolean
+  void_outcome: string | null
 }
 
-export type MortgageEscrowTransactionInput = Omit<MortgageEscrowTransaction, 'id' | 'property_id' | 'voided'>
+export type MortgageEscrowTransactionInput = Omit<MortgageEscrowTransaction, 'id' | 'property_id' | 'voided' | 'void_outcome'>
 
 // Fetches voided rows too (not just active), same as financial_transactions'
 // TransactionList — the list stays the full history with voided entries
@@ -146,7 +171,7 @@ export type MortgageEscrowTransactionInput = Omit<MortgageEscrowTransaction, 'id
 export async function listMortgageEscrowTransactions(propertyId: string) {
   return supabase
     .from('mortgage_escrow_transactions')
-    .select('id, property_id, transaction_date, transaction_type, amount, description, voided')
+    .select('id, property_id, transaction_date, transaction_type, amount, description, voided, void_outcome')
     .eq('property_id', propertyId)
     .order('transaction_date', { ascending: false })
     .returns<MortgageEscrowTransaction[]>()
@@ -166,19 +191,6 @@ export async function createMortgageEscrowTransaction(
     .single()
 }
 
-// The only "removal" path for an escrow transaction (roadmap 9.20) — never
-// a hard DELETE. Note this does not reverse its earlier effect on
-// mortgage_details.escrow_balance (that trigger only ever runs on INSERT,
-// same as mortgage_payments/current_balance) — voiding corrects the record
-// going forward, it isn't a balance-adjustment tool.
-export async function voidMortgageEscrowTransaction(id: string) {
-  return supabase
-    .from('mortgage_escrow_transactions')
-    .update({ voided: true, voided_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single()
-}
 
 export interface PortfolioMortgageRow {
   property_id: string

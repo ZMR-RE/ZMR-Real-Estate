@@ -75,12 +75,10 @@ describe('updateMortgageDetails — loan_number/loan_type preservation', () => {
     await updateMortgageDetails('mortgage-1', {
       lender_name: 'First Bank',
       original_loan_amount: '200000',
-      current_balance: '195000',
       interest_rate: '6.5',
       monthly_payment: '1264.14',
       loan_start_date: '2026-01-01',
       term_years: 30,
-      escrow_balance: null,
       loan_number: '0099887-X',
       loan_type: 'HELOC',
     })
@@ -90,6 +88,9 @@ describe('updateMortgageDetails — loan_number/loan_type preservation', () => {
     const payload = updateCall![1][0] as Record<string, unknown>
     expect(payload.loan_number).toBe('0099887-X')
     expect(payload.loan_type).toBe('HELOC')
+    // balance integrity: an ordinary update never carries the balances
+    expect(payload).not.toHaveProperty('current_balance')
+    expect(payload).not.toHaveProperty('escrow_balance')
   })
 })
 
@@ -104,5 +105,6 @@ describe('getMortgageDetails — selects the new columns', () => {
     const selected = selectCall![1][0] as string
     expect(selected).toContain('loan_number')
     expect(selected).toContain('loan_type')
+    expect(selected).toContain('balance_version')
   })
 })
