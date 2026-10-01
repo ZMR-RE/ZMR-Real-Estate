@@ -5,6 +5,7 @@ import { computeEquity, type EquitySnapshot } from '../mortgagePayoff/mortgagePa
 import { sumActiveLeaseRentForProperty } from '../leases/leasesQueries'
 import { listValueLog, type PropertyValueLogEntry } from '../propertyValueHistory/propertyValueHistoryQueries'
 import type { Transaction } from '../financials/financialsQueries'
+import { computeLedgerTotals } from '../financials/financialsCalculations'
 
 export interface MarketFinancialSnapshot {
   marketValue: PropertyValueLogEntry | null
@@ -92,10 +93,15 @@ export function useMarketFinancialSnapshot(propertyId: string, transactions: Tra
   const equity =
     marketValueNumber !== null && currentBalance !== null ? computeEquity(marketValueNumber, currentBalance) : null
 
-  const currentYear = new Date().getFullYear()
-  const ytdNetCashFlow = transactions
-    .filter((tx) => !tx.voided && new Date(tx.transaction_date).getFullYear() === currentYear)
-    .reduce((sum, tx) => sum + (tx.entry_type === 'income' ? tx.amount : -tx.amount), 0)
+  // Year from the date text itself: `new Date('2026-01-01')` is UTC
+  // midnight, which is still Dec 31 in US time zones, so Jan 1 rows used
+  // to count toward the wrong year. Totals use the shared ledger
+  // definition (income minus all spending, improvements included, voided
+  // excluded) — same meaning as before, cent-exact.
+  const currentYear = String(new Date().getFullYear())
+  const ytdNetCashFlow = computeLedgerTotals(
+    transactions.filter((tx) => tx.transaction_date.startsWith(`${currentYear}-`)),
+  ).netAfterAllSpending
 
   const snapshot: MarketFinancialSnapshot = {
     marketValue: latestMarketValue,

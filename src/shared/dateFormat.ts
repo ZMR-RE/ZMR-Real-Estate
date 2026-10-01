@@ -21,3 +21,12 @@ export function formatDateOnly(value: string): string {
   const [year, month, day] = value.split('-')
   return `${MONTH_NAMES[Number(month) - 1]} ${Number(day)}, ${year}`
 }
+
+// Today's date on the viewer's own calendar, as "YYYY-MM-DD". Not
+// `new Date().toISOString().slice(0, 10)`, which is today in UTC — in
+// US evenings that is already tomorrow.
+export function todayLocalIsoDate(now: Date = new Date()): string {
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${month}-${day}`
+}

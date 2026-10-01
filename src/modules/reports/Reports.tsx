@@ -1,5 +1,5 @@
 import { SearchableSelect } from '../../shared/SearchableSelect'
-import { useReports, YEAR_OPTIONS, type ReportTab } from './useReports'
+import { useReports, type ReportTab } from './useReports'
 import { BalanceSheetReport } from './BalanceSheetReport'
 import { ProfitAndLossReport } from './ProfitAndLossReport'
 import { CashFlowReport } from './CashFlowReport'
@@ -19,6 +19,7 @@ export function Reports() {
     tab,
     setTab,
     year,
+    yearOptions,
     setYear,
     propertyFilter,
     setPropertyFilter,
@@ -52,7 +53,7 @@ export function Reports() {
         <>
           <label htmlFor="report_year">Year</label>
           <select id="report_year" value={year} onChange={(e) => setYear(Number(e.target.value))}>
-            {YEAR_OPTIONS.map((y) => (
+            {yearOptions.map((y) => (
               <option key={y} value={y}>
                 {y}
               </option>

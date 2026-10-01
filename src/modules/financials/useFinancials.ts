@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { listProperties } from '../properties/propertiesQueries'
@@ -6,62 +6,35 @@ import { useVendors } from '../vendors/useVendors'
 import { listCaptureEntriesByTransactionIds } from '../capture/captureQueries'
 import {
   createReimbursementTransaction,
-  createTransaction,
   listTransactions,
-  updateTransaction,
+  listVoidedTransactions,
   voidTransaction,
   type Transaction,
-  type TransactionInput,
 } from './financialsQueries'
-import { buildTaxExportCsv, summarizeByProperty, summarizeByPropertyAndCategory } from './financialsCalculations'
+import { getTransactionYearRange } from './financialYearsQueries'
+import {
+  buildTaxExportCsv,
+  summarizeByProperty,
+  summarizeByPropertyAndCategory,
+  summarizeCapitalImprovementsByProperty,
+} from './financialsCalculations'
+import { buildYearOptions } from './transactionEntry'
 
-function todayDateString() {
-  return new Date().toISOString().slice(0, 10)
-}
-
-const BLANK_TRANSACTION: TransactionInput = {
-  propertyId: '',
-  entryType: 'expense',
-  category: 'repairs',
-  subcategory: null,
-  vendorId: '',
-  unit: null,
-  paymentMethod: '',
-  repairOrImprovement: null,
-  amount: 0,
-  transactionDate: todayDateString(),
-  description: null,
-  statementReconciled: false,
-}
-
-function toInput(transaction: Transaction): TransactionInput {
-  return {
-    propertyId: transaction.property?.id ?? '',
-    entryType: transaction.entry_type,
-    category: transaction.category,
-    subcategory: transaction.subcategory,
-    vendorId: transaction.vendor?.id ?? '',
-    unit: transaction.unit,
-    paymentMethod: transaction.payment_method,
-    repairOrImprovement: transaction.repair_or_improvement,
-    amount: transaction.amount,
-    transactionDate: transaction.transaction_date,
-    description: transaction.description,
-    statementReconciled: transaction.statement_reconciled,
-  }
-}
-
+// Financials' data side: the filtered transaction list, year choices,
+// optional voided rows, summaries and exports. Entry/editing lives in
+// useTransactionEntry.
 export function useFinancials() {
   const { accountId, session } = useAuth()
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [voidedTransactions, setVoidedTransactions] = useState<Transaction[]>([])
+  const [showVoided, setShowVoided] = useState(false)
   const [propertyOptions, setPropertyOptions] = useState<{ id: string; label: string }[]>([])
   const { vendorOptions, addVendor } = useVendors(accountId)
   const [propertyFilter, setPropertyFilter] = useState<string | null>(null)
   const [year, setYear] = useState(new Date().getFullYear())
+  const [yearRange, setYearRange] = useState<{ earliest: number | null; latest: number | null }>({ earliest: null, latest: null })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [isCreating, setIsCreating] = useState(false)
   const [saving, setSaving] = useState(false)
   // Roadmap 9.9 — the transaction→capture half of the bridge's traceable
   // link. Same reverse-lookup shape as reimbursedSourceIds below: rather
@@ -76,18 +49,46 @@ export function useFinancials() {
     })
   }, [accountId])
 
+  const refreshYears = useCallback(async () => {
+    if (!accountId) return
+    const { data } = await getTransactionYearRange(accountId)
+    if (data) setYearRange(data)
+  }, [accountId])
+
+  useEffect(() => {
+    refreshYears()
+  }, [refreshYears])
+
+  // `year` is included so a year the user just moved to (e.g. after
+  // saving a 2018 entry) is always selectable even before the range
+  // query comes back.
+  const yearOptions = useMemo(() => buildYearOptions(yearRange, new Date().getFullYear(), [year]), [yearRange, year])
+
+  // Only the most recently started load may update the list. Changing a
+  // filter and refreshing in the same tick (e.g. after saving a 2018
+  // entry while 2026 was shown) otherwise let a slower, stale response
+  // for the old filter land last and overwrite the correct one.
+  const loadSeq = useRef(0)
+
   const refresh = useCallback(async () => {
     if (!accountId) return
+    const seq = ++loadSeq.current
     setLoading(true)
-    const { data, error: fetchError } = await listTransactions(accountId, { propertyId: propertyFilter, year })
+    const [active, voided] = await Promise.all([
+      listTransactions(accountId, { propertyId: propertyFilter, year }),
+      showVoided ? listVoidedTransactions(accountId, { propertyId: propertyFilter, year }) : Promise.resolve(null),
+    ])
+    if (seq !== loadSeq.current) return
     setLoading(false)
+    const fetchError = active.error ?? voided?.error
     if (fetchError) {
       setError(fetchError.message)
       return
     }
     setError(null)
-    setTransactions(data ?? [])
-  }, [accountId, propertyFilter, year])
+    setTransactions(active.data ?? [])
+    setVoidedTransactions(voided?.data ?? [])
+  }, [accountId, propertyFilter, year, showVoided])
 
   useEffect(() => {
     refresh()
@@ -103,49 +104,30 @@ export function useFinancials() {
     })
   }, [accountId, transactions])
 
-  const selectedTransaction = transactions.find((t) => t.id === selectedId) ?? null
-
-  const startCreating = () => {
-    setSelectedId(null)
-    setIsCreating(true)
-  }
-
-  const selectTransaction = (id: string) => {
-    setIsCreating(false)
-    setSelectedId(id)
-  }
-
-  const cancelForm = () => {
-    setIsCreating(false)
-    setSelectedId(null)
-  }
-
-  const save = async (input: TransactionInput) => {
-    if (!accountId || !session) return
-    setSaving(true)
-    const { error: saveError } = selectedTransaction
-      ? await updateTransaction(selectedTransaction.id, input)
-      : await createTransaction(accountId, session.user.id, input)
-    setSaving(false)
-
-    if (saveError) {
-      setError(saveError.message)
-      return
+  // M2 — after a confirmed save, move the filters so the saved row is
+  // actually in the list: its year, and its property if a different
+  // property was filtered. Returns what changed so the confirmation can
+  // say so.
+  const revealTransaction = (txYear: number, txPropertyId: string): string[] => {
+    const changes: string[] = []
+    if (txYear !== year) {
+      setYear(txYear)
+      changes.push(`showing ${txYear}`)
     }
-
-    setError(null)
-    setIsCreating(false)
-    setSelectedId(null)
-    await refresh()
+    if (propertyFilter && propertyFilter !== txPropertyId) {
+      setPropertyFilter(txPropertyId)
+      changes.push('filtered to its property')
+    }
+    return changes
   }
 
-  const voidEntry = async (id: string) => {
+  // Returns an error message for the caller to show next to the row
+  // (e.g. a locked-period rejection), or null on success.
+  const voidEntry = async (id: string): Promise<string | null> => {
     const { error: voidError } = await voidTransaction(id)
-    if (voidError) {
-      setError(voidError.message)
-      return
-    }
-    await refresh()
+    if (voidError) return voidError.message
+    await Promise.all([refresh(), refreshYears()])
+    return null
   }
 
   // The set of transactions in the currently loaded list is a source of
@@ -188,6 +170,9 @@ export function useFinancials() {
     await refresh()
   }
 
+  // Only non-voided rows are exported — `transactions` never contains
+  // voided rows (listTransactions), and "Show voided" rows live in
+  // voidedTransactions, which no export reads.
   const exportTaxCsv = () => {
     const csv = buildTaxExportCsv(transactions, year)
     const blob = new Blob([csv], { type: 'text/csv' })
@@ -201,6 +186,9 @@ export function useFinancials() {
 
   return {
     transactions,
+    voidedTransactions,
+    showVoided,
+    setShowVoided,
     propertyOptions,
     vendorOptions,
     createVendor: addVendor,
@@ -210,26 +198,23 @@ export function useFinancials() {
     // has no use for per-row form state) — it calls this afterward so
     // Financials' own list picks up the newly-imported rows.
     refreshTransactions: refresh,
+    refreshYears,
+    revealTransaction,
     propertyFilter,
     setPropertyFilter,
     year,
     setYear,
+    yearOptions,
     loading,
     error,
-    isFormOpen: isCreating || selectedTransaction !== null,
-    formKey: selectedTransaction?.id ?? 'new',
-    formInitialValues: selectedTransaction ? toInput(selectedTransaction) : BLANK_TRANSACTION,
     saving,
-    startCreating,
-    selectTransaction,
-    cancelForm,
-    save,
     voidEntry,
     applySplit,
     reimbursedSourceIds,
     capturedTransactionIds,
     summaryByPropertyAndCategory: summarizeByPropertyAndCategory(transactions),
     summaryByProperty: summarizeByProperty(transactions),
+    capitalImprovements: summarizeCapitalImprovementsByProperty(transactions),
     exportTaxCsv,
   }
 }

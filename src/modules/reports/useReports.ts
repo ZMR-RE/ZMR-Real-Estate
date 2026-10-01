@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { listProperties, type Property } from '../properties/propertiesQueries'
@@ -7,6 +7,9 @@ import { listChartOfAccounts, listCategoryMappings } from '../chartOfAccounts/ch
 import { listPortfolioMortgages } from '../mortgagePayoff/mortgagePayoffQueries'
 import { listLatestValuesForAccount } from '../propertyValueHistory/propertyValueHistoryQueries'
 import { listMortgagePaymentsForAccount } from './reportsQueries'
+import { computeLedgerTotals } from '../financials/financialsCalculations'
+import { getTransactionYearRange } from '../financials/financialYearsQueries'
+import { buildYearOptions } from '../financials/transactionEntry'
 import {
   computeBalanceSheet,
   computeCashFlow,
@@ -18,7 +21,6 @@ import {
 
 export type ReportTab = 'balance-sheet' | 'profit-loss' | 'cash-flow'
 
-export const YEAR_OPTIONS = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i)
 
 export function useReports() {
   const { accountId } = useAuth()
@@ -34,10 +36,19 @@ export function useReports() {
   const [profitAndLoss, setProfitAndLoss] = useState<ProfitAndLoss | null>(null)
   const [cashFlow, setCashFlow] = useState<CashFlow | null>(null)
 
+  const [yearRange, setYearRange] = useState<{ earliest: number | null; latest: number | null }>({ earliest: null, latest: null })
+
   useEffect(() => {
     if (!accountId) return
     listProperties(accountId).then(({ data }) => setProperties(data ?? []))
+    // Every year with saved transactions is selectable (history can
+    // start years before the current tax year, e.g. a 2018 purchase).
+    getTransactionYearRange(accountId).then(({ data }) => {
+      if (data) setYearRange(data)
+    })
   }, [accountId])
+
+  const yearOptions = useMemo(() => buildYearOptions(yearRange, new Date().getFullYear(), [year]), [yearRange, year])
 
   const refresh = useCallback(async () => {
     if (!accountId) return
@@ -87,7 +98,7 @@ export function useReports() {
     const principalPaidThisYear = (yearPrincipalPayments ?? [])
       .filter((payment) => !propertyFilter || payment.property_id === propertyFilter)
       .reduce((sum, payment) => sum + Number(payment.principal_amount), 0)
-    setCashFlow(computeCashFlow(pnl, principalPaidThisYear))
+    setCashFlow(computeCashFlow(pnl, principalPaidThisYear, computeLedgerTotals(yearTransactions ?? []).capitalImprovements))
 
     const scopedProperties = propertyFilter ? properties.filter((p) => p.id === propertyFilter) : properties
     setBalanceSheet(
@@ -110,6 +121,7 @@ export function useReports() {
     setTab,
     year,
     setYear,
+    yearOptions,
     propertyFilter,
     setPropertyFilter,
     propertyOptions: properties.map((p) => ({ id: p.id, label: propertyLabel(p) })),

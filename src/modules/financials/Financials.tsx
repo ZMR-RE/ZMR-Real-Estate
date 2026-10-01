@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SearchableSelect } from '../../shared/SearchableSelect'
 import { MileageRollup } from '../mileage/MileageRollup'
@@ -11,17 +11,20 @@ import { TransactionForm } from './TransactionForm'
 import { TransactionList } from './TransactionList'
 import { TransactionListExport } from './TransactionListExport'
 import { FinancialsSummary } from './FinancialsSummary'
+import { useTransactionEntry } from './useTransactionEntry'
+import { formatMoney } from './financialsCalculations'
+import { formatDateOnly } from '../../shared/dateFormat'
 
-const YEAR_OPTIONS = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i)
-
-// Self-contained screen for roadmap item 2.3 (Financials & Tax Readiness).
-// Not wired into App.tsx yet — pending sign-off per the roadmap item.
+// Roadmap item 2.3 (Financials & Tax Readiness), routed at /financials.
 export function Financials() {
   const [isReconciling, setIsReconciling] = useState(false)
   const [isManagingSplitRules, setIsManagingSplitRules] = useState(false)
   const [isImportingHistorical, setIsImportingHistorical] = useState(false)
   const {
     transactions,
+    voidedTransactions,
+    showVoided,
+    setShowVoided,
     propertyOptions,
     vendorOptions,
     createVendor,
@@ -29,25 +32,50 @@ export function Financials() {
     setPropertyFilter,
     year,
     setYear,
+    yearOptions,
     loading,
     error,
-    isFormOpen,
-    formKey,
-    formInitialValues,
     saving,
-    startCreating,
-    selectTransaction,
-    cancelForm,
-    save,
     voidEntry,
     applySplit,
     reimbursedSourceIds,
     capturedTransactionIds,
     summaryByPropertyAndCategory,
     summaryByProperty,
+    capitalImprovements,
     exportTaxCsv,
     refreshTransactions,
+    refreshYears,
+    revealTransaction,
   } = useFinancials()
+
+  const entry = useTransactionEntry({
+    propertyLabelFor: (id) => propertyOptions.find((p) => p.id === id)?.label ?? 'property',
+    onSaved: async ({ year: savedYear, propertyId }) => {
+      const moved = revealTransaction(savedYear, propertyId)
+      await Promise.all([refreshTransactions(), refreshYears()])
+      return moved
+    },
+  })
+
+  // M3 — sensible focus after the form closes: back to the row's Edit
+  // button for an edit, otherwise to "Add transaction". Applied in an
+  // effect once the form has actually unmounted (the target button only
+  // exists after that render), not on a timer.
+  const addButtonRef = useRef<HTMLButtonElement>(null)
+  const pendingFocus = useRef<{ editedId: string | null } | null>(null)
+  const returnFocus = (editedId: string | null) => {
+    pendingFocus.current = { editedId }
+  }
+  useEffect(() => {
+    if (entry.entry.mode !== 'closed' || !pendingFocus.current) return
+    const { editedId } = pendingFocus.current
+    pendingFocus.current = null
+    const target = editedId ? document.querySelector<HTMLElement>(`[data-edit-transaction="${editedId}"]`) : null
+    ;(target ?? addButtonRef.current)?.focus()
+  })
+  const editingId = entry.entry.mode === 'edit' ? entry.entry.transaction.id : null
+  const editing = entry.entry.mode === 'edit' ? entry.entry.transaction : null
 
   return (
     <div>
@@ -56,7 +84,7 @@ export function Financials() {
 
       <label htmlFor="year_filter">Tax year</label>
       <select id="year_filter" value={year} onChange={(e) => setYear(Number(e.target.value))}>
-        {YEAR_OPTIONS.map((y) => (
+        {yearOptions.map((y) => (
           <option key={y} value={y}>
             {y}
           </option>
@@ -112,19 +140,41 @@ export function Financials() {
         />
       )}
 
-      {isFormOpen ? (
+      {entry.message?.kind === 'saved' && (
+        <p className="success-message" role="status">
+          {entry.message.text}
+        </p>
+      )}
+
+      {entry.initialValues ? (
         <TransactionForm
-          key={formKey}
-          initialValues={formInitialValues}
+          key={entry.formKey}
+          mode={entry.entry.mode === 'edit' ? 'edit' : 'new'}
+          heading={
+            editing
+              ? `Edit transaction — ${formatDateOnly(editing.transaction_date)}, ${formatMoney(Number(editing.amount))}`
+              : 'Add transaction'
+          }
+          continuing={entry.entry.mode === 'new' && entry.initialValues.propertyId !== ''}
+          initialValues={entry.initialValues}
           propertyOptions={propertyOptions}
           vendorOptions={vendorOptions}
           onCreateVendor={createVendor}
-          saving={saving}
-          onSave={save}
-          onCancel={cancelForm}
+          saving={entry.saving}
+          message={entry.message}
+          storedTenantName={editing?.tenant?.name}
+          onSave={async (input, addAnother) => {
+            const saved = await entry.save(input, addAnother)
+            if (saved && !addAnother) returnFocus(editingId)
+            return saved
+          }}
+          onCancel={() => {
+            entry.close()
+            returnFocus(editingId)
+          }}
         />
       ) : (
-        <button type="button" onClick={startCreating}>
+        <button type="button" ref={addButtonRef} onClick={entry.startCreating}>
           Add transaction
         </button>
       )}
@@ -133,12 +183,21 @@ export function Financials() {
         <p>Loading…</p>
       ) : (
         <>
-          <FinancialsSummary byPropertyAndCategory={summaryByPropertyAndCategory} byProperty={summaryByProperty} />
+          <FinancialsSummary
+            byPropertyAndCategory={summaryByPropertyAndCategory}
+            byProperty={summaryByProperty}
+            capitalImprovements={capitalImprovements}
+          />
           <MileageRollup year={year} />
           <TransactionListExport transactions={transactions} year={year} />
+          <label htmlFor="show_voided">
+            <input id="show_voided" type="checkbox" checked={showVoided} onChange={(e) => setShowVoided(e.target.checked)} />
+            Show voided
+          </label>
           <TransactionList
             transactions={transactions}
-            onSelect={selectTransaction}
+            voidedTransactions={showVoided ? voidedTransactions : []}
+            onSelect={entry.startEditing}
             onVoid={voidEntry}
             onApplySplit={applySplit}
             reimbursedSourceIds={reimbursedSourceIds}

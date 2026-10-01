@@ -1,11 +1,16 @@
-import type { PropertyTotals, SummaryRow } from './financialsCalculations'
+import { formatMoney, type CapitalImprovementRow, type PropertyTotals, type SummaryRow } from './financialsCalculations'
 
 interface FinancialsSummaryProps {
   byPropertyAndCategory: SummaryRow[]
   byProperty: PropertyTotals[]
+  capitalImprovements: CapitalImprovementRow[]
 }
 
-export function FinancialsSummary({ byPropertyAndCategory, byProperty }: FinancialsSummaryProps) {
+// M5 — operating results and capital spending are shown side by side but
+// never merged: "Net operating income" matches the P&L; "Net after all
+// spending" also subtracts capital improvements, so the two numbers are
+// explicitly different rather than silently disagreeing.
+export function FinancialsSummary({ byPropertyAndCategory, byProperty, capitalImprovements }: FinancialsSummaryProps) {
   return (
     <div>
       <h2>Income &amp; expense by property</h2>
@@ -13,22 +18,26 @@ export function FinancialsSummary({ byPropertyAndCategory, byProperty }: Financi
         <p className="empty-state">No activity for this filter.</p>
       ) : (
         <div className="table-scroll">
-          <table>
+          <table className="financials-summary-table">
             <thead>
               <tr>
                 <th>Property</th>
-                <th>Total income</th>
-                <th>Total expense</th>
-                <th>Net income</th>
+                <th>Income</th>
+                <th>Operating expenses</th>
+                <th>Net operating income</th>
+                <th>Capital improvements</th>
+                <th>Net after all spending</th>
               </tr>
             </thead>
             <tbody>
               {byProperty.map((row) => (
                 <tr key={row.propertyId}>
                   <td>{row.propertyName}</td>
-                  <td>${row.totalIncome.toFixed(2)}</td>
-                  <td>${row.totalExpense.toFixed(2)}</td>
-                  <td>${row.netIncome.toFixed(2)}</td>
+                  <td>{formatMoney(row.income)}</td>
+                  <td>{formatMoney(row.operatingExpense)}</td>
+                  <td>{formatMoney(row.netOperating)}</td>
+                  <td>{formatMoney(row.capitalImprovements)}</td>
+                  <td>{formatMoney(row.netAfterAllSpending)}</td>
                 </tr>
               ))}
             </tbody>
@@ -41,7 +50,7 @@ export function FinancialsSummary({ byPropertyAndCategory, byProperty }: Financi
         <p className="empty-state">No activity for this filter.</p>
       ) : (
         <div className="table-scroll">
-          <table>
+          <table className="financials-summary-table">
             <thead>
               <tr>
                 <th>Property</th>
@@ -56,12 +65,39 @@ export function FinancialsSummary({ byPropertyAndCategory, byProperty }: Financi
                   <td>{row.propertyName}</td>
                   <td>{row.entryType === 'income' ? 'Income' : 'Expense'}</td>
                   <td>{row.categoryLabel}</td>
-                  <td>${row.total.toFixed(2)}</td>
+                  <td>{formatMoney(row.total)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {capitalImprovements.length > 0 && (
+        <>
+          <h2>Capital improvements</h2>
+          <p className="field-hint">Not included in the expense categories above or in net operating income.</p>
+          <div className="table-scroll">
+            <table className="financials-summary-table">
+              <thead>
+                <tr>
+                  <th>Property</th>
+                  <th>Transactions</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {capitalImprovements.map((row) => (
+                  <tr key={row.propertyId}>
+                    <td>{row.propertyName}</td>
+                    <td>{row.count}</td>
+                    <td>{formatMoney(row.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   )

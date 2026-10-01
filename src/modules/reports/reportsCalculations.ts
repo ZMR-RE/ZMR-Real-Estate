@@ -9,6 +9,7 @@ import type { ChartAccount, CategoryMapping } from '../chartOfAccounts/chartOfAc
 import type { MortgagePaymentPrincipal } from './reportsQueries'
 import type { PortfolioMortgageRow } from '../mortgagePayoff/mortgagePayoffQueries'
 import { propertyLabel } from '../../shared/propertyLabel'
+import { computeLedgerTotals, totalsByScheduleECategory } from '../financials/financialsCalculations'
 
 export interface ReportLine {
   category: Category
@@ -51,21 +52,11 @@ export function computeProfitAndLoss(
   const accountsById = new Map(chartOfAccounts.map((a) => [a.id, a]))
   const chartAccountIdByCategory = new Map(categoryMappings.map((m) => [m.category, m.chart_account_id]))
 
-  // Bug fix (URGENT) — an expense transaction flagged
-  // repair_or_improvement = 'improvement' is a capital expenditure: it
-  // already feeds depreciation/cost basis directly from
-  // financial_transactions (depreciationQueries.ts's
-  // listCapitalImprovementAmounts, independent of this function). Also
-  // counting its full amount as an immediate expense line here was
-  // double-counting it — once as a same-year expense, again as
-  // depreciated basis over 27.5 years. Filtered out here, not in the
-  // shared listTransactions query, so other consumers (the raw
-  // transaction list) keep showing Improvement-flagged transactions.
-  const totalByCategory = new Map<Category, number>()
-  for (const tx of transactions) {
-    if (tx.repair_or_improvement === 'improvement') continue
-    totalByCategory.set(tx.category, (totalByCategory.get(tx.category) ?? 0) + tx.amount)
-  }
+  // Improvement-flagged expenses are capital, not expense lines (they
+  // feed cost basis/depreciation directly from financial_transactions).
+  // M5 moved that rule into financialsCalculations.ledgerTreatment so the
+  // Financials summary and tax CSV apply the identical definition.
+  const totalByCategory = totalsByScheduleECategory(transactions)
 
   const toLine = (category: Category): ReportLine => ({
     category,
@@ -75,10 +66,11 @@ export function computeProfitAndLoss(
 
   const incomeLines = INCOME_CATEGORIES.map(toLine)
   const expenseLines = EXPENSE_CATEGORIES.map(toLine)
-  const totalIncome = incomeLines.reduce((sum, line) => sum + line.amount, 0)
-  const totalExpense = expenseLines.reduce((sum, line) => sum + line.amount, 0)
+  const ledger = computeLedgerTotals(transactions)
+  const totalIncome = ledger.income
+  const totalExpense = ledger.operatingExpense
 
-  return { incomeLines, expenseLines, totalIncome, totalExpense, netIncome: totalIncome - totalExpense }
+  return { incomeLines, expenseLines, totalIncome, totalExpense, netIncome: ledger.netOperating }
 }
 
 export interface CashFlow {
@@ -86,34 +78,35 @@ export interface CashFlow {
   depreciationAddBack: number
   cashFromOperations: number
   principalPaid: number
+  capitalImprovementsPaid: number
   netCashFlow: number
 }
 
-// Distinct from net income in two ways real estate owners actually feel:
-// depreciation is a P&L expense that never leaves the bank account (added
-// back), and mortgage principal leaves the bank account without ever
-// being a P&L expense (subtracted as a financing use of cash) — so a
-// property can show a paper loss and still be cash-flow positive, or the
-// reverse.
-//
-// Checked for the same Improvement double-count bug computeProfitAndLoss
-// just fixed: this function takes an already-computed ProfitAndLoss, not
-// raw transactions, and derives both netIncome and depreciationAddBack
-// from it (profitAndLoss.netIncome / .expenseLines) — no separate pass
-// over transactions here. principalPaid is sourced independently from
-// mortgage payment records, unrelated to repair_or_improvement. So the
-// fix upstream in computeProfitAndLoss is sufficient; there's no second
-// place to apply it.
-export function computeCashFlow(profitAndLoss: ProfitAndLoss, principalPaid: number): CashFlow {
+// Distinct from net income in three ways real estate owners actually
+// feel: depreciation is a P&L expense that never leaves the bank account
+// (added back); mortgage principal leaves the bank account without ever
+// being a P&L expense (subtracted as financing); and capital improvements
+// leave the bank account but are capital, not P&L expense (subtracted
+// once, here, as investing spending — M5; previously omitted, so Cash
+// Flow overstated cash by the full improvement amount).
+// principalPaid is sourced from mortgage payment records; improvements
+// from the same transactions the P&L used, via ledgerTreatment.
+export function computeCashFlow(
+  profitAndLoss: ProfitAndLoss,
+  principalPaid: number,
+  capitalImprovementsPaid: number,
+): CashFlow {
   const depreciationAddBack = profitAndLoss.expenseLines.find((line) => line.category === 'depreciation')?.amount ?? 0
-  const cashFromOperations = profitAndLoss.netIncome + depreciationAddBack
+  const cents = (n: number) => Math.round(n * 100)
+  const cashFromOperations = (cents(profitAndLoss.netIncome) + cents(depreciationAddBack)) / 100
 
   return {
     netIncome: profitAndLoss.netIncome,
     depreciationAddBack,
     cashFromOperations,
     principalPaid,
-    netCashFlow: cashFromOperations - principalPaid,
+    capitalImprovementsPaid,
+    netCashFlow: (cents(cashFromOperations) - cents(principalPaid) - cents(capitalImprovementsPaid)) / 100,
   }
 }
 
@@ -162,9 +155,10 @@ export function computeBalanceSheet(
 ): BalanceSheet {
   const netCashByProperty = new Map<string, number>()
   for (const tx of transactionsAllTime) {
-    if (!tx.property) continue
-    const signedAmount = tx.entry_type === 'income' ? tx.amount : -tx.amount
-    netCashByProperty.set(tx.property.id, (netCashByProperty.get(tx.property.id) ?? 0) + signedAmount)
+    if (!tx.property || tx.voided) continue
+    // Every expense, including capital improvements, is cash out here.
+    const signedCents = Math.round(Number(tx.amount) * 100) * (tx.entry_type === 'income' ? 1 : -1)
+    netCashByProperty.set(tx.property.id, (netCashByProperty.get(tx.property.id) ?? 0) + signedCents)
   }
 
   const principalPaidByProperty = new Map<string, number>()
@@ -180,9 +174,9 @@ export function computeBalanceSheet(
   )
 
   const rows: BalanceSheetRow[] = properties.map((property) => {
-    const netIncome = netCashByProperty.get(property.id) ?? 0
+    const netCents = netCashByProperty.get(property.id) ?? 0
     const principalPaid = principalPaidByProperty.get(property.id) ?? 0
-    const cash = netIncome - principalPaid
+    const cash = (netCents - Math.round(principalPaid * 100)) / 100
     const mortgageBalance = mortgageBalanceByProperty.get(property.id) ?? 0
     const marketValue = latestMarketValues.get(property.id) ?? null
     const equity = marketValue === null ? null : marketValue + cash - mortgageBalance
