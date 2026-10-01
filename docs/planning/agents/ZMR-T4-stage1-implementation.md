@@ -347,13 +347,14 @@ These are recorded so they aren't mistaken for approvals.
 | 2 | Dashboard fields: Tenant profile › Tenancy & billing box (terms, recipients); Property › Billing settings box; Entity profile › Invoicing box (code, reply-to, payment instructions, sequence start) | 8–10 h |
 | 3 | ~~Rent ops replacement workflow~~ **done locally**, see above | — |
 | 4 | Agents screen (real module at the Automations route): assistant, assignments, Workload (next task, balance, missing fields with links, pending approvals), Approvals, runs | 7–9 h |
-| 5 | Practice verification (after T2's window handoff); empty-account and export checks; mobile; clean clone; T3 review | 5–6 h |
+| 5 | Practice verification (after T1's handoff); empty-account and export checks; mobile; clean clone; T3 review | 5–6 h |
 |   | **Total remaining** | **≈ 20–25 h** |
 
 ## Dependencies and coordination
 
-- **Practice window:** held by T2. T4 makes no shared Practice writes or
-  migration application until the handoff.
+- **Practice window:** requires a handoff from **T1** (corrected September 30;
+  earlier text said T2). T4 makes no Practice reads or writes and applies no
+  migration until T1 hands over.
 - **Shared files:**
   - Milestone 2 adds boxes on Property, Tenant and Entity profiles.
     `PropertyProfile.tsx` is on the shared-file caution list, so T4 places
