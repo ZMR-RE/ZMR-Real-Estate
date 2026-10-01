@@ -47,10 +47,21 @@ function applyLongNames() {
 const PROPERTY_COLUMNS = ['ac_type', 'basement', 'bathroom_count', 'bedroom_count', 'city', 'contact_email', 'contact_phone', 'county', 'county_assessor_use_code', 'created_at', 'exterior_wall_material', 'exterior_wall_materials', 'garage_parking_spaces', 'garage_spaces', 'heating_type', 'insurance_policy_number', 'insurance_provider', 'lease_terms', 'legacy_contact_reconciled_at', 'llc_id', 'lot_size', 'lot_size_unit', 'lot_size_value', 'municipal_zoning_code', 'owner_name', 'parking_notes', 'property_tax_id', 'property_type', 'purchase_date', 'purchase_method', 'purchase_price', 'square_footage', 'state', 'status', 'street_parking', 'township', 'updated_at', 'utilities', 'year_built', 'zip', 'zoning_use_code']
 
 function completePropertyRows() {
+  // Units and lease-tenant links in a real database always carry account_id.
+  for (const lt of reviewDb.lease_tenants as Record<string, unknown>[]) if (!('account_id' in lt)) lt.account_id = 'review-account'
+  for (const u of reviewDb.units as Record<string, unknown>[]) {
+    if (!('account_id' in u)) u.account_id = 'review-account'
+    if (!('archived' in u)) u.archived = false
+    if (!('status' in u)) u.status = ''
+  }
   for (const row of reviewDb.properties as Record<string, unknown>[]) {
     for (const col of PROPERTY_COLUMNS) if (!(col in row)) row[col] = col === 'exterior_wall_materials' ? [] : null // not null, default '{}'
   }
 }
+
+// Review page only: lets a reviewer inspect the simulated rows (e.g. that a
+// retried save made one lease, not two). Never part of the app bundle.
+;(window as unknown as { __reviewDb: unknown }).__reviewDb = reviewDb
 
 async function seed() {
   await seeded

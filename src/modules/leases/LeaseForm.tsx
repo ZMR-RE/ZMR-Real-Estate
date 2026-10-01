@@ -4,6 +4,7 @@ import { TenantForm } from '../tenants/TenantForm'
 import type { TenantOption } from '../tenants/useTenants'
 import type { TenantInput } from '../tenants/tenantsQueries'
 import type { LeaseInput } from './leasesQueries'
+import { slotOptions, tenantsNamed, uniqueTenantIds } from './leaseFormLogic'
 
 interface LeaseFormProps {
   tenantOptions: TenantOption[]
@@ -34,10 +35,28 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
   const [lateFee, setLateFee] = useState('')
   const [moveInFee, setMoveInFee] = useState('')
 
-  const selectedTenantIds = tenantIds.filter((id): id is string => id !== null)
+  const selectedTenantIds = uniqueTenantIds(tenantIds)
+  // A "new" tenant whose name matches someone already saved (for example a
+  // person created before a lease failed or was cancelled): offer that person
+  // first, so nobody is created twice. Creating another is still possible.
+  const [nameMatch, setNameMatch] = useState<{ input: TenantInput; matches: TenantOption[] } | null>(null)
 
-  const handleCreateTenant = async (input: TenantInput) => {
+  const chooseExistingTenant = (id: string) => {
+    const slot = addingTenantForSlot
+    if (slot === null) return
+    setTenantIds((prev) => prev.map((existing, i) => (i === slot ? id : existing)))
+    setNameMatch(null)
+    setAddingTenantForSlot(null)
+  }
+
+  const handleCreateTenant = async (input: TenantInput, confirmedNew = false) => {
     if (addingTenantForSlot === null) return
+    const matches = tenantsNamed(tenantOptions, input.name)
+    if (!confirmedNew && matches.length > 0) {
+      setNameMatch({ input, matches })
+      return
+    }
+    setNameMatch(null)
     setCreatingTenant(true)
     const result = await onCreateTenant(input)
     setCreatingTenant(false)
@@ -80,12 +99,13 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
             onCancel={() => {
               setAddingTenantForSlot(null)
               setCreateTenantError(null)
+              setNameMatch(null)
             }}
           />
         ) : (
           <div className="lease-form-tenant-row" key={i}>
             <SearchableSelect
-              options={tenantOptions}
+              options={slotOptions(tenantOptions, tenantIds, i)}
               value={tenantId}
               onChange={(id) => setTenantIds((prev) => prev.map((existing, idx) => (idx === i ? id : existing)))}
               placeholder="Select a tenant…"
@@ -99,6 +119,23 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
             )}
           </div>
         ),
+      )}
+      {nameMatch && (
+        <div role="status">
+          <p>
+            <strong>A tenant named “{nameMatch.input.name.trim()}” already exists.</strong> Use the existing person, so their history stays in one place?
+          </p>
+          <div className="lease-form-tenant-row">
+            {nameMatch.matches.map((m) => (
+              <button key={m.id} type="button" onClick={() => chooseExistingTenant(m.id)}>
+                Use existing: {m.label}
+              </button>
+            ))}
+            <button type="button" disabled={creatingTenant} onClick={() => handleCreateTenant(nameMatch.input, true)}>
+              Create a different person with this name
+            </button>
+          </div>
+        </div>
       )}
       {addingTenantForSlot === null && (
         <button type="button" onClick={() => setTenantIds((prev) => [...prev, null])}>
@@ -150,7 +187,7 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
           />
 
           <button type="button" disabled={saving || !startDate} onClick={handleSave}>
-            {saving ? 'Saving…' : 'Save lease'}
+            {saving ? 'Saving…' : 'Save'}
           </button>
         </>
       )}

@@ -12,6 +12,8 @@ import {
 } from './leasesQueries'
 import { ensureLeaseRenewalReminders } from './leaseRenewalReminders'
 
+export const partialLeaseMessage = 'The lease was saved, but its tenants weren’t all linked. Save again to finish — it won’t create a second lease.'
+
 function todayDateString() {
   return new Date().toISOString().slice(0, 10)
 }
@@ -80,16 +82,22 @@ export function useLeases(propertyId: string, unitId: string) {
     setEndingId(null)
   }
 
+  // A lease saved whose tenant links then failed: the next Save retries on
+  // this same lease instead of creating another (createLease).
+  const [pendingLeaseId, setPendingLeaseId] = useState<string | null>(null)
+
   const add = async (input: LeaseInput) => {
     if (!accountId) return
     setSaving(true)
-    const { error: saveError } = await createLease(accountId, propertyId, unitId, input)
+    const { leaseId, error: saveError } = await createLease(accountId, propertyId, unitId, input, pendingLeaseId)
     setSaving(false)
 
     if (saveError) {
-      setError(saveError.message)
+      setPendingLeaseId(leaseId)
+      setError(leaseId ? `${partialLeaseMessage} (${saveError.message})` : saveError.message)
       return
     }
+    setPendingLeaseId(null)
     setError(null)
     setIsAdding(false)
     await refresh()

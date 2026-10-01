@@ -1,5 +1,5 @@
+import { useState } from 'react'
 import type { SearchableSelectOption } from '../../shared/SearchableSelect'
-import { CollapsibleSection } from '../../shared/CollapsibleSection'
 import { EditableSection } from '../../shared/EditableSection'
 import type { LlcInput } from '../llcs/llcsQueries'
 import type { HoldingCompanyInput } from '../holdingCompanies/holdingCompaniesQueries'
@@ -10,7 +10,7 @@ import { UnitsSection } from '../units/UnitsSection'
 import { PropertySpecsSection } from '../propertySpecs/PropertySpecsSection'
 import { UtilityRecordsSection } from '../utilities/UtilityRecordsSection'
 import { SecurityDepositsSection } from '../securityDeposits/SecurityDepositsSection'
-import { PropertyTenantsOverview } from '../tenants/PropertyTenantsOverview'
+import { PropertyTenantsSection } from '../tenants/PropertyTenantsSection'
 import { FinancialAccountsSection } from '../financialAccounts/FinancialAccountsSection'
 import { VendorEstimatesSection } from '../vendorEstimates/VendorEstimatesSection'
 import { PropertyOwnershipInterestsSection } from './PropertyOwnershipInterestsSection'
@@ -76,6 +76,9 @@ export function PropertyProfileOverviewTab({
   // rows a user sees), so it must never fall back to the raw legacy
   // pointer the way a display label safely could.
   const { interests, completeness } = usePropertyOwnershipInterests(property.id)
+  // Bumped when Tenants › Add tenant saves a tenancy, so the Units box
+  // re-reads its units and leases and shows the new tenancy too.
+  const [tenancyVersion, setTenancyVersion] = useState(0)
   const ownershipAuthority = resolveOwnershipAuthority(interests, completeness, property.llc_id)
   const authoritativeLlcId = ownershipAuthority.authoritative ? ownershipAuthority.llcId : null
   // Roadmap 7.40 — the Financial accounts box also shows this LLC's
@@ -135,9 +138,7 @@ export function PropertyProfileOverviewTab({
 
       <PropertyTaxLedger propertyId={property.id} />
 
-      <CollapsibleSection title="Tenants">
-        <PropertyTenantsOverview propertyId={property.id} />
-      </CollapsibleSection>
+      <PropertyTenantsSection propertyId={property.id} onTenancyAdded={() => setTenancyVersion((v) => v + 1)} />
 
       <PropertySpecsSection propertyId={property.id} />
 
@@ -147,7 +148,7 @@ export function PropertyProfileOverviewTab({
 
       <VendorEstimatesSection propertyId={property.id} />
 
-      <UnitsSection propertyId={property.id} />
+      <UnitsSection key={tenancyVersion} propertyId={property.id} />
     </div>
   )
 }
