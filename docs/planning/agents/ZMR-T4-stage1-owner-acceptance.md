@@ -38,15 +38,16 @@
 **Simulated backend, not Practice:** `F1-fixed-harness-after-cancel.jpg` shows the details-panel fix. After Cancel, the panel shows "Cancelled (number kept)" with no Revise/Cancel. After Reject, the panel closes. This screen fix hasn't been seen on Practice yet.
 
 **Limitations:**
-- The Practice screenshots are at one desktop width.
-- Phone-width checks so far are from the local review harness.
+- The Practice screenshots are at one desktop width and drawn small, so they're proof that things work, not a guide to how they look.
+- **For appearance,** use the local review harness captures. They're the same screens and styles with fictional data and no real backend, at 1280, 900 and a true 390 px width: `evidence/stage1-local-harness/`.
+- Things to look at, and the open layout questions: `ZMR-T4-stage1-acceptance-review-material.md`, sections 3 and 4.
 
 ## Please decide
 1. **Accept or request changes** to the Stage 1 screens and invoice PDF as shown. Phone width: accept the harness evidence, or ask for a phone check on Practice.
 2. **Hosted re-checks before release** (optional):
    - F-1 on Practice;
    - H10 with a Practice manager login. This one needs your approval to create a non-owner Practice member.
-3. **Release timing:** Stage 1 is finalized after the Manage-panel fix is live. Say whether it goes before or after T1's mortgage release.
+3. **Release timing:** settled. Stage 1 releases after T1's mortgage release, on whatever is actually live then.
 4. **Release approval** comes later, for the exact final candidate.
 
 ## After release

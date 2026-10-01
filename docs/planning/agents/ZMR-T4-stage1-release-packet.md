@@ -4,14 +4,14 @@ Prepared by T4, 2026-10-01.
 
 **Status:**
 - NOT deployed; release NOT approved.
-- The production candidate is NOT final yet. It's finalized only after the Manage-panel release (T2, `9caf8e6`) is confirmed live; see §5.
+- The production candidate is NOT final yet. **Stage 1 releases after T1's mortgage release.** The candidate is finalized once, against the **actual live baseline** at that time (expected sequence: Manage `9caf8e6`, then mortgage); see §5.
 
 ## 1. Reviewed code
 - **Code candidate:** `45d3eb5ecfbcd5ee09a6404b9a6c5f2e15b9cf5d` (branch `t4/stage1-on-a`). T3 cleared it with no material blockers.
   - It is `03b3343` (T3-cleared, hosted-tested) plus the F-1 fix.
   - Later commits on the branch change documentation only.
 - **Built on:** Release A `ba2c9b1`.
-  - It does **not** yet contain Release B `1e4e640` (live) or the Manage fix.
+  - It does **not** yet contain Release B `1e4e640` (live), the Manage fix or the mortgage release.
   - The production candidate is an integration merge (§5), not this commit as it stands.
 - **Scope (Stage 1 of RP1–RP7, owner-approved September 30), owner-only:**
   - Rent ops invoices: draft, review, approve, issue (per-entity number and stored PDF), revise and cancel.
@@ -40,12 +40,16 @@ All nine are additive. They're byte-identical in `03b3343` and `45d3eb5`, which 
 | 20261002150000 | entity_invoice_code_lock | 62ab38f054ffa255 |
 | 20261002160000 | invoice_owner_only | 612608bf7da781f4 |
 
-**Push procedure.** Production has 109 migrations, and its latest, `20261003100000`, sorts after these nine.
-1. Run the exact-set check: local-not-remote must be **exactly these 9**, and remote-not-local must be **none**.
+**Push procedure.** Production's migration count is read at finalization, never assumed. Today it is 109; it becomes 110 if the mortgage release applies `20260930200000`. The latest applied version, `20261003100000`, sorts after these nine.
+1. Run the exact-set check against the live baseline: local-not-remote must be **exactly these 9**, and remote-not-local must be **none**.
 2. The dry run must list only these 9.
 3. Push with `--include-all`.
 
-The candidate doesn't carry T1's mortgage `20260930200000` or Capture's migrations, so they can't be pushed by accident. The Manage fix adds no migration.
+**Other migrations:**
+- T1's mortgage `20260930200000` reaches the candidate only through live `main`, once it's released. Then it's already applied and not pending.
+- If mortgage isn't live at finalization, it isn't in the candidate and can't be pushed by accident.
+- Capture's migrations are never included.
+- The Manage fix adds no migration.
 
 **What stays in the database after any rollback.** Nothing is dropped, and there are no down scripts.
 
@@ -70,48 +74,49 @@ The candidate doesn't carry T1's mortgage `20260930200000` or Capture's migratio
 | Combined with Release B (trial, `03b3343` + `1e4e640`) | `ZMR-T4-stage1-implementation.md` | Clean merge; 118 migrations; entity 43/43, closed-period 35/35, void-reconcile 36/36, branding 27/27, invoices 167/167. Repeated at finalization (§5). |
 
 ## 4. Release prerequisites (all required)
-1. **Manage release live and verified**: `9caf8e6` published and confirmed by T2. **T1's mortgage release keeps its own order.** Whichever ships after Stage 1 merges Stage 1, and the reverse.
+1. **Preceding releases live and verified:** the Manage fix (T2) and **T1's mortgage release**, each confirmed by its owner terminal. Stage 1 is integrated once, on whatever is actually live then, preserving all of it.
 2. **Owner acceptance** of the Stage 1 screens and invoice PDF (`ZMR-T4-stage1-owner-acceptance.md`).
 3. **Owner release approval** for this exact, finalized candidate.
 4. **Register entries:** the Stage 1 and owner-only invoicing approvals are recorded only on this branch (recording gap 2). The planning side appends `ZMR-T4-approval-register-addendum.md`, or confirms it.
 5. **A production window** recorded in the shared assignments file, with the owner pausing edits.
 6. **A fresh verified encrypted backup**, using the fail-closed script that checks reachability first.
 7. **Read-only production preflight:**
-   - live deploy and commit equal the Manage release;
-   - migrations 109;
+   - live deploy and commit equal the recorded live baseline (expected: the mortgage release);
+   - migration count equals the baseline's (expected 110 with mortgage), with nothing pending except these 9;
    - exact-set pending = these 9;
    - the dry run lists only these 9;
    - counts: accounts, properties, llcs, leases, tenants, invoices (with states), payments, documents, Storage objects, audit;
    - none of the 9 migrations' objects exist yet.
 
 ## 5. Integration and check plan
-Do this once, when the Manage release is confirmed live. Don't rebuild against an earlier hypothetical baseline.
+Do this once, after the mortgage release is confirmed live, against what's actually live. Don't rebuild for intermediate or hypothetical baselines.
 
 1. **Confirm the baseline:**
-   - `git fetch`; local and remote `main` equal the live commit (expected `9caf8e6`);
+   - `git fetch`; local and remote `main` equal the live commit (expected: the mortgage release, which contains Manage and Release B);
    - the Netlify published deploy is that commit.
 2. **Merge:** a new branch from live `main`, then merge `45d3eb5`.
-   - Expected: clean. Stage 1 doesn't touch `src/index.css` (the Manage fix's only file), and it had no file overlap with Release B.
+   - Expected: clean. Stage 1 has no file overlap with Release B, the Manage fix (`src/index.css` only) or the mortgage work at `70d526a` (mortgage module, shared pick lists, `20260930200000`). This was checked by file name only, without building.
    - Any conflict → stop and report.
 3. **Preservation checks:**
-   - every file `main` changed since `ba2c9b1` (Release B and the Manage fix) is byte-identical to `main`;
+   - every file `main` changed since `ba2c9b1` (Release B, Manage, mortgage and anything else released) is byte-identical to `main`;
    - every Stage 1 file is byte-identical to `45d3eb5`;
-   - the migration directory = production's 109 + these 9;
+   - the migration directory = production's applied list at that time + these 9, each byte-identical to the content production applied;
    - `git ls-files` covers every imported file.
 4. **Clean clone** of the merge commit:
-   - `npm ci`, `npm run build`, `tsc -b --noEmit`, vitest, oxlint (no new errors);
+   - `npm ci`, `npm run build`, `tsc -b --noEmit`, vitest (including the mortgage and shared pick-list tests), oxlint (no new errors);
    - DB suites on fresh local databases: rent_invoicing (with self-test and payment_race), entity_responsibility, closed_period_protection (with concurrency), void_reconcile, entity_branding.
 5. **Visual spot check** of the merged build against Practice, only in a newly coordinated window, if the owner wants it:
    - Rent ops issue/reject/cancel, which also observes F-1 on a real backend;
    - the Financials entity field (B);
-   - the Manage panel at 390 px.
+   - the Manage panel at 390 px;
+   - the mortgage screens.
 6. **T3 focused review** of the merge commit: integration only, with no new behaviour. The result is the **exact production candidate hash**.
 
 ## 6. Release steps (after approval)
 1. Window, pause, backup and preflight (§4, items 5–7). Stop on any difference.
 2. **Database:** from the clean clone of the candidate:
    - exact-set check, then `supabase db push --linked --include-all`;
-   - post-checks: 118 migrations, nothing pending or remote-only, and the 9 versions' tables, columns, triggers and policies present;
+   - post-checks: baseline count + 9 (expected 119), nothing pending or remote-only, and the 9 versions' tables, columns, triggers and policies present;
    - `anon` refused on the new tables and RPCs;
    - **no existing row changed:** counts equal the preflight, and existing invoices are readable with defaults;
    - earlier releases' triggers still enabled: R1 void/reconcile, M6 closed-period and same-workspace, B entity, R2 branding, audit.
@@ -121,12 +126,12 @@ Do this once, when the Manage release is confirmed live. Don't rebuild against a
 4. **Read-only live check** with the owner's session, nothing saved:
    - Rent ops loads with existing invoices and payments unchanged;
    - Entity › Invoicing and Property › Billing settings show empty, not invented, values;
-   - Financials (entity field and filter), the Manage panel and R2 branding still work.
+   - Financials (entity field and filter), the Manage panel, the mortgage screens and R2 branding still work.
 5. **Record:** new baseline = the candidate hash. Tell T1 and T2; the owner resumes editing.
 6. **First real invoices are owner-entered:** invoice codes, first numbers (if continuing existing numbering), terms, then draft → approve → issue. No production invoicing data is created by a terminal.
 
 ## 7. Rollback (to the immediate prior release)
-- **Target:** the Manage-panel release (the deploy and commit recorded when it goes live), not Release B or anything older. It is the only release that preserves everything shipped before Stage 1.
+- **Target:** the immediate prior verified release, i.e. the actual live baseline Stage 1 was integrated on (expected: the mortgage release; its deploy and commit are recorded at finalization). Nothing older: only that release preserves everything shipped before Stage 1.
 - **Frontend:**
   1. Emergency: republish that Netlify deploy.
   2. Then a normal scoped revert of the Stage 1 merge on `main` (to the same content), so auto-deploy doesn't republish Stage 1.
@@ -137,7 +142,7 @@ Do this once, when the Manage release is confirmed live. Don't rebuild against a
 
 ## 8. Owner decisions remaining
 1. **Visual and workflow acceptance** of Stage 1 (acceptance file). This includes the gap that hosted screenshots exist at one desktop width only; phone and intermediate evidence is from the local harness.
-2. **Release approval** of the finalized candidate (§5, step 6), including the timing relative to T1's mortgage release.
+2. **Release approval** of the finalized candidate (§5, step 6). Order is settled: Stage 1 releases after mortgage.
 3. Whether to require a **hosted re-check of F-1 and H10** before release. H10 would need a non-owner Practice member, which hasn't been approved (P-TESTID is open).
 4. **Register recording** of the Stage 1 and owner-only approvals (prerequisite 4).
 5. Separately, not blocking Stage 1: F-2 (collapsed box Edit), F-3 (button labels) and F-4 (issued-table money format).
