@@ -2,11 +2,11 @@
 
 Local, throwaway Postgres only. Never point these at Practice or production.
 
-1. `./build.sh <repo-root>` — fresh cluster on 127.0.0.1:55433 (data dir next to
+1. `./build.sh <repo-root>` — fresh cluster on 127.0.0.1:${ZMR_TEST_PGPORT:-55433} (refuses a port already in use) (data dir next to
    this file, `data/`, git-ignored by path), minimal stand-ins for Supabase's
    `auth`/`storage` schemas and roles (`bootstrap.sql`), then every file in
    `supabase/migrations/` in order.
-2. `psql -h 127.0.0.1 -p 55433 -U postgres -d zmr -f setup.sql` — fictional
+2. `psql -h 127.0.0.1 -p ${ZMR_TEST_PGPORT:-55433} -U postgres -d zmr -f setup.sql` — fictional
    two-account fixtures and the `t(name, sql, expected_sqlstate)` helper.
 3. `psql ... -f tests.sql` — rule checks run as the `authenticated` role with a
    simulated signed-in user (RLS applies). Every line prints PASS/FAIL.
