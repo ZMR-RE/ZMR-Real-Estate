@@ -28,8 +28,11 @@ export function PdfCanvasPreview({ pdf, label, openUrl, filename }: PdfCanvasPre
     const run = async () => {
       setStatus({ kind: 'loading' })
       try {
-        const [lib, worker] = await Promise.all([import('pdfjs-dist'), import('pdfjs-dist/build/pdf.worker.min.mjs?url')])
-        lib.GlobalWorkerOptions.workerSrc = worker.default
+        // pdf.js's worker code runs on the page itself (it registers
+        // globalThis.pdfjsWorker), so no separate worker URL has to resolve —
+        // that URL was the failure on the pinned review copy. One-page
+        // invoices draw in well under a second this way.
+        const [lib] = await Promise.all([import('pdfjs-dist'), import('pdfjs-dist/build/pdf.worker.min.mjs')])
         const doc = await lib.getDocument({ data: new Uint8Array(await pdf.arrayBuffer()) }).promise
         if (cancelled || !host) return
         host.replaceChildren()
