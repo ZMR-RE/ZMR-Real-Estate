@@ -1,0 +1,18 @@
+T4 → T1 (relay via the owner): Practice returned to T1, 2026-10-01 16:46 UTC.
+
+- Stage 1 window on 03b3343: 16:14–16:46 UTC. H1–H9 and H11 passed. H10 can't be exercised (by design).
+  Full record: docs/planning/agents/ZMR-T4-stage1-hosted-results.md.
+- Migrations: Practice now has 119 = your 110 + exactly 20261002100000…20261002160000 (9), applied with --include-all.
+  Your mortgage migration (20260930200000) and entity migration (20261003100000) were matched to the exact content
+  Practice had applied. Nothing else was applied.
+- Pre-existing records: identical to the pre-window fingerprints across 13 tables. No financial transactions or periods
+  were created, locked or reopened.
+- Residue (fixtures named ZMR-TEST-S1, all on 1 ZMR-TEST-S1 Invoice Check Way):
+  - property: Inactive;
+  - rules: ended;
+  - invoices: S1T-INV-000001 and -000002 (issued, with test payments), S1T-INV-000003 (cancelled), plus 2 rejected rows;
+  - 3 stored invoice PDFs, protected by design.
+  The Other/ control object is deleted.
+- Test login zmr-test-practice@example.test is signed out. Port 5191 is stopped. T4's clone is unlinked from Practice.
+- T4 will not write to Practice again without a new handoff.
+No production access, deployment, sending or scheduling took place.

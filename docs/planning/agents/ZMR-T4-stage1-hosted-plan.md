@@ -2,7 +2,7 @@
 
 **Candidate:** `03b334387b8c4afdc552bc263319452bd2dcb0c5` (branch `t4/stage1-on-a`, built on Release A `ba2c9b1`). It includes the fixes for T3's two production blockers on `921324e`. T3 has cleared it for hosted Practice testing. Practice runs use exactly this hash (`S1_CANDIDATE`). Later commits on the branch that change only documentation don't change what is tested.
 
-**Status:** prepared; nothing has run on Practice. It starts only after both:
+**Status:** RUN on Practice, 2026-10-01 16:14–16:46 UTC, on exactly `03b3343`. H1–H9 and H11 PASS; H10 can't be exercised. One Stage 1 display defect (F-1). Results: `ZMR-T4-stage1-hosted-results.md`. It started only after both:
 
 1. **T3 clears** this candidate. T3 has permitted Practice testing, and has also listed the two blockers fixed here.
 2. **T1 hands over Practice in writing,** after T1's mortgage follow-up checks are complete (see §1).
