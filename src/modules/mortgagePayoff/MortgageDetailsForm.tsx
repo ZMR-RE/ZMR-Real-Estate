@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { PickListSelect } from '../../shared/pickLists/PickListSelect'
 import type { MortgageDetailsInput } from './mortgagePayoffQueries'
 
 interface MortgageDetailsFormProps {
@@ -35,6 +36,27 @@ export function MortgageDetailsForm({
 
       <label htmlFor="lender_name">Lender</label>
       <input id="lender_name" {...field('lender_name')} />
+
+      {/* Owner-approved exception to the app's otherwise-standard
+          "last four digits only" convention — the full loan number,
+          free text (leading zeros and letters both occur in real loan
+          numbers and would be lost by a numeric field). Optional: never
+          backfilled for an existing mortgage. */}
+      <label htmlFor="loan_number">Loan number</label>
+      <input id="loan_number" {...field('loan_number')} />
+
+      {/* Pick-list-governed (8.1), not a fixed enum — owner can add/
+          archive beyond the 8 approved starting values via "+ Manage
+          loan type" below. Optional: never backfilled for an existing
+          mortgage. */}
+      <label htmlFor="loan_type">Loan type</label>
+      <PickListSelect
+        id="loan_type"
+        listName="loan_type"
+        title="Loan type"
+        value={values.loan_type ?? ''}
+        onChange={(value) => setValues((prev) => ({ ...prev, loan_type: value || null }))}
+      />
 
       <label htmlFor="original_loan_amount">
         Original loan amount ($)<span className="required-marker">*</span>

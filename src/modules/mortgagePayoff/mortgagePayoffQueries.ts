@@ -14,6 +14,16 @@ export interface MortgageDetails {
   // insurance, tracked separately from principal/interest above so it
   // never gets folded into current_balance.
   escrow_balance: string | null
+  // Mortgage correction (T1, isolated branch) — owner-approved exception
+  // to the app's otherwise-standard "last four digits only" convention:
+  // the FULL loan number, stored as free text (leading zeros and letters
+  // both occur in real loan numbers and would be lost by a numeric
+  // column). Optional, never backfilled for an existing mortgage.
+  loan_number: string | null
+  // Pick-list-governed (8.1) — see pickListsQueries.ts's PickListName
+  // 'loan_type' and its 8 owner-approved seeded starting values.
+  // Optional, never backfilled for an existing mortgage.
+  loan_type: string | null
 }
 
 export type MortgageDetailsInput = Omit<MortgageDetails, 'id' | 'property_id'>
@@ -26,7 +36,7 @@ export async function getMortgageDetails(propertyId: string) {
   return supabase
     .from('mortgage_details')
     .select(
-      'id, property_id, lender_name, original_loan_amount, current_balance, interest_rate, monthly_payment, loan_start_date, term_years, escrow_balance',
+      'id, property_id, lender_name, original_loan_amount, current_balance, interest_rate, monthly_payment, loan_start_date, term_years, escrow_balance, loan_number, loan_type',
     )
     .eq('property_id', propertyId)
     .eq('voided', false)

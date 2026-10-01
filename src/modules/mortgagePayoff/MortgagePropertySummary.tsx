@@ -10,10 +10,17 @@ interface MortgagePropertySummaryProps {
   voiding: boolean
 }
 
+// Mortgage correction (T1, isolated branch): exactly two decimals,
+// always — maximumFractionDigits alone (the prior config here was 0,
+// rounding to whole dollars) lets Intl.NumberFormat trim to fewer than
+// two digits for a value that happens to need fewer; minimumFractionDigits
+// forces the display to always show both, e.g. "$1,234.50" and
+// "$50.00", never "$1,235" or "$50".
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
-  maximumFractionDigits: 0,
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 })
 
 const percentFormatter = new Intl.NumberFormat('en-US', {
@@ -35,6 +42,22 @@ export function MortgagePropertySummary({
       <dl>
         <dt>Lender</dt>
         <dd>{mortgageDetails.lender_name ?? '—'}</dd>
+        {/* Empty field visibility: omitted entirely when blank, never a
+            placeholder/dash — these two are optional and never
+            backfilled, so a mortgage on file before this correction
+            simply doesn't show them until the owner adds them via Edit. */}
+        {mortgageDetails.loan_number && (
+          <>
+            <dt>Loan number</dt>
+            <dd>{mortgageDetails.loan_number}</dd>
+          </>
+        )}
+        {mortgageDetails.loan_type && (
+          <>
+            <dt>Loan type</dt>
+            <dd>{mortgageDetails.loan_type}</dd>
+          </>
+        )}
         <dt>Original loan amount</dt>
         <dd>{currencyFormatter.format(Number(mortgageDetails.original_loan_amount))}</dd>
         <dt>Current balance (principal)</dt>

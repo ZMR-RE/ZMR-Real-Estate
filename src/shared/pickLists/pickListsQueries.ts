@@ -96,6 +96,13 @@ export type PickListName =
   | 'tax_election_type'
   | 'contact_method_label'
   | 'contact_role'
+  // Mortgage correction (T1, isolated branch) — seeded with the 8
+  // owner-approved starting values in
+  // 20260930200000_mortgage_loan_identity_fields.sql. Shared file: this
+  // union is purely additive (one new literal, nothing removed or
+  // changed), coordinated with T2 rather than assumed safe to touch
+  // silently.
+  | 'loan_type'
 
 export interface PickListOption {
   id: string

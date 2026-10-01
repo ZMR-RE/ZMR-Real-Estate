@@ -19,6 +19,8 @@ const BLANK_MORTGAGE: MortgageDetailsInput = {
   loan_start_date: '',
   term_years: 30,
   escrow_balance: null,
+  loan_number: null,
+  loan_type: null,
 }
 
 // mortgage_details CRUD + void (roadmap 9.20) + the equity/LTV snapshot

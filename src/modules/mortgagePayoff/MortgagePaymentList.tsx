@@ -6,9 +6,13 @@ interface MortgagePaymentListProps {
   voiding: boolean
 }
 
+// Mortgage correction (T1, isolated branch): minimumFractionDigits
+// added — maximumFractionDigits alone let a whole-dollar amount display
+// with no decimals at all (e.g. "$50" instead of "$50.00").
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
+  minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
 
