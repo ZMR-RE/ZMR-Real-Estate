@@ -1,6 +1,6 @@
 # Stage 1 invoicing — hosted Practice check plan (T4)
 
-**Candidate:** the commit that adds this file (branch `t4/stage1-on-a`, on released A `ba2c9b1`). It includes the fixes for T3's two production blockers on `921324e`. T4 states the full hash in its report.
+**Candidate:** `03b334387b8c4afdc552bc263319452bd2dcb0c5` (branch `t4/stage1-on-a`, built on Release A `ba2c9b1`). It includes the fixes for T3's two production blockers on `921324e`. T3 has cleared it for hosted Practice testing. Practice runs use exactly this hash (`S1_CANDIDATE`). Later commits on the branch that change only documentation don't change what is tested.
 
 **Status:** prepared; nothing has run on Practice. It starts only after both:
 
@@ -17,7 +17,8 @@ Not in scope: Agents features, sending, mailbox, scheduling, any production step
   - that no other terminal will write to Practice during the window.
 - Without that line, T4 does nothing, including no read-only listing.
 - **Handback:** *"Practice returned to T1"*, with the results, residue and the final migration list.
-- **Release B** (T2's entity release) is not confirmed live. Practice's actual state is read, never assumed.
+- **Production baseline (corrected 2026-10-01):** Release B `1e4e640` is live (Netlify `6abddd26d6f44eedbd77d2c1`, 109 migrations, since 04:10 UTC). The earlier "not confirmed live" note was stale. This doesn't change the Practice procedure: Practice's actual state is still read, never assumed.
+- **Hosted clearance is not production approval.** The eventual deployment candidate must merge the live baseline as it actually is at release time (currently `1e4e640`), with that checked again then. Without B, the candidate would remove B's entity field, filter and Action Queue item.
 
 ## 2. Access and identity
 

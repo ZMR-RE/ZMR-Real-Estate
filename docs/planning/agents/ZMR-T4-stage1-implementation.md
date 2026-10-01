@@ -316,7 +316,9 @@ T3 permitted Practice testing but listed two production blockers. Both are fixed
 
 ## Candidate on released A (October 1) — supersedes `4981c9e`
 
-**Production baseline:** release A `ba2c9b1` (Netlify `6abdd7fe7365c799bb78de41`, 108 migrations). It contains R2 `2026d5f` and R1 `fc20c6c`, plus M1–M6 and the two M6 migrations: `20260930100000` closed-period protection and `20260930110000` same-workspace references. **`4981c9e` is superseded for deployment.**
+> **Superseded baseline (corrected 2026-10-01):** production is now Release B `1e4e640` (= A `ba2c9b1` + entity `82cd425`; Netlify `6abddd26d6f44eedbd77d2c1`; 109 migrations, adding `20261003100000`). The candidate cleared for hosting, `03b3343`, doesn't contain B. A trial merge `03b3343` + `1e4e640` was clean and kept no tree. On the 118-migration chain it passed: build; vitest 240 passed / 1 skipped; oxlint 0 errors (83 warnings, the same as `03b3343`); entity 43/43; closed-period 35/35; void-reconcile 36/36; branding 27/27; invoices 167/167. No files overlap, and Stage 1 doesn't write `financial_transactions`. The deployment candidate must merge the actual live baseline at the time and repeat these checks from a clean clone. Stage 1's `20261002*` migrations now sort before an applied version, so production needs the exact-set `--include-all` procedure.
+
+**Production baseline at the time:** release A `ba2c9b1` (Netlify `6abdd7fe7365c799bb78de41`, 108 migrations). It contains R2 `2026d5f` and R1 `fc20c6c`, plus M1–M6 and the two M6 migrations: `20260930100000` closed-period protection and `20260930110000` same-workspace references. **`4981c9e` is superseded for deployment.**
 
 **Branch** `t4/stage1-on-a` = `ba2c9b1` + merge of `t4/stage1-on-r2` (`4981c9e`). The merge was clean. The fixed hash is named in the T3 request.
 
