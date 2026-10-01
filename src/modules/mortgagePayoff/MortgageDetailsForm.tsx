@@ -6,6 +6,8 @@ import type { MortgageDetailsInput } from './mortgagePayoffQueries'
 interface MortgageDetailsFormProps {
   initialValues: MortgageDetailsInput
   saving: boolean
+  // A refused save, shown inside the form; the form keeps the user's entries.
+  error: string | null
   canCancel: boolean
   onSave: (input: MortgageDetailsInput) => void
   onCancel: () => void
@@ -14,6 +16,7 @@ interface MortgageDetailsFormProps {
 export function MortgageDetailsForm({
   initialValues,
   saving,
+  error,
   canCancel,
   onSave,
   onCancel,
@@ -189,6 +192,8 @@ export function MortgageDetailsForm({
         required
       />
 
+      {/* Beside Save, where the user is looking when a save is refused (the form is long). */}
+      {error && <p role="alert">{error}</p>}
       <button type="submit" disabled={saving}>
         {saving ? 'Saving…' : 'Save mortgage details'}
       </button>
