@@ -3,12 +3,14 @@ import { useAuth } from '../../shared/auth/AuthContext'
 import {
   createMortgageDetails,
   getMortgageDetails,
+  resetMortgageBalance,
   updateMortgageDetails,
   voidMortgageDetails,
   type MortgageDetails,
   type MortgageDetailsInput,
 } from './mortgagePayoffQueries'
 import { computeEquity, type EquitySnapshot } from './mortgagePayoffMath'
+import { friendlyDatabaseError, planMortgageSave } from './mortgageBalanceIntegrity'
 
 const BLANK_MORTGAGE: MortgageDetailsInput = {
   lender_name: null,
@@ -69,17 +71,68 @@ export function useMortgageDetails(propertyId: string, marketValue: string | nul
     setIsEditing(false)
   }
 
+  // Balance integrity (20261004100000): a changed balance is saved first through the versioned reset, then the other
+  // loan details. If the balance changed since this form opened, nothing is saved and the form stays open with the
+  // user's entries; the current figures are fetched (without closing the form) so the user can compare and save again.
   const save = async (input: MortgageDetailsInput): Promise<boolean> => {
     if (!accountId) return false
 
+    if (!mortgageDetails) {
+      setSaving(true)
+      const { data, error: createError } = await createMortgageDetails(accountId, propertyId, input)
+      setSaving(false)
+      if (createError) {
+        setError(createError.message)
+        return false
+      }
+      setError(null)
+      setMortgageDetails(data)
+      setIsEditing(false)
+      return true
+    }
+
+    const plan = planMortgageSave(mortgageDetails, input)
+    if (plan.error) {
+      setError(plan.error)
+      return false
+    }
+
     setSaving(true)
-    const { data, error: saveError } = mortgageDetails
-      ? await updateMortgageDetails(mortgageDetails.id, input)
-      : await createMortgageDetails(accountId, propertyId, input)
+    if (plan.reset) {
+      const { error: resetError } = await resetMortgageBalance({
+        mortgageId: mortgageDetails.id,
+        principal: plan.reset.principal,
+        principalVersion: plan.reset.principal === null ? null : mortgageDetails.principal_version,
+        escrow: plan.reset.escrow,
+        escrowVersion: plan.reset.escrow === null ? null : mortgageDetails.escrow_version,
+        statementDate: plan.reset.statementDate,
+      })
+      if (resetError) {
+        setSaving(false)
+        if (resetError.code === 'ZM5M5') {
+          const { data: latest } = await getMortgageDetails(propertyId)
+          if (latest) setMortgageDetails(latest)
+          setError(
+            latest
+              ? `${resetError.message} Current balance: ${latest.current_balance}; escrow: ${latest.escrow_balance ?? 'none'}.`
+              : resetError.message,
+          )
+        } else {
+          setError(friendlyDatabaseError(resetError))
+        }
+        return false
+      }
+    }
+
+    const { data, error: saveError } = await updateMortgageDetails(mortgageDetails.id, plan.details)
     setSaving(false)
 
     if (saveError) {
-      setError(saveError.message)
+      setError(
+        plan.reset
+          ? `The balance was saved, but the other loan details were not: ${saveError.message}`
+          : saveError.message,
+      )
       return false
     }
 

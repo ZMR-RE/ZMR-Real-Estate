@@ -1,0 +1,38 @@
+applied      111 repo migrations + 0 extra
+PASS reconcile T1 through the reconciliation save
+PASS ordinary Void of a matched entry is refused with its reason [ZM091]
+PASS …T1 still active and matched
+PASS void and clear the match in ONE save is refused (un-matching must be its own save) [ZM093]
+PASS clear the match as its own save (edit-form checkbox)
+PASS …the audit trail recorded the match removal
+PASS then the ordinary Void succeeds
+PASS void T2 (never matched)
+PASS the reconciliation save skips a voided entry and reports the shortfall (1 of 2 matched)
+PASS …T2 stayed unmatched, T3 matched
+PASS any other caller marking a voided entry matched is refused by the database [ZM092]
+PASS …including via the edit form [ZM092]
+PASS a new entry cannot be created voided and matched [ZM092]
+PASS restoring a voided entry while matching it (one save) is allowed — the result is consistent
+PASS …T2 is active and matched
+PASS voiding and matching a clean entry in one save is refused (would be voided and matched) [ZM092]
+PASS …T11 unchanged
+PASS a legacy conflict row can be restored while un-matching it (one save)
+PASS a normal entry can be matched
+PASS …and edited without touching the flags
+PASS a normal unmatched entry can be voided
+PASS the legacy conflict is listed for review
+PASS an unrelated edit on the legacy conflict row still works
+PASS …and it was not rewritten
+PASS the review list never shows another workspace's rows
+PASS signed-out callers cannot read the conflict review list [42501]
+PASS void then match (racing): void commits
+PASS void then match (racing): match refused after waiting
+PASS match then void (racing): match commits
+PASS match then void (racing): void refused after waiting
+PASS void then app reconciliation save (racing): save matches nothing, no error
+PASS void rolled back while a match waits: match then succeeds
+PASS match rolled back while a void waits: void then succeeds
+PASS races: no entry ended voided and matched
+PASS read-only diagnostic lists both workspaces' legacy conflicts and changes nothing
+PASS rollback removes the rule and view and changes no transaction rows
+== 36 passed, 0 failed

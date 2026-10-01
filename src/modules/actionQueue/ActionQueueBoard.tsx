@@ -6,6 +6,7 @@ import { ActionQueueFilters } from './ActionQueueFilters'
 import { ActionQueueList } from './ActionQueueList'
 import { NeedsEntityItem } from './NeedsEntityItem'
 import { useNeedsEntity } from './useNeedsEntity'
+import { MortgageBalanceReviewItem } from '../mortgageBalanceReview/MortgageBalanceReviewItem'
 
 type ActionQueueTab = 'to_resolve' | 'agents'
 
@@ -104,6 +105,8 @@ export function ActionQueueBoard() {
           />
 
           <NeedsEntityItem byYear={needsEntity.byYear} total={needsEntity.total} error={needsEntity.error} />
+
+          <MortgageBalanceReviewItem />
 
           <ActionQueueFilters
             propertyOptions={propertyOptions}

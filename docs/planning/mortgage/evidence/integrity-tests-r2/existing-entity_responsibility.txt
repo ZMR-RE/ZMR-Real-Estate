@@ -1,0 +1,45 @@
+applied      111 repo migrations + 0 extra
+PASS existing transactions start unresolved (no backfill)
+PASS sole 100% owner on the date is suggested
+PASS …the first day of the interest counts
+PASS no suggestion before the owner's start date
+PASS shared ownership: no suggestion
+PASS unknown start date: no suggestion
+PASS changed hands: the owner on the date before the change
+PASS changed hands: the owner on the date after the change
+PASS known partial share (60%): no suggestion
+PASS no ownership recorded: no suggestion
+PASS sole owner with no percentage given is suggested
+PASS ended with no recorded end date (only interest): no suggestion
+PASS …nor on a date inside its start
+PASS ended-undated owner before a current sole owner: no suggestion before the change
+PASS …nor after it (when the earlier owner left is unknown)
+PASS another workspace's property yields no suggestion
+PASS a new transaction on a sole-owner property saves with no entity
+PASS …and stays unresolved (nothing auto-assigned)
+PASS Needs-entity list shows all four active unresolved rows
+PASS owner confirms E1 on T1
+PASS …the confirmation is in the audit trail
+PASS a shared-property transaction can be assigned explicitly to either owner
+PASS Needs-entity list shrinks to two unresolved rows
+PASS an older client's edit (no entity column) keeps the confirmed entity
+PASS …E1 is still set
+PASS the entity can be cleared back to unresolved
+PASS assigning an entity to a transaction in a locked year is refused [ZM010]
+PASS …it stays in Needs entity
+PASS the owner reopens 2024
+PASS …then the assignment saves
+PASS an older client's insert (no entity column) succeeds and starts unresolved
+PASS another workspace's entity is refused [ZM002]
+PASS …also on insert [ZM002]
+PASS user B cannot see A's transactions or their entities
+PASS user B gets no suggestion for A's property
+PASS deleting an entity a transaction uses is refused [23503]
+PASS signed-out callers cannot ask for suggestions [42501]
+PASS rollback keeps all 2 confirmed assignments and every row unchanged
+PASS rollback withdraws only the suggestion function (column kept)
+PASS after rollback, an older client's edit keeps the confirmed entity
+PASS after rollback, another workspace's entity is still refused
+PASS re-applying the migration succeeds and keeps every assignment
+PASS …and restores the suggestion
+== 43 passed, 0 failed
