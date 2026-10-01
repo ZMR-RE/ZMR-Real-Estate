@@ -2319,6 +2319,22 @@ thead th {
   top: calc(var(--sticky-tab-bar-height, 0px) + var(--practice-banner-height, 0px));
 }
 
+/* T1's hosted 390px finding (Mortgage payments): on phones .table-scroll
+   is a horizontal scroll box (overflow-x: auto, so overflow-y computes to
+   auto too), which makes it the sticky container for its <thead>. The box
+   never scrolls vertically, so the page-level offset above was applied
+   inside it and pushed the header down over the first rows (27px on the
+   bare tab bar; worse under the taller sticky property header). Inside
+   that box, sticky can't track the page anyway — pin the offset to 0 so
+   the header stays in its own row. Desktop (.table-scroll has no overflow
+   there) keeps the page-level sticky header unchanged. */
+@media (max-width: 600px) {
+  .app-main .table-scroll thead th,
+  .table-scroll thead th {
+    top: 0;
+  }
+}
+
 tbody tr:last-child td {
   border-bottom: none;
 }
