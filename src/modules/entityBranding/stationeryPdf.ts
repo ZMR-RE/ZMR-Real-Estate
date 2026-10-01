@@ -1,5 +1,5 @@
 import type { jsPDF } from 'jspdf'
-import { BAND_TINT, fitLogo, resolveColors, tint, type Rgb } from './stationeryLogic'
+import { BAND_TINT, fitLogo, invoiceTotals, resolveColors, tint, type Rgb } from './stationeryLogic'
 import type { BilledPerson, EntityIdentity, InvoiceDoc, ReceiptDoc, Stationery } from './stationeryTypes'
 
 // Entity document renderer (invoice and receipt) for the Branding & documents
@@ -154,15 +154,33 @@ export function renderEntityDocument(JsPdf: JsPdfCtor, entity: EntityIdentity, s
     rule(y - 10)
   }
   y += 8
-  font('bold', 12)
-  setText(colors.highlight)
-  const total = isInvoice ? d.data.lines.reduce((sum, l) => sum + l.amount, 0) : d.data.amount
-  const amountText = MONEY.format(total)
-  const labelText = isInvoice ? 'Amount due' : 'Amount received'
-  const labelX = R - 8 - doc.getTextWidth(amountText) - 18 - doc.getTextWidth(labelText)
-  doc.text(labelText, labelX, y)
-  mark(isInvoice ? 13 : 10, labelX - 12, y)
-  doc.text(amountText, R - 8, y, { align: 'right' })
+  const totals = d.kind === 'invoice' ? invoiceTotals(d.data.lines, d.data.priorUnpaid) : null
+  const totalRow = (label: string, amount: number, size: number, color: Rgb, n: number | null) => {
+    font('bold', size)
+    setText(color)
+    const amountText = MONEY.format(amount)
+    const labelX = R - 8 - doc.getTextWidth(amountText) - 18 - doc.getTextWidth(label)
+    doc.text(label, labelX, y)
+    if (n !== null) mark(n, labelX - 12, y)
+    doc.text(amountText, R - 8, y, { align: 'right' })
+  }
+  if (d.kind === 'invoice' && totals) {
+    const hasPrior = d.data.priorUnpaid.length > 0
+    totalRow(hasPrior ? 'Amount due — this invoice' : 'Amount due', totals.thisInvoice, 12, colors.highlight, 13)
+    if (hasPrior) {
+      y += 18
+      const continued = d.data.priorUnpaid.some((p) => p.fromTenancy)
+      totalRow(
+        continued ? 'Total outstanding — this tenancy and the one it continues (this invoice + earlier unpaid below)' : 'Total outstanding for this tenancy (this invoice + earlier unpaid below)',
+        totals.tenancyOutstanding,
+        9,
+        TEXT,
+        18,
+      )
+    }
+  } else {
+    totalRow('Amount received', (d.data as ReceiptDoc).amount, 12, colors.highlight, 10)
+  }
   y += 30
 
   const block = (n: number, heading: string, body: string) => {
@@ -179,8 +197,10 @@ export function renderEntityDocument(JsPdf: JsPdfCtor, entity: EntityIdentity, s
   if (isInvoice && d.data.priorUnpaid.length > 0) {
     block(
       17,
-      'EARLIER UNPAID INVOICES — FOR REFERENCE, NOT INCLUDED IN THIS TOTAL',
-      d.data.priorUnpaid.map((p) => `${p.number} (${p.periodLabel}): ${MONEY.format(p.outstanding)} outstanding`).join('\n'),
+      'EARLIER UNPAID INVOICES — ALREADY BILLED, NOT CHARGED AGAIN ON THIS INVOICE',
+      d.data.priorUnpaid
+        .map((p) => `${p.number} (${p.periodLabel}${p.fromTenancy ? ` — earlier tenancy, ${p.fromTenancy}` : ''}): ${MONEY.format(p.outstanding)} remaining`)
+        .join('\n'),
     )
   }
   if (isInvoice && d.data.paymentInstructions?.trim()) block(14, 'HOW TO PAY', d.data.paymentInstructions)

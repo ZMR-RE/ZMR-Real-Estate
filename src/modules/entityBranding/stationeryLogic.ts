@@ -96,3 +96,15 @@ export const EMPTY_STATIONERY: Stationery = {
   paymentInstructions: '',
   defaults: { paperSize: 'letter', showLegalName: true, invoiceNote: '', documentFooter: '', receiptNote: '' },
 }
+
+// The two totals an invoice prints, kept distinct:
+//  • thisInvoice — the sum of this invoice's own lines (what it charges);
+//  • tenancyOutstanding — thisInvoice plus the remaining balance of each
+//    earlier unpaid invoice, each counted once. Earlier invoices are never
+//    charges on this invoice.
+export function invoiceTotals(lines: { amount: number }[], priorUnpaid: { outstanding: number }[]) {
+  const cents = (n: number) => Math.round(n * 100)
+  const thisInvoice = lines.reduce((s, l) => s + cents(l.amount), 0)
+  const prior = priorUnpaid.reduce((s, p) => s + cents(p.outstanding), 0)
+  return { thisInvoice: thisInvoice / 100, earlierUnpaid: prior / 100, tenancyOutstanding: (thisInvoice + prior) / 100 }
+}

@@ -208,6 +208,42 @@ of screens in the app.
 - Callers pass the bytes, an accessible label, an object URL of the same bytes (for the fallbacks) and a filename.
 - First used by Settings › Entities › Branding & documents.
 
+### Agents workspace preview (T4, preview-only, not shipped)
+
+`src/modules/automations/preview/agentsPreviewTokens.css`,
+`agentsProfilePreview.css`, `agentsWorkspacePreview.css` and
+`agentsPreviewPhone.css`, loaded only by
+`agents-preview.html`.
+
+- **Preview-scoped tokens** `--agents-review-bg/-border` (clearer light
+  yellow, `#fff7d1` / `#e6c85a` light; translucent yellow in dark) and
+  `--agents-problem-bg/-border` (soft red) — defined on `.agents-workspace`
+  with light and dark values, because the shared `--warning-bg` reads brown.
+  Proposed for promotion to `index.css :root` if the owner approves the look;
+  until then no shipped screen changes.
+- **`.agents-row--review` / `.agents-row--problem`** — owner colour decision
+  (September 30, 2026): whole row light yellow when human review is needed,
+  soft red for failures, disconnection or overdue work, neutral otherwise
+  (idle or ordinary drafting is never an alert). Tint layered over
+  `--surface`; hover keeps it. Also used on review cards in Approvals.
+- **`.agents-row--selected`** — 2px `--accent` outline plus inset bar,
+  never a background swap, so a selected yellow/red row keeps its colour.
+  Alert rows also carry a text badge so state never depends on colour alone.
+- **`.agents-compact-button`** — 36px secondary button; 44px at ≤600px.
+- **Phone touch targets** (`agentsPreviewPhone.css`, ≤600px) — every
+  control in the preview is ≥44px, including the shared box Edit button,
+  `.tab-bar` tabs and box headers, via overrides scoped to
+  `.agents-workspace`. The same shortfall exists app-wide in shared styles
+  (Edit 34px, tabs 42px); fixing it globally is a separate shared-style
+  change, not made here.
+- **`.agents-notice-flag` / `.agents-notice-confirm`** — text-first flags
+  inside a card (edit-during-run conflict, approval cleared, possible
+  duplicate; confirm steps), left border only.
+- Directory pager (`.agents-pager`, 25/50/100) and `.agents-selected-note`
+  ("Show selected" when the selected row is off-page or filtered out).
+- Two panes at ≥1201px (approved direction); below 1200px one pane at a time
+  as a narrow-width fallback, with an "All agents" back control.
+
 ## Icons
 
 No icon font or SVG icon library anywhere in the app — the CSS-drawn

@@ -1,0 +1,275 @@
+/* NON-SAVING AGENTS WORKSPACE PREVIEW (T4) — loaded only by
+   agents-preview.html. Existing tokens only; no new colours. Documented in
+   DESIGN-SYSTEM.md under "Agents workspace preview".
+
+   Owner colour decision (September 30, 2026): a whole agent row is light
+   yellow when human approval/review is needed, soft red for failures/
+   disconnection/overdue work, otherwise neutral. Selection is an outline +
+   inset bar, never a background swap, so the warning colours survive
+   selection and hover.
+
+   Owner follow-up: "clearer light yellow" — the existing --warning-bg is a
+   brown-leaning tint, so the preview defines its own review/problem
+   tokens in agentsPreviewTokens.css (light + dark). Proposed for promotion to index.css :root if
+   the owner approves the look; scoped to .agents-workspace until then so no
+   shipped screen changes. */
+
+.agents-preview-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-h);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-md);
+}
+
+.agents-preview-datasets {
+  margin: 0 0 0 auto;
+}
+
+.agents-preview-datasets button,
+.agents-compact-button {
+  margin: 0;
+  min-height: 36px;
+  padding: 6px var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.agents-compact-button--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+}
+
+.agents-compact-button--primary:hover:not(:disabled) {
+  background: var(--accent-h);
+  border-color: var(--accent-h);
+}
+
+.agents-link-button {
+  margin: 0;
+  min-height: 32px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: inherit;
+  font-weight: 600;
+  text-align: left;
+}
+
+.agents-link-button:hover:not(:disabled) {
+  background: none;
+  text-decoration: underline;
+}
+
+/* ---- Two panes ---- */
+.agents-panes {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.agents-directory {
+  position: sticky;
+  top: calc(var(--space-4) + var(--practice-banner-height, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.agents-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.agents-filters input,
+.agents-filters select {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: var(--text-md);
+  min-height: 40px;
+}
+
+.agents-filter-selects {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--space-2);
+}
+
+.agents-directory-count {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text);
+}
+
+.agents-selected-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+}
+
+.agents-pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.agents-page-size {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.agents-page-size select {
+  width: auto;
+  min-height: 36px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  font-size: var(--text-sm);
+}
+
+.agents-pager-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.agents-list,
+.agents-assignments,
+.agents-checks,
+.agents-check-results,
+.agents-approvals {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.agents-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ---- Directory row ---- */
+.agents-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+  padding: 6px var(--space-3);
+  line-height: 1.35;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.agents-row:hover:not(:disabled) {
+  border-color: var(--accent-border);
+  box-shadow: var(--shadow-md);
+}
+
+/* Tints layered over --surface so the soft colour reads the same on any
+   page background. */
+.agents-row--review,
+.agents-row--review:hover:not(:disabled) {
+  background: linear-gradient(var(--agents-review-bg), var(--agents-review-bg)), var(--surface);
+  border-color: var(--agents-review-border);
+}
+
+.agents-row--problem,
+.agents-row--problem:hover:not(:disabled) {
+  background: linear-gradient(var(--agents-problem-bg), var(--agents-problem-bg)), var(--surface);
+  border-color: var(--agents-problem-border);
+}
+
+.agents-row--selected {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+
+.agents-row--selected:hover:not(:disabled) {
+  box-shadow: inset 4px 0 0 var(--accent), var(--shadow-md);
+}
+
+.agents-row-main,
+.agents-assignment-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.agents-row-name,
+.agents-assignment-name {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.agents-row-meta {
+  font-size: var(--text-xs);
+  color: var(--text);
+}
+
+
+/* ---- Narrow layouts: one pane at a time. 1200px (a breakpoint index.css
+   already uses) because below it the sidebar leaves too little width for a
+   readable profile beside the directory. ---- */
+@media (max-width: 1200px) {
+  .agents-panes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .agents-directory {
+    position: static;
+  }
+
+  .agents-panes--show-directory .agents-profile,
+  .agents-panes--show-profile .agents-directory {
+    display: none;
+  }
+
+  .agents-back {
+    display: inline-flex;
+    margin-bottom: var(--space-3);
+  }
+
+  .agents-profile-actions {
+    max-width: none;
+    justify-content: flex-start;
+  }
+
+  .agents-profile-actions .field-hint {
+    text-align: left;
+  }
+}

@@ -1,0 +1,264 @@
+/* Rent ops invoice workflow (T4 Stage 1). Module stylesheet, imported by
+   InvoiceWorkflowSection — kept out of the shared index.css (another
+   terminal has uncommitted edits there). Existing tokens only, plus the
+   owner-approved light-yellow review tint (same values as the Agents
+   preview's tokens; proposed for promotion to index.css :root). */
+
+.invoice-workflow {
+  --invoice-review-bg: #fff7d1;
+  --invoice-review-border: #e6c85a;
+  margin-bottom: var(--space-6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .invoice-workflow {
+    --invoice-review-bg: rgba(242, 201, 76, 0.16);
+    --invoice-review-border: rgba(242, 201, 76, 0.5);
+  }
+}
+
+:root[data-theme='dark'] .invoice-workflow {
+  --invoice-review-bg: rgba(242, 201, 76, 0.16);
+  --invoice-review-border: rgba(242, 201, 76, 0.5);
+}
+
+.invoice-section-title {
+  margin: var(--space-5) 0 var(--space-3);
+}
+
+.invoice-new-panel {
+  margin: var(--space-3) 0;
+}
+
+.invoice-new-panel .property-details-title {
+  margin-top: 0;
+}
+
+.invoice-blockers {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.invoice-blocker {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-h);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+}
+
+/* Missing information = human review needed (light yellow), never guessed. */
+.invoice-blocker--missing {
+  background: var(--invoice-review-bg);
+  border: 1px solid var(--invoice-review-border);
+}
+
+.invoice-blocker a {
+  font-weight: 600;
+}
+
+.invoice-form-actions,
+.invoice-decision-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.invoice-decision-actions button,
+.invoice-compact-button {
+  margin: 0;
+  min-height: 36px;
+  padding: 6px var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.invoice-compact-button--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+}
+
+.invoice-compact-button--primary:hover:not(:disabled) {
+  background: var(--accent-h);
+  border-color: var(--accent-h);
+}
+
+.invoice-callout {
+  margin: var(--space-3) 0;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-h);
+  background: var(--invoice-review-bg);
+  border: 1px solid var(--invoice-review-border);
+  border-radius: var(--radius-sm);
+}
+
+.invoice-callout--error {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+}
+
+.invoice-callout--ok {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+}
+
+.invoice-errors {
+  margin: var(--space-3) 0 0;
+  padding-left: 18px;
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
+.invoice-awaiting-table .invoice-row td {
+  background: var(--invoice-review-bg);
+}
+
+.invoice-awaiting-table .invoice-row--selected td {
+  box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent);
+}
+
+.invoice-row-open {
+  margin: 0;
+  min-height: 32px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-weight: 600;
+  text-align: left;
+}
+
+.invoice-row-open:hover:not(:disabled) {
+  background: none;
+  text-decoration: underline;
+}
+
+.invoice-review-facts {
+  margin-bottom: var(--space-3);
+}
+
+.invoice-confirm {
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.invoice-confirm p {
+  margin: 0 0 var(--space-2);
+  color: var(--text-h);
+}
+
+.invoice-edit-form {
+  max-width: 640px;
+}
+
+.invoice-lines-editor {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.invoice-lines-editor legend {
+  padding: 0 var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.invoice-line-edit {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(0, 2fr) minmax(90px, 0.8fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.invoice-pdf-preview {
+  margin-top: var(--space-4);
+}
+
+.invoice-pdf-preview-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.invoice-pdf-canvas {
+  max-height: 720px;
+  overflow: auto;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}
+
+.invoice-pdf-pages {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* Drawn by PdfCanvasPreview at the box's width × device pixel ratio. */
+.invoice-pdf-page {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #ffffff;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Rent ops' wide tables scroll inside their own box at every width, so
+   the page never scrolls sideways (the shared rule only does this ≤600px). */
+.rent-ops-page .table-scroll {
+  overflow-x: auto;
+}
+
+.invoice-pdf-preview-bar a,
+.invoice-pdf-canvas a.invoice-compact-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+}
+
+@media (max-width: 600px) {
+  .invoice-decision-actions button,
+  .invoice-compact-button,
+  .invoice-row-open,
+  .invoice-pdf-preview-bar a,
+  .rent-ops-page input,
+  .rent-ops-page select,
+  .rent-ops-page .editable-section-edit {
+    min-height: 44px;
+  }
+
+  .invoice-line-edit {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .invoice-pdf-canvas {
+    max-height: 520px;
+  }
+}
+
+.invoice-recipient { display: block; }
+.invoice-source { display: block; }
+.invoice-recipient-list { margin: 0 0 var(--space-2, 8px); padding-left: 1.1em; }
+.invoice-checkbox { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.invoice-line-edit--rule { align-items: baseline; }

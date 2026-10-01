@@ -17,18 +17,13 @@ export interface Invoice {
   amount_due: string
   due_date: string
   notes: string | null
+  // Stage 1: numbered, lifecycle-tracked invoices. Legacy invoices are
+  // 'issued' with no number.
+  number: string | null
+  state: 'issued' | 'superseded' | 'cancelled'
+  lease_id: string | null
   property: { id: string; name: string; address: string | null } | null
   payments: Payment[]
-}
-
-export interface InvoiceInput {
-  propertyId: string
-  billedTo: string | null
-  periodStart: string
-  periodEnd: string
-  amountDue: string
-  dueDate: string
-  notes: string | null
 }
 
 export interface PaymentInput {
@@ -43,28 +38,15 @@ export async function listInvoices(accountId: string) {
   return supabase
     .from('invoices')
     .select(
-      'id, property_id, billed_to, period_start, period_end, amount_due, due_date, notes, property:properties(id, name, address), payments(id, amount, paid_date, method, notes)',
+      'id, property_id, billed_to, period_start, period_end, amount_due, due_date, notes, number, state, lease_id, property:properties(id, name, address), payments(id, amount, paid_date, method, notes)',
     )
     .eq('account_id', accountId)
+    // Drafts and approvals live in "Invoices to review" — only issued
+    // (and superseded/cancelled, kept for the record) invoices carry a
+    // payment status here.
+    .in('state', ['issued', 'superseded', 'cancelled'])
     .order('due_date', { ascending: false })
     .returns<Invoice[]>()
-}
-
-export async function createInvoice(accountId: string, input: InvoiceInput) {
-  return supabase
-    .from('invoices')
-    .insert({
-      account_id: accountId,
-      property_id: input.propertyId,
-      billed_to: input.billedTo,
-      period_start: input.periodStart,
-      period_end: input.periodEnd,
-      amount_due: input.amountDue,
-      due_date: input.dueDate,
-      notes: input.notes,
-    })
-    .select()
-    .single()
 }
 
 export async function recordPayment(accountId: string, input: PaymentInput) {
