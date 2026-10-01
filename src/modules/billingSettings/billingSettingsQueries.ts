@@ -96,10 +96,12 @@ export interface EntityOption {
   name: string
   display_name: string | null
   invoice_code: string | null
+  // 'individual' (a person) or 'entity' (a business); null until set on the owner's profile (Identity).
+  owner_kind: 'individual' | 'entity' | null
 }
 
 export async function listBillingEntities(accountId: string) {
-  return supabase.from('llcs').select('id, name, display_name, invoice_code').eq('account_id', accountId).eq('archived', false).order('name').returns<EntityOption[]>()
+  return supabase.from('llcs').select('id, name, display_name, invoice_code, owner_kind').eq('account_id', accountId).eq('archived', false).order('name').returns<EntityOption[]>()
 }
 
 export interface PropertyBillingRow {

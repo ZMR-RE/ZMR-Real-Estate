@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dueDayLabel, effectivePaymentInstructions, normalizeInvoiceCode, ordinal, previewInvoiceNumber, termsFormFrom, termsInputFrom, validateEntityInvoicing, validateTerms } from './billingSettingsLogic'
+import { dueDayLabel, effectivePaymentInstructions, issuerKindLabel, issuerOptionLabel, normalizeInvoiceCode, ordinal, previewInvoiceNumber, termsFormFrom, termsInputFrom, validateEntityInvoicing, validateTerms } from './billingSettingsLogic'
 
 describe('billing settings logic', () => {
   it('labels due days, flagging month-end days', () => {
@@ -39,5 +39,21 @@ describe('billing settings logic', () => {
     expect(previewInvoiceNumber('A', 1)).toBe('A-INV-000001')
     expect(previewInvoiceNumber('A', 1234567)).toBe('A-INV-1234567')
     expect(previewInvoiceNumber(null, 1)).toBeNull()
+  })
+})
+
+describe('invoice issuer (person or business)', () => {
+  it('a property’s own instructions show with no issuer chosen, labelled as its own', () => {
+    expect(effectivePaymentInstructions('Cash at the site office', null, null)).toEqual({ text: 'Cash at the site office', source: 'This property’s own instructions' })
+    expect(effectivePaymentInstructions('Cash at the site office', 'Zelle', 'Example Holdings').source).toMatch(/overrides the issuer’s default/)
+  })
+
+  it('says person or business only when the owner record says so — never guessed from the name', () => {
+    expect(issuerKindLabel('individual')).toBe('Person')
+    expect(issuerKindLabel('entity')).toBe('Business')
+    expect(issuerKindLabel(null)).toBeNull()
+    expect(issuerOptionLabel({ name: 'Riley Example', display_name: null, invoice_code: 'RE', owner_kind: 'individual' })).toBe('Riley Example — person (RE)')
+    expect(issuerOptionLabel({ name: 'Example Holdings LLC', display_name: 'Example Holdings', invoice_code: null, owner_kind: 'entity' })).toBe('Example Holdings — business')
+    expect(issuerOptionLabel({ name: 'Sample Road Properties LLC', display_name: null, invoice_code: 'SRP', owner_kind: null })).toBe('Sample Road Properties LLC (SRP)')
   })
 })

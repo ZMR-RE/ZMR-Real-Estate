@@ -59,7 +59,7 @@ async function documentFor(inv: RentInvoiceRow): Promise<SelectedDocument> {
     const { data: s, error } = await getPrintSnapshot(inv.id)
     if (error || !s) return { ...base, snapshot: null, render: null, problem: error?.message ?? 'This invoice couldn’t be read.' }
     const changed = inv.state === 'approved' && inv.approved_snapshot ? changedSinceApproval(inv.approved_snapshot, s) : []
-    if (!s.issuer) return { ...base, snapshot: s, render: null, changedSinceApproval: changed, problem: 'Choose the issuing entity (Edit) to preview the PDF.' }
+    if (!s.issuer) return { ...base, snapshot: s, render: null, changedSinceApproval: changed, problem: 'Choose the invoice issuer (Edit) to preview the PDF.' }
     return { ...base, snapshot: s, render: await renderSnapshot(s, null), changedSinceApproval: changed, problem: null }
   } catch (e) {
     return { ...base, snapshot: null, render: null, problem: e instanceof Error ? e.message : String(e) }

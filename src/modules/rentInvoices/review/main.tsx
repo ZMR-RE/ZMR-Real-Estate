@@ -5,6 +5,8 @@ import '../../../index.css'
 import { AppShell } from '../../../shared/AppShell'
 import { EntityProfile } from '../../llcs/EntityProfile'
 import { PropertyProfile } from '../../properties/PropertyProfile'
+import { PropertyRegistry } from '../../properties/PropertyRegistry'
+import { Settings } from '../../settings/Settings'
 import { RentOps } from '../../rentOps/RentOps'
 import { TenantProfile } from '../../tenants/TenantProfile'
 import { buildInvoiceRender } from '../invoiceDocument'
@@ -30,6 +32,10 @@ import { armUploadFailureFromUrl, review, reviewDb, seeded, supabase } from './r
 // states (a second issued invoice, a partial payment, a cancelled invoice).
 const params = new URLSearchParams(window.location.search)
 const longMode = params.has('long')
+// Add ?person=1 for the individual-issuer check: one fictional person's owner
+// record whose kind isn't set yet (as created earlier, e.g. by the property
+// wizard). Everything after that is done through the real screens.
+const personMode = params.has('person')
 
 function applyLongNames() {
   const set = (rows: Record<string, unknown>[], id: string, patch: Record<string, unknown>) => Object.assign(rows.find((r) => r.id === id)!, patch)
@@ -56,6 +62,9 @@ async function seed() {
   await seeded
   completePropertyRows()
   if (longMode) applyLongNames()
+  if (personMode) {
+    reviewDb.llcs.push({ id: 'ent-person', account_id: 'review-account', archived: false, name: 'Riley Example', display_name: null, invoice_code: null, owner_kind: null, mailing_address: '12 Example Court', mailing_city: 'Springfield', mailing_state: 'IL', mailing_zip: '62704' })
+  }
   const call = async (fn: string, args: Record<string, unknown>) => (await supabase.rpc(fn, args)).data
   const riley = (await call('create_invoice_draft', { p_lease_id: 'lease-riley', p_period_start: '2026-10-01' })) as string
   await call('update_invoice_draft', { p_id: riley, p_expected_version: 1, p_patch: { visible_note: 'Thank you!' } })
@@ -92,7 +101,8 @@ seed().then(() => {
     <StrictMode>
       {/* ?path=/tenants/t-casey opens the real tenant profile (Tenancy & billing, Billing rules);
           ?path=/billing-boxes the Entity › Invoicing and Property › Billing settings boxes;
-          ?path=/entities/ent-a and ?path=/properties/prop-410 the full real profile pages. */}
+          ?path=/entities/ent-a and ?path=/properties/prop-410 the full real profile pages;
+          the Properties and Settings nav links work too. */}
       <MemoryRouter initialEntries={[params.get('path') || '/rent-ops']}>
         <Routes>
           <Route element={<AppShell />}>
@@ -101,6 +111,8 @@ seed().then(() => {
             <Route path="/billing-boxes" element={<ReviewBillingBoxes />} />
             <Route path="/entities/:id" element={<EntityProfile />} />
             <Route path="/properties/:id" element={<PropertyProfile />} />
+            <Route path="/properties" element={<PropertyRegistry />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>
       </MemoryRouter>

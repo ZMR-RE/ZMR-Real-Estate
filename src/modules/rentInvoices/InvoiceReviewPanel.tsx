@@ -28,7 +28,7 @@ export function InvoiceReviewPanel({ invoice, tenancy, issuers, workflow }: Invo
   const changed = doc?.changedSinceApproval ?? []
   const approvalValid = invoice.state === 'approved' && invoice.approved_material_version === invoice.material_version && changed.length === 0
   const instructionsSource = snap ? paymentInstructionsSource(snap) : null
-  const issueBlocker = !issuer ? 'Choose the issuing entity (Edit).' : !issuer.invoice_code ? `${issuer.display_name || issuer.name} has no invoice code yet — add one on its entity profile (Invoicing).` : null
+  const issueBlocker = !issuer ? 'Choose the invoice issuer (Edit).' : !issuer.invoice_code ? `${issuer.display_name || issuer.name} has no invoice code yet — add one on its entity profile (Invoicing).` : null
   const nextNumber = issuer?.invoice_code ? `${issuer.invoice_code}-INV-…` : null
 
   const actions = (
@@ -52,7 +52,7 @@ export function InvoiceReviewPanel({ invoice, tenancy, issuers, workflow }: Invo
         <div className="field"><dt>Billing month</dt><dd>{periodLabel(invoice.period_start)}</dd></div>
         <div className="field"><dt>Due date</dt><dd>{invoice.due_date}</dd></div>
         <div className="field"><dt>Amount</dt><dd>{formatMoney(Number(invoice.amount_due))}</dd></div>
-        <div className="field"><dt>Issuing entity</dt><dd>{issuer ? issuer.display_name || issuer.name : 'Not chosen'}</dd></div>
+        <div className="field"><dt>Invoice issuer</dt><dd>{issuer ? issuer.display_name || issuer.name : 'Not chosen'}</dd></div>
         {invoice.internal_note && <div className="field"><dt>Internal note (never sent)</dt><dd>{invoice.internal_note}</dd></div>}
         <div className="field"><dt>Created by</dt><dd>{invoice.created_via === 'assistant' ? 'Rent & Payments Assistant' : 'You'}</dd></div>
       </dl>
