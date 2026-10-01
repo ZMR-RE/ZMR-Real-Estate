@@ -2902,6 +2902,22 @@ tr.capture-entry-complete td {
     min-height: 52px;
     width: auto;
   }
+
+  /* Shared Manage-options panel (every pick-list's "+ Manage" / first-
+     entry setup). Same cause as the button-group rule above: the general
+     `button { width: 100% }` rule made Add, Done and Archive/Restore each
+     claim the panel's full row, so the add-row's flex input was squeezed
+     to ~26px — too narrow to type a new option on a phone. Buttons inside
+     the panel keep their natural width; the input takes the rest and may
+     shrink below its intrinsic size (min-width: 0) instead of overflowing. */
+  .manage-options-panel button {
+    width: auto;
+    flex-shrink: 0;
+  }
+
+  .manage-options-add-row input {
+    min-width: 0;
+  }
 }
 
 /* ============================================================
