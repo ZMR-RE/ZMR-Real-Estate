@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
+import type { NeedsEntityYear } from '../financials/transactionEntity'
 
 interface NeedsEntityItemProps {
-  byYear: { year: number; count: number }[]
+  byYear: NeedsEntityYear[]
   total: number
   error: string | null
 }
@@ -21,11 +22,18 @@ export function NeedsEntityItem({ byYear, total, error }: NeedsEntityItemProps) 
         property totals, but not in any entity's books, until you choose one.
       </p>
       <ul>
-        {byYear.map(({ year, count }) => (
+        {byYear.map(({ year, count, locked }) => (
           <li key={year}>
             <Link to={`/financials?needs=entity&year=${year}`}>
               {year}: {count} {count === 1 ? 'transaction' : 'transactions'}
             </Link>
+            {locked && (
+              <>
+                {' '}
+                <span className="status-badge status-badge-neutral">Locked</span>{' '}
+                <span className="field-hint">Reopen {year} in Financials before assigning entities.</span>
+              </>
+            )}
           </li>
         ))}
       </ul>

@@ -28,6 +28,17 @@ export async function suggestTransactionEntity(propertyId: string, transactionDa
   return { data: typeof data === 'string' ? data : null, error }
 }
 
+// Locked (closed) years: a transaction in one can't be edited, including
+// assigning its entity, until the owner reopens the year (M6).
+export async function listLockedYears(accountId: string) {
+  return supabase
+    .from('financial_periods')
+    .select('year')
+    .eq('account_id', accountId)
+    .eq('status', 'locked')
+    .returns<{ year: number }[]>()
+}
+
 // Every active transaction with no entity confirmed, by date only: the
 // Action Queue item counts them per year. Voided entries never need one.
 export async function listNeedsEntityDates(accountId: string) {

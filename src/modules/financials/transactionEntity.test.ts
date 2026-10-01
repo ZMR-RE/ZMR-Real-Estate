@@ -62,9 +62,16 @@ describe('Needs-entity counts', () => {
     expect(
       needsEntityByYear([{ transaction_date: '2025-03-01' }, { transaction_date: '2026-01-02' }, { transaction_date: '2025-12-31' }]),
     ).toEqual([
-      { year: 2026, count: 1 },
-      { year: 2025, count: 2 },
+      { year: 2026, count: 1, locked: false },
+      { year: 2025, count: 2, locked: false },
     ])
     expect(needsEntityByYear([])).toEqual([])
+  })
+
+  it('marks locked years, which must be reopened before assigning', () => {
+    expect(needsEntityByYear([{ transaction_date: '2024-03-01' }, { transaction_date: '2025-01-01' }], [2024, 2019])).toEqual([
+      { year: 2025, count: 1, locked: false },
+      { year: 2024, count: 1, locked: true },
+    ])
   })
 })

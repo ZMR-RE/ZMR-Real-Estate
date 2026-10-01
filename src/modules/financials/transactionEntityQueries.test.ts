@@ -78,6 +78,16 @@ describe('Needs-entity reads', () => {
     expect(calls.some(([m]) => m === 'update' || m === 'insert')).toBe(false)
   })
 
+  it('locked years are read for this workspace only, never written', async () => {
+    calls.length = 0
+    const { listLockedYears } = await import('./transactionEntityQueries')
+    await listLockedYears('acct')
+    expect(calls).toContainEqual(['from', ['financial_periods']])
+    expect(calls).toContainEqual(['eq', ['account_id', 'acct']])
+    expect(calls).toContainEqual(['eq', ['status', 'locked']])
+    expect(calls.some(([m]) => m === 'update' || m === 'insert')).toBe(false)
+  })
+
   it('the suggestion is only read, never written', async () => {
     calls.length = 0
     const { suggestTransactionEntity } = await import('./transactionEntityQueries')

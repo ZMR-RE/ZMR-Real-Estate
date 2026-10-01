@@ -124,6 +124,11 @@ export function Financials() {
         />
         Needs entity only
       </label>
+      {needsEntityOnly && (
+        <p className="field-hint">
+          Transactions in a locked year can't be edited. Reopen the year above before assigning an entity.
+        </p>
+      )}
 
       <button type="button" onClick={exportTaxCsv} disabled={transactions.length === 0}>
         Export tax-ready CSV

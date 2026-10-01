@@ -1,56 +1,25 @@
--- Rollback for 20261003100000_transaction_responsible_entity.
--- WARNING: dropping the column discards every confirmed entity choice.
--- Before running it on a database where entities have been confirmed,
--- export them (the first query) so they can be restored.
+-- Rollback for 20261003100000_transaction_responsible_entity — DATA-PRESERVING.
 --
---   select id, responsible_entity_id from financial_transactions where responsible_entity_id is not null;
+-- Normal recovery needs NO database change. Re-publish the previous frontend.
+-- An older frontend never reads, writes or clears responsible_entity_id:
+-- its inserts leave it null, and its updates don't name it, so confirmed
+-- assignments are kept. This is tested in
+-- supabase/tests/entity_responsibility (old-client cases).
+--
+-- Run this script only if the suggestion function itself must be withdrawn.
+-- It removes ONLY suggested_transaction_entity(). It deliberately KEEPS:
+--   * the responsible_entity_id column and every confirmed assignment (user-entered data);
+--   * its indexes and foreign key (an entity in use still cannot be deleted);
+--   * the same-workspace check on it (stored references stay valid).
+-- Then, from the release checkout:
+--   supabase migration repair --linked --status reverted 20261003100000
+-- Re-applying the migration later is safe: it is re-runnable and leaves
+-- existing assignments untouched (also tested).
+--
+-- Removing the column is NOT a rollback step. That would delete
+-- owner-entered data, so it needs its own approved migration, with the
+-- assignments exported first.
 
 begin;
-
 drop function if exists suggested_transaction_entity(uuid, date);
-
--- Restore the same-workspace check exactly as 20260930110000 defined it.
-create or replace function trg_financial_transactions_same_account()
-returns trigger
-language plpgsql
-as $$
-declare
-  v_ref_account uuid;
-begin
-  if auth.uid() is not null and not is_account_member(new.account_id) then
-    return new;
-  end if;
-
-  select account_id into v_ref_account from properties where id = new.property_id;
-  perform assert_same_account(new.account_id, v_ref_account, 'financial_transactions.property_id');
-
-  if new.vendor_id is not null then
-    select account_id into v_ref_account from vendors where id = new.vendor_id;
-    perform assert_same_account(new.account_id, v_ref_account, 'financial_transactions.vendor_id');
-  end if;
-
-  if new.tenant_id is not null then
-    select account_id into v_ref_account from tenants where id = new.tenant_id;
-    perform assert_same_account(new.account_id, v_ref_account, 'financial_transactions.tenant_id');
-  end if;
-
-  if new.prospective_tenant_id is not null then
-    select account_id into v_ref_account from prospective_tenants where id = new.prospective_tenant_id;
-    perform assert_same_account(new.account_id, v_ref_account, 'financial_transactions.prospective_tenant_id');
-  end if;
-
-  return new;
-end;
-$$;
-
-drop trigger if exists financial_transactions_same_account on financial_transactions;
-create trigger financial_transactions_same_account
-  before insert or update of account_id, property_id, vendor_id, tenant_id, prospective_tenant_id on financial_transactions
-  for each row
-  execute function trg_financial_transactions_same_account();
-
-drop index if exists financial_transactions_needs_entity_idx;
-drop index if exists financial_transactions_responsible_entity_idx;
-alter table financial_transactions drop column if exists responsible_entity_id;
-
 commit;

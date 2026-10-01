@@ -13,15 +13,18 @@
 --   separate, later step: many consumers assume a property).
 -- * Changes are audited by the existing generic financial_transactions
 --   audit trigger (log_audit_changes diffs every column).
+-- * Re-runnable (IF NOT EXISTS / OR REPLACE): rolling back keeps the column
+--   and every confirmed assignment (see the rollback script), so a later
+--   re-apply must succeed on a database that still has them.
 
 alter table financial_transactions
-  add column responsible_entity_id uuid
+  add column if not exists responsible_entity_id uuid
     constraint financial_transactions_responsible_entity_fkey references llcs(id) on delete restrict;
 
-create index financial_transactions_responsible_entity_idx
+create index if not exists financial_transactions_responsible_entity_idx
   on financial_transactions (account_id, responsible_entity_id);
 -- The Needs-entity list: active transactions with no entity confirmed.
-create index financial_transactions_needs_entity_idx
+create index if not exists financial_transactions_needs_entity_idx
   on financial_transactions (account_id, transaction_date) where responsible_entity_id is null and not voided;
 
 -- Same-workspace check, extended to the new reference (same body as
@@ -78,6 +81,8 @@ create trigger financial_transactions_same_account
 --   * more than one entity's interest covers it (shared or changing hands);
 --   * any of the property's interests has an unknown effective date and has
 --     not ended before p_date (it might cover the date: unclear);
+--   * any of the property's interests is no longer current but has no
+--     recorded end date (when it ended is unknown: unclear, T3 review);
 --   * the sole owner's interest is a known percentage below 100 (the rest
 --     of the ownership is unrecorded).
 -- Security invoker: the caller's row-level security applies, so another
@@ -90,7 +95,7 @@ security invoker
 set search_path = public
 as $$
   with interests as (
-    select llc_id, percentage, effective_date, end_date
+    select llc_id, percentage, effective_date, end_date, is_current
     from property_ownership_interests
     where property_id = p_property_id
       and (end_date is null or end_date >= p_date)
@@ -101,6 +106,7 @@ as $$
   select case
     when p_property_id is null or p_date is null then null
     when exists (select 1 from interests where effective_date is null) then null
+    when exists (select 1 from interests where not is_current and end_date is null) then null
     when (select count(distinct llc_id) from covering) <> 1 then null
     when exists (select 1 from covering where percentage is not null and percentage < 100) then null
     else (select llc_id from covering limit 1)

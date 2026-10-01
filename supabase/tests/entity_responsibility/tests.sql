@@ -15,21 +15,35 @@ select check_true($n$changed hands: the owner on the date after the change$n$, (
 select check_true($n$known partial share (60%): no suggestion$n$, (select suggested_transaction_entity('a5000000-0000-0000-0000-0000000000a5','2025-05-01') is null));
 select check_true($n$no ownership recorded: no suggestion$n$, (select suggested_transaction_entity('a6000000-0000-0000-0000-0000000000a6','2025-05-01') is null));
 select check_true($n$sole owner with no percentage given is suggested$n$, (select suggested_transaction_entity('a7000000-0000-0000-0000-0000000000a7','2025-05-01') = 'e2000000-0000-0000-0000-0000000000e2'));
+-- T3 blocker 1: an interest that is no longer current but has no end date
+select check_true($n$ended with no recorded end date (only interest): no suggestion$n$, (select suggested_transaction_entity('a8000000-0000-0000-0000-0000000000a8','2025-05-01') is null));
+select check_true($n$…nor on a date inside its start$n$, (select suggested_transaction_entity('a8000000-0000-0000-0000-0000000000a8','2021-01-01') is null));
+select check_true($n$ended-undated owner before a current sole owner: no suggestion before the change$n$, (select suggested_transaction_entity('a9000000-0000-0000-0000-0000000000a9','2022-06-01') is null));
+select check_true($n$…nor after it (when the earlier owner left is unknown)$n$, (select suggested_transaction_entity('a9000000-0000-0000-0000-0000000000a9','2025-05-01') is null));
 select check_true($n$another workspace's property yields no suggestion$n$, (select suggested_transaction_entity('b1000000-0000-0000-0000-0000000000b1','2025-05-01') is null));
 
 -- ---- the server never fills it in
 select t($n$a new transaction on a sole-owner property saves with no entity$n$, $q$insert into financial_transactions (id, account_id, property_id, entry_type, category, payment_method, amount, transaction_date) values ('c0000000-0000-0000-0000-000000000003','a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-0000000000a1','expense','repairs','Checking',30,'2025-06-01')$q$, 'ok');
 select check_true($n$…and stays unresolved (nothing auto-assigned)$n$, (select responsible_entity_id is null from financial_transactions where id = 'c0000000-0000-0000-0000-000000000003'));
-select check_true($n$Needs-entity list shows all three active unresolved rows$n$, (select count(*) = 3 from financial_transactions where responsible_entity_id is null and not voided));
+select check_true($n$Needs-entity list shows all four active unresolved rows$n$, (select count(*) = 4 from financial_transactions where responsible_entity_id is null and not voided));
 
 -- ---- explicit confirmation
 select t($n$owner confirms E1 on T1$n$, $q$update financial_transactions set responsible_entity_id = 'e1000000-0000-0000-0000-0000000000e1' where id = 'c0000000-0000-0000-0000-000000000001'$q$, 'ok');
 select check_true($n$…the confirmation is in the audit trail$n$, (select count(*) = 1 from audit_log where record_id = 'c0000000-0000-0000-0000-000000000001' and field_name = 'responsible_entity_id' and old_value is null and new_value = 'e1000000-0000-0000-0000-0000000000e1' and changed_by = 'aaaaaaaa-0000-0000-0000-00000000000a'));
 select t($n$a shared-property transaction can be assigned explicitly to either owner$n$, $q$update financial_transactions set responsible_entity_id = 'e2000000-0000-0000-0000-0000000000e2' where id = 'c0000000-0000-0000-0000-000000000002'$q$, 'ok');
-select check_true($n$Needs-entity list shrinks to the one unresolved row$n$, (select count(*) = 1 from financial_transactions where responsible_entity_id is null and not voided));
+select check_true($n$Needs-entity list shrinks to two unresolved rows$n$, (select count(*) = 2 from financial_transactions where responsible_entity_id is null and not voided));
 select t($n$an older client's edit (no entity column) keeps the confirmed entity$n$, $q$update financial_transactions set description = 'edited by old client', amount = 11 where id = 'c0000000-0000-0000-0000-000000000001'$q$, 'ok');
 select check_true($n$…E1 is still set$n$, (select responsible_entity_id = 'e1000000-0000-0000-0000-0000000000e1' from financial_transactions where id = 'c0000000-0000-0000-0000-000000000001'));
 select t($n$the entity can be cleared back to unresolved$n$, $q$update financial_transactions set responsible_entity_id = null where id = 'c0000000-0000-0000-0000-000000000002'$q$, 'ok');
+
+-- ---- locked years: reopen before assigning (M6 closed-period protection)
+select t($n$assigning an entity to a transaction in a locked year is refused$n$, $q$update financial_transactions set responsible_entity_id = 'e1000000-0000-0000-0000-0000000000e1' where id = 'c0000000-0000-0000-0000-000000000024'$q$, 'ZM010');
+select check_true($n$…it stays in Needs entity$n$, (select responsible_entity_id is null from financial_transactions where id = 'c0000000-0000-0000-0000-000000000024'));
+select t($n$the owner reopens 2024$n$, $q$update financial_periods set status = 'open' where account_id = 'a0000000-0000-0000-0000-00000000000a' and year = 2024$q$, 'ok');
+select t($n$…then the assignment saves$n$, $q$update financial_transactions set responsible_entity_id = 'e1000000-0000-0000-0000-0000000000e1' where id = 'c0000000-0000-0000-0000-000000000024'$q$, 'ok');
+
+-- ---- an older client (no entity column) inserting and editing
+select t($n$an older client's insert (no entity column) succeeds and starts unresolved$n$, $q$insert into financial_transactions (id, account_id, property_id, entry_type, category, payment_method, amount, transaction_date) values ('c0000000-0000-0000-0000-000000000004','a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-0000000000a1','expense','repairs','Checking',40,'2025-06-03')$q$, 'ok');
 
 -- ---- workspace isolation
 select t($n$another workspace's entity is refused$n$, $q$update financial_transactions set responsible_entity_id = 'eb000000-0000-0000-0000-0000000000eb' where id = 'c0000000-0000-0000-0000-000000000003'$q$, 'ZM002');

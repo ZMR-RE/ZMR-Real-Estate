@@ -38,12 +38,20 @@ export function entityPickerOptions(options: EntityOption[], currentEntityId: st
     .map((o) => ({ id: o.id, label: o.archived ? `${o.name} (archived)` : o.name }))
 }
 
-// Needs-entity counts per year, newest year first.
-export function needsEntityByYear(dates: { transaction_date: string }[]): { year: number; count: number }[] {
+export interface NeedsEntityYear {
+  year: number
+  count: number
+  // The year is locked: it must be reopened before any entity is assigned.
+  locked: boolean
+}
+
+// Needs-entity counts per year, newest year first, marking locked years.
+export function needsEntityByYear(dates: { transaction_date: string }[], lockedYears: number[] = []): NeedsEntityYear[] {
   const counts = new Map<number, number>()
   for (const { transaction_date } of dates) {
     const year = Number(transaction_date.slice(0, 4))
     counts.set(year, (counts.get(year) ?? 0) + 1)
   }
-  return [...counts.entries()].sort((a, b) => b[0] - a[0]).map(([year, count]) => ({ year, count }))
+  const locked = new Set(lockedYears)
+  return [...counts.entries()].sort((a, b) => b[0] - a[0]).map(([year, count]) => ({ year, count, locked: locked.has(year) }))
 }
