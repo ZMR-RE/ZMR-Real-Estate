@@ -35,7 +35,7 @@ re-check it) after any large structural change; it will drift otherwise.
 | `/tasks` | `tasks/TaskEngine.tsx` | Tasks |
 | `/financials` | `financials/Financials.tsx` | Financials & tax |
 | `/command-center` | `commandCenter/CommandCenter.tsx` | Command center |
-| `/automations` | `automations/Automations.tsx` | Automations |
+| `/agents` | `automations/Automations.tsx` | Agents (`/automations` redirects here) |
 | `/mortgage-portfolio` | `mortgagePayoff/MortgagePortfolio.tsx` | Portfolio KPIs |
 | `/settings` | `settings/Settings.tsx` | Settings |
 | `/reports` | `reports/Reports.tsx` | *(linked from Financials & Tax)* |
@@ -220,8 +220,10 @@ centralized pick-list manager. Does not yet include security (still in
 
 ### commandCenter / automations (1 file each)
 Nav placeholders (roadmap 10.1) for Phase 3 (Command Center — per-property
-email) and Phase 11 (Automations — agent roster). No functionality yet
-beyond the page shell.
+email) and Phase 11 (Agents — agent roster; nav renamed from "Automations",
+owner-approved September 30, 2026). No functionality yet beyond the page
+shell. The module folder keeps the name `automations/`, which also holds
+T4's Agents workspace preview.
 
 ## Database (`supabase/migrations/`)
 

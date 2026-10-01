@@ -41,7 +41,10 @@ function App() {
           <Route path="/rent-ops" element={<RentOps />} />
           <Route path="/financials" element={<Financials />} />
           <Route path="/command-center" element={<CommandCenter />} />
-          <Route path="/automations" element={<Automations />} />
+          <Route path="/agents" element={<Automations />} />
+          {/* Automations → Agents rename (owner-approved Sept 30, 2026): keep
+              old bookmarks and links working. */}
+          <Route path="/automations" element={<Navigate to="/agents" replace />} />
           <Route path="/mortgage-portfolio" element={<MortgagePortfolio />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/reports" element={<Reports />} />

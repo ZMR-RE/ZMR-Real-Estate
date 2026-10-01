@@ -1,11 +1,12 @@
-// Placeholder — Automations' actual functionality (agent-roster pattern)
-// arrives with Phase 11 (11.1). Nav entry added by roadmap 10.1; nothing
-// to build here yet beyond stating that plainly.
+// Placeholder for the Agents workspace (renamed from "Automations",
+// owner-approved September 30, 2026). The actual agent-roster functionality
+// arrives with Phase 11 (11.1); nothing is built here yet beyond stating
+// that plainly. Route /agents; /automations redirects here (App.tsx).
 export function Automations() {
   return (
     <div>
-      <h1>Automations</h1>
-      <p>Automations is coming with Phase 11's agent roster.</p>
+      <h1>Agents</h1>
+      <p>Agents are coming with Phase 11's agent roster.</p>
     </div>
   )
 }

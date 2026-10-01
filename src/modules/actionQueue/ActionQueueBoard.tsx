@@ -7,11 +7,11 @@ import { ActionQueueList } from './ActionQueueList'
 import { NeedsEntityItem } from './NeedsEntityItem'
 import { useNeedsEntity } from './useNeedsEntity'
 
-type ActionQueueTab = 'to_resolve' | 'automations'
+type ActionQueueTab = 'to_resolve' | 'agents'
 
 const TABS: { key: ActionQueueTab; label: string }[] = [
   { key: 'to_resolve', label: 'To resolve' },
-  { key: 'automations', label: 'Automations' },
+  { key: 'agents', label: 'Agents' },
 ]
 
 // Roadmap 10.5 — full Action Queue build, overhauling 10.2's initial
@@ -79,8 +79,8 @@ export function ActionQueueBoard() {
         )}
       </div>
 
-      {tab === 'automations' ? (
-        <p>Automations is coming with Phase 11's agent roster.</p>
+      {tab === 'agents' ? (
+        <p>Agents are coming with Phase 11's agent roster.</p>
       ) : (
         <>
           {error && <p role="alert">{error}</p>}

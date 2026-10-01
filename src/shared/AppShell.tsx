@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { to: '/rent-ops', label: 'Rent ops' },
   { to: '/financials', label: 'Financials & tax' },
   { to: '/command-center', label: 'Command center' },
-  { to: '/automations', label: 'Automations' },
+  { to: '/agents', label: 'Agents' },
   { to: '/mortgage-portfolio', label: 'Portfolio KPIs' },
 ]
 
