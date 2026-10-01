@@ -18,7 +18,21 @@ export function MortgageDetailsForm({
   onSave,
   onCancel,
 }: MortgageDetailsFormProps) {
-  const [values, setValues] = useState<MortgageDetailsInput>(initialValues)
+  // Lazy initializer: formats the four dollar fields to two decimals the
+  // instant an existing record loads into the form, not just after a blur
+  // — original_loan_amount/current_balance/monthly_payment are always
+  // present on an existing record so formatCurrencyInputOnBlur runs
+  // unconditionally; escrow_balance stays null when genuinely blank
+  // (never coerced to "0.00"). A brand-new mortgage's blank strings pass
+  // through formatCurrencyInputOnBlur unchanged.
+  const [values, setValues] = useState<MortgageDetailsInput>(() => ({
+    ...initialValues,
+    original_loan_amount: formatCurrencyInputOnBlur(initialValues.original_loan_amount),
+    current_balance: formatCurrencyInputOnBlur(initialValues.current_balance),
+    monthly_payment: formatCurrencyInputOnBlur(initialValues.monthly_payment),
+    escrow_balance:
+      initialValues.escrow_balance === null ? null : formatCurrencyInputOnBlur(initialValues.escrow_balance),
+  }))
 
   const field = (key: keyof MortgageDetailsInput) => ({
     value: values[key] ?? '',

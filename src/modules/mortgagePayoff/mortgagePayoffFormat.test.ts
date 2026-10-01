@@ -60,6 +60,18 @@ describe('formatCurrencyInputOnBlur', () => {
     expect(formatCurrencyInputOnBlur('12.345')).toBe('12.35')
   })
 
+  // PostgREST returns a `numeric` column as a bare JSON number, not a
+  // quoted string, despite MortgageDetails' own TS type saying `string` —
+  // confirmed directly from the network response this session
+  // ("original_loan_amount":200000.00, parsed to the JS number 200000,
+  // decimals already gone). This is exactly the "on load" case: an
+  // existing record's raw value reaching this function is a number.
+  it('formats a raw number (as PostgREST actually returns a numeric column), not just a string', () => {
+    expect(formatCurrencyInputOnBlur(200000)).toBe('200000.00')
+    expect(formatCurrencyInputOnBlur(195000.5)).toBe('195000.50')
+    expect(formatCurrencyInputOnBlur(0)).toBe('0.00')
+  })
+
   it('never coerces a blank field to "0.00" — blank stays blank', () => {
     expect(formatCurrencyInputOnBlur('')).toBe('')
     expect(formatCurrencyInputOnBlur('   ')).toBe('   ')
