@@ -1,3 +1,5 @@
+import '../rentInvoices/invoiceLists.css'
+import { formatMoney } from '../rentInvoices/invoiceDocument'
 import { invoiceStatus } from './useRentOps'
 import { propertyLabel } from '../../shared/propertyLabel'
 import type { Invoice } from './rentOpsQueries'
@@ -27,9 +29,13 @@ export function InvoiceList({ invoices, onRecordPayment, onOpen }: InvoiceListPr
     return <p className="empty-state">No issued invoices yet.</p>
   }
 
+  // Same responsive list as Financials' transactions (.transaction-list):
+  // text columns and actions wrap inside the box at desktop widths, and in a
+  // narrow box each invoice becomes a labelled card, so the number, amount,
+  // status and Record payment are always visible without sideways scrolling.
   return (
-    <div className="table-scroll">
-      <table>
+    <div className="table-scroll transaction-list-container">
+      <table className="transaction-list invoice-issued-table">
         <thead>
           <tr>
             <th>Number</th>
@@ -40,7 +46,7 @@ export function InvoiceList({ invoices, onRecordPayment, onOpen }: InvoiceListPr
             <th>Due date</th>
             <th>Paid</th>
             <th>Status</th>
-            <th></th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -49,29 +55,32 @@ export function InvoiceList({ invoices, onRecordPayment, onOpen }: InvoiceListPr
             const closed = invoice.state === 'superseded' || invoice.state === 'cancelled'
             return (
               <tr key={invoice.id} className={closed ? 'row-voided' : undefined}>
-                <td>
+                <td data-label="Number">
                   {invoice.number ? (
                     <button type="button" className="invoice-row-open" onClick={() => onOpen(invoice.id)}>
                       {invoice.number}
                     </button>
                   ) : (
-                    <span className="field-hint">Earlier invoice (unnumbered)</span>
+                    <span className="field-hint invoice-list-note">Earlier invoice (unnumbered)</span>
                   )}
                 </td>
-                <td>{propertyLabel(invoice.property)}</td>
-                <td>{invoice.billed_to ?? ''}</td>
-                <td>
-                  {invoice.period_start} – {invoice.period_end}
+                <td data-label="Property" className="transaction-list-wrap">{propertyLabel(invoice.property)}</td>
+                <td data-label="Billed to" className="transaction-list-wrap">{invoice.billed_to ?? ''}</td>
+                <td data-label="Period" className="transaction-list-wrap">
+                  <span className="invoice-list-date">{invoice.period_start} –</span> <span className="invoice-list-date">{invoice.period_end}</span>
                 </td>
-                <td>${Number(invoice.amount_due).toFixed(2)}</td>
-                <td>{invoice.due_date}</td>
-                <td>${totalPaid.toFixed(2)}</td>
-                <td>{closed ? CLOSED_LABELS[invoice.state as 'superseded' | 'cancelled'] : STATUS_LABELS[invoiceStatus(invoice)]}</td>
-                <td>
+                <td data-label="Amount due" className="transaction-list-amount">{formatMoney(Number(invoice.amount_due))}</td>
+                <td data-label="Due date">{invoice.due_date}</td>
+                <td data-label="Paid">{formatMoney(totalPaid)}</td>
+                <td data-label="Status" className="transaction-list-wrap">{closed ? CLOSED_LABELS[invoice.state as 'superseded' | 'cancelled'] : STATUS_LABELS[invoiceStatus(invoice)]}</td>
+                {/* No caption on a closed invoice's empty action cell (empty fields aren't shown). */}
+                <td data-label={closed ? undefined : 'Actions'} className="transaction-list-actions">
                   {!closed && (
-                    <button type="button" onClick={() => onRecordPayment(invoice.id)}>
-                      Record payment
-                    </button>
+                    <div className="transaction-list-action-group">
+                      <button type="button" onClick={() => onRecordPayment(invoice.id)}>
+                        Record payment
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>

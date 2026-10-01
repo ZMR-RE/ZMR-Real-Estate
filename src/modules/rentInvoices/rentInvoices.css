@@ -121,12 +121,32 @@
   font-size: var(--text-sm);
 }
 
-.invoice-awaiting-table .invoice-row td {
-  background: var(--invoice-review-bg);
+/* Invoice panel header: the decision actions and the box's Edit button are
+   one wrapping group at the top right, with Edit at the same size as its
+   neighbours. Only invoice panels carry .invoice-decision-actions. */
+/* When the title and the actions don't fit side by side, the actions move
+   under the title as one group instead of breaking into two rows. */
+.collapsible-section > summary:has(.invoice-decision-actions) {
+  flex-wrap: wrap;
 }
 
-.invoice-awaiting-table .invoice-row--selected td {
-  box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent);
+.collapsible-section-header-actions:has(> .invoice-decision-actions) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.collapsible-section-header-actions > .invoice-decision-actions {
+  display: contents;
+}
+
+.collapsible-section-header-actions:has(> .invoice-decision-actions) .editable-section-edit {
+  margin: 0;
+  min-height: 36px;
+  padding: 6px var(--space-3);
+  font-size: var(--text-sm);
 }
 
 .invoice-row-open {
@@ -226,6 +246,21 @@
 
   .invoice-line-edit {
     grid-template-columns: 1fr 1fr;
+  }
+
+  /* Phone: the actions move to their own row under the title and share it,
+     instead of each stretching full-width beside a squeezed title. */
+  .collapsible-section-header-actions:has(> .invoice-decision-actions) {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+
+  .collapsible-section-header-actions:has(> .invoice-decision-actions) button,
+  .collapsible-section-header-actions:has(> .invoice-decision-actions) .editable-section-edit {
+    width: auto;
+    flex: 1 1 auto;
+    min-height: 44px;
   }
 }
 

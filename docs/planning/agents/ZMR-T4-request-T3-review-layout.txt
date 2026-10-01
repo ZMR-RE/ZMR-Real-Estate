@@ -1,0 +1,40 @@
+T4 → T3 (relay via the owner): focused review, Stage 1 invoice-list layout (G1–G3) and G5 harness.
+
+CANDIDATE: the commit adding this file on t4/stage1-on-a. Its code parent is 45d3eb5 (F-1, cleared).
+T4 states the full hash in its report.
+
+CHANGED, frontend only (no queries, actions, permissions, migrations or shared CSS/navigation):
+  - src/modules/rentInvoices/InvoiceWorkflowSection.tsx:
+      review list uses the shared .transaction-list classes and data-label captions.
+  - src/modules/rentOps/InvoiceList.tsx:
+      - issued list uses the same classes, with captions;
+      - Record payment sits in a wrapping action group;
+      - formatMoney for amounts (F-4);
+      - no caption on a closed invoice's empty action cell;
+      - numbers and dates don't break.
+  - src/modules/rentInvoices/invoiceLists.css (new; list rules moved out of rentInvoices.css, which stays
+    under 300 lines):
+      - issued table: cards at a container width of 940 px or less (same declarations as the shared rule);
+      - padding and heading wrap as in M5;
+      - selected-row marker in card mode.
+  - src/modules/rentInvoices/rentInvoices.css (G3): invoice panel header-action group, scoped with
+    :has(> .invoice-decision-actions), wrap under the title, and 44 px on phones.
+  - Harness only (not in the app bundle; checked):
+      - review/main.tsx: ?long=1 data, routes /billing-boxes, /entities/:id, /properties/:id, and null-filling
+        of unlisted property columns;
+      - review/ReviewBillingBoxes.tsx.
+  - src/modules/rentOps/InvoiceList.test.tsx: 5 tests.
+
+PLEASE CONFIRM
+  1. No behaviour change: same handlers, same buttons and order, Record payment still calls onRecordPayment.
+  2. The CSS stays scoped to invoice surfaces. The :has() selectors only match invoice panels, which are
+     the only place .invoice-decision-actions exists.
+  3. The 940 px rule duplicates the shared card declarations only for .invoice-issued-table. T4 will propose
+     generalising it to T2 rather than editing index.css.
+
+EVIDENCE
+  - Width sweep, 1440 to 390 px, with long names: no clipping, Record payment always visible, no page
+    sideways scroll, header on one row, nothing under 44 px at 390.
+  - Screenshots: docs/planning/agents/evidence/stage1-layout-fix/. See ZMR-T4-stage1-acceptance-review-material.md §6.
+  - Checks: tsc -b clean; vitest 233 passed / 1 skipped; oxlint 0 errors (83 warnings, unchanged); build OK;
+    clean clone in T4's report.

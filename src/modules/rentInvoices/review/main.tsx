@@ -3,12 +3,15 @@ import { createRoot } from 'react-dom/client'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import '../../../index.css'
 import { AppShell } from '../../../shared/AppShell'
+import { EntityProfile } from '../../llcs/EntityProfile'
+import { PropertyProfile } from '../../properties/PropertyProfile'
 import { RentOps } from '../../rentOps/RentOps'
 import { TenantProfile } from '../../tenants/TenantProfile'
 import { buildInvoiceRender } from '../invoiceDocument'
 import { invoicePdfBlob } from '../invoicePdf'
 import { attachIssuedInvoicePdf, loadSnapshotLogo } from '../rentInvoicesQueries'
 import type { IssuedSnapshot } from '../rentInvoiceTypes'
+import { ReviewBillingBoxes } from './ReviewBillingBoxes'
 import { armUploadFailureFromUrl, review, reviewDb, seeded, supabase } from './reviewSupabaseClient'
 
 // REVIEW PAGE (rent-invoices-review.html): the REAL Rent ops screen inside
@@ -23,8 +26,36 @@ import { armUploadFailureFromUrl, review, reviewDb, seeded, supabase } from './r
 //   • 410 Example St Unit 2 (co-tenants) — approved, then the entity's
 //     document footer changed: shows "Changed since you approved it".
 // Add ?fail-upload=1 to make the next issue's PDF upload fail once.
+// Add ?long=1 for layout checks: long fictional names, plus more issued
+// states (a second issued invoice, a partial payment, a cancelled invoice).
+const params = new URLSearchParams(window.location.search)
+const longMode = params.has('long')
+
+function applyLongNames() {
+  const set = (rows: Record<string, unknown>[], id: string, patch: Record<string, unknown>) => Object.assign(rows.find((r) => r.id === id)!, patch)
+  set(reviewDb.properties, 'prop-410', { address: '12345 North Longfellow Boulevard Extension' })
+  set(reviewDb.units, 'unit-1', { unit_label: 'Apartment 12B (rear building)' })
+  set(reviewDb.tenants, 't-riley', { name: 'Riley Alexandra Example-Montgomery' })
+  set(reviewDb.tenants, 't-jordan', { name: 'Jordan Christopher Samplewright' })
+  set(reviewDb.tenants, 't-casey', { name: 'Casey Placeholder-Vandenberg' })
+}
+
+// A real database returns null for every empty column; the fictional
+// property rows only list the columns the invoice screens use. Fill the
+// rest with null so the real property profile renders (Billing settings
+// in place). Column list from the properties table.
+const PROPERTY_COLUMNS = ['ac_type', 'basement', 'bathroom_count', 'bedroom_count', 'city', 'contact_email', 'contact_phone', 'county', 'county_assessor_use_code', 'created_at', 'exterior_wall_material', 'exterior_wall_materials', 'garage_parking_spaces', 'garage_spaces', 'heating_type', 'insurance_policy_number', 'insurance_provider', 'lease_terms', 'legacy_contact_reconciled_at', 'llc_id', 'lot_size', 'lot_size_unit', 'lot_size_value', 'municipal_zoning_code', 'owner_name', 'parking_notes', 'property_tax_id', 'property_type', 'purchase_date', 'purchase_method', 'purchase_price', 'square_footage', 'state', 'status', 'street_parking', 'township', 'updated_at', 'utilities', 'year_built', 'zip', 'zoning_use_code']
+
+function completePropertyRows() {
+  for (const row of reviewDb.properties as Record<string, unknown>[]) {
+    for (const col of PROPERTY_COLUMNS) if (!(col in row)) row[col] = col === 'exterior_wall_materials' ? [] : null // not null, default '{}'
+  }
+}
+
 async function seed() {
   await seeded
+  completePropertyRows()
+  if (longMode) applyLongNames()
   const call = async (fn: string, args: Record<string, unknown>) => (await supabase.rpc(fn, args)).data
   const riley = (await call('create_invoice_draft', { p_lease_id: 'lease-riley', p_period_start: '2026-10-01' })) as string
   await call('update_invoice_draft', { p_id: riley, p_expected_version: 1, p_patch: { visible_note: 'Thank you!' } })
@@ -41,18 +72,35 @@ async function seed() {
   await call('approve_invoice', { p_id: jordan, p_expected_version: 1 })
   const brandingA = reviewDb.entity_document_branding.find((b) => b.entity_id === 'ent-a')!
   brandingA.document_footer = 'Questions about this invoice? Call or email us.'
+  if (longMode) {
+    // November issued too; a partial payment on October; December issued then cancelled.
+    const nov = reviewDb.invoices.find((i) => i.lease_id === 'lease-riley' && i.period_start === '2026-11-01')!
+    await call('approve_invoice', { p_id: nov.id, p_expected_version: nov.version })
+    await call('issue_invoice', { p_id: nov.id, p_expected_version: (nov.version as number) + 1 })
+    reviewDb.payments.push({ id: 'pay-long-1', invoice_id: riley, amount: 600, paid_date: '2026-10-03', method: 'Zelle', notes: 'Fictional partial payment' })
+    const dec = (await call('create_invoice_draft', { p_lease_id: 'lease-riley', p_period_start: '2026-12-01' })) as string
+    await call('approve_invoice', { p_id: dec, p_expected_version: 1 })
+    await call('issue_invoice', { p_id: dec, p_expected_version: 2 })
+    await call('cancel_invoice', { p_id: dec, p_expected_version: 3, p_reason: 'Entered twice (fictional)' })
+  }
   armUploadFailureFromUrl()
 }
+
 
 seed().then(() => {
   createRoot(document.getElementById('rent-invoices-review-root')!).render(
     <StrictMode>
-      {/* ?path=/tenants/t-casey opens the real tenant profile (Tenancy & billing, Billing rules). */}
-      <MemoryRouter initialEntries={[new URLSearchParams(window.location.search).get('path') || '/rent-ops']}>
+      {/* ?path=/tenants/t-casey opens the real tenant profile (Tenancy & billing, Billing rules);
+          ?path=/billing-boxes the Entity › Invoicing and Property › Billing settings boxes;
+          ?path=/entities/ent-a and ?path=/properties/prop-410 the full real profile pages. */}
+      <MemoryRouter initialEntries={[params.get('path') || '/rent-ops']}>
         <Routes>
           <Route element={<AppShell />}>
             <Route path="/rent-ops" element={<RentOps />} />
             <Route path="/tenants/:id" element={<TenantProfile />} />
+            <Route path="/billing-boxes" element={<ReviewBillingBoxes />} />
+            <Route path="/entities/:id" element={<EntityProfile />} />
+            <Route path="/properties/:id" element={<PropertyProfile />} />
           </Route>
         </Routes>
       </MemoryRouter>

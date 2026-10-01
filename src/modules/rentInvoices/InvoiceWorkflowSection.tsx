@@ -1,4 +1,5 @@
 import './rentInvoices.css'
+import './invoiceLists.css'
 import { formatMoney, periodLabel } from './invoiceDocument'
 import { InvoiceReviewPanel } from './InvoiceReviewPanel'
 import { IssuedInvoicePanel } from './IssuedInvoicePanel'
@@ -42,8 +43,10 @@ export function InvoiceWorkflowSection({ workflow: w }: InvoiceWorkflowSectionPr
       {w.awaiting.length === 0 ? (
         <p className="empty-state">No drafts or approved invoices waiting.</p>
       ) : (
-        <div className="table-scroll">
-          <table className="invoice-awaiting-table">
+        // Same responsive list as Financials' transactions: stacked labelled
+        // cards in a narrow box, so amount and status never sit off-screen.
+        <div className="table-scroll transaction-list-container">
+          <table className="invoice-awaiting-table transaction-list">
             <thead>
               <tr>
                 <th scope="col">Tenancy</th>
@@ -58,15 +61,15 @@ export function InvoiceWorkflowSection({ workflow: w }: InvoiceWorkflowSectionPr
                 const t = tenancyFor(inv.lease_id)
                 return (
                   <tr key={inv.id} className={selected?.id === inv.id ? 'invoice-row invoice-row--selected' : 'invoice-row'}>
-                    <td>
+                    <td data-label="Tenancy" className="transaction-list-wrap">
                       <button type="button" className="invoice-row-open" aria-current={selected?.id === inv.id ? 'true' : undefined} onClick={() => w.select(inv)}>
                         {t ? tenancyLabel(t) : inv.recipient_name ?? 'Tenancy'}
                       </button>
                     </td>
-                    <td>{periodLabel(inv.period_start)}</td>
-                    <td>{formatMoney(Number(inv.amount_due))}</td>
-                    <td><span className="status-badge status-badge-warning">{STATE_LABEL[inv.state]}</span></td>
-                    <td>{inv.created_via === 'assistant' ? 'Assistant' : 'You'}</td>
+                    <td data-label="Month">{periodLabel(inv.period_start)}</td>
+                    <td data-label="Amount" className="transaction-list-amount">{formatMoney(Number(inv.amount_due))}</td>
+                    <td data-label="Status"><span className="status-badge status-badge-warning">{STATE_LABEL[inv.state]}</span></td>
+                    <td data-label="From">{inv.created_via === 'assistant' ? 'Assistant' : 'You'}</td>
                   </tr>
                 )
               })}

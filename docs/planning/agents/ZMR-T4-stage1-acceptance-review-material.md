@@ -102,3 +102,64 @@ All paths are on branch `t4/stage1-on-a`. The worktree is `/Users/janki/Projects
 - **Ask whether G1–G3 should be fixed before release** (Stage 1 layout, small CSS/layout scope). T4's recommendation is to fix G1 and G2, because Record payment and Status are hidden on a laptop-width screen.
 - **G4 and F-2 to F-4** stay with the separate shared-UI backlog.
 - **G5** needs either a Practice window or the owner's acceptance by description.
+
+## 6. G1–G3 fixed and G5 evidence (layout-fix candidate)
+
+**Scope:**
+- Changed: invoice surfaces only: `InvoiceWorkflowSection.tsx`, `rentOps/InvoiceList.tsx`, `rentInvoices.css` and the new `invoiceLists.css`.
+- Not changed: financial behaviour, permissions, migrations, shared navigation and shared CSS.
+- Harness-only (never in the app bundle, which was checked): `review/main.tsx` and `review/ReviewBillingBoxes.tsx`.
+
+**G1 and G2 (lists).** Both lists use the existing responsive list pattern (`.transaction-list`, Financials M3):
+- Text wraps inside the box.
+- Row actions wrap inside their cell.
+- In a narrow box, each invoice becomes a card with every field captioned.
+
+The issued table has nine columns and needs about 925 px, so `invoiceLists.css` switches it to cards at 940 px of container width or less. The shared 760 px rule still applies to every other list.
+
+Other changes:
+- Invoice numbers and each date never break inside themselves.
+- Amounts use `formatMoney`, which also resolves **F-4** for this table.
+- A closed invoice shows no empty "Actions" caption.
+
+**G3 (panel header).** Approve, Reject… (or Revise and Cancel…) and Edit form one group at the top right, with Edit at its neighbours' size. If the group doesn't fit beside the title, it moves under the title as one row. On a phone the buttons share the row at 44 px. Labels are unchanged; they're native buttons in the same order.
+
+**Measured with long fictional names and populated states** (`?long=1`: a long address and unit, long tenant names, a partial payment, a cancelled invoice), at 1440, 1280, 1240, 1200, 1100, 1000, 900, 861, 860, 800, 700, 600 and 390 px:
+- no cell cut off;
+- Record payment always inside the box;
+- no sideways page scroll;
+- panel actions on one row at every width;
+- at 390 px, no control under 44 px.
+
+At 390 px in card mode, Record payment opens the payment form, and the issued panel shows Revise and Cancel… at 44 px.
+
+**Screenshots** (`evidence/stage1-layout-fix/`; local harness, simulated backend):
+
+| Width | Before | After |
+|---|---|---|
+| 1280 | `stage1-local-harness/wide-1280-review-panel.jpg`, `wide-1280-pdf-and-issued-table.jpg` | `after-1280-review-list-and-panel-header.jpg`, `after-1280-issued-table-record-payment.jpg` |
+| 900 | `stage1-local-harness/intermediate-900-review-table.jpg` | `after-900-review-cards.jpg`, `after-900-panel-header.jpg`, `after-900-issued-cards-cancelled.jpg`, `after-900-issued-card-record-payment.jpg` |
+| 390 | `stage1-local-harness/phone-390-review-panel-and-tenant-billing.jpg` | `after-390-review-cards.png`, `after-390-panel-header.png`, `after-390-issued-card-record-payment.png` |
+
+The "before" captures use the standard fictional data; the "after" captures use `?long=1`. Widths are the true viewport widths.
+
+**G5: resolved with the real components and fictional data.** The harness now mounts:
+- `?path=/billing-boxes`: both real boxes, populated and empty, in view and edit states;
+- `?path=/entities/ent-a`: the full real Entity profile;
+- `?path=/properties/prop-410`: the full real Property profile, Overview tab.
+
+To render the property page, the harness fills the fictional property's unlisted columns with what the database returns: null, and `{}` for `exterior_wall_materials`.
+
+Screenshots:
+- `g5-boxes-1280-view.jpg`, `g5-boxes-1280-edit.jpg`, `g5-boxes-1280-empty-states.jpg`, `g5-boxes-390-view.png`;
+- `g5-entity-profile-invoicing-in-place.jpg`;
+- `g5-property-profile-billing-settings-in-place.jpg` (captured at 1396 px).
+
+**Limitations:**
+- The boxes start collapsed (F-2 applies) and were opened for capture.
+- Saving in these boxes isn't simulated by the harness. Saving was covered on Practice (F2 and F4 in the hosted run).
+
+**Unchanged and kept separate:**
+- **G4:** the shared Edit buttons are 34 px on the tenant page and the profile boxes.
+- F-2 and F-3.
+- The backend evidence (hosted H1–H9 and H11, database suites) is reused, because no query, action or migration changed.
