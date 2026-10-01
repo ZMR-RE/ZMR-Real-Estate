@@ -926,6 +926,50 @@ dd {
   border-bottom-color: var(--accent);
 }
 
+/* Owner request (Oct 1, 2026) — Property Profile's address stays visible
+   with its tabs while scrolling. The address heading and the tab bar
+   share ONE sticky block (rather than two separately sticky elements), so
+   they move together and nothing scrolls between them. The heading is
+   compact (--text-xl) and wraps a long address instead of truncating it;
+   it is always shown, so the block's height never jumps when it sticks.
+   Its live height is measured (useStickyHeaderHeight) into
+   --sticky-tab-bar-height on .property-profile, which the sticky <thead>
+   rule below already uses — table headers sit just under this block. */
+.property-sticky-header {
+  position: sticky;
+  /* Same Practice-banner offset as .tab-bar; 0px outside Practice. */
+  top: var(--practice-banner-height, 0px);
+  z-index: 10;
+  background: var(--bg);
+  padding-top: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.property-sticky-title {
+  font-size: var(--text-xl);
+  line-height: 1.3;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The block itself is sticky; the tab bar inside it is laid out normally
+   (a nested sticky would be redundant) and hands its bottom margin to the
+   block so the gap to the content is unchanged. */
+.property-sticky-header .tab-bar {
+  position: static;
+  margin: var(--space-2) 0 0;
+}
+
+/* Phones: one step smaller so a long address wraps to fewer lines and the
+   pinned block takes less of a small screen (measured: a ~80-character
+   address at 320px goes from 4 lines to 3). Property Profile only; the
+   global page-title size stays with the separate mobile-layout decisions. */
+@media (max-width: 600px) {
+  .property-sticky-title {
+    font-size: var(--text-lg);
+  }
+}
+
 /* ============================================================
    Collapsible sections (roadmap 7.10/7.13/7.14) — a labeled card
    that expands, used for every grouped block on the Property
