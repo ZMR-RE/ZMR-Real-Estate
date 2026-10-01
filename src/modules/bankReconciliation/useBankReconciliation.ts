@@ -1,10 +1,21 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { listProperties } from '../properties/propertiesQueries'
 import { listTransactions, type Transaction } from '../financials/financialsQueries'
-import { markTransactionsReconciled } from './bankReconciliationQueries'
+import { listReconciliationState, markTransactionsReconciled } from './bankReconciliationQueries'
 import { computeReconciliation, filterByPeriod } from './bankReconciliationCalculations'
+import {
+  createSelectionGate,
+  INITIAL_RECONCILIATION_STATUS,
+  loadLatest,
+  reconciliationStatusReducer,
+  reloadEvent,
+  saveThenReload,
+  type ListSelection,
+  type ReloadOutcome,
+  type VerifyOutcome,
+} from './bankReconciliationStatus'
 
 function firstOfMonth(): string {
   const now = new Date()
@@ -26,8 +37,9 @@ export function useBankReconciliation() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [status, dispatch] = useReducer(reconciliationStatusReducer, INITIAL_RECONCILIATION_STATUS)
   const [saving, setSaving] = useState(false)
+  const [loadGate] = useState(createSelectionGate)
 
   useEffect(() => {
     if (!accountId) return
@@ -36,27 +48,53 @@ export function useBankReconciliation() {
     })
   }, [accountId])
 
-  const refresh = useCallback(async () => {
-    if (!accountId || !propertyId) {
-      setTransactions([])
-      return
-    }
-    setLoading(true)
-    const { data, error: fetchError } = await listTransactions(accountId, { propertyId })
-    setLoading(false)
-    if (fetchError) {
-      setError(fetchError.message)
-      return
-    }
-    setError(null)
-    const inPeriod = filterByPeriod(data ?? [], periodStart, periodEnd)
-    setTransactions(inPeriod)
-    setSelectedIds(new Set(inPeriod.filter((tx) => tx.statement_reconciled).map((tx) => tx.id)))
-  }, [accountId, propertyId, periodStart, periodEnd])
+  const selection = useMemo<ListSelection>(
+    () => ({ propertyId, periodStart, periodEnd }),
+    [propertyId, periodStart, periodEnd],
+  )
 
+  // Loads the list for one selection and reports the outcome; it never
+  // touches the messages itself. Its result populates the list only if it
+  // is for the selection the owner has NOW and no newer load for that
+  // selection started (see createSelectionGate).
+  const loadFor = useCallback(
+    async (sel: ListSelection): Promise<ReloadOutcome> => {
+      if (!accountId || !sel.propertyId) {
+        loadGate.begin(sel)
+        setTransactions([])
+        return { status: 'loaded', reconciledIds: [] }
+      }
+      const propertyForLoad = sel.propertyId
+      setLoading(true)
+      const outcome = await loadLatest(
+        loadGate,
+        sel,
+        async () => {
+          const { data, error } = await listTransactions(accountId, { propertyId: propertyForLoad })
+          return { data, error: error?.message ?? null }
+        },
+        (data) => {
+          const inPeriod = filterByPeriod(data ?? [], sel.periodStart, sel.periodEnd)
+          setTransactions(inPeriod)
+          setSelectedIds(new Set(inPeriod.filter((tx) => tx.statement_reconciled).map((tx) => tx.id)))
+          return inPeriod.filter((tx) => tx.statement_reconciled).map((tx) => tx.id)
+        },
+      )
+      if (outcome.status !== 'superseded') setLoading(false)
+      return outcome
+    },
+    [accountId, loadGate],
+  )
+
+  // Selection change: record it as current, then load it. Records only its
+  // own outcome, so an unacknowledged save result stays on screen.
   useEffect(() => {
-    refresh()
-  }, [refresh])
+    loadGate.select(selection)
+    loadFor(selection).then((outcome) => {
+      const event = reloadEvent(outcome)
+      if (event) dispatch(event)
+    })
+  }, [selection, loadFor, loadGate])
 
   const toggleTransaction = (id: string) => {
     setSelectedIds((prev) => {
@@ -93,15 +131,34 @@ export function useBankReconciliation() {
 
   const markReconciled = async () => {
     if (!accountId || unreconciledSelectedIds.length === 0) return
+    const requested = unreconciledSelectedIds
     setSaving(true)
-    const { error: saveError } = await markTransactionsReconciled(accountId, unreconciledSelectedIds)
-    setSaving(false)
-    if (saveError) {
-      setError(saveError.message)
-      return
-    }
-    setError(null)
-    await refresh()
+    await saveThenReload(
+      requested,
+      async () => {
+        const { data, error: saveError, status } = await markTransactionsReconciled(accountId, requested)
+        setSaving(false)
+        return {
+          updatedIds: saveError ? null : (data ?? []).map((r) => r.id as string),
+          error: saveError ? { message: saveError.message, code: saveError.code, status } : null,
+        }
+      },
+      // Verify the saved records themselves, whatever is on screen now.
+      async (): Promise<VerifyOutcome> => {
+        const { data, error } = await listReconciliationState(accountId, requested)
+        if (error) return { status: 'failed', error: error.message }
+        return {
+          status: 'checked',
+          reconciledIds: (data ?? []).filter((r) => r.statement_reconciled && !r.voided).map((r) => r.id as string),
+        }
+      },
+      // Reload whatever the owner has selected NOW (not the saved selection).
+      () => {
+        const current = loadGate.current()
+        return current ? loadFor(current) : Promise.resolve<ReloadOutcome>({ status: 'superseded' })
+      },
+      dispatch,
+    )
   }
 
   return {
@@ -120,7 +177,10 @@ export function useBankReconciliation() {
     selectedIds,
     toggleTransaction,
     loading,
-    error,
+    error: status.error,
+    saveNotice: status.saveNotice,
+    listStale: status.listStale,
+    dismissSaveNotice: () => dispatch({ type: 'noticeDismissed' }),
     saving,
     result,
     hasEnteredBalances,

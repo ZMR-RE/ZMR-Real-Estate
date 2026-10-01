@@ -41,3 +41,12 @@ export function computeReconciliation(
     isBalanced: toCents(computedEndingBalance) === toCents(endingStatementBalance),
   }
 }
+
+// How many selected entries a reconciliation save did not mark as matched
+// (e.g. one was voided in the meantime), and the message to show for it.
+export function reconciliationShortfall(requestedIds: string[], updatedIds: string[]): string | null {
+  const updated = new Set(updatedIds)
+  const missed = requestedIds.filter((id) => !updated.has(id)).length
+  if (missed === 0) return null
+  return `${missed} selected ${missed === 1 ? 'transaction was' : 'transactions were'} not marked as matched — ${missed === 1 ? 'it was' : 'they were'} voided or changed in the meantime. Review the list and try again.`
+}
