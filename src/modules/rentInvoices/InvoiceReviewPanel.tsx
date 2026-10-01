@@ -28,7 +28,7 @@ export function InvoiceReviewPanel({ invoice, tenancy, issuers, workflow }: Invo
   const changed = doc?.changedSinceApproval ?? []
   const approvalValid = invoice.state === 'approved' && invoice.approved_material_version === invoice.material_version && changed.length === 0
   const instructionsSource = snap ? paymentInstructionsSource(snap) : null
-  const issueBlocker = !issuer ? 'Choose the invoice issuer (Edit).' : !issuer.invoice_code ? `${issuer.display_name || issuer.name} has no invoice code yet — add one on its entity profile (Invoicing).` : null
+  const issueBlocker = !issuer ? 'Choose the invoice issuer (Edit).' : !issuer.invoice_code ? `${issuer.display_name || issuer.name} has no invoice code yet — add one on their profile (Invoicing).` : null
   const nextNumber = issuer?.invoice_code ? `${issuer.invoice_code}-INV-…` : null
 
   const actions = (
@@ -91,7 +91,7 @@ export function InvoiceReviewPanel({ invoice, tenancy, issuers, workflow }: Invo
                 </dd>
               </div>
             ) : (
-              <div className="field"><dt>How to pay</dt><dd className="invoice-callout">No payment instructions — add a default in the entity’s Branding &amp; documents, or this property’s own in Billing settings.</dd></div>
+              <div className="field"><dt>How to pay</dt><dd className="invoice-callout">No payment instructions — add a default in the issuer’s Branding &amp; documents, or this property’s own in Billing settings.</dd></div>
             )}
             <div className="field"><dt>Amount due — this invoice</dt><dd>{formatMoney(Number(snap.balance.this_invoice))}</dd></div>
             {snap.prior_unpaid.length > 0 && (

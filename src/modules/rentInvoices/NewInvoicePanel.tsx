@@ -75,7 +75,7 @@ export function NewInvoicePanel({ tenancies, busy, onOpenPicker, checkBlockers, 
             })}
           </ul>
         )}
-        {check && check.info.length === 0 && <p className="field-hint">Ready: the draft uses the tenancy’s rent, due day and billing entity.</p>}
+        {check && check.info.length === 0 && <p className="field-hint">Ready: the draft uses the tenancy’s rent, due day and invoice issuer.</p>}
 
         {needsManual && (
           <>

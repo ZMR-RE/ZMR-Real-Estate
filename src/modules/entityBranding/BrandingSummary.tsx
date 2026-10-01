@@ -6,7 +6,7 @@ export function BrandingSummary({ stationery: s }: { stationery: Stationery }) {
   const roles = (Object.keys(DEFAULT_COLORS) as ColorRole[]).filter((r) => s.colors[r])
   return (
     <dl className="field-grid">
-      {s.logo && <div className="field"><dt>Logo</dt><dd><img className="branding-logo-thumb" src={s.logo.dataUrl} alt="Entity logo" /></dd></div>}
+      {s.logo && <div className="field"><dt>Logo</dt><dd><img className="branding-logo-thumb" src={s.logo.dataUrl} alt="Logo" /></dd></div>}
       <div className="field">
         <dt>Document colours</dt>
         <dd className="branding-swatches">

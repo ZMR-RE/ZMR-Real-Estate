@@ -55,3 +55,11 @@ Built on live `d9cdcb3`. No migration and no change to the PDF design. Sections 
 **Harness-only:** new owner records default `archived = false`, `invoice_code = null`, `display_name = null`.
 
 **Not covered here:** the property wizard's new-owner row still doesn't ask for the kind (option (b) earlier); not requested for this slice.
+
+## 4. T3 wording finding: "entity profile" → "their profile" (fixed)
+An issuer can be a person, so issuer-facing copy no longer says "entity":
+- Rent ops review: "…has no invoice code yet — add one on their profile (Invoicing)"; "add a default in the issuer's Branding & documents".
+- New invoice: "Ready: the draft uses the tenancy's rent, due day and invoice issuer."
+- Invoicing box on the profile: "this issuer" / "each issuer has its own sequence"; the code-lock messages likewise.
+- Branding & documents: "Open their profile", "Used only on their documents", "Name and address come from Identity on their profile. Payment instructions print on their invoices."; the profile's Branding description says "invoices and receipts they issue"; logo alt text "Logo"; logo load error "The issuer's logo couldn't be loaded."
+- **Not changed (ownership screens, outside this slice):** "this entity" in Linked properties, Contacts and Membership on the owner profile, and the Agents preview copy.
