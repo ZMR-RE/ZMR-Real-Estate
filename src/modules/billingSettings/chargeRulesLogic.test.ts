@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ruleFormFrom, ruleInputFrom, ruleSummary, validateRule } from './chargeRulesLogic'
+import { ruleFormFrom, ruleInputFrom, ruleLocked, ruleSummary, validateRule } from './chargeRulesLogic'
 import type { ChargeRuleRow } from './chargeRulesQueries'
 
 const base = ruleFormFrom(null)
@@ -29,6 +29,13 @@ describe('tenancy billing rules', () => {
     expect(ruleInputFrom(v)).toMatchObject({ amount: -25, one_time_period: '2027-01-01', effective_from: null, share_percent: null })
     expect(validateRule({ ...v, oneTimeMonth: '' })).toContain('Choose the month it’s billed in.')
     expect(ruleSummary(row({ kind: 'one_time', amount: -25, one_time_period: '2027-01-01', basis_total: null, share_percent: null }))).toBe('-$25.00 in January 2027 (credit)')
+  })
+
+  it('a one-time charge is locked only once it is on an invoice', () => {
+    const one = row({ kind: 'one_time', amount: -25, one_time_period: '2027-01-01', basis_total: null, share_percent: null })
+    expect(ruleLocked(one)).toBe(false)
+    expect(ruleLocked({ ...one, applied_invoice_id: undefined as unknown as null })).toBe(false)
+    expect(ruleLocked({ ...one, applied_invoice_id: 'inv-1' })).toBe(true)
   })
 
   it('refuses incomplete or inconsistent rules like the database', () => {

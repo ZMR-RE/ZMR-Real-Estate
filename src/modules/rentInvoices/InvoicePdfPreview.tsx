@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { InvoiceRender } from './invoiceDocument'
 import { invoicePdfBlob } from './invoicePdf'
-import { PdfCanvasPreview } from './PdfCanvasPreview'
+import { PdfCanvasPreview } from '../../shared/pdf/PdfCanvasPreview'
 import { getStoredInvoicePdf, openStoredInvoicePdf } from './rentInvoicesQueries'
 
 interface InvoicePdfPreviewProps {

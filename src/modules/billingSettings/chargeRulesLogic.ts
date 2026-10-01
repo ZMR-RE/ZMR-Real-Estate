@@ -96,7 +96,7 @@ export function ruleDates(r: ChargeRuleRow): string | null {
 
 // A billed one-time charge, or a billed statement, is fixed until that
 // invoice is rejected or cancelled (the database refuses edits).
-export const ruleLocked = (r: ChargeRuleRow) => r.kind === 'one_time' && r.applied_invoice_id !== null
+export const ruleLocked = (r: ChargeRuleRow) => r.kind === 'one_time' && r.applied_invoice_id != null
 
 export function nextPeriod(today: Date): string {
   return new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 1)).toISOString().slice(0, 10)

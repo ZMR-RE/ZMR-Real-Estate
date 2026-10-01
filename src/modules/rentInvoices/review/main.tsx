@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import '../../../index.css'
 import { AppShell } from '../../../shared/AppShell'
 import { RentOps } from '../../rentOps/RentOps'
+import { TenantProfile } from '../../tenants/TenantProfile'
 import { buildInvoiceRender } from '../invoiceDocument'
 import { invoicePdfBlob } from '../invoicePdf'
 import { attachIssuedInvoicePdf, loadSnapshotLogo } from '../rentInvoicesQueries'
@@ -46,10 +47,12 @@ async function seed() {
 seed().then(() => {
   createRoot(document.getElementById('rent-invoices-review-root')!).render(
     <StrictMode>
-      <MemoryRouter initialEntries={['/rent-ops']}>
+      {/* ?path=/tenants/t-casey opens the real tenant profile (Tenancy & billing, Billing rules). */}
+      <MemoryRouter initialEntries={[new URLSearchParams(window.location.search).get('path') || '/rent-ops']}>
         <Routes>
           <Route element={<AppShell />}>
             <Route path="/rent-ops" element={<RentOps />} />
+            <Route path="/tenants/:id" element={<TenantProfile />} />
           </Route>
         </Routes>
       </MemoryRouter>

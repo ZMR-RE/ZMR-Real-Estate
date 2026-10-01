@@ -36,11 +36,11 @@ export function buildReviewDb(): MockDb {
       { id: 'unit-main', property_id: 'prop-9', unit_label: 'Main' },
     ],
     tenants: [
-      { id: 't-riley', name: 'Riley Example', email: 'riley@example.com', phone: '(555) 010-1111' },
-      { id: 't-jordan', name: 'Jordan Sample', email: 'jordan@example.com', phone: null },
-      { id: 't-sam', name: 'Sam Sample', email: null, phone: '(555) 010-3333' },
-      { id: 't-casey', name: 'Casey Placeholder', email: 'casey@example.com', phone: null },
-      { id: 't-morgan', name: 'Morgan Demo', email: null, phone: null },
+      { id: 't-riley', account_id: A, name: 'Riley Example', email: 'riley@example.com', phone: '(555) 010-1111' },
+      { id: 't-jordan', account_id: A, name: 'Jordan Sample', email: 'jordan@example.com', phone: null },
+      { id: 't-sam', account_id: A, name: 'Sam Sample', email: null, phone: '(555) 010-3333' },
+      { id: 't-casey', account_id: A, name: 'Casey Placeholder', email: 'casey@example.com', phone: null },
+      { id: 't-morgan', account_id: A, name: 'Morgan Demo', email: null, phone: null },
     ],
     leases: [
       { id: 'lease-riley', account_id: A, archived: false, property_id: 'prop-410', unit_id: 'unit-1', rent_amount: 1450, start_date: '2026-01-01', end_date: '2026-12-31' },
@@ -49,16 +49,16 @@ export function buildReviewDb(): MockDb {
       { id: 'lease-morgan', account_id: A, archived: false, property_id: 'prop-9', unit_id: 'unit-main', rent_amount: null, start_date: '2026-06-01', end_date: null },
     ],
     lease_tenants: [
-      { lease_id: 'lease-riley', tenant_id: 't-riley', is_billing_recipient: true },
-      { lease_id: 'lease-jordan', tenant_id: 't-jordan', is_billing_recipient: true },
-      { lease_id: 'lease-jordan', tenant_id: 't-sam', is_billing_recipient: true },
-      { lease_id: 'lease-casey', tenant_id: 't-casey', is_billing_recipient: true },
-      { lease_id: 'lease-morgan', tenant_id: 't-morgan', is_billing_recipient: false },
+      { id: 'lt-1', lease_id: 'lease-riley', tenant_id: 't-riley', is_billing_recipient: true },
+      { id: 'lt-2', lease_id: 'lease-jordan', tenant_id: 't-jordan', is_billing_recipient: true },
+      { id: 'lt-3', lease_id: 'lease-jordan', tenant_id: 't-sam', is_billing_recipient: true },
+      { id: 'lt-4', lease_id: 'lease-casey', tenant_id: 't-casey', is_billing_recipient: true },
+      { id: 'lt-5', lease_id: 'lease-morgan', tenant_id: 't-morgan', is_billing_recipient: false },
     ],
     lease_billing_terms: [
-      { lease_id: 'lease-riley', due_day: 1, prorate_rule: 'none', effective_from: null, effective_to: null },
-      { lease_id: 'lease-jordan', due_day: 31, prorate_rule: 'daily', effective_from: null, effective_to: null },
-      { lease_id: 'lease-casey', due_day: 5, prorate_rule: 'none', effective_from: null, effective_to: null },
+      { lease_id: 'lease-riley', due_day: 1, prorate_rule: 'none', effective_from: null, effective_to: null, prorate_notes: null, continues_lease_id: null, version: 1 },
+      { lease_id: 'lease-jordan', due_day: 31, prorate_rule: 'daily', effective_from: null, effective_to: null, prorate_notes: null, continues_lease_id: null, version: 1 },
+      { lease_id: 'lease-casey', due_day: 5, prorate_rule: 'none', effective_from: null, effective_to: null, prorate_notes: null, continues_lease_id: null, version: 1 },
     ],
     // Billing rules on the Sample Road tenancy (fictional): a fixed half-share
     // of a $120 monthly cost, and half of a variable gas bill billed only

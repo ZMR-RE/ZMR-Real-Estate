@@ -116,6 +116,33 @@ export function createReviewRpc(db: MockDb, now: () => string) {
   }
 
   const rpc = {
+    // Mirrors of charge_rules_needing_review / unresolved_variable_charges
+    // (20261002115000 / 20261002120000) for the review page.
+    charge_rules_needing_review: (a: Record<string, unknown>) => {
+      const today = new Date().toISOString().slice(0, 10)
+      const l = find('leases', a.p_lease_id)
+      const in30 = (d: string) => (Date.parse(d) - Date.parse(today)) / 86_400_000 <= 30
+      return ok(
+        db.tenancy_charge_rules
+          .filter((r) => r.lease_id === a.p_lease_id && r.status === 'active')
+          .filter((r) => (r.effective_to && String(r.effective_to) < today) || (l?.end_date && in30(String(l.end_date))))
+          .map((r) => ({
+            rule_id: r.id,
+            reason: r.effective_to && String(r.effective_to) < today ? "The rule's end date has passed"
+              : String(l!.end_date) < today ? 'The tenancy has ended — review before any renewal' : 'The tenancy ends within 30 days — review for renewal',
+          })),
+      )
+    },
+    unresolved_variable_charges: (a: Record<string, unknown>) => {
+      const period = String(a.p_period_start)
+      const prev = new Date(Date.UTC(Number(period.slice(0, 4)), Number(period.slice(5, 7)) - 2, 1)).toISOString().slice(0, 10)
+      return ok(
+        db.tenancy_charge_rules
+          .filter((r) => r.lease_id === a.p_lease_id && r.status === 'active' && r.kind === 'variable_statement' && String(r.effective_from ?? period) <= period)
+          .filter((r) => !db.tenancy_charge_statements.some((st) => st.rule_id === r.id && st.service_period_start === prev))
+          .map((r) => ({ rule_id: r.id, description: r.description, service_period_start: prev })),
+      )
+    },
     invoice_print_snapshot: (a: Record<string, unknown>) => {
       const inv = find('invoices', a.p_id)
       return ok(inv ? printSnapshot(db, inv) : null)

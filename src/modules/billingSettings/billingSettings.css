@@ -69,7 +69,9 @@
 }
 
 @media (max-width: 600px) {
-  .billing-fieldset label {
+  .billing-fieldset label,
+  .billing-form input:not([type='checkbox']),
+  .billing-form select {
     min-height: 44px;
   }
 }

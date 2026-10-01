@@ -35,6 +35,10 @@ const now = () => new Date((clock += 60_000)).toISOString()
 const byId = (table: string, id: unknown) => reviewDb[table].find((r) => r.id === id) ?? null
 
 const joins = {
+  tenancy_charge_rules: (row: MockRow) => ({
+    ...row,
+    tenancy_charge_statements: reviewDb.tenancy_charge_statements.filter((st) => st.rule_id === row.id),
+  }),
   invoices: (row: MockRow) => ({
     ...row,
     invoice_lines: reviewDb.invoice_lines.filter((l) => l.invoice_id === row.id).sort((a, b) => (a.sort_order as number) - (b.sort_order as number)),
@@ -46,11 +50,35 @@ const joins = {
     unit: byId('units', row.unit_id),
     property: byId('properties', row.property_id),
     lease_tenants: reviewDb.lease_tenants.filter((lt) => lt.lease_id === row.id).map((lt) => ({ ...lt, tenant: byId('tenants', lt.tenant_id) })),
+    lease_billing_terms: reviewDb.lease_billing_terms.find((t) => t.lease_id === row.id) ?? null,
   }),
 }
 
 export const review = createReviewRpc(reviewDb, now)
 const base = createMockSupabaseClient(reviewDb, review.rpc, joins)
+// New rows get the same column defaults the real tables have (the shared
+// harness insert only adds id/created_at).
+const insertDefaults: Record<string, MockRow> = {
+  tenancy_charge_rules: { status: 'active', version: 1, applied_invoice_id: null, notes: null },
+  tenancy_charge_statements: { billed_invoice_id: null, document_id: null },
+}
+const baseFrom = base.from.bind(base)
+base.from = (table: string) => {
+  const qb = baseFrom(table) as unknown as { insert: (p: MockRow | MockRow[]) => unknown }
+  const defaults = insertDefaults[table]
+  if (defaults) {
+    const insert = qb.insert.bind(qb)
+    qb.insert = (p: MockRow | MockRow[]) => insert(Array.isArray(p) ? p.map((r) => ({ ...defaults, ...r })) : { ...defaults, ...p })
+  }
+  return qb as unknown as ReturnType<typeof baseFrom>
+}
+// The shared harness builder has no .neq(); the billing-rules box uses it.
+// Added here (review page only) rather than editing the shared harness.
+const builderProto = Object.getPrototypeOf(base.from('tenancy_charge_rules')) as { neq?: unknown }
+builderProto.neq = function (this: { filters: ((r: MockRow) => boolean)[] }, col: string, val: unknown) {
+  this.filters.push((r) => r[col] !== val)
+  return this
+}
 
 export const supabase = {
   ...base,
