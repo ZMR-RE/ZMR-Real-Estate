@@ -220,10 +220,14 @@ create trigger documents_invoice_pdf_guard before insert or update or delete on 
   for each row execute function documents_invoice_pdf_guard();
 
 -- Rent ops payments may only be recorded against issued invoices (never a
--- draft). Payments themselves are unchanged otherwise.
+-- draft). Payments themselves are unchanged otherwise. The invoice row is
+-- share-locked, so a payment and an issue/cancel/revision-issue of the same
+-- invoice (which take a row lock) serialize: whichever comes second sees the
+-- other's committed result — never a payment on a replaced invoice.
 create or replace function payments_invoice_state_guard() returns trigger language plpgsql set search_path = public as $$
 begin
-  if not exists (select 1 from invoices where id = new.invoice_id and state = 'issued') then
+  perform 1 from invoices where id = new.invoice_id and state = 'issued' for share;
+  if not found then
     raise exception 'Payments can only be recorded against an issued invoice' using errcode = 'ZM316';
   end if;
   return new;

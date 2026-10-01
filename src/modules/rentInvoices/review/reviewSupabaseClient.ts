@@ -15,9 +15,13 @@ import { createReviewRpc } from './reviewRpc'
 export const reviewDb = buildReviewDb()
 const objects = new Map<string, Blob>()
 let failNextInvoiceUpload = false
+let failNextInvoiceLink = false
 // Armed by main.tsx after seeding, so the seed's own PDF upload succeeds.
 export const armUploadFailureFromUrl = () => {
-  failNextInvoiceUpload = new URLSearchParams(window.location.search).get('fail-upload') === '1'
+  const q = new URLSearchParams(window.location.search)
+  failNextInvoiceUpload = q.get('fail-upload') === '1'
+  // ?fail-link=1: the upload succeeds, then linking it to the invoice fails once.
+  failNextInvoiceLink = q.get('fail-link') === '1'
 }
 
 // Store the entity logo file and record its digest, as an upload would.
@@ -80,8 +84,16 @@ builderProto.neq = function (this: { filters: ((r: MockRow) => boolean)[] }, col
   return this
 }
 
+const baseRpc = base.rpc.bind(base)
 export const supabase = {
   ...base,
+  rpc: (fn: string, args: Record<string, unknown>) => {
+    if (fn === 'attach_invoice_pdf' && failNextInvoiceLink) {
+      failNextInvoiceLink = false
+      return Promise.resolve({ data: null, error: { message: 'Simulated failure while linking the stored PDF (network dropped)' } })
+    }
+    return baseRpc(fn, args)
+  },
   storage: {
     from: () => ({
       upload: async (path: string, file: Blob) => {

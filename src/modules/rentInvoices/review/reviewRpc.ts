@@ -258,6 +258,8 @@ export function createReviewRpc(db: MockDb, now: () => string) {
     attach_invoice_pdf: (a: Record<string, unknown>) => {
       const inv = find('invoices', a.p_invoice_id)
       if (!inv || !inv.number) return fail('ZM315', 'A PDF can only be attached to an issued, numbered invoice')
+      if (!String(a.p_storage_path).startsWith(`${inv.account_id}/${inv.property_id}/Invoices/${inv.number}_`))
+        return fail('ZM346', "The PDF must be stored under this invoice's account and property")
       if (db.documents.some((d) => d.invoice_id === inv.id)) return fail('23505', 'This invoice already has its stored PDF')
       const doc = { id: newId('doc'), invoice_id: inv.id, storage_path: a.p_storage_path, file_size: a.p_file_size }
       db.documents.push(doc)

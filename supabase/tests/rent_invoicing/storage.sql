@@ -11,9 +11,14 @@ insert into storage.objects (bucket_id, name) values
  ('documents', 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Receipts/ordinary-control.pdf');
 set role authenticated;
 set request.jwt.claim.sub = 'aaaaaaaa-0000-0000-0000-00000000000a';
+-- Delete, overwrite (an upsert updates the existing row in place) and move
+-- (a rename updates name) are each attempted and checked separately.
 delete from storage.objects where name like '%/Invoices/SRP-INV-000001%';
-update storage.objects set name = name || '.x' where name like '%/Invoices/SRP-INV-000001%';
-select a('issued invoice object survives member delete/overwrite', $q$(select count(*) = 1 from storage.objects where name = 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Invoices/SRP-INV-000001_2026-10_Unit-A.pdf')$q$);
+select a('stored invoice PDF: delete removes nothing', $q$(select count(*) = 1 from storage.objects where name = 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Invoices/SRP-INV-000001_2026-10_Unit-A.pdf')$q$);
+update storage.objects set owner = 'aaaaaaaa-0000-0000-0000-00000000000a' where name like '%/Invoices/SRP-INV-000001%';
+select a('stored invoice PDF: overwrite (in-place update) changes nothing', $q$(select count(*) = 1 and bool_and(owner is null) from storage.objects where name = 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Invoices/SRP-INV-000001_2026-10_Unit-A.pdf')$q$);
+update storage.objects set name = replace(name, '/Invoices/', '/Other/') where name like '%/Invoices/SRP-INV-000001%';
+select a('stored invoice PDF: move (rename) is refused — still at its path, nothing under Other/', $q$(select count(*) = 1 from storage.objects where name = 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Invoices/SRP-INV-000001_2026-10_Unit-A.pdf') and not exists (select 1 from storage.objects where name like '%/Other/SRP-INV-000001%')$q$);
 delete from storage.objects where name like '%/Receipts/ordinary-control.pdf';
 select a('control: an ordinary document object is still deletable', $q$(select count(*) = 0 from storage.objects where name like '%/Receipts/ordinary-control.pdf')$q$);
 

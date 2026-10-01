@@ -134,12 +134,41 @@ async function sha256Hex(data: ArrayBuffer): Promise<string> {
 // the bytes' SHA-256 recorded in the invoice's immutable history. The
 // database refuses a PDF for a draft; Storage policies refuse later
 // overwrite or deletion of the stored object.
+const alreadyExists = (e: { message?: string; statusCode?: string | number; status?: number } | null) =>
+  !!e && (String(e.statusCode ?? e.status ?? '') === '409' || /already exists|duplicate/i.test(e.message ?? ''))
+
+// Store an issued invoice's PDF once, linked to that invoice revision.
+// `pdf` must be the deterministic render of its frozen (issued) document.
+// Safe to retry after any failure:
+//   * already linked → succeeds only if the linked file is these exact bytes;
+//   * upload succeeded earlier but linking failed → the existing object is
+//     downloaded and reused ONLY if its SHA-256 equals these bytes';
+//   * anything else at that path → refused; never overwritten, never linked.
+// The database additionally refuses a path that isn't this invoice's own
+// (`<account>/<property>/Invoices/<number>_…`).
 export async function attachIssuedInvoicePdf(inv: Pick<RentInvoiceRow, 'id' | 'account_id' | 'property_id'>, filename: string, pdf: Blob) {
   const path = `${inv.account_id}/${inv.property_id}/Invoices/${filename}`
   const bytes = await pdf.arrayBuffer()
+  const sha = await sha256Hex(bytes)
+
+  const linked = await getStoredInvoicePdf(inv.id)
+  if (linked.error) return { error: linked.error }
+  if (linked.data?.detail) {
+    return linked.data.detail.storage_path === path && linked.data.detail.sha256 === sha
+      ? { error: null }
+      : { error: new Error('This invoice already has a different stored PDF; nothing was changed.') }
+  }
+
   const upload = await supabase.storage.from('documents').upload(path, pdf, { contentType: 'application/pdf', upsert: false })
-  if (upload.error) return { error: upload.error }
-  return supabase.rpc('attach_invoice_pdf', { p_invoice_id: inv.id, p_storage_path: path, p_file_size: bytes.byteLength, p_sha256: await sha256Hex(bytes) })
+  if (upload.error) {
+    if (!alreadyExists(upload.error)) return { error: upload.error }
+    const existing = await supabase.storage.from('documents').download(path)
+    if (existing.error || !existing.data) return { error: new Error('A file is already stored at this invoice’s PDF location but couldn’t be read; nothing was linked.') }
+    if ((await sha256Hex(await existing.data.arrayBuffer())) !== sha) {
+      return { error: new Error('A different file is already stored at this invoice’s PDF location. It was not linked or overwritten — please report this.') }
+    }
+  }
+  return supabase.rpc('attach_invoice_pdf', { p_invoice_id: inv.id, p_storage_path: path, p_file_size: bytes.byteLength, p_sha256: sha })
 }
 
 export interface StoredInvoicePdf {

@@ -15,6 +15,22 @@ export interface InvoiceRender {
   doc: InvoiceDoc
   filename: string
   total: number
+  // Issued invoices only: the PDF's creation date and file ID are pinned
+  // (issue time; ID derived from the number), so re-rendering the frozen
+  // document reproduces the stored bytes exactly — Store PDF can then prove
+  // an already-uploaded file is this invoice's document before linking it.
+  fixed: { issuedAt: string; fileId: string } | null
+}
+
+// 32 hex characters derived from the invoice number (FNV-1a, four seeds).
+export function pdfFileIdFor(number: string): string {
+  return [0x811c9dc5, 0x01000193, 0x9e3779b9, 0x85ebca6b]
+    .map((seed) => {
+      let h = seed >>> 0
+      for (const ch of `ZMR-INVOICE:${number}`) h = Math.imul(h ^ ch.charCodeAt(0), 0x01000193) >>> 0
+      return h.toString(16).padStart(8, '0')
+    })
+    .join('')
 }
 
 const DATE = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
@@ -102,6 +118,7 @@ export function buildInvoiceRender(
     },
     filename: invoiceFilename(issued?.number ?? null, s.period_start, unit),
     total: Math.round(lines.reduce((sum, l) => sum + l.amount, 0) * 100) / 100,
+    fixed: issued ? { issuedAt: issued.issuedAt, fileId: pdfFileIdFor(issued.number) } : null,
   }
 }
 

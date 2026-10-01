@@ -37,6 +37,7 @@ select t('manager: edit billing rule refused', $q$update tenancy_charge_rules se
 select t('manager: assistant assignment refused', $q$insert into agent_assignments (account_id, agent_id, lease_id) values ('a0000000-0000-0000-0000-00000000000a','$q$ || :'ag' || $q$','a5000000-0000-0000-0000-000000000003')$q$, 'ZM370');
 select t('manager: assistant run refused', $q$select run_assistant_invoice_drafts('$q$ || :'ag' || $q$', '2027-03-01')$q$, 'ZM370');
 select t('control: manager''s ordinary property edit still works', $q$update properties set address = address where id = 'a1000000-0000-0000-0000-000000000003'$q$, 'ok');
+select t('control: manager can still record a payment (existing behaviour; shared invoice lock)', $q$insert into payments (account_id, invoice_id, amount, paid_date) values ('a0000000-0000-0000-0000-00000000000a','$q$ || :'issued' || $q$',1,'2026-11-04')$q$, 'ok');
 select t('control: manager''s ordinary tenancy-member edit still works', $q$update lease_tenants set tenant_id = tenant_id where tenant_id = 'a3000000-0000-0000-0000-000000000005'$q$, 'ok');
 
 set request.jwt.claim.sub = 'dddddddd-0000-0000-0000-00000000000d';

@@ -24,3 +24,12 @@ intentional failing check and succeeds only if `run.sh` then exits 1.
 
 These are disposable-database checks. They prove the policy logic, not hosted Storage; the
 release verification covers that (see `docs/planning/agents/ZMR-T4-stage1-implementation.md`).
+
+## Payment / revision race (T3 finding on 921324e)
+
+`./payment_race.sh` — after `run.sh`. Two sessions race a payment on an original
+invoice against issuing its revision, in both orders. The invoice row lock
+(issue) and share lock (payment guard) must serialize them: the second operation
+is refused (ZM349 / ZM316) after waiting, and no payment ever sits on a
+superseded invoice. Exits 1 on any failure. Against the unfixed `921324e` the same
+script reports 6 failures (payments stranded both ways).

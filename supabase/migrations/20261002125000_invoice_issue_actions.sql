@@ -39,9 +39,18 @@ begin
 
   perform set_config('app.invoice_op', 'on', true);
   if inv.revision_of is not null then
+    -- Row lock on the original: a payment being recorded against it holds a
+    -- share lock (payments_invoice_state_guard), so the two serialize.
     select * into orig from invoices where id = inv.revision_of for update;
     if orig.state <> 'issued' or orig.number is null then
       raise exception 'Only the current issued version can be revised' using errcode = 'ZM334';
+    end if;
+    -- A payment recorded on the original after this revision was opened would
+    -- be stranded on a superseded invoice; moving payments isn't part of this
+    -- release, so issuing the revision is refused instead.
+    if exists (select 1 from payments where invoice_id = orig.id) then
+      raise exception 'A payment has been recorded against % since this revision was opened. Issuing the revision would leave that payment on a replaced invoice, and moving payments isn''t part of this release — so the revision can''t be issued. Reject it; % and its payments stay as they are.', orig.number, orig.number
+        using errcode = 'ZM349';
     end if;
     v_number := regexp_replace(orig.number, '-R[0-9]+$', '') || '-R' || inv.revision;
   else

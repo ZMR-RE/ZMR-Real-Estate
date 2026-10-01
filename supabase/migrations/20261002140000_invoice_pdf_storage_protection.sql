@@ -25,7 +25,8 @@ begin
   if p_sha256 !~ '^[0-9a-f]{64}$' then
     raise exception 'A SHA-256 digest (64 lowercase hex characters) is required' using errcode = 'ZM345';
   end if;
-  if p_storage_path not like inv.account_id::text || '/' || inv.property_id::text || '/Invoices/%' then
+  -- The object must be THIS invoice's own file: <account>/<property>/Invoices/<number>_…
+  if inv.number is null or not starts_with(p_storage_path, inv.account_id::text || '/' || inv.property_id::text || '/Invoices/' || inv.number || '_') then
     raise exception 'The PDF must be stored under this invoice''s account and property' using errcode = 'ZM346';
   end if;
   if p_file_size is null or p_file_size <= 0 then

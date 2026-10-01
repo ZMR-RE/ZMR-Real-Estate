@@ -100,6 +100,15 @@ select t('cancel refused while payments exist', $q$select cancel_invoice('$q$ ||
 select create_invoice_draft(:L2, '2026-11-01') as inv4 \gset
 select approve_invoice(:'inv4', 1) as v \gset
 select issue_invoice(:'inv4', :v) as n4 \gset
+-- T3 finding: a payment recorded on the original AFTER its revision was
+-- opened must block issuing the revision (never strand it on a replaced invoice).
+select revise_invoice(:'inv4', (select version from invoices where id = :'inv4')) as rev4 \gset
+select approve_invoice(:'rev4', 1) as v4 \gset
+select t('payment on the original while its revision is open', $q$insert into payments (account_id, invoice_id, amount, paid_date) values ('a0000000-0000-0000-0000-00000000000a','$q$ || :'inv4' || $q$',10,'2026-11-03')$q$, 'ok');
+select t('revision issue refused: payment arrived after the revision was opened', $q$select issue_invoice('$q$ || :'rev4' || $q$', $q$ || :v4 || $q$)$q$, 'ZM349');
+select a('original still issued, payment still on it, revision not issued', $q$(select state = 'issued' from invoices where id = '$q$ || :'inv4' || $q$') and (select count(*) = 1 from payments where invoice_id = '$q$ || :'inv4' || $q$') and (select state = 'approved' and number is null from invoices where id = '$q$ || :'rev4' || $q$')$q$);
+select reject_invoice(:'rev4', :v4, 'payment arrived; revision withdrawn') \gset
+select t('payments on a superseded or draft invoice stay refused', $q$insert into payments (account_id, invoice_id, amount, paid_date) values ('a0000000-0000-0000-0000-00000000000a','$q$ || :'rev4' || $q$',10,'2026-11-03')$q$, 'ZM316');
 select a('cancelled number not reused: next is A-INV-000003', $q$'$q$ || :'n4' || $q$' = 'A-INV-000003'$q$);
 select a('cancelled invoice keeps number', $q$(select state = 'cancelled' and number = 'A-INV-000002' from invoices where id = '$q$ || :'inv2' || $q$')$q$);
 
@@ -131,8 +140,10 @@ select a('configured start used: PP-INV-000121', $q$'$q$ || :'n5' || $q$' = 'PP-
 select t('direct PDF link refused', $q$insert into documents (account_id, property_id, category, storage_path, file_size, invoice_id) values ('a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-000000000002','Invoices','a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Invoices/x.pdf',1,'$q$ || :'inv3' || $q$')$q$, 'ZM315');
 select t('attach needs a SHA-256 digest', $q$select attach_invoice_pdf('$q$ || :'inv3' || $q$', 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Invoices/SRP-INV-000001_2026-10_Unit-A.pdf', 5000, 'not-a-hash')$q$, 'ZM345');
 select t('attach refuses a path outside the invoice''s property', $q$select attach_invoice_pdf('$q$ || :'inv3' || $q$', 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000001/Invoices/x.pdf', 5000, $q$ || quote_literal(:SHA) || $q$)$q$, 'ZM346');
+select t('attach refuses another invoice''s file (number prefix)', $q$select attach_invoice_pdf('$q$ || :'inv3' || $q$', 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Invoices/SRP-INV-000009_2026-10_Unit-A.pdf', 5000, $q$ || quote_literal(:SHA) || $q$)$q$, 'ZM346');
+select t('attach refuses a lookalike prefix without the separator', $q$select attach_invoice_pdf('$q$ || :'inv3' || $q$', 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Invoices/SRP-INV-0000012_x.pdf', 5000, $q$ || quote_literal(:SHA) || $q$)$q$, 'ZM346');
 select t('PDF attaches to issued invoice', $q$select attach_invoice_pdf('$q$ || :'inv3' || $q$', 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Invoices/SRP-INV-000001_2026-10_Unit-A.pdf', 5000, $q$ || quote_literal(:SHA) || $q$)$q$, 'ok');
-select t('only one PDF per invoice revision', $q$select attach_invoice_pdf('$q$ || :'inv3' || $q$', 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Invoices/again.pdf', 5000, $q$ || quote_literal(:SHA) || $q$)$q$, '23505');
+select t('only one PDF per invoice revision', $q$select attach_invoice_pdf('$q$ || :'inv3' || $q$', 'a0000000-0000-0000-0000-00000000000a/a1000000-0000-0000-0000-000000000002/Invoices/SRP-INV-000001_again.pdf', 5000, $q$ || quote_literal(:SHA) || $q$)$q$, '23505');
 select t('issued PDF cannot be deleted', $q$delete from documents where invoice_id = '$q$ || :'inv3' || $q$'$q$, 'ZM314');
 select t('issued PDF cannot be relinked', $q$update documents set storage_path = 'moved.pdf' where invoice_id = '$q$ || :'inv3' || $q$'$q$, 'ZM314');
 select a('digest recorded in the immutable history', $q$exists (select 1 from invoice_events where invoice_id = '$q$ || :'inv3' || $q$' and event = 'pdf_attached' and detail->>'sha256' = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' and (detail->>'file_size')::int = 5000)$q$);
