@@ -89,6 +89,9 @@ export interface Transaction {
   voided: boolean
   statement_reconciled: boolean
   property: { id: string; name: string | null; address: string | null } | null
+  // Entity books: the entity whose books carry this transaction, or null
+  // while it still needs one (confirmed only by an explicit save).
+  responsible_entity: { id: string; name: string } | null
   reimbursement_source_id: string | null
 }
 
@@ -117,6 +120,7 @@ export interface TransactionInput {
   transactionDate: string
   description: string | null
   statementReconciled: boolean
+  responsibleEntityId: string | null
 }
 
 export function payerColumns(payer: TransactionPayer) {
@@ -130,10 +134,11 @@ export function payerColumns(payer: TransactionPayer) {
 export interface TransactionFilters {
   propertyId?: string | null
   year?: number | null
+  needsEntity?: boolean
 }
 
 const TRANSACTION_COLUMNS =
-  'id, entry_type, category, subcategory, vendor:vendors(id, name, split_percentage, split_description), tenant:tenants(id, name), prospective_tenant:prospective_tenants(id, name), unit, payment_method, repair_or_improvement, amount, transaction_date, description, voided, statement_reconciled, property:properties(id, name, address), reimbursement_source_id'
+  'id, entry_type, category, subcategory, vendor:vendors(id, name, split_percentage, split_description), tenant:tenants(id, name), prospective_tenant:prospective_tenants(id, name), unit, payment_method, repair_or_improvement, amount, transaction_date, description, voided, statement_reconciled, property:properties(id, name, address), responsible_entity:llcs!financial_transactions_responsible_entity_fkey(id, name), reimbursement_source_id'
 
 // Non-voided transactions — the only rows any total, report or export
 // counts. listVoidedTransactions is display-only ("Show voided").
@@ -155,6 +160,10 @@ async function queryTransactions(accountId: string, filters: TransactionFilters,
 
   if (filters.propertyId) {
     query = query.eq('property_id', filters.propertyId)
+  }
+
+  if (filters.needsEntity) {
+    query = query.is('responsible_entity_id', null)
   }
 
   if (filters.year) {
@@ -181,6 +190,7 @@ export async function createTransaction(accountId: string, recordedBy: string, i
       transaction_date: input.transactionDate,
       description: input.description,
       statement_reconciled: input.statementReconciled,
+      responsible_entity_id: input.responsibleEntityId,
       recorded_by: recordedBy,
     })
     .select()
@@ -356,6 +366,7 @@ export async function updateTransaction(id: string, input: TransactionInput) {
       transaction_date: input.transactionDate,
       description: input.description,
       statement_reconciled: input.statementReconciled,
+      responsible_entity_id: input.responsibleEntityId,
     })
     .eq('id', id)
     .select()

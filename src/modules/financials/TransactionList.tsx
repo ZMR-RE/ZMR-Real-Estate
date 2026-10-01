@@ -81,7 +81,7 @@ export function TransactionList({
         <thead>
           <tr>
             <th>Date</th>
-            <th>Property</th>
+            <th>Property / entity</th>
             <th>Type</th>
             <th>Paid to / from</th>
             <th>Description</th>
@@ -105,8 +105,14 @@ export function TransactionList({
                       </>
                     )}
                   </td>
-                  <td data-label="Property" className="transaction-list-wrap">
+                  <td data-label="Property / entity" className="transaction-list-wrap">
                     {property}
+                    <br />
+                    {tx.responsible_entity ? (
+                      tx.responsible_entity.name
+                    ) : tx.voided ? null : (
+                      <span className="status-badge status-badge-warning">Needs entity</span>
+                    )}
                   </td>
                   <td data-label="Type" className="transaction-list-wrap">
                     {tx.entry_type === 'income' ? 'Income' : 'Expense'} · {CATEGORY_LABELS[tx.category]}

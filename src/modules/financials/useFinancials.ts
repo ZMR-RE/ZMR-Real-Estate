@@ -23,7 +23,7 @@ import { buildYearOptions } from './transactionEntry'
 // Financials' data side: the filtered transaction list, year choices,
 // optional voided rows, summaries and exports. Entry/editing lives in
 // useTransactionEntry.
-export function useFinancials() {
+export function useFinancials({ initialNeedsEntityOnly = false, initialYear }: { initialNeedsEntityOnly?: boolean; initialYear?: number } = {}) {
   const { accountId, session } = useAuth()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [voidedTransactions, setVoidedTransactions] = useState<Transaction[]>([])
@@ -31,7 +31,9 @@ export function useFinancials() {
   const [propertyOptions, setPropertyOptions] = useState<{ id: string; label: string }[]>([])
   const { vendorOptions, addVendor } = useVendors(accountId)
   const [propertyFilter, setPropertyFilter] = useState<string | null>(null)
-  const [year, setYear] = useState(new Date().getFullYear())
+  // Entity books: show only active transactions with no entity confirmed.
+  const [needsEntityOnly, setNeedsEntityOnly] = useState(initialNeedsEntityOnly)
+  const [year, setYear] = useState(initialYear ?? new Date().getFullYear())
   const [yearRange, setYearRange] = useState<{ earliest: number | null; latest: number | null }>({ earliest: null, latest: null })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -75,7 +77,7 @@ export function useFinancials() {
     const seq = ++loadSeq.current
     setLoading(true)
     const [active, voided] = await Promise.all([
-      listTransactions(accountId, { propertyId: propertyFilter, year }),
+      listTransactions(accountId, { propertyId: propertyFilter, year, needsEntity: needsEntityOnly }),
       showVoided ? listVoidedTransactions(accountId, { propertyId: propertyFilter, year }) : Promise.resolve(null),
     ])
     if (seq !== loadSeq.current) return
@@ -88,7 +90,7 @@ export function useFinancials() {
     setError(null)
     setTransactions(active.data ?? [])
     setVoidedTransactions(voided?.data ?? [])
-  }, [accountId, propertyFilter, year, showVoided])
+  }, [accountId, propertyFilter, year, showVoided, needsEntityOnly])
 
   useEffect(() => {
     refresh()
@@ -202,6 +204,8 @@ export function useFinancials() {
     revealTransaction,
     propertyFilter,
     setPropertyFilter,
+    needsEntityOnly,
+    setNeedsEntityOnly,
     year,
     setYear,
     yearOptions,

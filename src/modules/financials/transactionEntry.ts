@@ -20,6 +20,7 @@ export function blankTransaction(today: string = todayLocalIsoDate()): Transacti
     transactionDate: today,
     description: null,
     statementReconciled: false,
+    responsibleEntityId: null,
   }
 }
 
@@ -52,6 +53,7 @@ export function transactionToInput(tx: Transaction): TransactionInput {
     transactionDate: tx.transaction_date,
     description: tx.description,
     statementReconciled: tx.statement_reconciled,
+    responsibleEntityId: tx.responsible_entity?.id ?? null,
   }
 }
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { SearchableSelect } from '../../shared/SearchableSelect'
 import { MileageRollup } from '../mileage/MileageRollup'
 import { BankReconciliation } from '../bankReconciliation/BankReconciliation'
@@ -20,6 +20,10 @@ export function Financials() {
   const [isReconciling, setIsReconciling] = useState(false)
   const [isManagingSplitRules, setIsManagingSplitRules] = useState(false)
   const [isImportingHistorical, setIsImportingHistorical] = useState(false)
+  // The Action Queue's Needs-entity item links here as
+  // /financials?needs=entity&year=YYYY: the filters start from the link.
+  const [searchParams] = useSearchParams()
+  const linkedYear = Number(searchParams.get('year'))
   const {
     transactions,
     voidedTransactions,
@@ -30,6 +34,8 @@ export function Financials() {
     createVendor,
     propertyFilter,
     setPropertyFilter,
+    needsEntityOnly,
+    setNeedsEntityOnly,
     year,
     setYear,
     yearOptions,
@@ -47,7 +53,10 @@ export function Financials() {
     refreshTransactions,
     refreshYears,
     revealTransaction,
-  } = useFinancials()
+  } = useFinancials({
+    initialNeedsEntityOnly: searchParams.get('needs') === 'entity',
+    initialYear: Number.isInteger(linkedYear) && linkedYear > 1900 ? linkedYear : undefined,
+  })
 
   const entry = useTransactionEntry({
     propertyLabelFor: (id) => propertyOptions.find((p) => p.id === id)?.label ?? 'property',
@@ -104,6 +113,21 @@ export function Financials() {
         <button type="button" onClick={() => setPropertyFilter(null)}>
           Clear filter
         </button>
+      )}
+
+      <label htmlFor="needs_entity_filter">
+        <input
+          id="needs_entity_filter"
+          type="checkbox"
+          checked={needsEntityOnly}
+          onChange={(e) => setNeedsEntityOnly(e.target.checked)}
+        />
+        Needs entity only
+      </label>
+      {needsEntityOnly && (
+        <p className="field-hint">
+          Transactions in a locked year can't be edited. Reopen the year above before assigning an entity.
+        </p>
       )}
 
       <button type="button" onClick={exportTaxCsv} disabled={transactions.length === 0}>

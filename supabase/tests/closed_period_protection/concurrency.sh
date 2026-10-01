@@ -1,5 +1,5 @@
 #!/bin/bash
-PSQL="/opt/homebrew/opt/postgresql@17/bin/psql -h 127.0.0.1 -p 55433 -U postgres -d zmr -X -q"
+PSQL="/opt/homebrew/opt/postgresql@17/bin/psql -h 127.0.0.1 -p ${ZMR_TEST_PGPORT:-55433} -U postgres -d zmr -X -q"
 pre="set role authenticated; set request.jwt.claim.sub='aaaaaaaa-0000-0000-0000-00000000000a';"
 ins() { echo "insert into financial_transactions (account_id,property_id,entry_type,category,payment_method,amount,transaction_date) values ('a0000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-00000000000a','expense','repairs','Card',$1,'$2');"; }
 ts() { date +%H:%M:%S; }
