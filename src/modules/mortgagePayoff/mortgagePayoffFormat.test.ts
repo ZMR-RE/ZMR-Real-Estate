@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { mortgageCurrencyFormatter } from './mortgagePayoffFormat'
+import { formatCurrencyInputOnBlur, mortgageCurrencyFormatter } from './mortgagePayoffFormat'
 
 // Regression coverage for the bug this correction fixed: every Mortgage-tab
 // money display used to run its own Intl.NumberFormat config, and they'd
@@ -31,5 +31,41 @@ describe('mortgageCurrencyFormatter', () => {
 
   it('formats zero as $0.00, not blank or "$0"', () => {
     expect(mortgageCurrencyFormatter.format(0)).toBe('$0.00')
+  })
+})
+
+// Regression coverage for the owner-approved follow-up: mortgage currency
+// INPUTS (not just read-only displays) show exactly two decimals once
+// editing finishes (onBlur), without reformatting on every keystroke —
+// that's the input's own onChange, untouched by this function — and
+// without ever turning a genuinely blank field into "0.00".
+describe('formatCurrencyInputOnBlur', () => {
+  it('pads a whole-number string to two decimals', () => {
+    expect(formatCurrencyInputOnBlur('200000')).toBe('200000.00')
+  })
+
+  it('pads a one-decimal string to two decimals', () => {
+    expect(formatCurrencyInputOnBlur('195000.5')).toBe('195000.50')
+  })
+
+  it('formats a literal zero as "0.00", distinct from blank', () => {
+    expect(formatCurrencyInputOnBlur('0')).toBe('0.00')
+  })
+
+  it('leaves an already-two-decimal string unchanged in value', () => {
+    expect(formatCurrencyInputOnBlur('1264.14')).toBe('1264.14')
+  })
+
+  it('rounds a third-decimal string to two places', () => {
+    expect(formatCurrencyInputOnBlur('12.345')).toBe('12.35')
+  })
+
+  it('never coerces a blank field to "0.00" — blank stays blank', () => {
+    expect(formatCurrencyInputOnBlur('')).toBe('')
+    expect(formatCurrencyInputOnBlur('   ')).toBe('   ')
+  })
+
+  it('leaves unparseable text unchanged for the input\'s own validation to catch', () => {
+    expect(formatCurrencyInputOnBlur('abc')).toBe('abc')
   })
 })

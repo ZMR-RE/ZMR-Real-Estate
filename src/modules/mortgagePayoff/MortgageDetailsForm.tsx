@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
+import { formatCurrencyInputOnBlur } from './mortgagePayoffFormat'
 import type { MortgageDetailsInput } from './mortgagePayoffQueries'
 
 interface MortgageDetailsFormProps {
@@ -69,6 +70,9 @@ export function MortgageDetailsForm({
         inputMode="decimal"
         value={values.original_loan_amount}
         onChange={(e) => setValues((prev) => ({ ...prev, original_loan_amount: e.target.value }))}
+        onBlur={(e) =>
+          setValues((prev) => ({ ...prev, original_loan_amount: formatCurrencyInputOnBlur(e.target.value) }))
+        }
         required
       />
 
@@ -83,6 +87,7 @@ export function MortgageDetailsForm({
         inputMode="decimal"
         value={values.current_balance}
         onChange={(e) => setValues((prev) => ({ ...prev, current_balance: e.target.value }))}
+        onBlur={(e) => setValues((prev) => ({ ...prev, current_balance: formatCurrencyInputOnBlur(e.target.value) }))}
         required
       />
 
@@ -111,6 +116,7 @@ export function MortgageDetailsForm({
         inputMode="decimal"
         value={values.monthly_payment}
         onChange={(e) => setValues((prev) => ({ ...prev, monthly_payment: e.target.value }))}
+        onBlur={(e) => setValues((prev) => ({ ...prev, monthly_payment: formatCurrencyInputOnBlur(e.target.value) }))}
         required
       />
 
@@ -135,6 +141,12 @@ export function MortgageDetailsForm({
         placeholder="Leave blank if no escrow account"
         value={values.escrow_balance ?? ''}
         onChange={(e) => setValues((prev) => ({ ...prev, escrow_balance: e.target.value || null }))}
+        onBlur={(e) =>
+          setValues((prev) => ({
+            ...prev,
+            escrow_balance: e.target.value === '' ? null : formatCurrencyInputOnBlur(e.target.value),
+          }))
+        }
       />
 
       <label htmlFor="term_years">

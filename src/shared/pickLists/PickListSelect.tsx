@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { usePickListOptions } from './usePickListOptions'
 import { ManageOptionsPanel } from './ManageOptionsPanel'
+import { resolveCurrentValueOption } from './resolveCurrentValueOption'
 import type { PickListName } from './pickListsQueries'
 
 // Roadmap 1.30 — sentinel option value for the inline "+ Manage [X]"
@@ -53,7 +54,7 @@ export function PickListSelect({
   const { options, activeOptions, loading, error, saving, add, archive, restore } = usePickListOptions(listName)
   const [manageOpen, setManageOpen] = useState(false)
 
-  const showArchivedCurrentValue = value !== '' && !activeOptions.some((o) => o.value === value)
+  const currentValueOption = resolveCurrentValueOption(value, activeOptions, loading)
   const needsSetup = emptySetup !== undefined && !loading && activeOptions.length === 0 && value === ''
 
   // Selecting what was just created only applies to the setup flow;
@@ -86,9 +87,7 @@ export function PickListSelect({
         }}
       >
         <option value="">{placeholder ?? 'Select…'}</option>
-        {showArchivedCurrentValue && (
-          <option value={value}>{value} (archived)</option>
-        )}
+        {currentValueOption && <option value={currentValueOption.value}>{currentValueOption.label}</option>}
         {activeOptions.map((option) => (
           <option key={option.id} value={option.value}>
             {option.value}
