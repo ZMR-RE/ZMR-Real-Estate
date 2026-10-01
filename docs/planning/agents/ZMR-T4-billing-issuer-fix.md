@@ -1,6 +1,6 @@
 # Billing follow-up: property payment instructions and the invoice issuer (T4)
 
-Built on live `d9cdcb3`. Frontend copy and view only: no migration, no change to queries' write paths, no change to the PDF design.
+Built on live `d9cdcb3`. No migration and no change to the PDF design. Sections 1–2 are copy and view only; section 3 adds one write (creating a person owner record).
 
 ## 1. Saved payment instructions were hidden with no issuer (fixed)
 
@@ -32,14 +32,26 @@ Built on live `d9cdcb3`. Frontend copy and view only: no migration, no change to
   - The existing November draft kept its explicitly chosen issuer.
   - Entered instructions were kept.
 
-## Deeper blocker (reported, not built)
+## 3. "+ Add person" in the issuer field (approved direct path, built)
 
-There's no direct way to **add** a person as an issuer who isn't recorded as an owner:
-- **Owner records are created only by:** the Add-property wizard, which records ownership and doesn't ask for the kind; or Settings › Organizations › "Organization types", which is business-oriented and also has no kind.
-- **The kind** can only be set afterwards, under Identity, and only while it's still unset.
+**Before:** there was no direct way to add a person as an issuer who isn't recorded as an owner. Owner records came only from the Add-property wizard (which records ownership and doesn't ask for the kind) or Settings › Organizations, and the kind could only be set afterwards.
 
-The help text now names the existing route for real owners: add them as an owner, then set Individual. A proper "Add a person" route needs a product decision:
-- **(a)** an "Add person" action in the issuer field that creates an owner record with kind Individual and no ownership; or
-- **(b)** a kind choice in the property wizard's new-owner row, which avoids an extra step for owners.
+**Now:** Billing settings › Edit › Invoice issuer › **+ Add person**.
+- A small step asks for "Person's full name*" with "Save person" and "Cancel". Enter adds the person; it doesn't submit the Billing settings form.
+- It creates an owner record of kind **Individual**, reusing the existing owner/issuer records (`llcs`). No ownership row is written, so no property ownership is assigned.
+- The new person is chosen in the issuer list ("Taylor Fictional — person"). Nothing is saved for the property until Billing settings › Save. A note says to add their invoice code on their profile before issuing.
+- **Same name:** if the name matches an existing record (ignoring case and spacing), the step offers "Use existing: …" for each match, and "Add a different person with this name". Reuse is never forced; two different people can share a name.
+- The issuer hint now reads: "The list is your owner records. Not listed? Use + Add person — it doesn't make them an owner of any property."
+- No wizard change.
 
-Either is small. Neither is built without approval.
+**Verified** (local harness, simulated backend, fictional data, 410 Example Street with no owner on file):
+- Added "Taylor Fictional", chose them and saved. The view shows "Invoice issuer Taylor Fictional · Person" and the "no invoice code yet" note.
+- Ownership still reads "No owner on file yet." Taylor's profile shows Active, Individual, "No properties linked yet."
+- Typing "riley  example" offered "Use existing: Riley Example". Choosing "Add a different person with this name" left two separate records ("riley example — person" and "Riley Example"). Cancel kept the saved issuer, Taylor Fictional.
+- Evidence: `evidence/billing-add-person/01–04`.
+
+**Tests:** `issuersNamed` (case/spacing-insensitive matching on name or display name) in `billingSettingsLogic.test.ts`.
+
+**Harness-only:** new owner records default `archived = false`, `invoice_code = null`, `display_name = null`.
+
+**Not covered here:** the property wizard's new-owner row still doesn't ask for the kind (option (b) earlier); not requested for this slice.

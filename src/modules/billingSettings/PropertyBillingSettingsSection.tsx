@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { EditableSection } from '../../shared/EditableSection'
+import { AddPersonIssuer } from './AddPersonIssuer'
 import './billingSettings.css'
 import { effectivePaymentInstructions, issuerKindLabel, issuerOptionLabel } from './billingSettingsLogic'
 import {
@@ -32,6 +33,7 @@ export function PropertyBillingSettingsSection({ propertyId }: PropertyBillingSe
   const [draft, setDraft] = useState({ entityId: '', override: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [addedNote, setAddedNote] = useState<string | null>(null)
 
   // Entity defaults are owned by Branding & documents, so they're re-read
   // whenever this box loads or enters Edit (cross-module freshness).
@@ -112,11 +114,23 @@ export function PropertyBillingSettingsSection({ propertyId }: PropertyBillingSe
         <option value="">Not chosen</option>
         {entities.map((e) => <option key={e.id} value={e.id}>{issuerOptionLabel(e)}</option>)}
       </select>
+      {accountId && (
+        <AddPersonIssuer
+          accountId={accountId}
+          existing={entities}
+          onChosen={(issuer, isNew) => {
+            if (isNew) setEntities((prev) => [...prev, issuer].sort((a, b) => a.name.localeCompare(b.name)))
+            setDraft((d) => ({ ...d, entityId: issuer.id }))
+            setAddedNote(isNew ? `${issuer.name} added as a person and chosen. Save to use them for this property; add their invoice code on their profile (Invoicing) before issuing.` : null)
+          }}
+        />
+      )}
+      {addedNote && <p className="field-hint" role="status">{addedNote}</p>}
       <p className="field-hint">
         The person or business named on this property’s rent invoices. Choose it explicitly — it isn’t taken from the ownership list or from who is signed in. Already-issued invoices keep the issuer they were issued by.
       </p>
       <p className="field-hint">
-        The list is your owner records. To issue as a person, choose their owner record; if it doesn’t say “person” yet, open it and set <em>Owner / entity kind</em> to Individual under Identity. A person with no owner record yet is added as an owner on the property they own (Ownership › Edit).
+        The list is your owner records. Not listed? Use <em>+ Add person</em> — it doesn’t make them an owner of any property. A record that doesn’t say “person” yet can be set to Individual under Identity on its profile.
       </p>
 
       <label htmlFor={`billing-pay-${propertyId}`}>This property’s payment instructions</label>
@@ -147,6 +161,7 @@ export function PropertyBillingSettingsSection({ propertyId }: PropertyBillingSe
       edit={edit}
       onEditStart={() => {
         setDraft({ entityId: row?.billing_entity_id ?? '', override: row?.payment_instructions_override ?? '' })
+        setAddedNote(null)
         refresh()
       }}
     />

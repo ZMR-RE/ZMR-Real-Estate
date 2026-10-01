@@ -94,6 +94,14 @@ export function issuerOptionLabel(o: { name: string; display_name: string | null
   return `${o.display_name || o.name}${kind ? ` — ${kind.toLowerCase()}` : ''}${o.invoice_code ? ` (${o.invoice_code})` : ''}`
 }
 
+// Owner records with the same name as a person being added. Offered, never
+// forced: two different people may share a name.
+export function issuersNamed<T extends { name: string; display_name: string | null }>(options: T[], name: string): T[] {
+  const norm = (n: string) => n.trim().replace(/\s+/g, ' ').toLowerCase()
+  const key = norm(name)
+  return key ? options.filter((o) => norm(o.name) === key || (o.display_name !== null && norm(o.display_name) === key)) : []
+}
+
 export function continuityLabel(o: ContinuityOption): string {
   const names = o.lease_tenants.map((lt) => lt.tenant?.name).filter(Boolean).join(' & ')
   const dates = `${o.start_date}${o.end_date ? ` to ${o.end_date}` : ' onward'}`

@@ -104,6 +104,18 @@ export async function listBillingEntities(accountId: string) {
   return supabase.from('llcs').select('id, name, display_name, invoice_code, owner_kind').eq('account_id', accountId).eq('archived', false).order('name').returns<EntityOption[]>()
 }
 
+// Billing settings › Invoice issuer › + Add person: a new owner record for a
+// person (kind Individual) so they can issue invoices. It records no
+// ownership of any property; that stays an explicit Ownership entry.
+export async function createPersonIssuer(accountId: string, name: string) {
+  return supabase
+    .from('llcs')
+    .insert({ account_id: accountId, name, owner_kind: 'individual' })
+    .select('id, name, display_name, invoice_code, owner_kind')
+    .single()
+    .returns<EntityOption>()
+}
+
 export interface PropertyBillingRow {
   id: string
   billing_entity_id: string | null

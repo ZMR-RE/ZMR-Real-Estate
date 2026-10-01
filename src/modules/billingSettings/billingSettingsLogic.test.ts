@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dueDayLabel, effectivePaymentInstructions, issuerKindLabel, issuerOptionLabel, normalizeInvoiceCode, ordinal, previewInvoiceNumber, termsFormFrom, termsInputFrom, validateEntityInvoicing, validateTerms } from './billingSettingsLogic'
+import { dueDayLabel, effectivePaymentInstructions, issuerKindLabel, issuerOptionLabel, issuersNamed, normalizeInvoiceCode, ordinal, previewInvoiceNumber, termsFormFrom, termsInputFrom, validateEntityInvoicing, validateTerms } from './billingSettingsLogic'
 
 describe('billing settings logic', () => {
   it('labels due days, flagging month-end days', () => {
@@ -55,5 +55,18 @@ describe('invoice issuer (person or business)', () => {
     expect(issuerOptionLabel({ name: 'Riley Example', display_name: null, invoice_code: 'RE', owner_kind: 'individual' })).toBe('Riley Example — person (RE)')
     expect(issuerOptionLabel({ name: 'Example Holdings LLC', display_name: 'Example Holdings', invoice_code: null, owner_kind: 'entity' })).toBe('Example Holdings — business')
     expect(issuerOptionLabel({ name: 'Sample Road Properties LLC', display_name: null, invoice_code: 'SRP', owner_kind: null })).toBe('Sample Road Properties LLC (SRP)')
+  })
+})
+
+describe('+ Add person: same-name records are offered, not forced', () => {
+  const records = [
+    { id: 'p1', name: 'Riley Example', display_name: null },
+    { id: 'b1', name: 'Example Holdings LLC', display_name: 'Example Holdings' },
+  ]
+  it('finds records with the same name or display name, ignoring case and spacing', () => {
+    expect(issuersNamed(records, '  riley   example ').map((r) => r.id)).toEqual(['p1'])
+    expect(issuersNamed(records, 'example holdings').map((r) => r.id)).toEqual(['b1'])
+    expect(issuersNamed(records, 'Riley Examples')).toEqual([])
+    expect(issuersNamed(records, '  ')).toEqual([])
   })
 })
