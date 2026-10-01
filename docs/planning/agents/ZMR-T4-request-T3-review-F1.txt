@@ -1,0 +1,43 @@
+T4 → T3 (relay via the owner): focused review request, Stage 1 F-1 fix.
+
+CANDIDATE: 45d3eb5ecfbcd5ee09a6404b9a6c5f2e15b9cf5d (branch t4/stage1-on-a)
+  = T3-cleared 03b3343 + docs-only commits (14fc899, decd582, 54f20f0) + 45d3eb5.
+  The commit adding this file changes docs only.
+
+WHAT CHANGED (src/modules/rentInvoices/ only; 180 insertions, 28 deletions)
+  invoiceActions.ts (new):
+    - the hook's run(), moved unchanged as actionRunner(host);
+    - closingActions(): reject and cancel now pass the invoice they act on as keepId (it was null).
+  invoiceWorkflowLogic.ts: detailPanelFor() (same rules as the section's old inline conditions) and
+    issuedActionsOpen().
+  useInvoiceWorkflow.ts, InvoiceWorkflowSection.tsx, IssuedInvoicePanel.tsx: use the above.
+  invoiceActions.test.ts (new): 6 tests.
+  supabase/: byte-identical to 03b3343. No migration and no database change.
+
+ROOT CAUSE
+  refresh(null) reloads the review list but never re-reads the open invoice, so after reject or cancel
+  the panel showed the old row's status and actions.
+
+PLEASE CONFIRM
+  1. Reject: the panel closes (a rejected row has no panel). Cancel: the panel shows
+     "Cancelled (number kept)" with no Revise/Cancel.
+  2. Unchanged:
+     - approve, edit, create, revise, issue and Store PDF keep their keepId handling;
+     - issue and storePdf code is untouched;
+     - error paths are identical (ZM324 re-reads; ZM338/ZM349 refusals change nothing).
+  3. detailPanelFor matches the old conditions exactly.
+
+EVIDENCE
+  - 3 of the new tests fail when the old null keepId is restored temporarily.
+  - Clean clone of 45d3eb5:
+      npm ci, build OK; tsc -b --noEmit clean;
+      vitest 228 passed / 1 skipped (222 + 6); oxlint 0 errors (83 warnings, unchanged);
+      rent_invoicing suite 167/167; payment_race 0 failed.
+  - Local review harness (simulated backend, port 5196):
+      before the fix: Draft/Approve after reject; Issued/Revise after cancel;
+      after the fix: panel closed after reject; Cancelled, no actions after cancel.
+  - Hosted results on 03b3343 are reused where behaviour is unchanged
+    (docs/planning/agents/ZMR-T4-stage1-hosted-results.md).
+    No new Practice window was used.
+
+Not authorized: production release, sending, scheduling, migrations.
