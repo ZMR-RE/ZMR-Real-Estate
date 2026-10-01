@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
 import { formatMoney, periodLabel } from './invoiceDocument'
 import { InvoicePdfPreview } from './InvoicePdfPreview'
-import { STATE_LABEL } from './invoiceWorkflowLogic'
+import { issuedActionsOpen, STATE_LABEL } from './invoiceWorkflowLogic'
 import type { RentInvoiceRow } from './rentInvoiceTypes'
 import type { InvoiceWorkflow } from './useInvoiceWorkflow'
 
@@ -20,7 +20,7 @@ export function IssuedInvoicePanel({ invoice, workflow }: IssuedInvoicePanelProp
   const [hasStoredPdf, setHasStoredPdf] = useState<boolean | null>(null)
   const doc = workflow.selectedDoc?.invoiceId === invoice.id ? workflow.selectedDoc : null
   const snap = invoice.issued_snapshot
-  const live = invoice.state === 'issued'
+  const live = issuedActionsOpen(invoice)
   const issuerName = snap?.issuer ? snap.issuer.display_name?.trim() || snap.issuer.legal_name : ''
 
   const actions = live ? (

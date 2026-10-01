@@ -55,7 +55,7 @@ Screenshots are in `evidence/stage1-hosted/`.
 
 | # | Finding | Origin | Recommendation |
 |---|---|---|---|
-| **F-1** | After **Reject draft** or **Cancel invoice**, the Rent ops detail panel keeps showing the old state (e.g. "Approved — ready to issue" with **Issue…**, or "Issued" with **Revise / Cancel…**) until a reload. The database and list are correct. | Stage 1 (`useInvoiceWorkflow`: the action refreshes without re-reading or clearing the selected invoice) | Fix in the next candidate, since misleading actions show on a finished invoice. Needs a new fixed hash and T3 re-review. I didn't click the stale **Issue…**, to avoid consuming a number if that path were wrong. |
+| **F-1** (fixed in the next candidate; see below) | After **Reject draft** or **Cancel invoice**, the Rent ops detail panel keeps showing the old state (e.g. "Approved — ready to issue" with **Issue…**, or "Issued" with **Revise / Cancel…**) until a reload. The database and list are correct. | Stage 1 (`useInvoiceWorkflow`: the action refreshes without re-reading or clearing the selected invoice) | Fix in the next candidate, since misleading actions show on a finished invoice. Needs a new fixed hash and T3 re-review. I didn't click the stale **Issue…**, to avoid consuming a number if that path were wrong. |
 | F-2 | On a collapsed box (e.g. entity › Invoicing), **Edit** enters edit mode but the box stays closed, so the form is hidden. | Pre-existing shared `EditableSection` (in production `1e4e640`) | Log for the owner's decision; not Stage 1 scope. |
 | F-3 | Button labels "Add tenant" and "Save payment" don't follow the universal "Save" rule. | Pre-existing (`TenantForm`, `PaymentForm`) | Log; not Stage 1 scope. |
 | F-4 | The Issued invoices table shows `$1045.00` (no thousands separator); the rest of the page shows `$1,045.00`. | Pre-existing `rentOps/InvoiceList` | Log; not Stage 1 scope. |
@@ -100,3 +100,44 @@ Screenshots are in `evidence/stage1-hosted/`.
 **Final migration list:** Practice 119 = the previous 110 + the 9 Stage 1 versions.
 
 **Production:** unchanged at `1e4e640`. Hosted clearance isn't production approval. A deployment candidate must merge the live baseline and needs the owner's scoped release approval.
+
+## F-1 fix (after the window, for T3's focused review)
+
+**Root cause:** `useInvoiceWorkflow` ran reject and cancel with `keepId = null`. `refresh(null)` reloads the review list but never re-reads the open invoice, so the panel kept the pre-action row: its state, and the actions derived from it.
+
+**Fix (`src/modules/rentInvoices/` only):**
+
+| File | Change |
+|---|---|
+| `invoiceActions.ts` (new, no React or Supabase) | Holds the hook's action runner, moved unchanged as `actionRunner`, plus `closingActions`. Reject and cancel now pass the invoice they acted on as `keepId`, so the panel re-reads the saved row. |
+| `invoiceWorkflowLogic.ts` | New `detailPanelFor` (`review` / `issued` / none), taken from the section's inline conditions with the same rules. New `issuedActionsOpen` (only `issued` offers Revise/Cancel). |
+| `useInvoiceWorkflow.ts`, `InvoiceWorkflowSection.tsx`, `IssuedInvoicePanel.tsx` | Use the above. |
+
+**Result:**
+- A rejected draft's panel closes.
+- A cancelled invoice shows "Cancelled (number kept)", read-only, with no Revise/Cancel.
+
+**Not changed:**
+- The approve, edit, issue, revise, create and Store PDF paths keep their existing `keepId` handling. Issue and Store PDF code is untouched.
+- Error handling is identical: ZM324 still re-reads; refusals (ZM338, ZM349 and others) change nothing.
+- No migration, no database change: `supabase/` is byte-identical to `03b3343`.
+
+**Regression coverage:** `invoiceActions.test.ts`, 6 tests.
+- Reject closes the review panel; cancel shows it cancelled with no actions.
+- A refused cancel (ZM338) leaves the panel and record unchanged.
+- A stale reject (ZM324) re-reads.
+- Panel and actions are checked for every state.
+- With the old `null` behaviour put back temporarily, the 3 refresh tests **fail**.
+
+**Checks:**
+- `tsc -b --noEmit` clean.
+- vitest 228 passed, 1 skipped (222 + 6).
+- oxlint 0 errors (83 warnings, unchanged).
+- Build OK.
+- Clean clone: see the T3 request.
+
+**Browser (local review harness, SIMULATED backend, port 5196; not Practice):**
+- **Before the fix:** after Reject, Status was "Draft" with Approve/Reject…; after Cancel, "Issued" with Revise/Cancel… while the list said Cancelled.
+- **After the fix:** Reject closes the panel; Cancel shows "Cancelled (number kept)" with no actions (`evidence/stage1-hosted/F1-fixed-harness-after-cancel.jpg`).
+
+**Hosted evidence reused from `03b3343`** (behaviour unchanged): H1–H7b, H9 and H11. For H8a and H8b, the database refusals and the saved results are unchanged. Only the panel refresh after reject/cancel differs, which F-1 covers. A hosted re-check of the two transitions needs a newly coordinated Practice window. It's optional, since the database side is identical.

@@ -94,3 +94,17 @@ export const STATE_LABEL: Record<RentInvoiceRow['state'], string> = {
   cancelled: 'Cancelled (number kept)',
   rejected: 'Rejected',
 }
+
+// Which details panel an invoice opens in: drafts and approved invoices are
+// reviewed; numbered issued, superseded and cancelled ones are read-only.
+// Anything else (a rejected draft) shows no panel.
+export function detailPanelFor(inv: Pick<RentInvoiceRow, 'state' | 'number'>): 'review' | 'issued' | null {
+  if (inv.state === 'draft' || inv.state === 'approved') return 'review'
+  if (inv.number && (inv.state === 'issued' || inv.state === 'superseded' || inv.state === 'cancelled')) return 'issued'
+  return null
+}
+
+// Revise and Cancel are offered only while an issued invoice is live.
+export function issuedActionsOpen(inv: Pick<RentInvoiceRow, 'state'>): boolean {
+  return inv.state === 'issued'
+}

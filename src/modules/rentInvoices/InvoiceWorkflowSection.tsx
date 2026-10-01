@@ -2,7 +2,7 @@ import './rentInvoices.css'
 import { formatMoney, periodLabel } from './invoiceDocument'
 import { InvoiceReviewPanel } from './InvoiceReviewPanel'
 import { IssuedInvoicePanel } from './IssuedInvoicePanel'
-import { STATE_LABEL, tenancyLabel } from './invoiceWorkflowLogic'
+import { detailPanelFor, STATE_LABEL, tenancyLabel } from './invoiceWorkflowLogic'
 import { NewInvoicePanel } from './NewInvoicePanel'
 import type { InvoiceWorkflow } from './useInvoiceWorkflow'
 
@@ -75,10 +75,10 @@ export function InvoiceWorkflowSection({ workflow: w }: InvoiceWorkflowSectionPr
         </div>
       )}
 
-      {selected && (selected.state === 'draft' || selected.state === 'approved') && (
+      {selected && detailPanelFor(selected) === 'review' && (
         <InvoiceReviewPanel invoice={selected} tenancy={tenancyFor(selected.lease_id)} issuers={w.issuers} workflow={w} />
       )}
-      {selected && selected.number && (selected.state === 'issued' || selected.state === 'superseded' || selected.state === 'cancelled') && (
+      {selected && detailPanelFor(selected) === 'issued' && (
         <IssuedInvoicePanel invoice={selected} workflow={w} />
       )}
     </section>

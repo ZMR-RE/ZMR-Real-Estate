@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
-import { actionErrorMessage, describeBlockers, type BlockerInfo } from './invoiceBlockers'
+import { actionRunner, closingActions, type RpcError } from './invoiceActions'
+import { describeBlockers, type BlockerInfo } from './invoiceBlockers'
 import { buildInvoiceRender, changedSinceApproval, type InvoiceRender } from './invoiceDocument'
 import { invoicePdfBlob } from './invoicePdf'
 import {
@@ -64,8 +65,6 @@ async function documentFor(inv: RentInvoiceRow): Promise<SelectedDocument> {
     return { ...base, snapshot: null, render: null, problem: e instanceof Error ? e.message : String(e) }
   }
 }
-
-type RpcError = { code?: string; message: string } | null
 
 // Business logic for Rent ops' manual invoice workflow: draft from a tenancy
 // → review/edit → approve → issue (number + stored PDF) → revise or cancel.
@@ -131,22 +130,8 @@ export function useInvoiceWorkflow(onRecordsChanged: () => void) {
     if (selected) setSelectedDoc(await documentFor(selected))
   }
 
-  const run = async <T,>(action: () => PromiseLike<{ data: T; error: RpcError }>, keepId: string | null, success: string | null) => {
-    setBusy(true)
-    setError(null)
-    setNotice(null)
-    const { data, error: e } = await action()
-    setBusy(false)
-    if (e) {
-      setError(actionErrorMessage(e))
-      if (e.code === 'ZM324') await refresh(keepId) // show the newer version
-      return null
-    }
-    if (success) setNotice(success)
-    await refresh(keepId)
-    onRecordsChanged()
-    return data
-  }
+  const run = actionRunner({ setBusy, setError, setNotice, refresh, onRecordsChanged })
+  const { reject, cancel } = closingActions(run, { rejectInvoice, cancelInvoice })
 
   const checkBlockers = async (leaseId: string, periodStart: string): Promise<{ codes: string[]; info: BlockerInfo[] }> => {
     const { data } = await getDraftBlockers(leaseId, periodStart)
@@ -168,7 +153,6 @@ export function useInvoiceWorkflow(onRecordsChanged: () => void) {
   // Approval records exactly what prints now (issuer, recipients, branding,
   // payment instructions, lines). Approving again refreshes that record.
   const approve = (inv: RentInvoiceRow) => run(() => approveInvoice(inv.id, inv.version), inv.id, 'Approved as shown. Issue it when you’re ready — issuing assigns the number.')
-  const reject = (inv: RentInvoiceRow, reason: string | null) => run(() => rejectInvoice(inv.id, inv.version, reason), null, 'Draft rejected.')
 
   // Issue, then render the PDF from the stored snapshot and keep it once.
   // Store the PDF BEFORE showing the issued invoice, so its panel opens on
@@ -208,9 +192,6 @@ export function useInvoiceWorkflow(onRecordsChanged: () => void) {
     const id = await run(() => reviseInvoice(invoiceId, version) as PromiseLike<{ data: string; error: RpcError }>, null, 'Revision draft created. The issued invoice and its PDF stay unchanged until the revision is issued.')
     if (id) await refresh(id)
   }
-
-  const cancel = (invoiceId: string, version: number, reason: string) =>
-    run(() => cancelInvoice(invoiceId, version, reason), null, 'Invoice cancelled. Its number is kept and never reused.')
 
   // Open any invoice by id (e.g. a numbered one from Rent ops' issued list).
   const openInvoice = async (id: string) => {
