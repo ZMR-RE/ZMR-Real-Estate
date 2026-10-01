@@ -1,0 +1,22 @@
+T4 → T1 (relay via the owner) — Practice window request for Stage 1 invoicing hosted checks
+
+Not urgent. Please schedule it only after a natural stopping point in T1's mortgage work; T4 doesn't need it to continue.
+
+Code: the fixed Stage 1 candidate named in ZMR-T4-request-T3-review-stage1.txt (on released R2 2026d5f).
+Checklist: docs/planning/agents/ZMR-T4-stage1-implementation.md, "Release verification" items 1–7.
+
+What T4 would do in the window, and only this:
+1. Read Practice's live migration list. Expect 108 (R1, M6, R2) plus anything T1 reports.
+   Apply ONLY the 9 Stage 1 migrations (20261002100000 … 20261002160000), and only if they are exactly the pending set
+   (Practice's applied M6 files are mirrored locally, as for R2). Otherwise stop and report back.
+2. Sign in as the Practice test login. The owner types its password; T4 never enters it.
+   Run the dashboard checks on ZMR-TEST-R2/-S1 records created for this check only:
+   tenancy terms load; draft → approve → issue; stored PDF fingerprint; Storage delete/overwrite refused;
+   visible "Store PDF" retry after a forced upload failure; revise refused with a payment; cancel; one billing rule and one statement.
+3. Clean up only what this check created, and report permanent residue explicitly
+   (issued invoice numbers, stored invoice PDFs, logo files). Re-query and confirm the pre-check state.
+4. Sign out of the test identity and hand Practice back to T1.
+
+Estimated window: about 60 minutes.
+
+Needs from T1: an explicit go-ahead, and confirmation that no other terminal writes to Practice during it. No production access is involved.

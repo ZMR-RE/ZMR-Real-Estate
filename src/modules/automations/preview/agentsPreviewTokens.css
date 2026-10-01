@@ -1,0 +1,29 @@
+/* NON-SAVING AGENTS WORKSPACE PREVIEW (T4) — preview-scoped colour tokens.
+   Owner asked for a clearer light yellow for "review needed" (the shared
+   --warning-bg reads brown) and a demonstrated soft red for failures.
+   Scoped to .agents-workspace so no shipped screen changes; proposed for
+   promotion to index.css :root (documented in DESIGN-SYSTEM.md) once the
+   owner approves the look. */
+
+.agents-workspace {
+  --agents-review-bg: #fff7d1;
+  --agents-review-border: #e6c85a;
+  --agents-problem-bg: #fdecea;
+  --agents-problem-border: rgba(181, 68, 47, 0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .agents-workspace {
+    --agents-review-bg: rgba(242, 201, 76, 0.16);
+    --agents-review-border: rgba(242, 201, 76, 0.5);
+    --agents-problem-bg: rgba(224, 133, 113, 0.16);
+    --agents-problem-border: rgba(224, 133, 113, 0.5);
+  }
+}
+
+:root[data-theme='dark'] .agents-workspace {
+  --agents-review-bg: rgba(242, 201, 76, 0.16);
+  --agents-review-border: rgba(242, 201, 76, 0.5);
+  --agents-problem-bg: rgba(224, 133, 113, 0.16);
+  --agents-problem-border: rgba(224, 133, 113, 0.5);
+}

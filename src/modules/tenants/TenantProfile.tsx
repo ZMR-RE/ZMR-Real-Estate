@@ -6,6 +6,7 @@ import { TenantForm } from './TenantForm'
 import { TenantProfileLeaseHistory } from './TenantProfileLeaseHistory'
 import { TenantProfileDocuments } from './TenantProfileDocuments'
 import { useTenantProfile } from './useTenantProfile'
+import { TenancyBillingSection } from '../billingSettings/TenancyBillingSection'
 
 // Roadmap "Units/Lease/Tenant rebuild" item 5 — a standalone Tenant
 // profile page (net new — no such route existed before this rebuild).
@@ -77,6 +78,8 @@ export function TenantProfile() {
           />
         )}
       />
+
+      <TenancyBillingSection tenantId={tenant.id} />
 
       <CollapsibleSection title="Lease history" defaultOpen>
         <TenantProfileLeaseHistory tenantId={tenant.id} />

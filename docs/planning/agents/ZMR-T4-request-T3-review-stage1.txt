@@ -1,0 +1,33 @@
+T4 → T3 (relay via the owner) — review request: Stage 1 invoicing candidate on released R2
+
+Fixed commit: see the commit that adds this file (the branch head at hand-off; T4 states the full hash in its report).
+Branch t4/stage1-on-r2 = released R2 2026d5f + merge of agents/stage1-invoicing (080fe6a) + fix commit fa0bb9c + this docs commit.
+Base for diffs: 2026d5f (released). `git diff 2026d5f <candidate>` is the whole of Stage 1 on top of production.
+
+Please review:
+1. Migrations 20261002100000 … 20261002160000 (9 files) and supabase/tests/rent_invoicing/*.
+   Highest-risk areas:
+   - print snapshot / approval coverage;
+   - revise-with-payments refusal;
+   - trusted assistant provenance;
+   - owner-only (ZM370);
+   - balance references and renewal links;
+   - charge-rule shape.
+2. Frontend:
+   - src/modules/rentInvoices, src/modules/billingSettings (tenancy terms, billing rules, statements, continuity link);
+   - rentOps list filtering;
+   - EntityProfile Invoicing box.
+3. Shared-file changes to released R2 code:
+   - stationeryPdf/Logic/Types/Fields (totals and renewal labels).
+     Evidence that R2 output is unchanged: identical branding sample PDFs on 2026d5f vs the candidate.
+   - Invoices now use the shared src/shared/pdf/PdfCanvasPreview; the duplicate is deleted.
+4. Integration claims:
+   - R1/R2 migrations and src/modules/bankReconciliation byte-identical to 2026d5f;
+   - no M1–M6 and no 20260930* migration;
+   - one pdf.js copy in the bundle.
+5. The review page only (not shipped): src/modules/rentInvoices/review/*, including ?path=/tenants/<id>.
+
+Evidence: docs/planning/agents/ZMR-T4-stage1-implementation.md, "Candidate on the released baseline".
+Not yet done (needs Practice): release verification items 1–7.
+
+Out of scope: Agents screen/Workload editing, mailbox, sending, schedules, role-aware buttons, payment permissions, deployment.

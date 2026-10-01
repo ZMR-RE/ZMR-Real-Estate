@@ -1,0 +1,299 @@
+/* NON-SAVING AGENTS WORKSPACE PREVIEW (T4) — profile pane (right side):
+   header, health/details lists, assignments, checks, run table, approvals.
+   Existing tokens only. Directory, panes and responsive rules live in
+   agentsWorkspacePreview.css. */
+
+/* ---- Profile ---- */
+.agents-profile {
+  min-width: 0;
+}
+
+.agents-back {
+  display: none;
+}
+
+.agents-profile-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.agents-profile-title {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.agents-profile-title h2 {
+  margin: 0 0 var(--space-1);
+}
+
+.agents-profile-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.agents-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  max-width: 280px;
+}
+
+.agents-profile-actions .field-hint {
+  flex-basis: 100%;
+  margin: 0;
+  text-align: right;
+}
+
+.agents-dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3) var(--space-5);
+  margin: 0;
+}
+
+.agents-dl dt {
+  margin-top: 0;
+}
+
+.agents-reasons {
+  margin: 0;
+  padding-left: 18px;
+  font-size: var(--text-md);
+}
+
+.agents-assignment,
+.agents-check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  min-height: 44px;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.agents-assignment:last-child,
+.agents-check:last-child {
+  border-bottom: none;
+}
+
+.agents-check {
+  display: block;
+}
+
+.agents-check-results li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: 2px 0;
+  font-size: var(--text-sm);
+}
+
+.agents-check-subject {
+  min-width: 140px;
+  color: var(--text-h);
+}
+
+.agents-check-detail {
+  flex-basis: 100%;
+}
+
+.agents-assignment-side {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.agents-assignment-rent {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.agents-inline-check {
+  margin: 0;
+  min-height: 36px;
+  font-size: var(--text-sm);
+}
+
+.agents-add-row,
+.agents-approval-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.agents-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.agents-table {
+  margin-top: 0;
+}
+
+.agents-table-row--open td {
+  background: var(--surface-sunken);
+}
+
+.agents-table-detail td {
+  white-space: normal;
+}
+
+.agents-approvals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.agents-approval {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.agents-approval-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.agents-approval-actions {
+  justify-content: flex-end;
+  margin-top: var(--space-2);
+}
+
+.agents-draft-detail {
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+
+.agents-block {
+  display: block;
+}
+
+.agents-blocker::before {
+  content: '• ';
+}
+
+.agents-file {
+  display: block;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: var(--text-xs);
+  white-space: normal;
+  word-break: break-all;
+}
+
+.agents-table--wrap td {
+  white-space: normal;
+  vertical-align: top;
+}
+
+.agents-field-group + .agents-field-group {
+  margin-top: var(--space-4);
+}
+
+/* Flags inside a review card: edit-during-run conflicts, cleared approvals,
+   possible duplicate payments. Text-first; the card's own tint carries the
+   colour. */
+.agents-notice-flag,
+.agents-notice-confirm {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-h);
+  background: var(--surface);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius-sm);
+}
+
+.agents-notice-confirm {
+  border-left-color: var(--accent);
+}
+
+.agents-notice-match {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  font-weight: 400;
+}
+
+.agents-destination {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  max-width: 320px;
+  text-align: right;
+}
+
+.agents-destination a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.agents-invoice-form {
+  max-width: 480px;
+}
+
+.agents-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.agents-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* Wide tables (run history, workload) scroll inside the profile at every
+   width, not only ≤600px, so a single-pane layout never scrolls the page
+   sideways. */
+.agents-profile .table-scroll {
+  overflow-x: auto;
+}
+
+.agents-allocation {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.agents-allocation-label {
+  margin: 0;
+  font-weight: 600;
+}
+
+.agents-allocation-input {
+  width: 110px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  min-height: 36px;
+  text-align: right;
+}
