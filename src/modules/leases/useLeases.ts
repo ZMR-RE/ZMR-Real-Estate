@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { useTenants } from '../tenants/useTenants'
+import { createLease } from './leaseEntryQueries'
+import { unfinishedLeases } from './leaseFormLogic'
 import {
-  createLease,
   endLease as endLeaseQuery,
   listLeasesForUnit,
   setLeaseArchived,
@@ -33,6 +34,14 @@ export function useLeases(propertyId: string, unitId: string) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [endingId, setEndingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  // A lease saved whose tenant links then failed: the next Save retries on
+  // this same lease instead of creating another (createLease). Also set when
+  // the owner resumes an unfinished tenancy found on this unit.
+  const [pendingLeaseId, setPendingLeaseId] = useState<string | null>(null)
+  const [resumedLease, setResumedLease] = useState<Lease | null>(null)
+  // Starting a separate tenancy while an unfinished one exists is an
+  // explicit choice, never the default.
+  const [separateChosen, setSeparateChosen] = useState(false)
 
   const refresh = useCallback(async () => {
     if (!accountId) return
@@ -61,7 +70,14 @@ export function useLeases(propertyId: string, unitId: string) {
   const startAdding = () => {
     setEditingId(null)
     setEndingId(null)
+    setResumedLease(null)
+    setSeparateChosen(false)
     setIsAdding(true)
+  }
+
+  const resume = (lease: Lease) => {
+    setResumedLease(lease)
+    setPendingLeaseId(lease.id)
   }
 
   const startEditing = (id: string) => {
@@ -80,11 +96,12 @@ export function useLeases(propertyId: string, unitId: string) {
     setIsAdding(false)
     setEditingId(null)
     setEndingId(null)
+    // A half-saved lease isn't forgotten: it's read back as an unfinished
+    // tenancy and offered next time.
+    if (pendingLeaseId) refresh()
+    setPendingLeaseId(null)
+    setResumedLease(null)
   }
-
-  // A lease saved whose tenant links then failed: the next Save retries on
-  // this same lease instead of creating another (createLease).
-  const [pendingLeaseId, setPendingLeaseId] = useState<string | null>(null)
 
   const add = async (input: LeaseInput) => {
     if (!accountId) return
@@ -98,10 +115,16 @@ export function useLeases(propertyId: string, unitId: string) {
       return
     }
     setPendingLeaseId(null)
+    setResumedLease(null)
     setError(null)
     setIsAdding(false)
     await refresh()
   }
+
+  const unfinished = unfinishedLeases(leases)
+  // Adding on a unit with an unfinished tenancy: resume it or explicitly
+  // start a separate one before the form appears.
+  const needsUnfinishedChoice = isAdding && unfinished.length > 0 && !resumedLease && !separateChosen && !pendingLeaseId
 
   const save = async (id: string, input: Pick<LeaseInput, 'startDate' | 'endDate' | 'rentAmount' | 'lateFee' | 'moveInFee'>) => {
     setSaving(true)
@@ -163,5 +186,10 @@ export function useLeases(propertyId: string, unitId: string) {
     endLease,
     toggleArchived,
     todayDateString: todayDateString(),
+    unfinished,
+    needsUnfinishedChoice,
+    resumedLease,
+    resume,
+    chooseSeparate: () => setSeparateChosen(true),
   }
 }

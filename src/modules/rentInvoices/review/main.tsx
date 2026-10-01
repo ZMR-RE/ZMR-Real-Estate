@@ -98,7 +98,22 @@ async function seed() {
 }
 
 
+// ?persist=1 (review page only): the tenancy rows (tenants, leases, links)
+// survive a real page reload in this tab, so recovery after leaving or
+// reloading is tested against saved rows rather than screen memory.
+const PERSIST_KEY = 'zmr-review-tenancy-rows'
+const PERSISTED = ['tenants', 'leases', 'lease_tenants'] as const
+function restorePersistedRows() {
+  if (!params.has('persist')) return
+  const saved = sessionStorage.getItem(PERSIST_KEY)
+  if (saved) for (const [table, rows] of Object.entries(JSON.parse(saved) as Record<string, Record<string, unknown>[]>)) reviewDb[table].splice(0, reviewDb[table].length, ...rows)
+  window.addEventListener('pagehide', () => {
+    sessionStorage.setItem(PERSIST_KEY, JSON.stringify(Object.fromEntries(PERSISTED.map((t) => [t, reviewDb[t]]))))
+  })
+}
+
 seed().then(() => {
+  restorePersistedRows()
   createRoot(document.getElementById('rent-invoices-review-root')!).render(
     <StrictMode>
       {/* ?path=/tenants/t-casey opens the real tenant profile (Tenancy & billing, Billing rules);

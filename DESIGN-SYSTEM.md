@@ -236,6 +236,15 @@ of screens in the app.
 - Callers pass the bytes, an accessible label, an object URL of the same bytes (for the fallbacks) and a filename.
 - First used by Settings › Entities › Branding & documents.
 
+### Tenancy entry choices (leases module)
+
+`src/modules/leases/leases.css` — used where adding a tenancy needs an explicit choice first (resume an unfinished tenancy; add a co-tenant vs a separate tenancy).
+
+- **`.lease-choice`** — sunken, bordered panel (`--surface-sunken`, `--border`, `--radius-sm`) holding the explanation and the options.
+- **`.lease-choice-option`** — one option: its description, then its button; wraps on phones.
+
+**Box header "Add" button (`EditableSection` `addLabel`)** — owner-approved for Property Overview › Tenants only ("+ Add tenant"). It sits beside Edit, uses the same button style, opens the box and enters the same edit state. Not a default for other boxes.
+
 ### Agents workspace preview (T4, preview-only, not shipped)
 
 `src/modules/automations/preview/agentsPreviewTokens.css`,

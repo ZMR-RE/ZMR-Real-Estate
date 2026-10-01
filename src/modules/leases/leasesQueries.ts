@@ -1,5 +1,4 @@
 import { supabase } from '../../shared/supabaseClient'
-import { missingTenantIds } from './leaseFormLogic'
 
 export interface LeaseTenantRef {
   id: string
@@ -17,6 +16,9 @@ export interface Lease {
   end_date: string | null
   end_reason: string | null
   archived: boolean
+  // When the lease row was saved — identifies an unfinished tenancy (a lease
+  // whose tenant links never saved) when offering to resume it.
+  created_at?: string
   tenants: LeaseTenantRef[]
 }
 
@@ -44,11 +46,12 @@ interface LeaseRow {
   end_date: string | null
   end_reason: string | null
   archived: boolean
+  created_at?: string
   lease_tenants: { tenant: LeaseTenantRef | null }[]
 }
 
 const LEASE_COLUMNS = `
-  id, property_id, unit_id, rent_amount, late_fee, move_in_fee, start_date, end_date, end_reason, archived,
+  id, property_id, unit_id, rent_amount, late_fee, move_in_fee, start_date, end_date, end_reason, archived, created_at,
   lease_tenants(tenant:tenants(id, name))
 `
 
@@ -91,57 +94,6 @@ export async function listLeasesForUnit(accountId: string, unitId: string) {
 
   if (error) return { data: null, error }
   return { data: (data ?? []).map(mapLease), error: null }
-}
-
-// A lease is created with one-or-more tenants in one call — the actual
-// co-tenant fix this whole rebuild exists for. Not run inside a database
-// transaction/RPC (this codebase has no precedent for either — the
-// closest multi-step write, documentsQueries.ts's moveToDocuments, is
-// also a sequential storage-then-table write with an early return on
-// failure, not a DB transaction) — if the lease_tenants insert fails
-// after the lease insert succeeds, the lease row is kept and its id is
-// returned, so the caller retries with `existingLeaseId`: the retry
-// updates that same lease's fields and links only the tenants still
-// missing. A retry never creates a second lease.
-export async function createLease(
-  accountId: string,
-  propertyId: string,
-  unitId: string,
-  input: LeaseInput,
-  existingLeaseId: string | null = null,
-): Promise<{ leaseId: string | null; error: { message: string } | null }> {
-  let leaseId = existingLeaseId
-  if (leaseId) {
-    const { error: updateError } = await updateLease(leaseId, input)
-    if (updateError) return { leaseId, error: updateError }
-  } else {
-    const { data: lease, error: leaseError } = await supabase
-      .from('leases')
-      .insert({
-        account_id: accountId,
-        property_id: propertyId,
-        unit_id: unitId,
-        rent_amount: input.rentAmount,
-        late_fee: input.lateFee,
-        move_in_fee: input.moveInFee,
-        start_date: input.startDate,
-        end_date: input.endDate,
-      })
-      .select('id')
-      .single()
-    if (leaseError || !lease) return { leaseId: null, error: leaseError ?? { message: 'Could not save the lease' } }
-    leaseId = lease.id as string
-  }
-
-  const { data: linked, error: readError } = await supabase.from('lease_tenants').select('tenant_id').eq('lease_id', leaseId).returns<{ tenant_id: string }[]>()
-  if (readError) return { leaseId, error: readError }
-  const missing = missingTenantIds(input.tenantIds, (linked ?? []).map((r) => r.tenant_id))
-  if (missing.length === 0) return { leaseId, error: null }
-
-  const { error: linkError } = await supabase
-    .from('lease_tenants')
-    .insert(missing.map((tenantId) => ({ account_id: accountId, lease_id: leaseId, tenant_id: tenantId })))
-  return { leaseId, error: linkError }
 }
 
 // Lease-level fields only (rent/fees/dates) — this v1 doesn't support

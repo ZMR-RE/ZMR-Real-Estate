@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { missingTenantIds, slotOptions, tenantsNamed, uniqueTenantIds } from './leaseFormLogic'
+import { leaseFormInitial, missingTenantIds, slotOptions, tenantDetail, tenantsNamed, unfinishedLeases, uniqueTenantIds, withSameNameDetails } from './leaseFormLogic'
 
 const options = [
   { id: 't1', label: 'Riley Example' },
@@ -22,6 +22,34 @@ describe('lease form rules', () => {
     expect(tenantsNamed(options, '  riley   EXAMPLE ').map((o) => o.id)).toEqual(['t1'])
     expect(tenantsNamed(options, 'Riley Examples')).toEqual([])
     expect(tenantsNamed(options, '   ')).toEqual([])
+  })
+
+  it('same-name people show distinguishing details in the picker; unique names stay plain', () => {
+    const people = [
+      { id: 'a', label: 'Riley Example', detail: 'riley@example.com · added Oct 1, 2026' },
+      { id: 'b', label: 'riley  example', detail: 'no email or phone on file · added Oct 2, 2026' },
+      { id: 'c', label: 'Morgan Demo', detail: 'no email or phone on file' },
+    ]
+    expect(withSameNameDetails(people).map((o) => o.label)).toEqual([
+      'Riley Example — riley@example.com · added Oct 1, 2026',
+      'riley  example — no email or phone on file · added Oct 2, 2026',
+      'Morgan Demo',
+    ])
+    const fmt = (d: string) => `<${d}>`
+    expect(tenantDetail({ email: 'a@b.c', phone: '555', created_at: '2026-10-01T12:00:00Z' }, fmt)).toBe('a@b.c · 555 · added <2026-10-01>')
+    expect(tenantDetail({ email: null, phone: null }, fmt)).toBe('no email or phone on file')
+  })
+
+  it('an unfinished tenancy is a live lease with no tenants linked', () => {
+    const leases = [
+      { id: 'l1', archived: false, tenants: [] },
+      { id: 'l2', archived: true, tenants: [] },
+      { id: 'l3', archived: false, tenants: [{ id: 't1' }] },
+    ]
+    expect(unfinishedLeases(leases).map((l) => l.id)).toEqual(['l1'])
+    expect(leaseFormInitial({ start_date: '2026-11-01', end_date: null, rent_amount: 1500, late_fee: null, move_in_fee: '50' })).toEqual({
+      startDate: '2026-11-01', endDate: null, rentAmount: '1500', lateFee: null, moveInFee: '50',
+    })
   })
 
   it('links only the tenants a lease is still missing', () => {
@@ -78,7 +106,7 @@ describe('createLease retry after a partial failure', () => {
   const input = { tenantIds: ['t1', 't2'], startDate: '2026-11-01', endDate: null, rentAmount: '1500', lateFee: null, moveInFee: null }
 
   it('keeps the saved lease and finishes it on retry — one lease, both co-tenants, one rent', async () => {
-    const { createLease } = await import('./leasesQueries')
+    const { createLease } = await import('./leaseEntryQueries')
     db.failLinksOnce = true
     const first = await createLease('acct', 'prop', 'unit', input)
     expect(first.error?.message).toBe('network dropped')
@@ -93,8 +121,33 @@ describe('createLease retry after a partial failure', () => {
     expect(db.links.map((l) => l.tenant_id).sort()).toEqual(['t1', 't2'])
   })
 
+  it('after leaving or reloading, the unfinished lease is found from saved rows and resumed by ID — one lease, rent once', async () => {
+    const { createLease } = await import('./leaseEntryQueries')
+    db.failLinksOnce = true
+    await createLease('acct', 'prop', 'unit', input)
+    // Screen memory is gone (Cancel / navigation / reload): only saved rows remain.
+    const saved = db.leases.map((l) => ({ ...(l as { id: string }), archived: false, tenants: db.links.filter((k) => k.lease_id === l.id) }))
+    const [unfinished] = unfinishedLeases(saved)
+    expect(unfinished.id).toBe('lease-1')
+    const resumed = await createLease('acct', 'prop', 'unit', input, unfinished.id)
+    expect(resumed).toEqual({ leaseId: 'lease-1', error: null })
+    expect(db.leases).toHaveLength(1)
+    expect(db.leases.map((l) => Number(l.rent_amount)).reduce((a, b) => a + b, 0)).toBe(1500)
+    expect(db.links.map((l) => l.tenant_id).sort()).toEqual(['t1', 't2'])
+  })
+
+  it('adding a co-tenant links the person only — no new lease, the rent untouched', async () => {
+    const { addCoTenants, createLease } = await import('./leaseEntryQueries')
+    await createLease('acct', 'prop', 'unit', { ...input, tenantIds: ['t1'] })
+    const result = await addCoTenants('acct', 'lease-1', ['t1', 't2'])
+    expect(result.error).toBeNull()
+    expect(db.leases).toHaveLength(1)
+    expect(db.leases[0].rent_amount).toBe('1500')
+    expect(db.links.map((l) => l.tenant_id)).toEqual(['t1', 't2'])
+  })
+
   it('a retry after only some links saved adds just the missing ones', async () => {
-    const { createLease } = await import('./leasesQueries')
+    const { createLease } = await import('./leaseEntryQueries')
     await createLease('acct', 'prop', 'unit', { ...input, tenantIds: ['t1'] })
     const retry = await createLease('acct', 'prop', 'unit', input, 'lease-1')
     expect(retry.error).toBeNull()

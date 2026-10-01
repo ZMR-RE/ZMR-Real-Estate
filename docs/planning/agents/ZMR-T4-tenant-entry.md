@@ -3,12 +3,13 @@
 Built on live `d9cdcb3`. This is a separate candidate from the billing follow-up (`36e85ac`). No migration and no change to shared navigation.
 
 ## What the owner gets
-**Property Overview › Tenants › Edit → add a tenant.**
+**Property Overview › Tenants › + Add tenant** (or Edit — both open the same form).
 1. Choose a unit of this property (chosen automatically when there's only one).
-2. Choose an existing person, or create a new tenant. Add co-tenants as needed.
-3. Enter the dates and rent, then Save.
+2. If that unit has an unfinished tenancy, or a current/upcoming one, choose what you're adding (see below).
+3. Choose an existing person, or create a new tenant. Add co-tenants as needed.
+4. Enter the dates and rent (not for a co-tenant), then Save.
 
-The same box keeps the box standard: the only action is Edit at the top right, and adding happens inside the Edit state.
+**Entry point:** the owner approved "Tenants → Add tenant", so "+ Add tenant" sits beside Edit in the box header, visible even when the box is collapsed. That explicit approval overrides the Edit-only box convention for this box. Edit stays; both open the box and the same edit state, and both hide while editing. It's one optional `EditableSection` prop (`addLabel`) that no other box uses. **Rule-file note for planning:** CLAUDE.md's Box interaction standard says approved deviations are "noted here"; T4 hasn't edited CLAUDE.md (it has the owner's uncommitted edits), so planning should add the note.
 
 **After saving:**
 - the Tenants list and the Units box both refresh;
@@ -23,7 +24,46 @@ The same box keeps the box standard: the only action is Edit at the top right, a
 - **Existing history:** never changed. If the chosen unit already has a current or upcoming tenancy, a note names it and points to "+ End lease" in Units.
 - **Labels:** the form's button is now "Save", per the universal labelling rule.
 
-## Verified (local review harness, simulated backend, fictional data)
+## T3 findings (fixed in this candidate)
+
+**1. A half-saved lease stays recoverable after Cancel, navigation and reload.** Creating a tenancy is two writes: the lease, then its tenant links. If the links fail, the lease is kept with no tenants. That **unfinished tenancy** is now found from the saved records (a live lease with no tenants linked), not from screen memory. Adding a tenancy on that unit (Tenants › + Add tenant, or Units › + Add lease) first shows "Unfinished tenancy on this unit" with its ID, saved date, start date and rent.
+- "Resume tenancy <ID>" finishes that exact lease: the form starts from its saved dates, rent and fees, and Save links the tenants without creating a second lease.
+- "Start a separate new tenancy instead" is an explicit choice.
+- Nothing is deleted or adopted automatically. Tenant links are inserted in one statement, so a lease is either fully linked or has none; partial sets don't occur.
+
+**2. Co-tenant vs separate tenancy is an explicit choice.** When the unit already has a current or upcoming tenancy, the owner chooses one of:
+- **"A co-tenant on <names>'s tenancy"** — joins it and shares its rent. No new rent is added. The form shows people only (no dates or rent), skips anyone already on it, and Save only links them. The lease's rent, dates and fees are untouched.
+- **"A separate tenancy with its own rent"** — its rent is counted in addition. If the current tenancy has ended, end it first with "+ End lease" in Units.
+
+"Change" goes back to the choices unless a half-saved lease is being finished.
+
+**3. Same-name people are told apart.**
+- The picker labels anyone who shares a name with the details on their record: email, phone and date added. Unique names stay plain.
+- The "already exists" prompt shows each match's details, plus what was just entered.
+- "Create a different person with this name" stays available.
+
+**Proposed durable fix (not built; needs separate migration review and approval):** one database function that inserts the lease and its tenant links together (atomic), so an unfinished tenancy can't arise at all. The frontend recovery above stays useful for any already-existing unfinished rows.
+
+**Not changed:** Units › "+ Add lease" got the unfinished-tenancy resume but not the co-tenant/separate choice. That path existed before this slice; adding the choice there is a separate decision.
+
+## T3 verification (local review harness, simulated backend, fictional data)
+The new `?persist=1` keeps the tenant, lease and link rows across a real page reload in that tab, so recovery is tested against saved rows.
+- **Partial failure → reload → resume** (`?persist=1&fail-lease-links=1`, 410 Example Street › Unit 2):
+  1. Chose "Create separate tenancy" with Casey Placeholder, $1,600 from Nov 1. Save failed after the lease saved: 5 leases, 5 links, 1 unfinished.
+  2. Full page reload without the failure flag. + Add tenant › Unit 2 offered "Unfinished tenancy … rent $1,600.00", then Resume, with the form prefilled ($1,600, Nov 1). Chose Casey and saved.
+  3. Result: **still 5 leases** and 6 links. The resumed lease has $1,600 stored once, linked to Casey, and no unfinished lease remains. Unit 2's leases are Jordan & Sam at $1,395 plus this one at $1,600, each counted once.
+- **Co-tenant:** Unit 1 (Riley, $1,450) › "Add co-tenant". The picker didn't offer Riley; chose Morgan Demo and saved. Still 5 leases; Riley's lease now links Riley and Morgan, and its rent is still $1,450.
+- **Same name:** a new tenant "riley  example" with a different email prompted "Use existing: Riley Example — riley@example.com · (555) 010-1111" and "You entered: riley.two@example.com". "Create a different person" left two records, and the picker shows "Riley Example — riley@example.com · (555) 010-1111" and "riley  example — riley.two@example.com · added October 1, 2026".
+- **Units › + Add lease** (27 Sample Road › Unit A): the failed Save left 6 leases (1 unfinished, $900). Cancel, then "+ Add lease" again, offered it; Resume with Morgan finished it: 6 leases, the $900 stored once, no unfinished lease.
+- **+ Add tenant** opens the collapsed box straight into the form; Cancel returns to the view with both buttons; Edit still opens the same form. Saving through + Add tenant created 1 lease and 1 link and refreshed the list.
+- **Phone (390 px frame):** no horizontal scroll, and the header buttons and choice options stack.
+- **Tests (`leaseFormLogic.test.ts`, 10):** these add same-name labels and details, unfinished detection, prefill, resume found from saved rows only (one lease, rent once), and co-tenant links only with the rent untouched.
+- **Evidence:** `evidence/tenant-entry-t3/01–12`.
+
+## Defect found, not fixed here (shared CSS, T2's index.css)
+`.collapsible-section { overflow: clip }` (from the sticky-headers work) cuts off a picker's dropdown where it runs past the bottom of a box. In the Tenants form, with few fields below the picker, "+ Add new tenant" can be hidden or a click can land on the next box. **Workaround:** typing a name narrows the list so the options fit. The fix belongs in the shared box rule, without breaking sticky headers; it's proposed for T2/planning.
+
+## Earlier verification (local review harness, simulated backend, fictional data)
 **Scenario A** (`?fail-lease-links=1`, 410 Example Street › Unit 2, which already has Jordan & Sam):
 - **Slot 1:** a new tenant, Avery Fictional, was created. The slot 2 list excluded Avery; Morgan Demo was chosen.
 - **First Save:** "The lease was saved, but its tenants weren't all linked…", with 1 new lease and 0 links.
@@ -52,4 +92,6 @@ These make the review page behave like the real database for these screens:
 - The existing inline tenant form's button says "Add tenant" (F-3).
 
 ## Coordination
-Shared-file hold recorded at 21:53 UTC for the tenants and leases files, `UnitsSection` and the Tenants/Units wiring in `PropertyProfileOverviewTab.tsx`. `PropertyProfile.tsx` (T2's hold) and `index.css` are untouched.
+Shared-file holds are recorded at 21:53 UTC (tenants and leases files, `UnitsSection`, and the Tenants/Units wiring in `PropertyProfileOverviewTab.tsx`) and extended on October 1. The extension covers `src/shared/EditableSection.tsx` (the optional `addLabel`), `UnitCard.tsx`, the new lease/tenant files and one `DESIGN-SYSTEM.md` entry. `PropertyProfile.tsx` (T2's hold) and `index.css` are untouched.
+
+**Harness-only additions:** `?persist=1` (tenancy rows survive a reload in that tab).

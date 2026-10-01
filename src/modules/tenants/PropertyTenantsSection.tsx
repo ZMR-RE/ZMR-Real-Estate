@@ -12,7 +12,7 @@ interface PropertyTenantsSectionProps {
 }
 
 // Property Overview › Tenants. View: every tenant ever at this property.
-// Edit: add a tenant (existing or new person, co-tenants) to a unit of this
+// "+ Add tenant" (or Edit): add a tenant (existing or new person, co-tenants) to a unit of this
 // property — the same lease the Units box creates. After saving, the box
 // links to each tenant's Tenancy & billing.
 export function PropertyTenantsSection({ propertyId, onTenancyAdded }: PropertyTenantsSectionProps) {
@@ -21,6 +21,8 @@ export function PropertyTenantsSection({ propertyId, onTenancyAdded }: PropertyT
   return (
     <EditableSection
       title="Tenants"
+      // Owner-approved visible entry point; Edit leads to the same form.
+      addLabel="+ Add tenant"
       onEditStart={() => setAdded(null)}
       view={
         <>
