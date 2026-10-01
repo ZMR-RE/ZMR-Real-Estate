@@ -339,6 +339,23 @@ create trigger mortgage_escrow_transactions_apply_locked
   before insert on mortgage_escrow_transactions
   for each row execute function mortgage_escrow_apply_locked();
 
+-- C1: once an entry is voided (whatever the balance outcome), its earlier "refused void" and "possibly covered"
+-- causes no longer describe reality ("still active", "it was applied") and are closed as voided. A cause explaining a
+-- skipped reversal is created separately and stays open.
+create or replace function mortgage_close_entry_causes(p_kind text, p_id uuid)
+returns void
+language sql
+security definer
+set search_path = pg_catalog, public, pg_temp
+as $$
+  update public.mortgage_balance_review_causes
+     set resolved_at = now(), resolved_by = auth.uid(), resolution = 'voided'
+   where source_kind = p_kind and source_id = p_id
+     and cause in ('refused_over_original', 'refused_negative_escrow', 'possibly_covered_by_statement')
+     and resolved_at is null
+$$;
+revoke all on function mortgage_close_entry_causes(text, uuid) from public, anon, authenticated;
+
 -- ---------------------------------------------------------------------------------------------------------------
 -- 6. Conditional, exactly-once void core (internal). Takes the loan lock itself (already held in the void function's
 --    path; in an older page's UPDATE path the entry row is locked first — the one documented cycle, which Postgres
@@ -366,6 +383,7 @@ begin
   if p_mortgage is null then
     -- unlinked legacy entry: lock the property's active loan (if any), record the skip, raise a review on that loan
     select * into l from public.mortgage_details where property_id = p_property and not voided for update;
+    perform public.mortgage_close_entry_causes(p_kind, p_id);
     insert into public.mortgage_balance_effects (account_id, property_id, source_kind, source_id, effect, reason)
     values (p_account, p_property, p_kind, p_id, 'reversal_skipped', 'unlinked_legacy')
     on conflict do nothing;
@@ -381,6 +399,7 @@ begin
   select * into l from public.mortgage_details where id = p_mortgage for update;
 
   if l.voided then
+    perform public.mortgage_close_entry_causes(p_kind, p_id);
     insert into public.mortgage_balance_effects (account_id, property_id, mortgage_id, source_kind, source_id, effect, reason)
     values (p_account, p_property, l.id, p_kind, p_id, 'reversal_skipped', 'loan_inactive')
     on conflict do nothing;
@@ -395,6 +414,7 @@ begin
 
   if (kind = 'principal' and l.principal_epoch <> a.principal_epoch)
      or (kind = 'escrow' and l.escrow_epoch <> a.escrow_epoch) then
+    perform public.mortgage_close_entry_causes(p_kind, p_id);
     insert into public.mortgage_balance_effects
       (account_id, property_id, mortgage_id, source_kind, source_id, effect, reason, principal_epoch, escrow_epoch)
     values (p_account, p_property, l.id, p_kind, p_id, 'reversal_skipped', 'reset_after_entry', l.principal_epoch, l.escrow_epoch)
@@ -453,12 +473,7 @@ begin
   values (p_account, p_property, l.id, p_kind, p_id, 'reversed',
           case when kind = 'principal' then delta else 0 end, case when kind = 'escrow' then delta else 0 end,
           l.principal_epoch, l.escrow_epoch);
-  -- the void that finally succeeds closes earlier refusal causes and any "possibly covered" flag for this entry
-  update public.mortgage_balance_review_causes
-     set resolved_at = now(), resolved_by = auth.uid(), resolution = 'voided'
-   where source_kind = p_kind and source_id = p_id
-     and cause in ('refused_over_original', 'refused_negative_escrow', 'possibly_covered_by_statement')
-     and resolved_at is null;
+  perform public.mortgage_close_entry_causes(p_kind, p_id);
   return 'reversed';
 end;
 $$;

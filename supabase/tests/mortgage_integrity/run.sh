@@ -218,6 +218,19 @@ P=$(mk 1000 100); L=$(loan $P); HE=$(newesc $P deposit 40 "current_date - 45")
 check "H6 escrow: flagged on the escrow balance only" "$(bal $L) $(causes $L escrow)/$(causes $L principal)" "1000.00/140.00 1/0"
 check "H7 future statement date refused" "$($Q -c "$AS select reset_mortgage_balance('$L', null, null, 140, $(ever $L), current_date + 1)" 2>&1 | grep -o 'future' | head -1)" "future"
 
+echo "-- C1: a successful void closes the entry's stale causes, whatever the balance outcome"
+P=$(mk 1000 100); L=$(loan $P); ED=$(newesc $P deposit 50); EB=$(newesc $P disbursement 140)
+check "C1a refused void leaves a 'still active' cause" "$(vrpc escrow $ED) $($Q -c "select count(*) from mortgage_balance_review_causes where source_id='$ED' and cause='refused_negative_escrow' and resolved_at is null")" "refused_negative_escrow 1"
+reset_e $L $(ever $L) 10 >/dev/null
+check "C1b after a reset, the void succeeds as a skip" "$(vrpc escrow $ED) $($Q -c "select voided from mortgage_escrow_transactions where id='$ED'")" "skipped_reset_after_entry t"
+check "C1c no stale 'still active' cause remains for the voided entry" "$($Q -c "select count(*) from mortgage_balance_review_causes where source_id='$ED' and cause in ('refused_negative_escrow','refused_over_original','possibly_covered_by_statement') and resolved_at is null")" "0"
+check "C1d the cause explaining the skipped reversal stays open" "$($Q -c "select count(*) from mortgage_balance_review_causes where source_id='$ED' and cause='skipped_reset_after_entry' and resolved_at is null")" "1"
+P=$(mk 1000 100); L=$(loan $P); HV=$(newpay $P 50 "current_date - 40"); reset_p $L $(ver $L) 950 >/dev/null
+check "C1e possibly-covered entry voided after a reset: flag closed, skip cause open" "$(vrpc payment $HV) $($Q -c "select string_agg(cause || ':' || (resolved_at is null)::text, ',' order by cause) from mortgage_balance_review_causes where source_id='$HV'")" "skipped_reset_after_entry possibly_covered_by_statement:false,skipped_reset_after_entry:true"
+P=$(mk 1000 100); A=$(loan $P); HI=$(newpay $P 50 "current_date - 40")
+$Q -c "update mortgage_details set voided = true, voided_at = now() where id='$A'" >/dev/null
+check "C1f possibly-covered entry on a now-inactive loan: flag closed on void" "$(vrpc payment $HI) $($Q -c "select count(*) from mortgage_balance_review_causes where source_id='$HI' and resolved_at is null")" "skipped_loan_inactive 0"
+
 echo "-- Review context (B3)"
 P=$(mk 1000 100); L=$(loan $P); EP=$(newpay $P 50); reset_p $L $(ver $L) 950 >/dev/null; vrpc payment $EP >/dev/null
 check "B3 reset-skip cause records entry date/type/principal and when the balance was updated" "$($Q -c "select context->>'entry_type' || '|' || (context->>'principal') || '|' || ((context->>'balance_updated_at') is not null)::text from mortgage_balance_review_causes where source_id='$EP'")" "payment|50.00|true"

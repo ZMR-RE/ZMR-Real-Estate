@@ -1,4 +1,4 @@
-# Mortgage balance integrity: implementation record (T1, 2026-10-01, revision r2)
+# Mortgage balance integrity: implementation record (T1, 2026-10-01, revision r3)
 
 **Approval:** the owner, via planning: *"Yes, build the mortgage integrity fix with those choices."*
 - Inactive or replaced loans are frozen, with no review task solely for being inactive.
@@ -10,7 +10,10 @@ visually reviewed; not released.
 
 **Candidates:**
 - **Reviewed (unchanged):** `t1/mortgage-integrity` @ `8f18f77` (code `e13340e`). T3 reviewed it (F1–F4 / B1–B4).
-- **Fixed (this revision):** `t1/mortgage-integrity-r2`. Exact hash in the report. Same base: verified live `origin/main`
+- **r2 (reviewed by T3):** `4290a08` (evidence `e62dff1`). T3's verdict: B1–B4 closed, plus C1 (fix before Practice) and
+  R1/R2 (recovery drafts). Source: `evidence/t3-review-r2-C1-R1-R2/`.
+- **Fixed (this revision, r3):** `t1/mortgage-integrity-r2` HEAD. Exact hash in the report. The change since `4290a08`
+  is limited to C1, R1, R2 and the hint wording (§0). Same base: verified live `origin/main`
   `4f696c3` (Agents, deploy `6abeb18a…`, 110 migrations). Agents preserved.
 
 **T3 sources (retained):**
@@ -19,6 +22,24 @@ visually reviewed; not released.
 - `evidence/t3-mortgage-concurrency-2026-10-01/` (C1–C7 reproduction).
 
 All have provenance and SHA-256.
+
+## 0. Disposition: T3 review of r2 `4290a08` (C1, R1, R2)
+| # | Finding | Disposition in r3 |
+|---|---|---|
+| C1 (before Practice) | A voided entry could keep a stale "still active" / "possibly covered" cause when its void was a skip | **Fixed.** New internal `mortgage_close_entry_causes()` runs on **every** successful void (reversed, reset-skip, inactive loan, unlinked legacy) and closes that entry's open refused and possibly-covered causes as `voided`. A cause explaining a skipped reversal is created afterwards and **stays open**. Tests C1a–C1f, including the requested refused void → reset → successful void |
+| R1 (draft) | Re-enable could reverse against a balance edited while disabled | **Fixed in `enable_draft.sql`.** The disabled period is treated as an **unknown reset** on every active loan: both reset counters and both version counters move, statement dates become unknown, figure-entered times become now, and a `reset` effect with reason `re_enable` is recorded. `recovery.sh` covers disable → direct balance edit → enable → void of a pre-disable entry, which gives `skipped_reset_after_entry` plus a review cause, not a reversal. Optional: the disable now **keeps the no-delete triggers** |
+| R2 (draft) | A plain revert would delete the applied migration from `main` | **Fixed.** Recovery is **application-only**. `supabase/recovery/mortgage_integrity/frontend_scoped_revert.sh` restores only the release's application files to the live base, keeping `supabase/**`, `docs/**` and root `*.md`. It refuses a dirty tree or later edits to those files, makes one local commit, and never pushes. Reintroduction is by reverting that commit. `frontend_revert_rehearsal.sh` checks: refusals, preservation, later unrelated work kept, both states type-check, reintroduction exact |
+| Hint | The statement date is ignored when balances are unchanged | **Clarified** on the form: the date is used only when a balance is changed there; unchanged-balance confirmations use "matches my statement" in the Action Queue |
+
+**T3's minor notes, not changed in this batch:**
+- one statement-date input sits above all loans in the review item;
+- review amounts are shown without currency formatting;
+- the opening effect records only the principal statement date;
+- the UTC date cutoff and the `updated_at` backfill can flag slightly more (both err towards flagging).
+
+These are listed for a later presentation pass; no redesign here.
+
+**Recovery drafts remain unapproved,** pending T3's recovery assessment.
 
 ## 1. Disposition: T3 implementation review of `e13340e` (F1–F4 = B1–B4, required for the Practice test)
 | # | Finding | Disposition in r2 |
@@ -69,10 +90,11 @@ All have provenance and SHA-256.
 ## 4. Evidence (r2, disposable local Postgres 17 + app checks)
 | Run | Result |
 |---|---|
-| `run.sh` | **86 passed, 0 failed** (concurrency R1–R12 including the forced deadlock; linkage; immutability; one-way void; older-page paths; resets and versions; inactive loan; legacy; escrow refusals; over-original; per-balance and seen-only resolution; historical flags; review context; authorization and hardening; audit) |
+| `run.sh` | **92 passed, 0 failed** (r3 adds C1a–C1f) (concurrency R1–R12 including the forced deadlock; linkage; immutability; one-way void; older-page paths; resets and versions; inactive loan; legacy; escrow refusals; over-original; per-balance and seen-only resolution; historical flags; review context; authorization and hardening; audit) |
 | `run.sh --control` (disable draft applied) | **49 failed**: reproduces T3's C1–C4/C6 and the missing protections |
 | `migration_preservation.sh` | 8/8: md5 of all existing loans, entries and audit rows unchanged; balances identical; legacy unlinked; no history effects; statement dates unknown; figure time = row's last write; another migration's audit name kept |
-| `recovery.sh` | 10/10: disable keeps objects, data and audit triggers and restores pre-integrity writes; enable restores integrity; entries made while disabled void as unlinked legacy |
+| `recovery.sh` | disable keeps objects, data, audit and no-delete triggers and restores pre-integrity writes; enable (R1) treats the disabled period as an unknown reset; a pre-disable entry then skips with a cause; entries made while disabled void as unlinked legacy |
+| `frontend_revert_rehearsal.sh` | R2 scoped application-only revert and its reintroduction |
 | T3's original `run.sh` (live) | 5 wrong, unchanged |
 | App | tsc clean, build clean, vitest 215/215, oxlint 79 = baseline |
 

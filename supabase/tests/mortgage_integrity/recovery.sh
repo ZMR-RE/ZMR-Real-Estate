@@ -40,16 +40,19 @@ C0=$(counts)
 $Q -v ON_ERROR_STOP=1 -f "$REPO/supabase/recovery/mortgage_integrity/disable_draft.sql" >/dev/null || { echo "disable draft failed"; exit 1; }
 r "disable: effects/causes/columns retained" "$(counts)" "$C0"
 r "disable: activity audit triggers kept" "$($Q -c "select count(*) from pg_trigger where tgname in ('mortgage_payments_audit_log','mortgage_escrow_transactions_audit_log')")" "2"
+r "disable: no-delete protection kept" "$($Q -c "$AS delete from mortgage_payments where id='$E1'" 2>&1 | grep -o 'never deleted' | head -1)" "never deleted"
 r "disable: integrity functions retained (re-enable needs them)" "$($Q -c "select count(*) from pg_proc where proname in ('void_mortgage_activity','reset_mortgage_balance','mortgage_void_core','mortgage_activity_guard')")" "4"
 E2=$(pay 50)
 r "disable: pre-integrity write behaviour (applied, not linked)" "$(bal $L) $($Q -c "select mortgage_id is null from mortgage_payments where id='$E2'")" "850.00 t"
-r "disable: older-page balance edit possible again (pre-integrity)" "$($Q -c "$AS update mortgage_details set lender_name = lender_name, current_balance = current_balance where id='$L'" >/dev/null 2>&1 && echo OK)" "OK"
+r "disable: an older page can edit a balance directly again (pre-integrity), counters unmoved" "$($Q -c "$AS update mortgage_details set current_balance = 700 where id='$L'" >/dev/null 2>&1 && echo OK) $($Q -c "select principal_epoch from mortgage_details where id='$L'")" "OK 0"
 
 $Q -v ON_ERROR_STOP=1 -f "$REPO/supabase/recovery/mortgage_integrity/enable_draft.sql" >/dev/null || { echo "enable draft failed"; exit 1; }
+r "R1 enable: disabled period treated as an unknown reset (both counters and versions moved, statement dates unknown, re_enable effect)" "$($Q -c "select principal_epoch||'/'||escrow_epoch||'/'||principal_version||'/'||escrow_version||'/'||coalesce(principal_as_of::text,'unknown')||'/'||coalesce(escrow_as_of::text,'unknown') from mortgage_details where id='$L'") $($Q -c "select count(*) from mortgage_balance_effects where mortgage_id='$L' and reason='re_enable'")" "1/1/2/1/unknown/unknown 1"
 E3=$(pay 25)
-r "enable: new entries linked and applied again" "$(bal $L) $($Q -c "select mortgage_id = '$L' from mortgage_payments where id='$E3'")" "825.00 t"
+r "enable: new entries linked and applied again" "$(bal $L) $($Q -c "select mortgage_id = '$L' from mortgage_payments where id='$E3'")" "675.00 t"
 r "enable: older-page balance change refused again" "$($Q -c "$AS update mortgage_details set current_balance = 1 where id='$L'" 2>&1 | grep -o 'out of date' | head -1)" "out of date"
-r "enable: entry recorded while disabled voids as unlinked legacy (no reversal, review cause)" "$($Q -c "$AS select void_mortgage_activity('payment','$E2')->>'outcome'" | tail -1) $(bal $L)" "skipped_unlinked_legacy 825.00"
-r "enable: entry recorded before the disable still reverses exactly" "$($Q -c "$AS select void_mortgage_activity('payment','$E1')->>'outcome'" | tail -1) $(bal $L)" "reversed 925.00"
+r "enable: entry recorded while disabled voids as unlinked legacy (no reversal, review cause)" "$($Q -c "$AS select void_mortgage_activity('payment','$E2')->>'outcome'" | tail -1) $(bal $L)" "skipped_unlinked_legacy 675.00"
+r "R1 a pre-disable entry is NOT reversed after a disabled-period balance edit: skip + review cause" "$($Q -c "$AS select void_mortgage_activity('payment','$E1')->>'outcome'" | tail -1) $(bal $L) $($Q -c "select count(*) from mortgage_balance_review_causes where source_id='$E1' and cause='skipped_reset_after_entry' and resolved_at is null")" "skipped_reset_after_entry 675.00 1"
+r "a post-enable entry still reverses exactly" "$($Q -c "$AS select void_mortgage_activity('payment','$E3')->>'outcome'" | tail -1) $(bal $L)" "reversed 700.00"
 r "recovery README forbids marking the migration reverted" "$(grep -c 'Never.*repair --status reverted' "$REPO/supabase/recovery/mortgage_integrity/README.md")" "1"
 exit $FAIL

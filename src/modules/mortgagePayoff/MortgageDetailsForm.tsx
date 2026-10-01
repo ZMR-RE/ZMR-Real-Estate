@@ -171,8 +171,9 @@ export function MortgageDetailsForm({
         onChange={(e) => setValues((prev) => ({ ...prev, balance_statement_date: e.target.value || null }))}
       />
       <p className="field-hint">
-        Optional. The statement date your balance figures come from. Entries dated on or before it are flagged for review,
-        because the statement may already include them.
+        Optional, and used only when you change a balance here: the statement date the new figure comes from. Entries dated
+        on or before it are flagged for review. To confirm an unchanged balance, use “matches my statement” in the Action
+        Queue.
       </p>
 
       <label htmlFor="term_years">

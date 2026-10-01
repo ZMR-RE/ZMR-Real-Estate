@@ -1,0 +1,128 @@
+T3 → planning conversation (relayed by the owner): mortgage integrity r2, 4290a08 (evidence e62dff1), change since e13340e
+
+  Verdict: B1–B4 are closed in the application and the migration, as are the optional items I listed. The candidate is technically ready for the scoped Practice test, once one small truthfulness fix (C1 below) is made. That isn't approval to apply the migration.
+
+  The recovery drafts need two corrections (R1, R2) before anyone could approve them. They don't block the Practice test, provided they aren't used on Practice until corrected.
+
+  I reviewed by reading code. I didn't re-run the suites, and reused T1's evidence:
+  - candidate suite 86/86;
+  - control 49 failures;
+  - preservation 8/8;
+  - recovery 10/10;
+  - my original reproduction on live, giving 5 wrong;
+  - the existing suites.
+
+  No environment access, and Stage 1 wasn't repeated.
+
+  Inspected first: the statement-date field and the review wording
+
+  - Mortgage Edit: "Statement date for these balances", optional, with a hint explaining that earlier-dated entries get flagged.
+    - It starts blank on every edit, never pre-filled, so an old date can't be reused silently.
+    - Future dates are refused on the server.
+    - Minor wording: the date is used only when a balance is changed. If the balances are unchanged, the date is silently ignored. The hint should say so, or point to the Action Queue's "matches my statement" for confirmations.
+  - The review item now shows enough context to confirm safely:
+    - each cause names the entry: type, date, and amount or principal;
+    - it shows when the balance was last updated, and its statement date or "no statement date recorded";
+    - refused causes say "Not voided: … still active", with a badge and the next step;
+    - the button says "Closes only the items listed above";
+    - unlinked legacy items have their own "Checked" button.
+  - Minor: one statement-date input sits above all loans' reviews, and amounts appear without currency formatting.
+
+  B1–B4 and the optional items
+
+  Item: B1 recovery
+  Status: Closed in principle: frontend-first, forward disable/enable drafts, and
+  an explicit "never use repair --status reverted". Draft corrections R1–R2
+  below.
+  ────────────────────────────────────────
+  Item: B2 only displayed causes
+  Status: Closed. reset_mortgage_balance resolves only the p_resolve_cause_ids
+  passed, for that loan and balance, never legacy causes. The Action Queue
+  passes exactly the IDs it displayed. Mortgage-tab edits pass none, so they
+  resolve nothing and causes stay visible.
+  ────────────────────────────────────────
+  Item: B3 context
+  Status: Closed. Context is stored on each cause when it's created (entry and
+  balance-update details), and the wording is truthful when written. See C1.
+  ────────────────────────────────────────
+  Item: B4 statement dates
+  Status: Closed, and the variation is sound (details below)
+  ────────────────────────────────────────
+  Item: Separate version counters
+  Status: Done. Principal and escrow versions are checked only for the balance
+  being updated, so an escrow entry no longer blocks a principal reset.
+  ────────────────────────────────────────
+  Item: Deadlock message
+  Status: Done. 40P01/40001 → "Changed at the same time somewhere else, so
+  nothing was saved. Try again."
+  ────────────────────────────────────────
+  Item: Guard hardening
+  Status: Done. The loan guard runs with the caller's rights and refuses any
+  balance, counter or statement-date change when current_user is
+  authenticated/anon. Server-side writers run as their owner. The add triggers
+  also check membership. Only zmr.mortgage_void remains as a marker, and it
+  isn't client-settable.
+  ────────────────────────────────────────
+  Item: Opening-balance effect
+  Status: Done. An insert trigger records a reset/opening effect. Minor: it
+  stores only the principal statement date.
+
+  The statement-date variation (unknown stays unknown, entry dates only flag): sound.
+The statement-date variation (unknown stays unknown, entry dates only flag): sound.
+- Statement dates are stored only when the owner gives one; existing loans stay NULL.
+- When no date is known, the time the figure was entered is the comparison point.
+- An entry dated on or before that point is still applied and raises a "possibly covered by statement" cause. Nothing is skipped, reversed or inferred.
+- Notes, all erring towards flagging:
+  - existing loans' "figure entered" time is backfilled from updated_at, which payment triggers also updated, so older loans may flag a little more;
+  - the cutoff uses the UTC date, so evening entries in US time can flag an entry for the following day;
+  - a confirmation without a statement date clears an earlier known statement date to unknown and uses now. The effects record keeps the earlier one.
+
+Concurrency, refusals and older pages: confirmed
+
+- Locking: the loan is locked before the entry, including the unlinked legacy path, which now locks the property's active loan.
+- Reversals use the exact recorded change, once only.
+- Refusals: in the current app, a refusal records one cause plus its effect only when the cause is new, so retries don't pile up. An older page raises the refusal and keeps nothing.
+- Older pages:
+  - an unchanged balance resend is allowed and can't overwrite;
+  - a changed balance is refused;
+  - counters and statement dates can't be written by clients;
+  - inserts are linked on the server;
+  - voids run the same core.
+
+Fix before the Practice test (small)
+
+C1. Out-of-date "still active" causes.
+- A cause for an entry (refused void, or "possibly covered") is closed only when that entry's void reverses.
+- If the entry is later voided through a skip path (a reset since, an inactive loan, or a legacy entry), the earlier cause stays open. It still says "It was applied" or "Not voided: … still active", with the "Entry still active" badge, about an entry that is now voided.
+- Fix: every successful void, whatever its outcome, resolves that entry's open refused or possibly-covered causes as voided.
+- Add a test: refused void → reset → void again gives no open "still active" cause.
+
+Recovery drafts: corrections before any approval (not Practice blockers)
+
+R1. Re-enabling can correct a balance twice.
+- While disabled, the balance guard is gone, so the pre-integrity frontend can edit balances directly. Those edits don't move the reset counters.
+- After enable_draft.sql, voiding an entry applied before the disable still sees the old reset counter and reverses its change, even though a manual reset may have happened while disabled.
+- Fix: the enable migration must treat the disabled period as an unknown reset, for every active loan:
+  - move both reset counters and both version counters;
+  - set both statement dates to unknown and the "figure entered" times to now;
+  - record a reset effect with reason re_enable (allowed, since migrations run as a server-side role).
+- Add a test: disable → direct balance edit → enable → void a pre-disable entry gives skipped_reset_after_entry plus a cause, not a reversal.
+
+R2. Frontend-only recovery must keep the migration file.
+- The README's "normal scoped revert on main" would, as a plain git revert of the mortgage commit, also delete 20261004100000 and its tests from main while the migration stays applied. That's the same problem we fixed for Stage 1.
+- Fix: specify a scoped revert of application files only, keeping supabase/**, preferably with a script like Stage 1's stage1-scoped-revert.sh that refuses a dirty tree or later edits to those files.
+- Reintroduction is by reverting the revert.
+
+Optional: keep the no-delete triggers even when disabled. That costs nothing for compatibility, and it protects the effects record.
+
+Practice readiness
+
+Technically ready once C1 is fixed (one fixed commit; I'll check only that change). The scope is the one I gave before:
+- Practice only, exactly 20261004100000 with the exact-set procedure, in the Practice holder's window, using the reserved test identity on a fictional ZMR-TEST loan;
+- the RPC outcomes and the embed hint work on hosted Supabase;
+- older-page behaviour, using a 4f696c3 build;
+- the review item's context, partial resolution and acknowledgement;
+- the statement-date flag;
+- no concurrency testing and no recovery run on Practice.
+
+Applying the migration on Practice still needs its own approval. Production remains a separate owner decision, and T4's production window is unaffected.
