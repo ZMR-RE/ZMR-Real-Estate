@@ -307,9 +307,44 @@ This was pulled ahead of Milestone 2 because the owner asked for it to be finish
 - PostgREST's embed hint `lease_billing_terms!lease_billing_terms_lease_id_fkey` has not been run against real PostgREST (it's needed now that two foreign keys point to `leases`). This is a Practice check.
 - The review page's simulated backend models this-tenancy earlier balances only, not links.
 
+## Candidate on released A (October 1) — supersedes `4981c9e`
+
+**Production baseline:** release A `ba2c9b1` (Netlify `6abdd7fe7365c799bb78de41`, 108 migrations). It contains R2 `2026d5f` and R1 `fc20c6c`, plus M1–M6 and the two M6 migrations: `20260930100000` closed-period protection and `20260930110000` same-workspace references. **`4981c9e` is superseded for deployment.**
+
+**Branch** `t4/stage1-on-a` = `ba2c9b1` + merge of `t4/stage1-on-r2` (`4981c9e`). The merge was clean. The fixed hash is named in the T3 request.
+
+**Preservation, verified:**
+
+- **Released code:** all 38 non-documentation files A changed (both M6 migrations, Financials, Reports, `index.css`, shared pick lists and date format, the closed-period harness) are byte-identical to `ba2c9b1`.
+- **Released migrations:** all 108 are byte-identical.
+- **Stage 1 code:** identical to `4981c9e`.
+- **No overlap in behaviour:** none of Stage 1's 9 migrations references `financial_transactions` or `financial_periods`, the only tables A's migrations guard.
+
+**Evidence on the combined chain** (117 migrations = production's 108 + Stage 1's 9):
+
+- `tsc -b --noEmit` clean; vitest **218** passed (A's ledger and Financials tests included); oxlint 0 errors; build OK; one pdf.js worker.
+- **T2's closed-period suite:** **35/35**, plus the concurrency cases. The output is **identical** to released A alone, apart from timestamps; C4 still refuses a move into a locked year.
+- **Other suites:** invoices **158/158** (self-test OK; concurrency A-INV-000004/000005, no duplicates); branding **27/27**; R1 void-reconcile **36/36**.
+- **Reused unchanged** (Stage 1 code identical to `4981c9e`): every browser check recorded under "Candidate on the released baseline" below, including the billing-rules box at phone width, the shared viewer and the visible PDF retry.
+- **Not run locally, needs Practice:** A's Financials review server reads hosted Practice, so a browser check of Financials with Stage 1 merged waits for the Practice window. Locally, A's code is byte-identical and its unit and database suites pass on the combined chain.
+
+**Practice pending set:** to be read from the actual Practice inventory at handoff, never inferred from production.
+
+- **Known from local branches only (names, not Practice state):**
+  - T1's mortgage migration `20260930200000` sorts before R2 and Stage 1;
+  - T2's entity migration `20261003100000` sorts **after** Stage 1's `20261002*` files;
+  - Capture's `20260930120000`/`130000` may or may not be present.
+- **Rule at handoff:**
+  1. Mirror every Practice-applied migration that the candidate lacks into a scratch checkout only.
+  2. Require local-not-remote to equal exactly the 9 Stage 1 files.
+  3. If anything later (e.g. `20261003100000`) is already applied, use `--include-all` with that exact set.
+  4. Otherwise stop and report.
+
+**Production (later, separately approved):** with production at 108 (latest `20260930110000`), Stage 1's 9 files are newest, so a plain push applies. If T2's entity release (`20261003100000`) ships first, Stage 1 needs the exact-set `--include-all` procedure. Whichever frontend ships second must integrate the first.
+
 ## Candidate on the released baseline (October 1)
 
-**Branch** `t4/stage1-on-r2` is released R2 `2026d5f` (which contains R1 `fc20c6c`) plus a merge of `agents/stage1-invoicing` (`080fe6a`) and one fix commit. The fixed candidate commit is named in the T3 request (`ZMR-T4-request-T3-review-stage1.txt`).
+*(Superseded by the section above for deployment; its evidence is reused.)* **Branch** `t4/stage1-on-r2` is released R2 `2026d5f` (which contains R1 `fc20c6c`) plus a merge of `agents/stage1-invoicing` (`080fe6a`) and one fix commit. The fixed candidate commit is named in the T3 request (`ZMR-T4-request-T3-review-stage1.txt`).
 
 - **Merge:** one conflict, in `DESIGN-SYSTEM.md`. Both sides had added a separate section, and both were kept.
 - **R1 and R2 preserved:**
