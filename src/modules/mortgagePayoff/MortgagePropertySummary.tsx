@@ -1,5 +1,6 @@
 import type { MortgageDetails } from './mortgagePayoffQueries'
 import type { EquitySnapshot } from './mortgagePayoffMath'
+import { mortgageCurrencyFormatter as currencyFormatter } from './mortgagePayoffFormat'
 
 interface MortgagePropertySummaryProps {
   mortgageDetails: MortgageDetails
@@ -9,19 +10,6 @@ interface MortgagePropertySummaryProps {
   onVoid: () => void
   voiding: boolean
 }
-
-// Mortgage correction (T1, isolated branch): exactly two decimals,
-// always — maximumFractionDigits alone (the prior config here was 0,
-// rounding to whole dollars) lets Intl.NumberFormat trim to fewer than
-// two digits for a value that happens to need fewer; minimumFractionDigits
-// forces the display to always show both, e.g. "$1,234.50" and
-// "$50.00", never "$1,235" or "$50".
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
 
 const percentFormatter = new Intl.NumberFormat('en-US', {
   style: 'percent',

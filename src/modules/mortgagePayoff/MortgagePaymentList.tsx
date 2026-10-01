@@ -1,20 +1,11 @@
 import type { MortgagePayment } from './mortgagePayoffQueries'
+import { mortgageCurrencyFormatter as currencyFormatter } from './mortgagePayoffFormat'
 
 interface MortgagePaymentListProps {
   payments: MortgagePayment[]
   onVoid: (id: string) => void
   voiding: boolean
 }
-
-// Mortgage correction (T1, isolated branch): minimumFractionDigits
-// added — maximumFractionDigits alone let a whole-dollar amount display
-// with no decimals at all (e.g. "$50" instead of "$50.00").
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
 
 export function MortgagePaymentList({ payments, onVoid, voiding }: MortgagePaymentListProps) {
   if (payments.length === 0) {

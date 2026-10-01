@@ -1,14 +1,9 @@
 import type { PayoffScenarioResult } from './mortgagePayoffMath'
+import { mortgageCurrencyFormatter as currencyFormatter } from './mortgagePayoffFormat'
 
 interface MortgagePayoffResultsProps {
   result: PayoffScenarioResult
 }
-
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 0,
-})
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' })
 
