@@ -1,0 +1,60 @@
+== mode: candidate   repo HEAD: e13340e   migrations: 111   2026-10-01T19:36:08Z
+-- Concurrency (T3 C1–C7 method)
+PASS  R1 payment 100 || 50 -> 850
+PASS  R2 deposit 30 || 20 -> escrow 150
+PASS  R3 disbursement 80 || 80 -> second refused
+PASS  R4 principal 80 || 80 on 100 -> second refused
+PASS  R5 payment || deposit (columns independent)
+PASS  R6 reset to 2000 || then payment 50 -> 1950
+PASS  R7 payment || then STALE reset -> reset refused, 900
+PASS  R8 old-browser balance edit (C6/C7 path) refused, payment kept
+PASS  R9 concurrent double void -> reversed once
+PASS  R10 void || new payment -> 950
+PASS  R11 old-browser void || current void of same entry -> one reversal
+-- Linkage, immutability, one-way void
+PASS  F1 new entry linked server-side to the active loan
+PASS  F1b client-supplied wrong mortgage_id refused
+PASS  F2 current void reverses exactly
+PASS  F2b repeated void is a no-op
+PASS  F3 un-void refused
+PASS  F4 fact edit refused
+PASS  F4b delete refused
+PASS  F5 old-browser void (plain UPDATE) reverses with outcome
+PASS  F5b client can't set void details without voiding
+-- Resets (separate principal/escrow epochs; same-value; stale; old browsers)
+PASS  F6 principal reset
+PASS  F6b void payment after principal reset -> skipped, balance unchanged
+PASS  F6c ...creates one principal review cause
+PASS  F6d escrow unaffected by principal reset: deposit void reverses
+PASS  F7 same-value reset (deliberate confirmation) accepted
+PASS  F7b ...counts as a reset: later void skips
+PASS  F8 stale form (version moved) refused, nothing saved
+PASS  F8b old-browser changed balance refused (ZM5M6)
+PASS  F8c old-browser unchanged resend + other edit allowed, not a reset
+PASS  F8d counters can't be set directly
+-- Inactive/replaced loan (frozen, no review cause)
+PASS  F9 void on replaced loan: A frozen, B untouched
+PASS  F9b no review cause for an inactive loan
+PASS  F9c reset on inactive loan refused
+-- Unlinked legacy entries
+PASS  F10 legacy void: flag only, balance unchanged
+PASS  F10b ...principal review cause on the active loan
+-- Escrow refusals and order
+PASS  F11 void deposit used by a later disbursement -> refused, not voided
+PASS  F11b ...refusal and escrow review cause committed together
+PASS  F11c old-browser same void -> ZM5M3, nothing recorded
+PASS  F12 void disbursement then deposit -> both reverse
+-- Over-original refusal (owner choice 3)
+PASS  F13 void raising balance above original -> refused, review cause
+PASS  F13b old-browser same void -> ZM5M4
+-- Review resolution is per balance
+PASS  F14 two open causes (principal + escrow)
+PASS  F14b resolving principal leaves the escrow cause open
+-- Permissions and audit
+PASS  F15 clients can't write effects
+PASS  F15b clients can't write review causes
+PASS  F15c another workspace sees none of A's effects
+PASS  F15d another workspace can't void A's entry
+PASS  F16 audit rows for a void
+PASS  F16b audit rows for a reset
+== RESULT (candidate): 49 passed, 0 failed
