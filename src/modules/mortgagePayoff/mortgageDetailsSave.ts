@@ -1,5 +1,5 @@
 import type { BalanceResetRequest, MortgageDetails, MortgageDetailsInput } from './mortgagePayoffQueries'
-import { friendlyDatabaseError, planMortgageSave } from './mortgageBalanceIntegrity'
+import { friendlyDatabaseError, isSimultaneousChange, planMortgageSave } from './mortgageBalanceIntegrity'
 
 // The save flow behind "Save mortgage details", kept free of React and Supabase so every refusal path is testable.
 // The query functions are passed in by useMortgageDetails.
@@ -25,6 +25,14 @@ export interface MortgageDetailsSaveResult {
 }
 
 const NOT_SAVED = 'Nothing was saved; your entries are still in the form.'
+
+// The balance update committed but the details update did not (a simultaneous change, 40P01/40001, or a refusal).
+export function partialSaveMessage(error: DbError): string {
+  const reason = isSimultaneousChange(error)
+    ? 'they were changed at the same time somewhere else'
+    : error.message.trim().replace(/\.$/, '')
+  return `The balance was saved. Only the other loan details were not saved, because ${reason}. Your entries are still in the form; save again to apply them.`
+}
 
 export async function saveMortgageDetails(
   deps: MortgageDetailsSaveDeps,
@@ -67,16 +75,13 @@ export async function saveMortgageDetails(
 
   const { data, error: saveError } = await deps.update(current.id, plan.details)
   if (saveError || !data) {
-    const message = friendlyDatabaseError(saveError ?? { message: 'The loan details could not be saved.' })
-    if (!plan.reset) return { ok: false, error: `${message} ${NOT_SAVED}` }
-    // The balance update committed but the other details did not: reload the loan so the next attempt is checked
-    // against the stored balance and its new version, not the one the form opened with.
+    const failure = saveError ?? { message: 'The loan details could not be saved.' }
+    if (!plan.reset) return { ok: false, error: `${friendlyDatabaseError(failure)} ${NOT_SAVED}` }
+    // The balance update committed; only the other details failed. Say exactly that (never "nothing was saved"), and
+    // reload the loan so the retry is checked against the stored balance and its new version: the form's balance then
+    // matches it, so the retry sends only the details, with no second balance update.
     const { data: latest } = await deps.fetchLatest()
-    return {
-      ok: false,
-      ...(latest ? { details: latest } : {}),
-      error: `The balance was saved, but the other loan details were not: ${message} Your entries are still in the form.`,
-    }
+    return { ok: false, ...(latest ? { details: latest } : {}), error: partialSaveMessage(failure) }
   }
 
   return { ok: true, error: null, details: data }

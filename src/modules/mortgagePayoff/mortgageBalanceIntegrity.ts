@@ -73,9 +73,14 @@ export function voidedRowNote(outcome: string | null): string | null {
   }
 }
 
-// Postgres aborts one side of a rare simultaneous change (deadlock, 40P01); nothing was saved on that side.
+// Postgres aborts one side of a rare simultaneous change (deadlock 40P01, serialization failure 40001); nothing was
+// saved by the aborted statement.
+export function isSimultaneousChange(error: { code?: string | null }): boolean {
+  return error.code === '40P01' || error.code === '40001'
+}
+
 export function friendlyDatabaseError(error: { code?: string | null; message: string }): string {
-  if (error.code === '40P01' || error.code === '40001') {
+  if (isSimultaneousChange(error)) {
     return 'Changed at the same time somewhere else, so nothing was saved. Try again.'
   }
   return error.message

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { saveMortgageDetails, type MortgageDetailsSaveDeps } from './mortgageDetailsSave'
+import { friendlyDatabaseError, isSimultaneousChange } from './mortgageBalanceIntegrity'
 import type { BalanceResetRequest, MortgageDetails, MortgageDetailsInput } from './mortgagePayoffQueries'
 
 // B-1 (hosted Practice, abf2b35): a refused save used to replace the whole Mortgage tab. Every refusal must now return
@@ -73,13 +74,67 @@ describe('saveMortgageDetails — server refusals keep the form (B-1)', () => {
     expect(r.error).not.toContain('deadlock')
   })
 
-  it('balance saved but other details refused: reports the partial save and adopts the stored record', async () => {
-    const { d, calls } = deps({ update: { data: null, error: { code: '23514', message: 'Interest rate must be between 0 and 100.' } } })
+})
+
+// Partial save: the balance update committed, then the ordinary details update failed. The message must say the
+// balance was saved and only the other details failed — never "nothing was saved" (T3, 3407d42).
+describe('saveMortgageDetails — partial save (balance committed, details failed)', () => {
+  const committed: MortgageDetails = { ...loan, current_balance: '148900.00', principal_version: 7 }
+
+  it('details refused: says the balance was saved and only the details failed, adopts the stored record', async () => {
+    const { d, calls } = deps({
+      update: { data: null, error: { code: '23514', message: 'Interest rate must be between 0 and 100.' } },
+      fetchLatest: { data: committed, error: null },
+    })
     const r = await saveMortgageDetails(d, loan, input({ current_balance: '148900', interest_rate: '400' }))
     expect(r.ok).toBe(false)
-    expect(r.error).toBe('The balance was saved, but the other loan details were not: Interest rate must be between 0 and 100. Your entries are still in the form.')
-    expect(r.details).toEqual(stored)
+    expect(r.error).toBe(
+      'The balance was saved. Only the other loan details were not saved, because Interest rate must be between 0 and 100. Your entries are still in the form; save again to apply them.',
+    )
+    expect(r.details).toEqual(committed)
     expect(calls.fetchLatest).toBe(1)
+  })
+
+  for (const code of ['40P01', '40001']) {
+    it(`simultaneous change on the details update (${code}): no contradictory "nothing was saved"`, async () => {
+      const { d } = deps({
+        update: { data: null, error: { code, message: code === '40P01' ? 'deadlock detected' : 'could not serialize access' } },
+        fetchLatest: { data: committed, error: null },
+      })
+      const r = await saveMortgageDetails(d, loan, input({ current_balance: '148900', lender_name: 'Other' }))
+      expect(r.error).toBe(
+        'The balance was saved. Only the other loan details were not saved, because they were changed at the same time somewhere else. Your entries are still in the form; save again to apply them.',
+      )
+      expect(r.error).not.toMatch(/nothing was saved|deadlock|serialize/i)
+    })
+  }
+
+  it('retry after adopting the partially saved record: no second balance update, details once, no review causes resolved', async () => {
+    const retryInput = input({ current_balance: '148900', lender_name: 'Other' })
+    const first = deps({ update: { data: null, error: { code: '40P01', message: 'deadlock detected' } }, fetchLatest: { data: committed, error: null } })
+    const r1 = await saveMortgageDetails(first.d, loan, retryInput)
+    expect(first.calls.reset).toHaveLength(1)
+    // an edit-path balance update never resolves review causes (only the Action Queue passes the ids it displayed)
+    expect(first.calls.reset[0].resolveCauseIds).toBeUndefined()
+
+    const retry = deps({ update: { data: { ...committed, lender_name: 'Other' }, error: null } })
+    const r2 = await saveMortgageDetails(retry.d, r1.details!, retryInput)
+    expect(r2).toEqual({ ok: true, error: null, details: { ...committed, lender_name: 'Other' } })
+    expect(retry.calls.reset).toHaveLength(0)
+    expect(retry.calls.update).toBe(1)
+    expect(retry.calls.fetchLatest).toBe(0)
+  })
+})
+
+describe('isSimultaneousChange / friendlyDatabaseError', () => {
+  it('treats 40P01 and 40001 alike and nothing else', () => {
+    expect(isSimultaneousChange({ code: '40P01' })).toBe(true)
+    expect(isSimultaneousChange({ code: '40001' })).toBe(true)
+    expect(isSimultaneousChange({ code: '23514' })).toBe(false)
+    expect(isSimultaneousChange({})).toBe(false)
+    expect(friendlyDatabaseError({ code: '40001', message: 'could not serialize access' })).toBe(
+      'Changed at the same time somewhere else, so nothing was saved. Try again.',
+    )
   })
 })
 
