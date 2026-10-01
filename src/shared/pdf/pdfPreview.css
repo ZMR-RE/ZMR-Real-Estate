@@ -1,0 +1,54 @@
+/* Shared PDF preview (PdfCanvasPreview). Tokens only; the error box reuses
+   the global [role='alert'] danger styling. */
+.pdf-preview {
+  margin-top: var(--space-3);
+  max-height: 720px;
+  overflow: auto;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}
+
+.pdf-preview-pages {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.pdf-preview-page {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #ffffff;
+  box-shadow: var(--shadow-sm);
+}
+
+.pdf-preview-status {
+  margin: 0 0 var(--space-2);
+}
+
+.pdf-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.pdf-preview-actions a,
+.pdf-preview-actions button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+}
+
+@media (max-width: 600px) {
+  .pdf-preview {
+    max-height: 520px;
+  }
+
+  .pdf-preview-actions a,
+  .pdf-preview-actions button {
+    min-height: 44px;
+  }
+}

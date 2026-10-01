@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { PdfCanvasPreview } from '../../shared/pdf/PdfCanvasPreview'
 import { sampleInvoice, sampleReceipt } from './sampleDocuments'
 import { INVOICE_FIELDS, RECEIPT_FIELDS } from './stationeryFields'
 import { entityDocumentBlob } from './stationeryPdf'
@@ -15,28 +16,35 @@ interface BrandingLivePreviewProps {
 export function BrandingLivePreview({ identity, stationery, editing }: BrandingLivePreviewProps) {
   const [kind, setKind] = useState<'invoice' | 'receipt'>('invoice')
   const [markers, setMarkers] = useState(false)
-  const [url, setUrl] = useState<string | null>(null)
+  // The generated sample: its bytes (drawn on the page) and an object URL of
+  // the same bytes (Open in new tab / Download).
+  const [sample, setSample] = useState<{ blob: Blob; url: string } | null>(null)
   const key = JSON.stringify({ identity, stationery, kind, markers })
-  // `?frame=off` skips the embedded viewer (automated checks only).
-  const showFrame = !new URLSearchParams(window.location.search).has('frame')
+  // The URL currently in use; released only when replaced or on unmount, so
+  // the Open/Download links never point at a released file.
+  const current = useRef<string | null>(null)
+  useEffect(() => () => {
+    if (current.current) URL.revokeObjectURL(current.current)
+  }, [])
 
   useEffect(() => {
     let alive = true
-    let created: string | null = null
     const timer = setTimeout(() => {
       const d = kind === 'invoice'
         ? ({ kind, data: sampleInvoice(stationery.paymentInstructions || null, null) } as const)
         : ({ kind, data: sampleReceipt(null) } as const)
       entityDocumentBlob(identity, stationery, d, markers).then((blob) => {
         if (!alive) return
-        created = URL.createObjectURL(blob)
-        setUrl(created)
+        const url = URL.createObjectURL(blob)
+        const previous = current.current
+        current.current = url
+        setSample({ blob, url })
+        if (previous) URL.revokeObjectURL(previous)
       })
     }, 250)
     return () => {
       alive = false
       clearTimeout(timer)
-      if (created) URL.revokeObjectURL(created)
     }
     // key captures the content of identity/stationery/kind/markers
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -53,11 +61,16 @@ export function BrandingLivePreview({ identity, stationery, editing }: BrandingL
         <label className="branding-toggle">
           <input type="checkbox" checked={markers} onChange={(e) => setMarkers(e.target.checked)} /> Number each field
         </label>
-        {url && <a href={url} download={`sample-${kind}.pdf`}>Download sample</a>}
+        {sample && (
+          <span className="branding-preview-links">
+            <a href={sample.url} target="_blank" rel="noopener">Open in new tab</a>
+            <a href={sample.url} download={`sample-${kind}.pdf`}>Download sample</a>
+          </span>
+        )}
       </div>
       <p className="field-hint">{editing ? 'Showing your unsaved changes.' : 'Showing the saved settings.'} Sample content only — not a real tenant or charge.</p>
-      {url && showFrame && <iframe className="branding-pdf-frame" src={url} title={`Sample ${kind}`} />}
-      {!url && <p className="field-hint">Preparing sample…</p>}
+      {sample && <PdfCanvasPreview pdf={sample.blob} label={`Sample ${kind}`} openUrl={sample.url} filename={`sample-${kind}.pdf`} />}
+      {!sample && <p className="field-hint">Preparing sample…</p>}
       {markers && (
         <div className="table-scroll">
           <table className="branding-sources">

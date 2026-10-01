@@ -113,13 +113,10 @@
   font-weight: 400;
 }
 
-.branding-pdf-frame {
-  width: 100%;
-  height: 720px;
-  margin-top: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
+.branding-preview-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
 .branding-sources td {
@@ -161,10 +158,6 @@
 
   .branding-color-row label {
     grid-column: 1 / -1;
-  }
-
-  .branding-pdf-frame {
-    height: 520px;
   }
 
   .branding-page .editable-section-edit,

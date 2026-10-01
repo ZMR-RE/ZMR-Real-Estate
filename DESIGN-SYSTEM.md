@@ -196,6 +196,18 @@ of screens in the app.
   for a subsection that's a real peer of the box's other top-level
   groups). Always this class on any such heading, never a bare `<h4>`.
 
+### PDF preview (shared, R2)
+
+`src/shared/pdf/PdfCanvasPreview.tsx` with `src/shared/pdf/pdfPreview.css` shows a PDF by drawing its **actual bytes** with pdf.js (`pdfjs-dist`, loaded only when a preview is shown). It never uses an embedded browser PDF viewer, which can stay as a blank dark panel inside a page without reporting an error.
+
+- **`.pdf-preview`** — sunken, bordered scroll box (max 720px tall; 520px at ≤600px).
+- **`.pdf-preview-page`** — one drawn page: white, full width, `--shadow-sm`.
+- **`.pdf-preview-status`** — "Drawing the PDF…" while loading.
+- **`.pdf-preview-error`** — uses the global `[role='alert']` danger styling. It names the failure and offers **Open in new tab**, **Download PDF** and **Try again** (`.pdf-preview-actions`, 44px tall at ≤600px).
+- A page that draws nothing counts as a failure, not a preview.
+- Callers pass the bytes, an accessible label, an object URL of the same bytes (for the fallbacks) and a filename.
+- First used by Settings › Entities › Branding & documents.
+
 ## Icons
 
 No icon font or SVG icon library anywhere in the app — the CSS-drawn
