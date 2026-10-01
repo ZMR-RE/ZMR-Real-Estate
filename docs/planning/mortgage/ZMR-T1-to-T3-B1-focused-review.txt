@@ -34,3 +34,17 @@ EVIDENCE (fresh --no-local clone of f245551): tsc -b clean; build clean; vitest 
 GAP: not yet exercised in a browser against a backend (the Practice window is closed; a hosted re-check of the
 refused-save display needs a new coordinated window and owner approval). Static renders prove the form/summary keep
 values and show the alert; the flow tests prove every refusal returns ok:false without closing.
+
+FLAG — PARTIAL SAVE (please check explicitly)
+If the balance reset COMMITTED and then the ordinary details update failed, the message must not say "Nothing was
+saved". Current wording in f245551 (src/modules/mortgagePayoff/mortgageDetailsSave.ts:78), exactly:
+  `The balance was saved, but the other loan details were not: ${message} Your entries are still in the form.`
+where ${message} is friendlyDatabaseError(updateError) (the server message, or the 40P01/40001 retry sentence).
+The "Nothing was saved; your entries are still in the form." suffix is used ONLY on paths where nothing committed:
+create refused, reset refused (before any update), details-only update refused. Test:
+mortgageDetailsSave.test.ts "balance saved but other details refused" asserts the full string with toBe (so the
+not-saved suffix is absent) and that the stored loan is adopted (fetchLatest called once).
+Note for review: if the update failure is 40P01, ${message} is "Changed at the same time somewhere else, so nothing was
+saved. Try again." — inside the partial-save sentence this reads as contradictory ("The balance was saved, but … nothing
+was saved"). T1 flags this as a wording defect in f245551 for T3's decision; it is NOT changed here, to keep the
+candidate fixed for review.
