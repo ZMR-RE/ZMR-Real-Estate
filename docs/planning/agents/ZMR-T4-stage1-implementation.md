@@ -307,6 +307,13 @@ This was pulled ahead of Milestone 2 because the owner asked for it to be finish
 - PostgREST's embed hint `lease_billing_terms!lease_billing_terms_lease_id_fkey` has not been run against real PostgREST (it's needed now that two foreign keys point to `leases`). This is a Practice check.
 - The review page's simulated backend models this-tenancy earlier balances only, not links.
 
+## T3 blockers on `921324e` — fixed (October 1)
+
+T3 permitted Practice testing but listed two production blockers. Both are fixed in `f86818a`, with focused tests. Details are in `ZMR-T4-request-T3-review-stage1.txt`; the hosted coverage is in `ZMR-T4-stage1-hosted-plan.md`.
+
+1. **Payment stranded by issuing a revision:** refused (ZM349) under row locks; payments share-lock the invoice. `payment_race.sh` proves both orders, and the same races on unfixed `921324e` strand payments.
+2. **Store PDF after "upload ok, link failed":** deterministic issued PDFs; an existing object is reused only when byte-identical to the frozen document; never overwritten or mislinked. The database requires the invoice's own path.
+
 ## Candidate on released A (October 1) — supersedes `4981c9e`
 
 **Production baseline:** release A `ba2c9b1` (Netlify `6abdd7fe7365c799bb78de41`, 108 migrations). It contains R2 `2026d5f` and R1 `fc20c6c`, plus M1–M6 and the two M6 migrations: `20260930100000` closed-period protection and `20260930110000` same-workspace references. **`4981c9e` is superseded for deployment.**

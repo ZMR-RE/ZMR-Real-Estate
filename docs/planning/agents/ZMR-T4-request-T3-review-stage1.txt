@@ -1,34 +1,37 @@
-T4 → T3 (relay via the owner) — review request: Stage 1 invoicing candidate on released A
+T4 → T3 (relay via the owner) — focused re-review: T3's two production blockers on 921324e, fixed
 
-Fixed commit: the commit that adds this version of this file. T4 states the full hash in its report.
-Branch t4/stage1-on-a = released A ba2c9b1 (contains R2 2026d5f and R1 fc20c6c) + merge of t4/stage1-on-r2 (4981c9e) + this docs commit.
-4981c9e is superseded for deployment. Its Stage 1 code is carried over byte-identical.
-Base for diffs: ba2c9b1 (production). `git diff ba2c9b1 <candidate>` is the whole of Stage 1 on top of production.
+Fixed candidate: the commit that adds this version of this file. T4 states the full hash in its report.
+Branch t4/stage1-on-a: 921324e + f86818a (the fixes) + this docs commit. Base is unchanged: released A ba2c9b1.
+`git diff 921324e <candidate>` is the whole change since your review.
 
-Please review:
-1. Migrations 20261002100000 … 20261002160000 (9 files) and supabase/tests/rent_invoicing/*.
-   Highest-risk areas:
-   - print snapshot / approval coverage;
-   - revise-with-payments refusal;
-   - trusted assistant provenance;
-   - owner-only (ZM370);
-   - balance references and renewal links;
-   - charge-rule shape.
-2. Frontend:
-   - src/modules/rentInvoices, src/modules/billingSettings (tenancy terms, billing rules, statements, continuity link);
-   - rentOps list filtering;
-   - EntityProfile Invoicing box.
-3. Changes to released shared code:
-   - R2's stationeryPdf/Logic/Types/Fields (totals and renewal labels). Branding sample PDFs are identical on 2026d5f vs the candidate.
-   - Invoices use the shared src/shared/pdf/PdfCanvasPreview; the duplicate is deleted.
-4. Integration claims against A:
-   - all 38 non-doc A files and all 108 released migrations byte-identical to ba2c9b1;
-   - Stage 1 migrations never reference financial_transactions/financial_periods;
-   - T2's closed-period suite gives 35/35 with output identical to A alone;
-   - invoices 158/158, branding 27/27, R1 36/36, vitest 218.
-5. The review page only (not shipped): src/modules/rentInvoices/review/*, including ?path=/tenants/<id>.
+1. Revision issue stranding a payment.
+   - supabase/migrations/20261002125000: issue_invoice re-checks payments on the original under its FOR UPDATE row lock and refuses with ZM349, explained.
+   - supabase/migrations/20261002110000: payments_invoice_state_guard now takes FOR SHARE on the invoice row.
+     A payment and an issue/cancel/revision-issue therefore serialize; the second sees the first's committed result.
+   - Coverage:
+     * tests.sql — a sequential regression;
+     * payment_race.sh — both orders (P1 payment-first → issue waits, then ZM349; P2 issue-first → payment waits, then ZM316);
+       no payment on any superseded invoice. The same races on the unfixed 921324e give 6 failures.
+     * owner_only.sql — a manager can still record a payment.
+2. Store PDF when the upload succeeded but linking failed.
+   - Issued PDFs are deterministic: invoicePdf.ts pins the creation date and file ID; invoiceDocument.ts pdfFileIdFor.
+   - attachIssuedInvoicePdf (rentInvoicesQueries.ts):
+     * already linked → only identical bytes succeed;
+     * an existing object at the invoice path → reused only if its SHA-256 equals the frozen document's;
+     * otherwise refused — never overwritten, never linked.
+   - attach_invoice_pdf (20261002140000) requires the path to be the invoice's own (<number>_ prefix; ZM346).
+   - Coverage:
+     * attachIssuedInvoicePdf.test.ts — determinism, the exact upload-ok/link-fail → retry sequence, mismatched object, already linked.
+       The old code fails 3 of the 4.
+     * tests.sql — path ownership;
+     * storage.sql — delete / overwrite / move checked separately.
+   - Review page: ?fail-link=1 reproduces the sequence (verified in the browser).
+3. Hosted plan and inventory (docs only):
+   - docs/planning/agents/ZMR-T4-stage1-hosted-plan.md. Failure injection after confirmed issuance (H7a) and after a successful upload before linking (H7b);
+     H8a covers blocker 1; H9 internal-schema API refusal; H6 delete/overwrite/move.
+   - docs/planning/agents/practice/s1practice.sh + s1_pin_versions.py: Practice-only migrations are pinned to the exact applied content (recorded statements)
+     against every local historical version; no match, ambiguity or missing statements → STOP. Offline scenarios are in the plan.
 
-Evidence: docs/planning/agents/ZMR-T4-stage1-implementation.md, "Candidate on released A".
-Not yet done (needs a Practice window from T1): release verification items 1–7, and a Financials browser check on the combined build.
-
-Out of scope: Agents screen/Workload editing, mailbox, sending, schedules, role-aware buttons, payment permissions, deployment.
+Evidence (fresh clone of the candidate): DB 167/167 (self-test OK); payment races 0 failed; concurrency no duplicates;
+branding 27/27; R1 36/36; closed-period 35/35; vitest 222; build OK; A's code and all 108 released migrations byte-identical.
+Everything else is unchanged from your 921324e review.
