@@ -25,11 +25,12 @@ export const INVOICE_FIELDS: FieldSource[] = [
   { n: 10, field: 'Bill to', source: 'Billing recipients on the tenancy — names, emails and phones from their tenant profiles (blank ones omitted)' },
   { n: 11, field: 'Rental', source: 'Property address and unit of the tenancy' },
   { n: 12, field: 'Lines', source: 'Rent and charges from the tenancy (invoicing release)' },
-  { n: 13, field: 'Amount due', source: 'Total of the lines' },
+  { n: 13, field: 'Amount due — this invoice', source: 'Total of this invoice’s own lines — what this invoice charges' },
   { n: 14, field: 'How to pay', source: 'Branding & documents (payment instructions); a property-level override is part of the invoicing release' },
   { n: 15, field: 'Note', source: 'The draft’s note — tenant note, else the entity’s default invoice note' },
   { n: 16, field: 'Footer', source: 'Branding & documents (reply-to email, footer text); legal name from Identity' },
-  { n: 17, field: 'Earlier unpaid invoices', source: 'Other issued invoices for this tenancy with a balance — references only, never added to the total (invoicing release)' },
+  { n: 17, field: 'Earlier unpaid invoices', source: 'Other issued invoices for this tenancy, each with its remaining balance — already billed, never charged again (invoicing release)' },
+  { n: 18, field: 'Total outstanding for this tenancy', source: 'This invoice plus each earlier unpaid remaining balance, counted once; shown only when there are earlier unpaid invoices (invoicing release)' },
 ]
 
 export const RECEIPT_FIELDS: FieldSource[] = [

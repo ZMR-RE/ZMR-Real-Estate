@@ -1,0 +1,37 @@
+T4 → T3 (relay via the owner) — focused re-review: T3's two production blockers on 921324e, fixed
+
+Fixed candidate: the commit that adds this version of this file. T4 states the full hash in its report.
+Branch t4/stage1-on-a: 921324e + f86818a (the fixes) + this docs commit. Base is unchanged: released A ba2c9b1.
+`git diff 921324e <candidate>` is the whole change since your review.
+
+1. Revision issue stranding a payment.
+   - supabase/migrations/20261002125000: issue_invoice re-checks payments on the original under its FOR UPDATE row lock and refuses with ZM349, explained.
+   - supabase/migrations/20261002110000: payments_invoice_state_guard now takes FOR SHARE on the invoice row.
+     A payment and an issue/cancel/revision-issue therefore serialize; the second sees the first's committed result.
+   - Coverage:
+     * tests.sql — a sequential regression;
+     * payment_race.sh — both orders (P1 payment-first → issue waits, then ZM349; P2 issue-first → payment waits, then ZM316);
+       no payment on any superseded invoice. The same races on the unfixed 921324e give 6 failures.
+     * owner_only.sql — a manager can still record a payment.
+2. Store PDF when the upload succeeded but linking failed.
+   - Issued PDFs are deterministic: invoicePdf.ts pins the creation date and file ID; invoiceDocument.ts pdfFileIdFor.
+   - attachIssuedInvoicePdf (rentInvoicesQueries.ts):
+     * already linked → only identical bytes succeed;
+     * an existing object at the invoice path → reused only if its SHA-256 equals the frozen document's;
+     * otherwise refused — never overwritten, never linked.
+   - attach_invoice_pdf (20261002140000) requires the path to be the invoice's own (<number>_ prefix; ZM346).
+   - Coverage:
+     * attachIssuedInvoicePdf.test.ts — determinism, the exact upload-ok/link-fail → retry sequence, mismatched object, already linked.
+       The old code fails 3 of the 4.
+     * tests.sql — path ownership;
+     * storage.sql — delete / overwrite / move checked separately.
+   - Review page: ?fail-link=1 reproduces the sequence (verified in the browser).
+3. Hosted plan and inventory (docs only):
+   - docs/planning/agents/ZMR-T4-stage1-hosted-plan.md. Failure injection after confirmed issuance (H7a) and after a successful upload before linking (H7b);
+     H8a covers blocker 1; H9 internal-schema API refusal; H6 delete/overwrite/move.
+   - docs/planning/agents/practice/s1practice.sh + s1_pin_versions.py: Practice-only migrations are pinned to the exact applied content (recorded statements)
+     against every local historical version; no match, ambiguity or missing statements → STOP. Offline scenarios are in the plan.
+
+Evidence (fresh clone of the candidate): DB 167/167 (self-test OK); payment races 0 failed; concurrency no duplicates;
+branding 27/27; R1 36/36; closed-period 35/35; vitest 222; build OK; A's code and all 108 released migrations byte-identical.
+Everything else is unchanged from your 921324e review.

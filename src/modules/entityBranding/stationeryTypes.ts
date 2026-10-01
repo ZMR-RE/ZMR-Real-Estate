@@ -62,8 +62,12 @@ export interface InvoiceDoc {
   // entity default) — resolved before approval and snapshotted at issue.
   paymentInstructions: string | null
   note: string | null
-  // Earlier unpaid invoices shown as references only — never billed again.
-  priorUnpaid: { number: string; periodLabel: string; outstanding: number }[]
+  // Earlier unpaid invoices of the same tenancy, with their REMAINING
+  // balances. Never added as lines of this invoice (no new charge); counted
+  // once in the labelled tenancy total (see invoiceTotals).
+  // `fromTenancy` names the earlier tenancy when the balance comes through
+  // an explicit billing-continuity link (e.g. a renewal); null = this one.
+  priorUnpaid: { number: string; periodLabel: string; outstanding: number; fromTenancy?: string | null }[]
 }
 
 export interface ReceiptDoc {

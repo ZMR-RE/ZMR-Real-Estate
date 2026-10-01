@@ -1,0 +1,37 @@
+/* NON-SAVING AGENTS WORKSPACE PREVIEW (T4) — phone-width rules (≤600px).
+   Loaded last so it overrides the base and 1200px rules. Every control in
+   the preview is at least 44px tall here. */
+
+/* Touch targets: at phone width every control is at least 44px tall. */
+@media (max-width: 600px) {
+  .agents-compact-button,
+  .agents-preview-datasets button,
+  .agents-filters input,
+  .agents-filters select,
+  .agents-inline-check,
+  .agents-link-button,
+  .agents-page-size select,
+  .agents-allocation-input,
+  .agents-notice-match select,
+  .agents-destination a {
+    min-height: 44px;
+  }
+
+  /* Shared controls inside this preview that are shorter than a touch
+     target at phone width (shared box Edit 34px, tab bar 42px, box
+     headers). Scoped to .agents-workspace so shipped screens don't change;
+     the app-wide fix is a separate shared-style decision. */
+  .agents-workspace .editable-section-edit,
+  .agents-workspace .tab-bar button,
+  .agents-workspace .collapsible-section > summary {
+    min-height: 44px;
+  }
+
+  .agents-preview-datasets {
+    margin-left: 0;
+  }
+
+  .agents-approval-actions .agents-compact-button {
+    flex: 1 1 auto;
+  }
+}
