@@ -307,6 +307,51 @@ This was pulled ahead of Milestone 2 because the owner asked for it to be finish
 - PostgREST's embed hint `lease_billing_terms!lease_billing_terms_lease_id_fkey` has not been run against real PostgREST (it's needed now that two foreign keys point to `leases`). This is a Practice check.
 - The review page's simulated backend models this-tenancy earlier balances only, not links.
 
+## Candidate on the released baseline (October 1)
+
+**Branch** `t4/stage1-on-r2` is released R2 `2026d5f` (which contains R1 `fc20c6c`) plus a merge of `agents/stage1-invoicing` (`080fe6a`) and one fix commit. The fixed candidate commit is named in the T3 request (`ZMR-T4-request-T3-review-stage1.txt`).
+
+- **Merge:** one conflict, in `DESIGN-SYSTEM.md`. Both sides had added a separate section, and both were kept.
+- **R1 and R2 preserved:**
+  - migrations `20260929020000` and `20261001190000` and `src/modules/bankReconciliation/*` are byte-identical to `2026d5f`;
+  - no released migration changed;
+  - no M1–M6 (`b2c767d`) and no `20260930*` migration.
+- **Released R2 renderer files changed by Stage 1:** `stationeryFields/Logic/Pdf/Types.ts`, for the approved totals and renewal labels. `EntityProfile.tsx` gains the Invoicing box.
+  - Proof that R2's output is unchanged: the branding sample invoice and receipt, with and without field numbers, render **identical** PDFs on `2026d5f` and on the candidate, apart from the creation date.
+- **One PDF viewer:** invoices now use R2's shared `src/shared/pdf/PdfCanvasPreview`. Stage 1's earlier invoice-only copy, its worker type stub and its styles are deleted, so the bundle carries one pdf.js copy.
+
+**Completed locally (evidence):**
+
+- `tsc -b --noEmit` clean; vitest 188 passed (+1 new); oxlint 0 errors; build OK.
+- **Database suites on the full chain** (115 migrations: production's 106 + Stage 1's 9):
+  - invoices **158/158** with a passing self-test; concurrency gives A-INV-000004/000005, no duplicates;
+  - branding **27/27**;
+  - R1 void-reconcile **36/36**.
+- **Previously open checks, now resolved:**
+  - **Billing-rules box in a browser:** the review page now opens the real tenant profile with `?path=/tenants/t-casey`. At 500 px width:
+    - rules and statements render;
+    - an empty one-time rule shows all three required-field errors and saves nothing;
+    - a valid −$25 credit saves and lists as "−$25.00 in November 2026 (credit)";
+    - a $91.40 statement shows the "Tenant's 50%: $45.70" hint and lists as not billed;
+    - every rule control is 46 px; there is no sideways scroll.
+  - **Two defects found and fixed:**
+    - a brand-new credit showed "On an invoice" when a missing value meant not billed (fixed, with a test);
+    - billing-form dropdowns were 41 px on phones (now at least 44).
+  - **"Billing continues from":** offers only earlier tenancies, labelled with address, unit, dates and tenants. It offers none for the earliest tenancy.
+  - **Rent ops at 500 px:**
+    - "What prints" shows the separate "Amount due — this invoice" and "Total outstanding for this tenancy" ($1,450 / $2,900), with the earlier invoice listed as already billed;
+    - no control under 44 px; no sideways scroll;
+    - the draft PDF draws through the shared viewer, with no embedded viewer.
+- **Reused unchanged (no code change since):** the visible PDF-upload retry (`?fail-upload=1`) and the PDF-viewer failure/recovery checks from `bb9a392`; the shared viewer's failure/recovery checks from R2 `2026d5f`.
+
+**Still needs hosted checks:** Practice, in a window granted by T1; see the list below and `ZMR-T4-request-T1-practice-window-stage1.txt`.
+
+**Release ordering (for whoever ships second):**
+
+- T2's A candidate (`ba2c9b1`) is also built on `2026d5f`. Its M6 migrations sort before R2's.
+- Stage 1's 9 migrations sort after R2's, so after either order Stage 1 applies with a plain push of exactly its 9 files.
+- The second frontend release must integrate the first. Neither includes the other today.
+
 ## Release verification (Practice, before any production step)
 
 Each item must be observed on Practice through the dashboard, not inferred from disposable-DB checks.
@@ -319,6 +364,11 @@ Each item must be observed on Practice through the dashboard, not inferred from 
    - Reloading before retrying must still offer "Store PDF".
 4. **Owner-only.** Confirm the reserved test-verification login's membership is `owner`; if it isn't, report it rather than change it. If Practice has a non-owner member, their invoice actions must be refused with the owner-only message.
 5. **Hosted Storage.** Confirm the Storage policies behave as in the local stand-in, including a non-owner upload into `/Invoices/` being refused.
+6. **Tenancy & billing loads through real PostgREST.** The `lease_billing_terms!lease_billing_terms_lease_id_fkey` embed must return the terms now that two foreign keys point at `leases`. The simulated backend can't test this.
+7. **Apply on Practice by the exact-set procedure.**
+   - Pending from the candidate = exactly the 9 `20261002*` files, after mirroring Practice's already-applied M6 files locally as was done for R2.
+   - Then repeat the invoice flow end to end on a `ZMR-TEST-` tenancy: draft, approve, issue (number and stored PDF), revise refusal with payments, cancel. Also one billing rule and one statement.
+   - Clean up, and report residue. Stored invoice PDFs and logos are permanent by design.
 
 ## Routine implementation choices (not owner decisions)
 
@@ -332,13 +382,13 @@ These are recorded so they aren't mistaken for approvals.
 - Ending a billing rule keeps it on record (status `ended`); nothing is deleted.
 - Old sample PDFs were replaced by snapshot-rendered samples: `samples/sample-1-issued-with-logo_A-INV-000001.pdf` and `samples/sample-2-draft-no-logo_co-tenants.pdf`.
 
-## Known gaps (this correction)
+## Known gaps (updated October 1)
 
-- Workload editing of billing rules isn't wired: the real Agents screen doesn't exist yet (the rename is pending coordination). `TenancyChargeRulesBox` is built to be reused there.
-- Phone-width check of the new "What prints" block and the billing-rules box wasn't re-run; the browser session couldn't resize below desktop width.
-- The billing-rules box isn't on the simulated review page, because that page shows Rent ops only. It is verified by unit checks, the 23 DB rule checks and a type-check, not in a browser.
-- The frontend doesn't know the member's role (it isn't in the shared auth context), so non-owners see action buttons and get the refusal message. Hiding the buttons needs a shared auth change, not made here.
-- Recording payments: existing behaviour, unchanged, recorded separately in `ZMR-T4-existing-payment-recording-behavior.md`.
+- **Resolved:** the phone-width check, and the billing-rules box in a browser (see "Candidate on the released baseline").
+- **Workload editing of billing rules:** not wired, because the real Agents screen doesn't exist yet (the rename is pending coordination). It isn't added now: no new features. `TenancyChargeRulesBox` is reusable there.
+- **Member role in the frontend:** the shared auth context doesn't carry it, so non-owners see action buttons and get the owner-only refusal message. Hiding the buttons is a shared auth change, not made here. The backend enforcement is complete.
+- **Recording payments:** existing behaviour, unchanged, recorded separately in `ZMR-T4-existing-payment-recording-behavior.md`.
+- **Hosted checks 1–7 above:** pending a Practice window from T1.
 
 ## Remaining milestones (estimates)
 
