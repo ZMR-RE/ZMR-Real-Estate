@@ -4,6 +4,8 @@ import { ActionItemForm } from './ActionItemForm'
 import { ActionQueueSummary } from './ActionQueueSummary'
 import { ActionQueueFilters } from './ActionQueueFilters'
 import { ActionQueueList } from './ActionQueueList'
+import { NeedsEntityItem } from './NeedsEntityItem'
+import { useNeedsEntity } from './useNeedsEntity'
 
 type ActionQueueTab = 'to_resolve' | 'automations'
 
@@ -53,6 +55,7 @@ export function ActionQueueBoard() {
     reopen,
     saveEdit,
   } = useActionQueue()
+  const needsEntity = useNeedsEntity()
 
   const handleStartCreating = () => {
     setSelectedItemId(null)
@@ -99,6 +102,8 @@ export function ActionQueueBoard() {
             upcoming={summary.upcoming}
             automated={summary.automated}
           />
+
+          <NeedsEntityItem byYear={needsEntity.byYear} total={needsEntity.total} error={needsEntity.error} />
 
           <ActionQueueFilters
             propertyOptions={propertyOptions}

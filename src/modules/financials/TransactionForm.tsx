@@ -11,6 +11,7 @@ import {
   type TransactionInput,
 } from './financialsQueries'
 import { FIELD_NAMES, validateTransaction, type FieldErrors, type TransactionField } from './transactionEntry'
+import { TransactionEntityField } from './TransactionEntityField'
 import { TransactionPayerField } from './TransactionPayerField'
 import type { EntryMessage } from './useTransactionEntry'
 
@@ -273,6 +274,13 @@ export function TransactionForm({
         onChange={(e) => update({ transactionDate: e.target.value })}
       />
       {fieldError('transactionDate')}
+
+      <TransactionEntityField
+        propertyId={values.propertyId}
+        transactionDate={values.transactionDate}
+        value={values.responsibleEntityId}
+        onChange={(responsibleEntityId) => update({ responsibleEntityId })}
+      />
 
       <label htmlFor="description">Description</label>
       <input

@@ -35,6 +35,7 @@ function tx(
     voided: false,
     statement_reconciled: false,
     property,
+    responsible_entity: null,
     reimbursement_source_id: null,
     ...extra,
   }
