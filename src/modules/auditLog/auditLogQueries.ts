@@ -1,6 +1,12 @@
 import { supabase } from '../../shared/supabaseClient'
 
-export type AuditedTable = 'properties' | 'llcs' | 'mortgage_details' | 'financial_transactions'
+export type AuditedTable =
+  | 'properties'
+  | 'llcs'
+  | 'mortgage_details'
+  | 'financial_transactions'
+  | 'mortgage_payments'
+  | 'mortgage_escrow_transactions'
 
 export interface AuditLogEntry {
   id: string
@@ -20,6 +26,20 @@ export async function listAuditLogEntries(accountId: string, tableName: AuditedT
     .eq('account_id', accountId)
     .eq('table_name', tableName)
     .eq('record_id', recordId)
+    .order('changed_at', { ascending: false })
+    .returns<AuditLogEntry[]>()
+}
+
+// Mortgage balance integrity (20261004100000): the audit rows of every payment/escrow entry on a property (the
+// activity tables are now audited; their record ids come from the property's own entries).
+export async function listAuditLogEntriesForRecords(accountId: string, tableName: AuditedTable, recordIds: string[]) {
+  if (recordIds.length === 0) return { data: [] as AuditLogEntry[], error: null }
+  return supabase
+    .from('audit_log')
+    .select('id, table_name, record_id, field_name, old_value, new_value, changed_by, changed_at')
+    .eq('account_id', accountId)
+    .eq('table_name', tableName)
+    .in('record_id', recordIds)
     .order('changed_at', { ascending: false })
     .returns<AuditLogEntry[]>()
 }

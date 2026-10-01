@@ -10,7 +10,7 @@ import {
   type MortgageDetailsInput,
 } from './mortgagePayoffQueries'
 import { computeEquity, type EquitySnapshot } from './mortgagePayoffMath'
-import { planMortgageSave } from './mortgageBalanceIntegrity'
+import { friendlyDatabaseError, planMortgageSave } from './mortgageBalanceIntegrity'
 
 const BLANK_MORTGAGE: MortgageDetailsInput = {
   lender_name: null,
@@ -99,12 +99,14 @@ export function useMortgageDetails(propertyId: string, marketValue: string | nul
 
     setSaving(true)
     if (plan.reset) {
-      const { error: resetError } = await resetMortgageBalance(
-        mortgageDetails.id,
-        mortgageDetails.balance_version,
-        plan.reset.principal,
-        plan.reset.escrow,
-      )
+      const { error: resetError } = await resetMortgageBalance({
+        mortgageId: mortgageDetails.id,
+        principal: plan.reset.principal,
+        principalVersion: plan.reset.principal === null ? null : mortgageDetails.principal_version,
+        escrow: plan.reset.escrow,
+        escrowVersion: plan.reset.escrow === null ? null : mortgageDetails.escrow_version,
+        statementDate: plan.reset.statementDate,
+      })
       if (resetError) {
         setSaving(false)
         if (resetError.code === 'ZM5M5') {
@@ -116,7 +118,7 @@ export function useMortgageDetails(propertyId: string, marketValue: string | nul
               : resetError.message,
           )
         } else {
-          setError(resetError.message)
+          setError(friendlyDatabaseError(resetError))
         }
         return false
       }

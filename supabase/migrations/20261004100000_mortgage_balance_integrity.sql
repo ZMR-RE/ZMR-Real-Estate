@@ -1,45 +1,55 @@
 -- Mortgage balance integrity (T1; owner-approved 2026-10-01: "Yes, build the mortgage integrity fix with those choices").
--- Contract: docs/planning/mortgage/ZMR-mortgage-balance-integrity-contract.md (v2, bed4174) with the owner's binding choices:
---   1. inactive/replaced loans keep frozen balances, no review item solely for being inactive;
---   2. balance edits from older browsers (plain UPDATE of the balance columns) are REFUSED; reload required;
---   3. reversals above the original loan amount are refused and create a review cause.
+-- Contract v2 (bed4174) + owner choices + T3 M1–M10 and F1–F4/B1–B4 corrections
+-- (record: docs/planning/mortgage/ZMR-mortgage-integrity-implementation.md):
+--   * owner 1: inactive/replaced loans keep frozen balances; no review solely for being inactive;
+--   * owner 2: an older page can't change a balance (reload required). The loan guard runs with the CALLER's rights and
+--     refuses any balance or counter change made by an ordinary client role (authenticated/anon); only the server-side
+--     writers below (which run as their owner and check membership) can change them;
+--   * owner 3: reversals above the original loan amount are refused with a review cause;
+--   * historical entries (B4): every entry is applied as today. If it is dated on/before the balance's latest statement
+--     date (or, when none was given, the date the figure was last entered), it ALSO raises a review cause — flagged for a
+--     person, never skipped or guessed. Statement dates are stored only when given; unknown stays unknown.
 --
--- Fixes, with T3's reproduction (docs/planning/mortgage/evidence/t3-mortgage-concurrency-2026-10-01/) as the
--- negative control:
---   D1 unlocked read-modify-write in the insert triggers (lost updates, bypassed guards) -> loan row locked FOR UPDATE;
---   D2 a void never reversed its balance effect -> conditional, exactly-once reversal;
---   D3 no loan reference on entries -> mortgage_id set server-side on every new entry;
---   D4 absolute balance edits with no stale check -> versioned reset function only; per-balance epochs;
---   D5 no audit / editable facts -> immutable facts, one-way void, audit triggers, append-only effects ledger.
---
--- Data impact: no existing activity row, balance or loan is changed. Pre-existing entries stay mortgage_id NULL
--- ("unlinked legacy property activity"): no backfill, no guessed links, no historical correction.
+-- Data impact: no existing activity row, balance or loan value changes. Existing entries stay mortgage_id NULL
+-- (unlinked legacy property activity); no backfill, no guessed links, no historical correction. Existing loans get
+-- counters 0, statement dates NULL (unknown), and figure-entered timestamps = the row's own last-write time.
+-- Permissions are unchanged: any workspace member, exactly as the mortgage tables already allow.
 
 -- ---------------------------------------------------------------------------------------------------------------
 -- 1. Columns
 -- ---------------------------------------------------------------------------------------------------------------
 alter table mortgage_details
-  add column balance_version bigint not null default 0,
-  add column principal_epoch integer not null default 0,
-  add column escrow_epoch integer not null default 0;
+  add column principal_version bigint not null default 0,     -- M7: one version counter per balance
+  add column escrow_version bigint not null default 0,
+  add column principal_epoch integer not null default 0,      -- reset counters (a reset since an entry stops its reversal)
+  add column escrow_epoch integer not null default 0,
+  add column principal_as_of date,                            -- statement dates; NULL = unknown (never defaulted)
+  add column escrow_as_of date,
+  add column principal_figure_at timestamptz,                 -- when a person last entered/updated the figure
+  add column escrow_figure_at timestamptz;
+-- Backfill metadata only; the audit trigger is paused for this one statement so existing history gains no rows.
+alter table mortgage_details disable trigger mortgage_details_audit_log;
+update mortgage_details set principal_figure_at = updated_at, escrow_figure_at = updated_at;
+alter table mortgage_details enable trigger mortgage_details_audit_log;
+alter table mortgage_details
+  alter column principal_figure_at set not null, alter column principal_figure_at set default now(),
+  alter column escrow_figure_at set not null, alter column escrow_figure_at set default now();
 
 alter table mortgage_payments
   add column mortgage_id uuid references mortgage_details(id),
   add column void_reason text,
   add column void_outcome text check (void_outcome in
     ('reversed', 'skipped_reset_after_entry', 'skipped_loan_inactive', 'skipped_unlinked_legacy'));
-
 alter table mortgage_escrow_transactions
   add column mortgage_id uuid references mortgage_details(id),
   add column void_reason text,
   add column void_outcome text check (void_outcome in
     ('reversed', 'skipped_reset_after_entry', 'skipped_loan_inactive', 'skipped_unlinked_legacy'));
-
 create index mortgage_payments_mortgage_idx on mortgage_payments (mortgage_id);
 create index mortgage_escrow_transactions_mortgage_idx on mortgage_escrow_transactions (mortgage_id);
 
 -- ---------------------------------------------------------------------------------------------------------------
--- 2. Append-only balance-effects ledger (audit trail + exactly-once key). Written only by the functions below.
+-- 2. Append-only balance-effects ledger (authoritative record of balance decisions + exactly-once keys).
 -- ---------------------------------------------------------------------------------------------------------------
 create table mortgage_balance_effects (
   id uuid primary key default gen_random_uuid(),
@@ -58,12 +68,10 @@ create table mortgage_balance_effects (
   created_by uuid default auth.uid(),
   created_at timestamptz not null default now()
 );
--- A reversal (or a recorded skip) can happen at most once per entry; refusals may repeat.
 create unique index mortgage_balance_effects_once_idx
   on mortgage_balance_effects (source_kind, source_id, effect)
   where effect in ('applied', 'reversed', 'reversal_skipped');
 create index mortgage_balance_effects_mortgage_idx on mortgage_balance_effects (mortgage_id, created_at);
-
 alter table mortgage_balance_effects enable row level security;
 create policy "members can view their mortgage balance effects"
   on mortgage_balance_effects for select using (is_account_member(account_id));
@@ -71,96 +79,165 @@ revoke all on mortgage_balance_effects from anon;
 revoke insert, update, delete, truncate on mortgage_balance_effects from authenticated;
 
 -- ---------------------------------------------------------------------------------------------------------------
--- 3. Review causes behind the Action Queue "Mortgage balance review" item (one open item per loan, derived from
---    its open causes). Principal and escrow causes resolve independently.
+-- 3. Review causes. The Action Queue "Mortgage balance review" is DERIVED from unresolved causes (no action_items row,
+--    so generic task completion can't dismiss it). One open cause per (entry, cause). Each cause stores the context a
+--    person needs to decide it safely (B3): the entry's date/type/amount and the balance's latest update.
 -- ---------------------------------------------------------------------------------------------------------------
 create table mortgage_balance_review_causes (
   id uuid primary key default gen_random_uuid(),
   account_id uuid not null references accounts(id) on delete cascade,
   property_id uuid not null references properties(id) on delete cascade,
-  -- the loan whose balance should be checked (for unlinked legacy entries: the property's active loan at void time;
+  -- the loan whose balance should be checked (for unlinked legacy entries: the property's active loan at void time —
   -- a review target, not a claim that the entry belonged to it)
   review_mortgage_id uuid not null references mortgage_details(id),
   balance_kind text not null check (balance_kind in ('principal', 'escrow')),
-  cause text not null check (cause in
-    ('skipped_reset_after_entry', 'skipped_unlinked_legacy', 'refused_negative_escrow', 'refused_over_original')),
+  cause text not null check (cause in ('skipped_reset_after_entry', 'skipped_unlinked_legacy', 'refused_negative_escrow',
+                                       'refused_over_original', 'possibly_covered_by_statement')),
   source_kind text not null check (source_kind in ('payment', 'escrow')),
   source_id uuid not null,
+  context jsonb not null default '{}',
   created_by uuid default auth.uid(),
   created_at timestamptz not null default now(),
   resolved_at timestamptz,
   resolved_by uuid,
-  resolution text check (resolution in ('reset', 'confirmed')),
+  resolution text check (resolution in ('reset', 'confirmed', 'voided', 'acknowledged')),
   resolved_by_effect uuid references mortgage_balance_effects(id)
 );
 create unique index mortgage_balance_review_causes_open_idx
   on mortgage_balance_review_causes (source_kind, source_id, cause) where resolved_at is null;
 create index mortgage_balance_review_causes_loan_idx
   on mortgage_balance_review_causes (review_mortgage_id) where resolved_at is null;
-
 alter table mortgage_balance_review_causes enable row level security;
 create policy "members can view their mortgage balance review causes"
   on mortgage_balance_review_causes for select using (is_account_member(account_id));
 revoke all on mortgage_balance_review_causes from anon;
 revoke insert, update, delete, truncate on mortgage_balance_review_causes from authenticated;
 
+-- Context recorded on a cause: the entry, and the balance's latest update (time entered; statement date if given).
+create or replace function mortgage_cause_context(p_kind text, r jsonb, l public.mortgage_details)
+returns jsonb
+language sql
+stable
+set search_path = pg_catalog, public, pg_temp
+as $$
+  select jsonb_strip_nulls(jsonb_build_object(
+    'entry_date', coalesce(r->>'payment_date', r->>'transaction_date'),
+    'entry_type', case when p_kind = 'payment' then 'payment' else r->>'transaction_type' end,
+    'amount', r->>'amount',
+    'principal', r->>'principal_amount',
+    'entry_recorded_at', r->>'created_at',
+    'balance_updated_at', case when p_kind = 'payment' then l.principal_figure_at else l.escrow_figure_at end,
+    'statement_date', case when p_kind = 'payment' then l.principal_as_of else l.escrow_as_of end))
+$$;
+revoke all on function mortgage_cause_context(text, jsonb, public.mortgage_details) from public, anon, authenticated;
+
+-- True for an ordinary signed-in client statement (PostgREST role); false inside the SECURITY DEFINER writers below
+-- (they run as their owner) and in admin/migration sessions.
+create or replace function mortgage_is_client_write()
+returns boolean
+language sql
+stable
+set search_path = pg_catalog, public, pg_temp
+as $$ select current_user in ('authenticated', 'anon') $$;
+revoke all on function mortgage_is_client_write() from public, anon;
+grant execute on function mortgage_is_client_write() to authenticated;
+
 -- ---------------------------------------------------------------------------------------------------------------
--- 4. Loan row guard: balances and their counters change only through these functions/triggers.
---    An older browser's edit form always resends both balances; a CHANGED value is refused (owner choice 2).
+-- 4. Loan row guard — SECURITY INVOKER on purpose: current_user tells a client statement from a server-side writer.
 -- ---------------------------------------------------------------------------------------------------------------
 create or replace function mortgage_details_balance_guard()
 returns trigger
 language plpgsql
+set search_path = pg_catalog, public, pg_temp
 as $$
 begin
   if tg_op = 'INSERT' then
-    new.balance_version := 0;
+    new.principal_version := 0;
+    new.escrow_version := 0;
     new.principal_epoch := 0;
     new.escrow_epoch := 0;
+    new.principal_figure_at := now();
+    new.escrow_figure_at := now();
+    if new.principal_as_of > current_date or new.escrow_as_of > current_date then
+      raise exception 'A statement date can''t be in the future.' using errcode = '22023';
+    end if;
     return new;
   end if;
 
-  if coalesce(current_setting('zmr.mortgage_internal', true), '') = 'on' then
+  if not public.mortgage_is_client_write() then
     return new;
   end if;
-
+  -- compared with the row Postgres has just locked (re-checked against the newest version if another write landed
+  -- first), so a stale form's balance always differs and is refused; an identical value can't overwrite anything.
   if new.current_balance is distinct from old.current_balance
      or new.escrow_balance is distinct from old.escrow_balance then
     raise exception 'This page is out of date and can''t change the mortgage balance. Copy any unsaved changes, reload the page, then try again. Nothing was saved.'
       using errcode = 'ZM5M6';
   end if;
-
-  if new.balance_version is distinct from old.balance_version
-     or new.principal_epoch is distinct from old.principal_epoch
-     or new.escrow_epoch is distinct from old.escrow_epoch then
-    raise exception 'Mortgage balance counters can''t be changed directly.' using errcode = 'ZM5M6';
+  if (new.principal_version, new.escrow_version, new.principal_epoch, new.escrow_epoch, new.principal_as_of,
+      new.escrow_as_of, new.principal_figure_at, new.escrow_figure_at)
+     is distinct from
+     (old.principal_version, old.escrow_version, old.principal_epoch, old.escrow_epoch, old.principal_as_of,
+      old.escrow_as_of, old.principal_figure_at, old.escrow_figure_at) then
+    raise exception 'Mortgage balance details can only be changed through a balance update.' using errcode = 'ZM5M6';
   end if;
-
   return new;
 end;
 $$;
-
 create trigger mortgage_details_balance_guard
   before insert or update on mortgage_details
   for each row execute function mortgage_details_balance_guard();
 
+-- M1: a new loan's opening balances are recorded as an initial reset effect (statement date when given).
+create or replace function mortgage_record_opening()
+returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public, pg_temp
+as $$
+begin
+  insert into public.mortgage_balance_effects
+    (account_id, property_id, mortgage_id, source_kind, source_id, effect, principal_delta, escrow_delta,
+     principal_epoch, escrow_epoch, reason, statement_date)
+  values (new.account_id, new.property_id, new.id, 'reset', new.id, 'reset', new.current_balance,
+          coalesce(new.escrow_balance, 0), 0, 0, 'opening', new.principal_as_of);
+  return new;
+end;
+$$;
+revoke all on function mortgage_record_opening() from public, anon, authenticated;
+create trigger mortgage_details_record_opening
+  after insert on mortgage_details
+  for each row execute function mortgage_record_opening();
+
 -- ---------------------------------------------------------------------------------------------------------------
--- 5. New entries: lock the active loan, validate against the locked value, link, apply, record. Replaces the
---    unlocked AFTER INSERT triggers (T3 C1–C4).
+-- 5. New entries: check membership, lock the active loan, validate against the locked values, link, apply. An entry
+--    dated on/before the balance's latest statement date (or, if none given, the date the figure was entered) also
+--    raises a "possibly covered by statement" review cause (B4) — it is still applied; nothing is guessed.
 -- ---------------------------------------------------------------------------------------------------------------
 drop trigger if exists mortgage_payments_apply_to_balance on mortgage_payments;
 drop trigger if exists mortgage_escrow_transactions_apply_to_balance on mortgage_escrow_transactions;
+
+create or replace function mortgage_entry_may_be_covered(p_effective date, p_as_of date, p_figure_at timestamptz)
+returns boolean
+language sql
+immutable
+set search_path = pg_catalog, public, pg_temp
+as $$ select p_effective <= coalesce(p_as_of, (p_figure_at at time zone 'UTC')::date) $$;
+revoke all on function mortgage_entry_may_be_covered(date, date, timestamptz) from public, anon, authenticated;
 
 create or replace function mortgage_payment_apply_locked()
 returns trigger
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  l mortgage_details%rowtype;
+  l public.mortgage_details%rowtype;
 begin
-  select * into l from mortgage_details where property_id = new.property_id and not voided for update;
+  if auth.uid() is not null and not public.is_account_member(new.account_id) then
+    raise exception 'Not a member of this workspace.' using errcode = '42501';
+  end if;
+  select * into l from public.mortgage_details where property_id = new.property_id and not voided for update;
   if not found then
     raise exception 'No active mortgage_details found for property %; enter loan terms before logging payments.', new.property_id;
   end if;
@@ -180,17 +257,21 @@ begin
   new.void_reason := null;
   new.void_outcome := null;
 
-  perform set_config('zmr.mortgage_internal', 'on', true);
-  update mortgage_details
+  update public.mortgage_details
      set current_balance = l.current_balance - new.principal_amount,
-         balance_version = l.balance_version + 1,
+         principal_version = l.principal_version + 1,
          updated_at = now()
    where id = l.id;
-  perform set_config('zmr.mortgage_internal', 'off', true);
-
-  insert into mortgage_balance_effects
+  insert into public.mortgage_balance_effects
     (account_id, property_id, mortgage_id, source_kind, source_id, effect, principal_delta, principal_epoch, escrow_epoch)
   values (new.account_id, new.property_id, l.id, 'payment', new.id, 'applied', -new.principal_amount, l.principal_epoch, l.escrow_epoch);
+
+  if public.mortgage_entry_may_be_covered(new.payment_date, l.principal_as_of, l.principal_figure_at) then
+    insert into public.mortgage_balance_review_causes
+      (account_id, property_id, review_mortgage_id, balance_kind, cause, source_kind, source_id, context)
+    values (new.account_id, new.property_id, l.id, 'principal', 'possibly_covered_by_statement', 'payment', new.id,
+            public.mortgage_cause_context('payment', to_jsonb(new), l));
+  end if;
   return new;
 end;
 $$;
@@ -199,14 +280,17 @@ create or replace function mortgage_escrow_apply_locked()
 returns trigger
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  l mortgage_details%rowtype;
+  l public.mortgage_details%rowtype;
   before_escrow numeric(12, 2);
   delta numeric(12, 2);
 begin
-  select * into l from mortgage_details where property_id = new.property_id and not voided for update;
+  if auth.uid() is not null and not public.is_account_member(new.account_id) then
+    raise exception 'Not a member of this workspace.' using errcode = '42501';
+  end if;
+  select * into l from public.mortgage_details where property_id = new.property_id and not voided for update;
   if not found then
     raise exception 'No active mortgage_details found for property %; enter loan terms before logging escrow transactions.', new.property_id;
   end if;
@@ -216,7 +300,6 @@ begin
   if new.mortgage_id is not null and new.mortgage_id <> l.id then
     raise exception 'A new escrow entry can only be recorded against the property''s active mortgage.' using errcode = 'ZM5M1';
   end if;
-
   before_escrow := coalesce(l.escrow_balance, 0);
   if new.transaction_type = 'disbursement' and new.amount > before_escrow then
     raise exception 'Disbursement amount (%) exceeds the current escrow balance (%).', new.amount, before_escrow;
@@ -229,21 +312,26 @@ begin
   new.void_reason := null;
   new.void_outcome := null;
 
-  perform set_config('zmr.mortgage_internal', 'on', true);
-  update mortgage_details
+  update public.mortgage_details
      set escrow_balance = before_escrow + delta,
-         balance_version = l.balance_version + 1,
+         escrow_version = l.escrow_version + 1,
          updated_at = now()
    where id = l.id;
-  perform set_config('zmr.mortgage_internal', 'off', true);
-
-  insert into mortgage_balance_effects
+  insert into public.mortgage_balance_effects
     (account_id, property_id, mortgage_id, source_kind, source_id, effect, escrow_delta, principal_epoch, escrow_epoch)
   values (new.account_id, new.property_id, l.id, 'escrow', new.id, 'applied', delta, l.principal_epoch, l.escrow_epoch);
+
+  if public.mortgage_entry_may_be_covered(new.transaction_date, l.escrow_as_of, l.escrow_figure_at) then
+    insert into public.mortgage_balance_review_causes
+      (account_id, property_id, review_mortgage_id, balance_kind, cause, source_kind, source_id, context)
+    values (new.account_id, new.property_id, l.id, 'escrow', 'possibly_covered_by_statement', 'escrow', new.id,
+            public.mortgage_cause_context('escrow', to_jsonb(new), l));
+  end if;
   return new;
 end;
 $$;
-
+revoke all on function mortgage_payment_apply_locked() from public, anon, authenticated;
+revoke all on function mortgage_escrow_apply_locked() from public, anon, authenticated;
 create trigger mortgage_payments_apply_locked
   before insert on mortgage_payments
   for each row execute function mortgage_payment_apply_locked();
@@ -252,132 +340,140 @@ create trigger mortgage_escrow_transactions_apply_locked
   for each row execute function mortgage_escrow_apply_locked();
 
 -- ---------------------------------------------------------------------------------------------------------------
--- 6. Conditional, exactly-once void (shared by the void function and the older-browser UPDATE path).
---    Returns the outcome; refusals either raise (older browser: nothing is kept) or are recorded and returned
---    (void function: refusal + review cause commit together, entry stays unvoided).
+-- 6. Conditional, exactly-once void core (internal). Takes the loan lock itself (already held in the void function's
+--    path; in an older page's UPDATE path the entry row is locked first — the one documented cycle, which Postgres
+--    breaks cleanly with 40P01). A refusal either raises (older page: nothing kept) or records ONE refusal per open
+--    cause (current app: the refusal and its cause commit together; the entry stays active).
 -- ---------------------------------------------------------------------------------------------------------------
-create or replace function mortgage_void_core(
-  p_kind text, p_id uuid, p_account uuid, p_property uuid, p_mortgage uuid,
-  p_principal numeric, p_amount numeric, p_type text, p_raise boolean)
+create or replace function mortgage_void_core(p_kind text, r jsonb, p_raise boolean)
 returns text
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  l mortgage_details%rowtype;
-  a mortgage_balance_effects%rowtype;
-  active_id uuid;
+  l public.mortgage_details%rowtype;
+  a public.mortgage_balance_effects%rowtype;
+  p_id uuid := (r->>'id')::uuid;
+  p_account uuid := (r->>'account_id')::uuid;
+  p_property uuid := (r->>'property_id')::uuid;
+  p_mortgage uuid := (r->>'mortgage_id')::uuid;
   kind text := case when p_kind = 'payment' then 'principal' else 'escrow' end;
   delta numeric(12, 2);
   new_value numeric(12, 2);
+  cause_id uuid;
 begin
-  -- Unlinked legacy entry: which loan it affected was never recorded, so nothing is adjusted.
   if p_mortgage is null then
-    insert into mortgage_balance_effects (account_id, property_id, source_kind, source_id, effect, reason)
+    -- unlinked legacy entry: lock the property's active loan (if any), record the skip, raise a review on that loan
+    select * into l from public.mortgage_details where property_id = p_property and not voided for update;
+    insert into public.mortgage_balance_effects (account_id, property_id, source_kind, source_id, effect, reason)
     values (p_account, p_property, p_kind, p_id, 'reversal_skipped', 'unlinked_legacy')
     on conflict do nothing;
-    select id into active_id from mortgage_details where property_id = p_property and not voided;
-    if active_id is not null then
-      insert into mortgage_balance_review_causes
-        (account_id, property_id, review_mortgage_id, balance_kind, cause, source_kind, source_id)
-      values (p_account, p_property, active_id, kind, 'skipped_unlinked_legacy', p_kind, p_id)
+    if l.id is not null then
+      insert into public.mortgage_balance_review_causes
+        (account_id, property_id, review_mortgage_id, balance_kind, cause, source_kind, source_id, context)
+      values (p_account, p_property, l.id, kind, 'skipped_unlinked_legacy', p_kind, p_id, public.mortgage_cause_context(p_kind, r, l))
       on conflict do nothing;
     end if;
     return 'skipped_unlinked_legacy';
   end if;
 
-  select * into l from mortgage_details where id = p_mortgage for update;
+  select * into l from public.mortgage_details where id = p_mortgage for update;
 
-  -- Inactive/replaced loan: frozen; the replacement is never touched; no review cause (owner choice 1).
   if l.voided then
-    insert into mortgage_balance_effects (account_id, property_id, mortgage_id, source_kind, source_id, effect, reason)
+    insert into public.mortgage_balance_effects (account_id, property_id, mortgage_id, source_kind, source_id, effect, reason)
     values (p_account, p_property, l.id, p_kind, p_id, 'reversal_skipped', 'loan_inactive')
     on conflict do nothing;
     return 'skipped_loan_inactive';
   end if;
 
-  select * into a from mortgage_balance_effects
+  select * into a from public.mortgage_balance_effects
    where source_kind = p_kind and source_id = p_id and effect = 'applied';
   if not found then
     raise exception 'No recorded balance effect for this entry.' using errcode = 'ZM5M8';
   end if;
 
-  -- A reset of this balance since the entry: the reset may already include or exclude it; never guessed.
   if (kind = 'principal' and l.principal_epoch <> a.principal_epoch)
      or (kind = 'escrow' and l.escrow_epoch <> a.escrow_epoch) then
-    insert into mortgage_balance_effects
+    insert into public.mortgage_balance_effects
       (account_id, property_id, mortgage_id, source_kind, source_id, effect, reason, principal_epoch, escrow_epoch)
     values (p_account, p_property, l.id, p_kind, p_id, 'reversal_skipped', 'reset_after_entry', l.principal_epoch, l.escrow_epoch)
     on conflict do nothing;
-    insert into mortgage_balance_review_causes
-      (account_id, property_id, review_mortgage_id, balance_kind, cause, source_kind, source_id)
-    values (p_account, p_property, l.id, kind, 'skipped_reset_after_entry', p_kind, p_id)
+    insert into public.mortgage_balance_review_causes
+      (account_id, property_id, review_mortgage_id, balance_kind, cause, source_kind, source_id, context)
+    values (p_account, p_property, l.id, kind, 'skipped_reset_after_entry', p_kind, p_id, public.mortgage_cause_context(p_kind, r, l))
     on conflict do nothing;
     return 'skipped_reset_after_entry';
   end if;
 
   if kind = 'principal' then
-    delta := p_principal;
+    delta := -a.principal_delta;
     new_value := l.current_balance + delta;
     if new_value > l.original_loan_amount then
       if p_raise then
-        raise exception 'Voiding this payment would raise the balance above the original loan amount (%). Nothing was changed; check the balance against your statement.', l.original_loan_amount
+        raise exception 'Not voided: this would raise the balance above the original loan amount (%). Check the balance against your statement.', l.original_loan_amount
           using errcode = 'ZM5M4';
       end if;
-      insert into mortgage_balance_effects (account_id, property_id, mortgage_id, source_kind, source_id, effect, principal_delta, reason)
-      values (p_account, p_property, l.id, p_kind, p_id, 'void_refused', delta, 'over_original');
-      insert into mortgage_balance_review_causes
-        (account_id, property_id, review_mortgage_id, balance_kind, cause, source_kind, source_id)
-      values (p_account, p_property, l.id, kind, 'refused_over_original', p_kind, p_id)
-      on conflict do nothing;
+      insert into public.mortgage_balance_review_causes
+        (account_id, property_id, review_mortgage_id, balance_kind, cause, source_kind, source_id, context)
+      values (p_account, p_property, l.id, kind, 'refused_over_original', p_kind, p_id, public.mortgage_cause_context(p_kind, r, l))
+      on conflict do nothing
+      returning id into cause_id;
+      if cause_id is not null then
+        insert into public.mortgage_balance_effects (account_id, property_id, mortgage_id, source_kind, source_id, effect, principal_delta, reason)
+        values (p_account, p_property, l.id, p_kind, p_id, 'void_refused', delta, 'over_original');
+      end if;
       return 'refused_over_original';
     end if;
+    update public.mortgage_details set current_balance = new_value, principal_version = l.principal_version + 1, updated_at = now() where id = l.id;
   else
-    delta := case when p_type = 'deposit' then -p_amount else p_amount end;
+    delta := -a.escrow_delta;
     new_value := coalesce(l.escrow_balance, 0) + delta;
     if new_value < 0 then
       if p_raise then
-        raise exception 'Not voided: a later disbursement used this deposit, so voiding it would make escrow negative. Void that disbursement first, or reset escrow from a statement.'
+        raise exception 'Not voided: a later disbursement used this deposit, so voiding it would make escrow negative. Void that disbursement first, or update escrow from a statement.'
           using errcode = 'ZM5M3';
       end if;
-      insert into mortgage_balance_effects (account_id, property_id, mortgage_id, source_kind, source_id, effect, escrow_delta, reason)
-      values (p_account, p_property, l.id, p_kind, p_id, 'void_refused', delta, 'negative_escrow');
-      insert into mortgage_balance_review_causes
-        (account_id, property_id, review_mortgage_id, balance_kind, cause, source_kind, source_id)
-      values (p_account, p_property, l.id, kind, 'refused_negative_escrow', p_kind, p_id)
-      on conflict do nothing;
+      insert into public.mortgage_balance_review_causes
+        (account_id, property_id, review_mortgage_id, balance_kind, cause, source_kind, source_id, context)
+      values (p_account, p_property, l.id, kind, 'refused_negative_escrow', p_kind, p_id, public.mortgage_cause_context(p_kind, r, l))
+      on conflict do nothing
+      returning id into cause_id;
+      if cause_id is not null then
+        insert into public.mortgage_balance_effects (account_id, property_id, mortgage_id, source_kind, source_id, effect, escrow_delta, reason)
+        values (p_account, p_property, l.id, p_kind, p_id, 'void_refused', delta, 'negative_escrow');
+      end if;
       return 'refused_negative_escrow';
     end if;
+    update public.mortgage_details set escrow_balance = new_value, escrow_version = l.escrow_version + 1, updated_at = now() where id = l.id;
   end if;
 
-  perform set_config('zmr.mortgage_internal', 'on', true);
-  if kind = 'principal' then
-    update mortgage_details set current_balance = new_value, balance_version = l.balance_version + 1, updated_at = now() where id = l.id;
-  else
-    update mortgage_details set escrow_balance = new_value, balance_version = l.balance_version + 1, updated_at = now() where id = l.id;
-  end if;
-  perform set_config('zmr.mortgage_internal', 'off', true);
-
-  insert into mortgage_balance_effects
+  insert into public.mortgage_balance_effects
     (account_id, property_id, mortgage_id, source_kind, source_id, effect, principal_delta, escrow_delta, principal_epoch, escrow_epoch)
   values (p_account, p_property, l.id, p_kind, p_id, 'reversed',
           case when kind = 'principal' then delta else 0 end, case when kind = 'escrow' then delta else 0 end,
           l.principal_epoch, l.escrow_epoch);
+  -- the void that finally succeeds closes earlier refusal causes and any "possibly covered" flag for this entry
+  update public.mortgage_balance_review_causes
+     set resolved_at = now(), resolved_by = auth.uid(), resolution = 'voided'
+   where source_kind = p_kind and source_id = p_id
+     and cause in ('refused_over_original', 'refused_negative_escrow', 'possibly_covered_by_statement')
+     and resolved_at is null;
   return 'reversed';
 end;
 $$;
-revoke all on function mortgage_void_core(text, uuid, uuid, uuid, uuid, numeric, numeric, text, boolean) from public, anon, authenticated;
+revoke all on function mortgage_void_core(text, jsonb, boolean) from public, anon, authenticated;
 
 -- ---------------------------------------------------------------------------------------------------------------
--- 7. Immutable facts and one-way void on both activity tables. A plain UPDATE voided=true (older browsers) runs the
---    same core with refusals raised; the void function sets zmr.mortgage_void after doing the work itself.
+-- 7. Activity guard (SECURITY DEFINER so an older page's plain void can run the conditional core). Facts are immutable;
+--    un-void and deletes are refused; void details can only be set by voiding. The void function marks its own update
+--    with a transaction-local setting (not settable through PostgREST — verified by T3) so the core runs once.
 -- ---------------------------------------------------------------------------------------------------------------
 create or replace function mortgage_activity_guard()
 returns trigger
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   facts_changed boolean;
@@ -395,42 +491,32 @@ begin
         is distinct from (old.id, old.account_id, old.property_id, old.mortgage_id, old.created_at) then
     raise exception 'A recorded mortgage entry can''t be changed. Void it and record a new entry instead.' using errcode = 'ZM5M2';
   end if;
-
   if old.voided then
     if not new.voided then
       raise exception 'A voided mortgage entry can''t be restored. Record a new entry instead.' using errcode = 'ZM5M2';
     end if;
-    -- repeated void: idempotent, keeps the original void record
     new.voided_at := old.voided_at;
     new.void_reason := old.void_reason;
     new.void_outcome := old.void_outcome;
     return new;
   end if;
-
   if not new.voided then
     if (new.voided_at, new.void_reason, new.void_outcome) is distinct from (old.voided_at, old.void_reason, old.void_outcome) then
       raise exception 'Void details can only be set by voiding the entry.' using errcode = 'ZM5M2';
     end if;
     return new;
   end if;
-
-  -- false -> true
   if coalesce(current_setting('zmr.mortgage_void', true), '') = 'on' then
-    return new;
+    return new;  -- the void function already did the work
   end if;
-  if tg_table_name = 'mortgage_payments' then
-    outcome := mortgage_void_core('payment', old.id, old.account_id, old.property_id, old.mortgage_id,
-                                  old.principal_amount, old.amount, null, true);
-  else
-    outcome := mortgage_void_core('escrow', old.id, old.account_id, old.property_id, old.mortgage_id,
-                                  null, old.amount, old.transaction_type, true);
-  end if;
+  -- an older page's plain UPDATE voided=true: same conditional core, refusals raised (nothing kept)
+  outcome := public.mortgage_void_core(case when tg_table_name = 'mortgage_payments' then 'payment' else 'escrow' end,
+                                       to_jsonb(old), true);
   new.void_outcome := outcome;
   new.voided_at := coalesce(new.voided_at, now());
   return new;
 end;
 $$;
-
 create trigger mortgage_payments_activity_guard
   before update on mortgage_payments
   for each row execute function mortgage_activity_guard();
@@ -438,10 +524,10 @@ create trigger mortgage_escrow_transactions_activity_guard
   before update on mortgage_escrow_transactions
   for each row execute function mortgage_activity_guard();
 
--- Hard deletes were never part of the app; refuse them so the effects trail can't be orphaned.
 create or replace function mortgage_activity_no_delete()
 returns trigger
 language plpgsql
+set search_path = pg_catalog, public, pg_temp
 as $$
 begin
   raise exception 'Mortgage entries are never deleted. Void the entry instead.' using errcode = 'ZM5M2';
@@ -453,67 +539,57 @@ create trigger mortgage_escrow_transactions_no_delete before delete on mortgage_
   for each row execute function mortgage_activity_no_delete();
 
 -- ---------------------------------------------------------------------------------------------------------------
--- 8. Void function for the current frontend: lock the loan, then the entry; refusals are recorded with their review
---    cause and returned (the entry is NOT voided); successes void the entry with its outcome.
+-- 8. Void (current app): membership check, loan lock then entry lock, conditional core. Refusals are recorded with
+--    their review cause and returned (entry stays active).
 -- ---------------------------------------------------------------------------------------------------------------
 create or replace function void_mortgage_activity(p_kind text, p_id uuid, p_reason text default null)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  p mortgage_payments%rowtype;
-  e mortgage_escrow_transactions%rowtype;
+  r jsonb;
+  m uuid;
+  acct uuid;
+  prop uuid;
   outcome text;
 begin
   if p_kind = 'payment' then
-    select * into p from mortgage_payments where id = p_id;
-    if not found or not is_account_member(p.account_id) then
-      raise exception 'Mortgage payment not found.' using errcode = 'P0002';
-    end if;
-    if p.mortgage_id is not null then
-      perform 1 from mortgage_details where id = p.mortgage_id for update;
-    end if;
-    select * into p from mortgage_payments where id = p_id for update;
-    if p.voided then
-      return jsonb_build_object('outcome', 'already_voided', 'voided', true, 'void_outcome', p.void_outcome);
-    end if;
-    outcome := mortgage_void_core('payment', p.id, p.account_id, p.property_id, p.mortgage_id,
-                                  p.principal_amount, p.amount, null, false);
-    if outcome like 'refused_%' then
-      return jsonb_build_object('outcome', outcome, 'voided', false);
-    end if;
-    perform set_config('zmr.mortgage_void', 'on', true);
-    update mortgage_payments
-       set voided = true, voided_at = now(), void_reason = p_reason, void_outcome = outcome
-     where id = p.id;
-    perform set_config('zmr.mortgage_void', 'off', true);
+    select mortgage_id, account_id, property_id into m, acct, prop from public.mortgage_payments where id = p_id;
   elsif p_kind = 'escrow' then
-    select * into e from mortgage_escrow_transactions where id = p_id;
-    if not found or not is_account_member(e.account_id) then
-      raise exception 'Escrow entry not found.' using errcode = 'P0002';
-    end if;
-    if e.mortgage_id is not null then
-      perform 1 from mortgage_details where id = e.mortgage_id for update;
-    end if;
-    select * into e from mortgage_escrow_transactions where id = p_id for update;
-    if e.voided then
-      return jsonb_build_object('outcome', 'already_voided', 'voided', true, 'void_outcome', e.void_outcome);
-    end if;
-    outcome := mortgage_void_core('escrow', e.id, e.account_id, e.property_id, e.mortgage_id,
-                                  null, e.amount, e.transaction_type, false);
-    if outcome like 'refused_%' then
-      return jsonb_build_object('outcome', outcome, 'voided', false);
-    end if;
-    perform set_config('zmr.mortgage_void', 'on', true);
-    update mortgage_escrow_transactions
-       set voided = true, voided_at = now(), void_reason = p_reason, void_outcome = outcome
-     where id = e.id;
-    perform set_config('zmr.mortgage_void', 'off', true);
+    select mortgage_id, account_id, property_id into m, acct, prop from public.mortgage_escrow_transactions where id = p_id;
   else
-    raise exception 'Unknown mortgage activity kind %.', p_kind;
+    raise exception 'Unknown mortgage activity kind %.', p_kind using errcode = '22023';
   end if;
+  if acct is null or not public.is_account_member(acct) then
+    raise exception 'Mortgage entry not found.' using errcode = 'P0002';
+  end if;
+  -- lock order: the loan (or, for an unlinked entry, the property's active loan) first, then the entry
+  if m is not null then
+    perform 1 from public.mortgage_details where id = m for update;
+  else
+    perform 1 from public.mortgage_details where property_id = prop and not voided for update;
+  end if;
+  if p_kind = 'payment' then
+    select to_jsonb(x) into r from public.mortgage_payments x where id = p_id for update;
+  else
+    select to_jsonb(x) into r from public.mortgage_escrow_transactions x where id = p_id for update;
+  end if;
+  if (r->>'voided')::boolean then
+    return jsonb_build_object('outcome', 'already_voided', 'voided', true, 'void_outcome', r->>'void_outcome');
+  end if;
+  outcome := public.mortgage_void_core(p_kind, r, false);
+  if outcome like 'refused_%' then
+    return jsonb_build_object('outcome', outcome, 'voided', false);
+  end if;
+  perform set_config('zmr.mortgage_void', 'on', true);
+  if p_kind = 'payment' then
+    update public.mortgage_payments set voided = true, voided_at = now(), void_reason = p_reason, void_outcome = outcome where id = p_id;
+  else
+    update public.mortgage_escrow_transactions set voided = true, voided_at = now(), void_reason = p_reason, void_outcome = outcome where id = p_id;
+  end if;
+  perform set_config('zmr.mortgage_void', 'off', true);
   return jsonb_build_object('outcome', outcome, 'voided', true);
 end;
 $$;
@@ -521,87 +597,145 @@ revoke all on function void_mortgage_activity(text, uuid, text) from public, ano
 grant execute on function void_mortgage_activity(text, uuid, text) to authenticated;
 
 -- ---------------------------------------------------------------------------------------------------------------
--- 9. Versioned balance reset (manual edit or statement confirmation). A same-value submission is a deliberate
---    confirmation and counts as a reset of that balance. A stale form (version moved) is refused. Resolving one
---    balance never resolves the other balance's review causes.
+-- 9. Versioned balance update (manual edit or statement confirmation). M7: only the versions of the balances being
+--    updated are checked. A same-value update is a deliberate confirmation (reset counter moves). The statement date
+--    is stored when given (otherwise unknown); the figure-entered time is now. B2: resolves ONLY the cause ids passed
+--    (the ones the person was shown), for this loan and the balances updated; never unlinked legacy causes.
 -- ---------------------------------------------------------------------------------------------------------------
 create or replace function reset_mortgage_balance(
-  p_mortgage_id uuid, p_expected_version bigint,
-  p_principal numeric default null, p_escrow numeric default null, p_statement_date date default null)
+  p_mortgage_id uuid,
+  p_principal numeric default null, p_expected_principal_version bigint default null,
+  p_escrow numeric default null, p_expected_escrow_version bigint default null,
+  p_statement_date date default null,
+  p_resolve_cause_ids uuid[] default '{}')
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  l mortgage_details%rowtype;
+  l public.mortgage_details%rowtype;
   eff_id uuid;
   old_principal numeric(12, 2);
   old_escrow numeric(12, 2);
 begin
   if p_principal is null and p_escrow is null then
-    raise exception 'Nothing to reset.' using errcode = '22023';
+    raise exception 'Nothing to update.' using errcode = '22023';
+  end if;
+  if (p_principal is not null and p_expected_principal_version is null)
+     or (p_escrow is not null and p_expected_escrow_version is null) then
+    raise exception 'A balance update must say which version of that balance it was based on.' using errcode = '22023';
   end if;
   if (p_principal is not null and p_principal < 0) or (p_escrow is not null and p_escrow < 0) then
     raise exception 'A balance can''t be negative.' using errcode = '22023';
   end if;
+  if p_statement_date > current_date then
+    raise exception 'A statement date can''t be in the future.' using errcode = '22023';
+  end if;
 
-  select * into l from mortgage_details where id = p_mortgage_id for update;
-  if not found or not is_account_member(l.account_id) then
+  select * into l from public.mortgage_details where id = p_mortgage_id for update;
+  if not found or not public.is_account_member(l.account_id) then
     raise exception 'Mortgage not found.' using errcode = 'P0002';
   end if;
   if l.voided then
     raise exception 'This mortgage is inactive; its balances are kept as they were.' using errcode = 'ZM5M7';
   end if;
-  if l.balance_version <> p_expected_version then
+  if (p_principal is not null and l.principal_version <> p_expected_principal_version)
+     or (p_escrow is not null and l.escrow_version <> p_expected_escrow_version) then
     raise exception 'The balance changed since you opened this form (a payment, escrow entry or another edit). Your entries were not saved. Reload, compare with your statement, then save again.'
       using errcode = 'ZM5M5';
   end if;
   old_principal := l.current_balance;
   old_escrow := l.escrow_balance;
 
-  perform set_config('zmr.mortgage_internal', 'on', true);
-  update mortgage_details
+  update public.mortgage_details
      set current_balance = coalesce(p_principal, current_balance),
          escrow_balance = case when p_escrow is null then escrow_balance else p_escrow end,
          principal_epoch = principal_epoch + case when p_principal is null then 0 else 1 end,
          escrow_epoch = escrow_epoch + case when p_escrow is null then 0 else 1 end,
-         balance_version = balance_version + 1,
+         principal_version = principal_version + case when p_principal is null then 0 else 1 end,
+         escrow_version = escrow_version + case when p_escrow is null then 0 else 1 end,
+         principal_as_of = case when p_principal is null then principal_as_of else p_statement_date end,
+         escrow_as_of = case when p_escrow is null then escrow_as_of else p_statement_date end,
+         principal_figure_at = case when p_principal is null then principal_figure_at else now() end,
+         escrow_figure_at = case when p_escrow is null then escrow_figure_at else now() end,
          updated_at = now()
    where id = l.id
    returning * into l;
-  perform set_config('zmr.mortgage_internal', 'off', true);
 
-  insert into mortgage_balance_effects
+  insert into public.mortgage_balance_effects
     (account_id, property_id, mortgage_id, source_kind, source_id, effect, principal_delta, escrow_delta,
      principal_epoch, escrow_epoch, reason, statement_date)
   values (l.account_id, l.property_id, l.id, 'reset', gen_random_uuid(), 'reset',
-          l.current_balance - old_principal,
-          coalesce(l.escrow_balance, 0) - coalesce(old_escrow, 0),
+          l.current_balance - old_principal, coalesce(l.escrow_balance, 0) - coalesce(old_escrow, 0),
           l.principal_epoch, l.escrow_epoch,
           concat_ws(',', case when p_principal is not null then 'principal' end, case when p_escrow is not null then 'escrow' end),
           p_statement_date)
   returning id into eff_id;
 
-  update mortgage_balance_review_causes
-     set resolved_at = now(), resolved_by = auth.uid(), resolution = 'reset', resolved_by_effect = eff_id
-   where review_mortgage_id = l.id and resolved_at is null
+  update public.mortgage_balance_review_causes
+     set resolved_at = now(), resolved_by = auth.uid(),
+         resolution = case
+           when balance_kind = 'principal' and p_principal = old_principal then 'confirmed'
+           when balance_kind = 'escrow' and p_escrow is not distinct from old_escrow then 'confirmed'
+           else 'reset' end,
+         resolved_by_effect = eff_id
+   where id = any (coalesce(p_resolve_cause_ids, '{}'))
+     and review_mortgage_id = l.id and resolved_at is null
+     and cause <> 'skipped_unlinked_legacy'
      and ((balance_kind = 'principal' and p_principal is not null) or (balance_kind = 'escrow' and p_escrow is not null));
 
-  return jsonb_build_object('balance_version', l.balance_version, 'current_balance', l.current_balance,
-                            'escrow_balance', l.escrow_balance);
+  return jsonb_build_object('principal_version', l.principal_version, 'escrow_version', l.escrow_version,
+                            'current_balance', l.current_balance, 'escrow_balance', l.escrow_balance);
 end;
 $$;
-revoke all on function reset_mortgage_balance(uuid, bigint, numeric, numeric, date) from public, anon;
-grant execute on function reset_mortgage_balance(uuid, bigint, numeric, numeric, date) to authenticated;
+revoke all on function reset_mortgage_balance(uuid, numeric, bigint, numeric, bigint, date, uuid[]) from public, anon;
+grant execute on function reset_mortgage_balance(uuid, numeric, bigint, numeric, bigint, date, uuid[]) to authenticated;
+
+-- An unlinked legacy cause (no loan link was ever recorded) is resolved only by an explicit acknowledgement.
+create or replace function acknowledge_mortgage_review_cause(p_cause_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = pg_catalog, public, pg_temp
+as $$
+declare
+  c public.mortgage_balance_review_causes%rowtype;
+begin
+  select * into c from public.mortgage_balance_review_causes where id = p_cause_id for update;
+  if not found or not public.is_account_member(c.account_id) then
+    raise exception 'Review item not found.' using errcode = 'P0002';
+  end if;
+  if c.cause <> 'skipped_unlinked_legacy' then
+    raise exception 'This review is resolved by confirming or updating the balance.' using errcode = 'ZM5M9';
+  end if;
+  update public.mortgage_balance_review_causes
+     set resolved_at = now(), resolved_by = auth.uid(), resolution = 'acknowledged'
+   where id = p_cause_id and resolved_at is null;
+end;
+$$;
+revoke all on function acknowledge_mortgage_review_cause(uuid) from public, anon;
+grant execute on function acknowledge_mortgage_review_cause(uuid) to authenticated;
 
 -- ---------------------------------------------------------------------------------------------------------------
--- 10. Audit: both activity tables join the existing generic audit trail.
+-- 10. Audit: both activity tables join the generic audit trail. The table-name check is extended ADDITIVELY from
+--     whatever the live constraint already allows, so it can't drop another migration's entries.
 -- ---------------------------------------------------------------------------------------------------------------
-alter table audit_log drop constraint audit_log_table_name_check;
-alter table audit_log add constraint audit_log_table_name_check
-  check (table_name in ('properties', 'llcs', 'mortgage_details', 'financial_transactions', 'financial_periods',
-                        'contacts', 'contact_methods', 'contact_links', 'mortgage_payments', 'mortgage_escrow_transactions'));
+do $$
+declare
+  existing text[];
+  def text;
+begin
+  select pg_get_constraintdef(oid) into def from pg_constraint
+   where conrelid = 'public.audit_log'::regclass and conname = 'audit_log_table_name_check';
+  select array_agg(distinct m[1]) into existing from regexp_matches(coalesce(def, ''), '''([a-z_]+)''', 'g') as m;
+  existing := array(select distinct x from unnest(coalesce(existing, '{}') || array['mortgage_payments', 'mortgage_escrow_transactions']) as x order by 1);
+  if def is not null then
+    execute 'alter table public.audit_log drop constraint audit_log_table_name_check';
+  end if;
+  execute format('alter table public.audit_log add constraint audit_log_table_name_check check (table_name = any (%L::text[]))', existing);
+end;
+$$;
 create trigger mortgage_payments_audit_log
   after insert or update on mortgage_payments
   for each row execute function log_audit_changes();

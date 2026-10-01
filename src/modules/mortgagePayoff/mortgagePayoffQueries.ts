@@ -24,12 +24,18 @@ export interface MortgageDetails {
   // 'loan_type' and its 8 owner-approved seeded starting values.
   // Optional, never backfilled for an existing mortgage.
   loan_type: string | null
-  // Balance integrity (20261004100000): bumped by every balance change. A balance reset must quote the version
-  // the form was opened with, so a stale form can't overwrite a newer balance.
-  balance_version: number
+  // Balance integrity (20261004100000): one version counter per balance, bumped by every change to that balance.
+  // A balance update quotes the version of each balance it changes, so a stale form can't overwrite a newer figure
+  // and an escrow change never makes a principal-only update stale.
+  principal_version: number
+  escrow_version: number
 }
 
-export type MortgageDetailsInput = Omit<MortgageDetails, 'id' | 'property_id' | 'balance_version'>
+export type MortgageDetailsInput = Omit<MortgageDetails, 'id' | 'property_id' | 'principal_version' | 'escrow_version'> & {
+  // Not a column: the statement date the balance figures come from (optional). Stored as the balances' as-of date on
+  // create, or sent with a balance update; never defaulted.
+  balance_statement_date?: string | null
+}
 
 // voided = false — a voided mortgage is never "the" active mortgage for a
 // property (roadmap 9.20); the property_id unique index was relaxed to a
@@ -39,7 +45,7 @@ export async function getMortgageDetails(propertyId: string) {
   return supabase
     .from('mortgage_details')
     .select(
-      'id, property_id, lender_name, original_loan_amount, current_balance, interest_rate, monthly_payment, loan_start_date, term_years, escrow_balance, loan_number, loan_type, balance_version',
+      'id, property_id, lender_name, original_loan_amount, current_balance, interest_rate, monthly_payment, loan_start_date, term_years, escrow_balance, loan_number, loan_type, principal_version, escrow_version',
     )
     .eq('property_id', propertyId)
     .eq('voided', false)
@@ -51,9 +57,17 @@ export async function createMortgageDetails(
   propertyId: string,
   input: MortgageDetailsInput,
 ) {
+  const { balance_statement_date, ...columns } = input
+  const asOf = balance_statement_date || null
   return supabase
     .from('mortgage_details')
-    .insert({ ...input, account_id: accountId, property_id: propertyId })
+    .insert({
+      ...columns,
+      principal_as_of: asOf,
+      escrow_as_of: columns.escrow_balance === null ? null : asOf,
+      account_id: accountId,
+      property_id: propertyId,
+    })
     .select()
     .single()
 }
@@ -67,20 +81,35 @@ export async function updateMortgageDetails(
   return supabase.from('mortgage_details').update(details).eq('id', id).select().single()
 }
 
-// Versioned balance reset (a manual edit or a statement confirmation). Refused with ZM5M5 when the balance changed
-// since expectedVersion was read; a same-value reset is a deliberate confirmation.
-export async function resetMortgageBalance(
-  mortgageId: string,
-  expectedVersion: number,
-  principal: number | null,
-  escrow: number | null,
-) {
+export interface BalanceResetRequest {
+  mortgageId: string
+  principal: number | null
+  principalVersion: number | null
+  escrow: number | null
+  escrowVersion: number | null
+  statementDate?: string | null
+  // review causes the user was shown and is resolving with this update (never others)
+  resolveCauseIds?: string[]
+}
+
+// Versioned balance update (a manual edit or a statement confirmation). Refused with ZM5M5 when a balance being
+// updated changed since its version was read; a same-value update is a deliberate confirmation.
+export async function resetMortgageBalance(req: BalanceResetRequest) {
   return supabase.rpc('reset_mortgage_balance', {
-    p_mortgage_id: mortgageId,
-    p_expected_version: expectedVersion,
-    p_principal: principal,
-    p_escrow: escrow,
+    p_mortgage_id: req.mortgageId,
+    p_principal: req.principal,
+    p_expected_principal_version: req.principalVersion,
+    p_escrow: req.escrow,
+    p_expected_escrow_version: req.escrowVersion,
+    p_statement_date: req.statementDate ?? null,
+    p_resolve_cause_ids: req.resolveCauseIds ?? [],
   })
+}
+
+// An earlier entry that was never linked to a loan was voided; nothing about the balance can be inferred, so the
+// review is closed only by an explicit acknowledgement.
+export async function acknowledgeMortgageReviewCause(causeId: string) {
+  return supabase.rpc('acknowledge_mortgage_review_cause', { p_cause_id: causeId })
 }
 
 export interface VoidResult {

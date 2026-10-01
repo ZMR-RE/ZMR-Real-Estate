@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
-import { getMortgageDetails } from '../mortgagePayoff/mortgagePayoffQueries'
+import {
+  getMortgageDetails,
+  listMortgageEscrowTransactions,
+  listMortgagePayments,
+} from '../mortgagePayoff/mortgagePayoffQueries'
 import {
   listAccountMemberDirectory,
   listAuditLogEntries,
+  listAuditLogEntriesForRecords,
   type AuditedTable,
   type AuditLogEntry,
 } from './auditLogQueries'
-import { fieldLabel, formatChangedAt, formatFieldValue, RECORD_LABELS } from './auditLogFormatting'
+import { fieldLabel, formatChangedAt, formatFieldValue, HIDDEN_AUDIT_FIELDS, RECORD_LABELS } from './auditLogFormatting'
 
 export interface AuditLogRow {
   id: string
@@ -41,7 +46,11 @@ export function useAuditLog(propertyId: string, llcId: string | null) {
     if (!accountId) return
     setLoading(true)
 
-    const { data: mortgageDetails } = await getMortgageDetails(propertyId)
+    const [{ data: mortgageDetails }, { data: payments }, { data: escrowEntries }] = await Promise.all([
+      getMortgageDetails(propertyId),
+      listMortgagePayments(propertyId),
+      listMortgageEscrowTransactions(propertyId),
+    ])
     const mortgageDetailsId = mortgageDetails?.id ?? null
 
     const fetches: Promise<{ data: AuditLogEntry[] | null; error: { message: string } | null }>[] = [
@@ -49,6 +58,10 @@ export function useAuditLog(propertyId: string, llcId: string | null) {
     ]
     if (llcId) fetches.push(listAuditLogEntries(accountId, 'llcs', llcId))
     if (mortgageDetailsId) fetches.push(listAuditLogEntries(accountId, 'mortgage_details', mortgageDetailsId))
+    fetches.push(listAuditLogEntriesForRecords(accountId, 'mortgage_payments', (payments ?? []).map((p) => p.id)))
+    fetches.push(
+      listAuditLogEntriesForRecords(accountId, 'mortgage_escrow_transactions', (escrowEntries ?? []).map((e) => e.id)),
+    )
 
     const [directoryRes, ...entryResults] = await Promise.all([
       listAccountMemberDirectory(accountId),
@@ -65,7 +78,7 @@ export function useAuditLog(propertyId: string, llcId: string | null) {
     setError(null)
 
     const emailByUserId = new Map((directoryRes.data ?? []).map((m) => [m.user_id, m.email]))
-    const allEntries = entryResults.flatMap((r) => r.data ?? [])
+    const allEntries = entryResults.flatMap((r) => r.data ?? []).filter((e) => !HIDDEN_AUDIT_FIELDS.has(e.field_name))
     allEntries.sort((a, b) => (a.changed_at < b.changed_at ? 1 : -1))
 
     setRows(

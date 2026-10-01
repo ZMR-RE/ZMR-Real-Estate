@@ -105,6 +105,7 @@ describe('getMortgageDetails — selects the new columns', () => {
     const selected = selectCall![1][0] as string
     expect(selected).toContain('loan_number')
     expect(selected).toContain('loan_type')
-    expect(selected).toContain('balance_version')
+    expect(selected).toContain('principal_version')
+    expect(selected).toContain('escrow_version')
   })
 })

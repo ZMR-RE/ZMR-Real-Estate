@@ -5,6 +5,27 @@ export const RECORD_LABELS: Record<AuditedTable, string> = {
   llcs: 'Organization type',
   mortgage_details: 'Mortgage',
   financial_transactions: 'Transaction',
+  mortgage_payments: 'Mortgage payment',
+  mortgage_escrow_transactions: 'Escrow entry',
+}
+
+// Internal counters and timestamps recorded by the balance-integrity rules: kept in the audit trail, not shown as
+// user-facing field changes.
+export const HIDDEN_AUDIT_FIELDS = new Set([
+  'principal_version',
+  'escrow_version',
+  'principal_epoch',
+  'escrow_epoch',
+  'principal_figure_at',
+  'escrow_figure_at',
+  'mortgage_id',
+])
+
+const VOID_OUTCOME_LABELS: Record<string, string> = {
+  reversed: 'Balance reversed',
+  skipped_reset_after_entry: 'Balance not changed (it had been updated after this entry)',
+  skipped_loan_inactive: 'Balance not changed (inactive mortgage record)',
+  skipped_unlinked_legacy: 'Balance not changed (earlier entry not linked to a loan)',
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -44,6 +65,16 @@ const FIELD_LABELS: Record<string, string> = {
   voided_at: 'Voided at',
   statement_reconciled: 'Matched to bank/credit-card statement',
   entry_type: 'Type',
+  loan_number: 'Loan number',
+  loan_type: 'Loan type',
+  payment_date: 'Payment date',
+  principal_amount: 'Principal',
+  interest_amount: 'Interest',
+  transaction_type: 'Escrow type',
+  void_reason: 'Void reason',
+  void_outcome: 'Void result',
+  principal_as_of: 'Principal statement date',
+  escrow_as_of: 'Escrow statement date',
 }
 
 const MONEY_FIELDS = new Set([
@@ -53,6 +84,8 @@ const MONEY_FIELDS = new Set([
   'monthly_payment',
   'escrow_balance',
   'amount',
+  'principal_amount',
+  'interest_amount',
 ])
 
 export function fieldLabel(fieldName: string): string {
@@ -69,6 +102,10 @@ export function formatFieldValue(fieldName: string, rawValue: string | null): st
   if (MONEY_FIELDS.has(fieldName)) {
     const parsed = Number(rawValue)
     return Number.isNaN(parsed) ? rawValue : `$${parsed.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
+  if (fieldName === 'void_outcome') {
+    return VOID_OUTCOME_LABELS[rawValue] ?? rawValue
   }
 
   if (fieldName === 'interest_rate') {

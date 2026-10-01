@@ -7,7 +7,7 @@ import {
   type MortgagePayment,
   type MortgagePaymentInput,
 } from './mortgagePayoffQueries'
-import { voidRefusalMessage } from './mortgageBalanceIntegrity'
+import { friendlyDatabaseError, voidRefusalMessage } from './mortgageBalanceIntegrity'
 
 function todayDateString() {
   return new Date().toISOString().slice(0, 10)
@@ -81,7 +81,7 @@ export function useMortgagePayments(propertyId: string) {
     setLoggingPayment(false)
 
     if (voidError) {
-      setPaymentError(voidError.message)
+      setPaymentError(friendlyDatabaseError(voidError))
       return false
     }
     // A refused void leaves the entry active; the database already opened the Action Queue balance review.

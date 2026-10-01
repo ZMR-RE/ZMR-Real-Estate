@@ -1,0 +1,6 @@
+Sources (relayed by the owner/planning, 2026-10-01), author T3, reviewed commit e13340e (evidence 8f18f77):
+  ce3dac8a-…/Pasted text.txt -> T3-review-e13340e-F1-F4.txt
+  d2249bd6-…/Pasted text.txt -> T3-review-e13340e-B1-B4-summary.txt
+Copied unchanged by T1. SHA-256:
+aa2825ae53eb67ada0a0ba33013fe1cb0441a0f573fd8359191638715f1d6575  T3-review-e13340e-B1-B4-summary.txt
+f6d157cfe97ec065babd58a2ec59c4291a7a29079e0b2f1e222fbf19b1eceaf1  T3-review-e13340e-F1-F4.txt

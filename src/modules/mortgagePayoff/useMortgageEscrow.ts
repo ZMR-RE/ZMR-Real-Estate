@@ -7,7 +7,7 @@ import {
   type MortgageEscrowTransaction,
   type MortgageEscrowTransactionInput,
 } from './mortgagePayoffQueries'
-import { voidRefusalMessage } from './mortgageBalanceIntegrity'
+import { friendlyDatabaseError, voidRefusalMessage } from './mortgageBalanceIntegrity'
 
 function todayDateString() {
   return new Date().toISOString().slice(0, 10)
@@ -83,7 +83,7 @@ export function useMortgageEscrow(propertyId: string) {
     setLoggingEscrowTransaction(false)
 
     if (voidError) {
-      setEscrowTransactionError(voidError.message)
+      setEscrowTransactionError(friendlyDatabaseError(voidError))
       return false
     }
     // A refused void leaves the entry active; the database already opened the Action Queue balance review.

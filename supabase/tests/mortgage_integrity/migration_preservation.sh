@@ -58,6 +58,9 @@ snap() {
     union all select 'E'||id||amount||transaction_type||voided||coalesce(voided_at::text,'')||transaction_date from mortgage_escrow_transactions
     union all select 'A'||count(*) from audit_log) s"
 }
+# simulate another migration having widened the audit check (e.g. a future invoices table): it must survive
+$Q -c "alter table audit_log drop constraint audit_log_table_name_check; alter table audit_log add constraint audit_log_table_name_check check (table_name in ('properties','llcs','mortgage_details','financial_transactions','financial_periods','contacts','contact_methods','contact_links','zz_other_migration_table'))" >/dev/null
+UPD=$($Q -c "select string_agg(updated_at::text, ' ' order by created_at) from mortgage_details")
 BEFORE=$(snap); BAL=$($Q -c "select string_agg(lender_name||'='||current_balance||'/'||coalesce(escrow_balance::text,'null'), ' ' order by created_at) from mortgage_details")
 $Q -v ON_ERROR_STOP=1 -f "$NEW" >/dev/null 2>"$WORK/err" || { echo "FAILED to apply new migration"; cat "$WORK/err"; exit 1; }
 AFTER=$(snap); BAL2=$($Q -c "select string_agg(lender_name||'='||current_balance||'/'||coalesce(escrow_balance::text,'null'), ' ' order by created_at) from mortgage_details")
@@ -68,5 +71,8 @@ r "every pre-existing loan, entry and audit row unchanged (md5)" "$AFTER" "$BEFO
 r "balances identical (current loan untouched; voided loans frozen as entered)" "$BAL2" "$BAL"
 r "legacy entries stay unlinked (mortgage_id NULL)" "$($Q -c "select count(*) from mortgage_payments where mortgage_id is not null")/$($Q -c "select count(*) from mortgage_escrow_transactions where mortgage_id is not null")" "0/0"
 r "no effects or review causes created for history" "$($Q -c "select count(*) from mortgage_balance_effects")/$($Q -c "select count(*) from mortgage_balance_review_causes")" "0/0"
-r "existing loans start at version/epochs 0" "$($Q -c "select string_agg(balance_version||':'||principal_epoch||':'||escrow_epoch, ' ') from mortgage_details")" "0:0:0 0:0:0 0:0:0"
+r "existing loans start at versions/epochs 0" "$($Q -c "select string_agg(principal_version||':'||escrow_version||':'||principal_epoch||':'||escrow_epoch, ' ') from mortgage_details")" "0:0:0:0 0:0:0:0 0:0:0:0"
+r "as-of dates unknown (NULL), never defaulted" "$($Q -c "select count(*) from mortgage_details where principal_as_of is not null or escrow_as_of is not null")" "0"
+r "figure-entered time = each row's own last-write time" "$($Q -c "select string_agg(principal_figure_at::text, ' ' order by created_at) from mortgage_details")" "$UPD"
+r "audit check kept another migration's table name" "$($Q -c "select pg_get_constraintdef(oid) like '%zz_other_migration_table%' and pg_get_constraintdef(oid) like '%mortgage_payments%' from pg_constraint where conname='audit_log_table_name_check'")" "t"
 exit $FAIL

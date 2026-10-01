@@ -14,10 +14,11 @@ export type VoidOutcome =
 export interface BalanceReset {
   principal: number | null
   escrow: number | null
+  statementDate: string | null
 }
 
 export interface MortgageSavePlan {
-  details: Omit<MortgageDetailsInput, 'current_balance' | 'escrow_balance'>
+  details: Omit<MortgageDetailsInput, 'current_balance' | 'escrow_balance' | 'balance_statement_date'>
   reset: BalanceReset | null
   error: string | null
 }
@@ -48,7 +49,12 @@ export function planMortgageSave(loaded: MortgageDetails, input: MortgageDetails
   }
   const principal = principalNew !== null && principalNew !== principalNow ? principalNew : null
   const escrow = escrowNew !== null && escrowNew !== escrowNow ? escrowNew : null
-  return { details, reset: principal === null && escrow === null ? null : { principal, escrow }, error: null }
+  const statementDate = input.balance_statement_date || null
+  return {
+    details,
+    reset: principal === null && escrow === null ? null : { principal, escrow, statementDate },
+    error: null,
+  }
 }
 
 export const REVIEW_NOTE = 'A balance review was added to the Action Queue.'
@@ -65,6 +71,14 @@ export function voidedRowNote(outcome: string | null): string | null {
     default:
       return null
   }
+}
+
+// Postgres aborts one side of a rare simultaneous change (deadlock, 40P01); nothing was saved on that side.
+export function friendlyDatabaseError(error: { code?: string | null; message: string }): string {
+  if (error.code === '40P01' || error.code === '40001') {
+    return 'Changed at the same time somewhere else, so nothing was saved. Try again.'
+  }
+  return error.message
 }
 
 // Message for a void that was refused (the entry stays active), or null when the void went through.
