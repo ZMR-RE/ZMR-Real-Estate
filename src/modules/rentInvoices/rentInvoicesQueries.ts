@@ -163,7 +163,7 @@ export async function openStoredInvoicePdf(storagePath: string, expectedSha256: 
   const file = await supabase.storage.from('documents').download(storagePath)
   if (file.error || !file.data) return { error: file.error ?? new Error('The stored PDF could not be read.') }
   const matches = expectedSha256 ? (await sha256Hex(await file.data.arrayBuffer())) === expectedSha256 : null
-  return { url: URL.createObjectURL(file.data), matches }
+  return { url: URL.createObjectURL(file.data), blob: file.data, matches }
 }
 
 // The logo version an invoice snapshot names, as the renderer needs it.

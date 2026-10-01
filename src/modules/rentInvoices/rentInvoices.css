@@ -201,12 +201,27 @@
   margin-bottom: var(--space-2);
 }
 
-.invoice-pdf-frame {
-  width: 100%;
-  height: 640px;
+.invoice-pdf-canvas {
+  max-height: 720px;
+  overflow: auto;
+  padding: var(--space-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: var(--surface);
+  background: var(--surface-sunken);
+}
+
+.invoice-pdf-pages {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* Drawn by PdfCanvasPreview at the box's width × device pixel ratio. */
+.invoice-pdf-page {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #ffffff;
+  box-shadow: var(--shadow-sm);
 }
 
 /* Rent ops' wide tables scroll inside their own box at every width, so
@@ -215,7 +230,8 @@
   overflow-x: auto;
 }
 
-.invoice-pdf-preview-bar a {
+.invoice-pdf-preview-bar a,
+.invoice-pdf-canvas a.invoice-compact-button {
   display: inline-flex;
   align-items: center;
   min-height: 32px;
@@ -236,8 +252,8 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .invoice-pdf-frame {
-    height: 480px;
+  .invoice-pdf-canvas {
+    max-height: 520px;
   }
 }
 

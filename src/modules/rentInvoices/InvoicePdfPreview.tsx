@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { InvoiceRender } from './invoiceDocument'
 import { invoicePdfBlob } from './invoicePdf'
+import { PdfCanvasPreview } from './PdfCanvasPreview'
 import { getStoredInvoicePdf, openStoredInvoicePdf } from './rentInvoicesQueries'
 
 interface InvoicePdfPreviewProps {
@@ -14,6 +15,7 @@ interface InvoicePdfPreviewProps {
 
 export function InvoicePdfPreview({ model, issuedInvoiceId, onStoredChecked }: InvoicePdfPreviewProps) {
   const [url, setUrl] = useState<string | null>(null)
+  const [blob, setBlob] = useState<Blob | null>(null)
   // The embedded viewer loads on request (lighter on phones).
   const [showFrame, setShowFrame] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
@@ -39,6 +41,7 @@ export function InvoicePdfPreview({ model, issuedInvoiceId, onStoredChecked }: I
         if ('url' in opened && opened.url) {
           created = opened.url
           setUrl(opened.url)
+          setBlob(opened.blob)
           setStatus(opened.matches === false ? 'Warning: the stored file doesn’t match the fingerprint recorded when it was issued.' : 'Stored PDF — matches the fingerprint recorded at issue.')
         }
         return
@@ -47,6 +50,7 @@ export function InvoicePdfPreview({ model, issuedInvoiceId, onStoredChecked }: I
       if (!alive) return
       created = URL.createObjectURL(blob)
       setUrl(created)
+      setBlob(blob)
       setStatus(null)
     }
     load()
@@ -66,14 +70,15 @@ export function InvoicePdfPreview({ model, issuedInvoiceId, onStoredChecked }: I
         {url && (
           <span className="invoice-form-actions">
             <button type="button" className="invoice-compact-button" aria-expanded={showFrame} onClick={() => setShowFrame(!showFrame)}>
-              {showFrame ? 'Hide preview' : 'Preview PDF'}
+              {showFrame ? 'Hide preview' : 'Show preview'}
             </button>
+            <a href={url} target="_blank" rel="noopener">Open in new tab</a>
             <a href={url} download={model.filename}>Download PDF</a>
           </span>
         )}
       </div>
       {!url && <p className="field-hint">Preparing PDF…</p>}
-      {url && showFrame && <iframe className="invoice-pdf-frame" src={url} title={`PDF preview: ${model.filename}`} />}
+      {url && blob && showFrame && <PdfCanvasPreview pdf={blob} label={model.filename} openUrl={url} filename={model.filename} />}
     </div>
   )
 }
