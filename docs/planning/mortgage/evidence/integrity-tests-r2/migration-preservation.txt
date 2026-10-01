@@ -1,0 +1,10 @@
+== baseline: 110 migrations (without 20261004100000)
+balances before: ZMR-TEST Old Bank=194556.00/800.00 ZMR-TEST-Verification=150000.00/null ZMR-TEST Current Bank=42952.07/0.00
+PASS  every pre-existing loan, entry and audit row unchanged (md5)
+PASS  balances identical (current loan untouched; voided loans frozen as entered)
+PASS  legacy entries stay unlinked (mortgage_id NULL)
+PASS  no effects or review causes created for history
+PASS  existing loans start at versions/epochs 0
+PASS  as-of dates unknown (NULL), never defaulted
+PASS  figure-entered time = each row's own last-write time
+PASS  audit check kept another migration's table name

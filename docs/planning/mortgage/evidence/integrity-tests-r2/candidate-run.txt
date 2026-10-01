@@ -1,0 +1,102 @@
+== mode: candidate   repo HEAD: 4290a08   migrations: 111   2026-10-01T20:29:19Z
+-- Concurrency (T3 C1–C7 method)
+PASS  R1 payment 100 || 50 -> 850
+PASS  R2 deposit 30 || 20 -> escrow 150
+PASS  R3 disbursement 80 || 80 -> second refused
+PASS  R4 principal 80 || 80 on 100 -> second refused
+PASS  R5 payment || deposit (columns independent)
+PASS  R6 reset to 2000 || then payment 50 (dated after it) -> 1950
+PASS  R6b reset today || payment dated today -> applied and flagged (the new figure may include it)
+PASS  R7 payment || then STALE reset -> reset refused, 900
+PASS  R8 old-browser balance edit (C6/C7 path) refused, payment kept
+PASS  R9 concurrent double void -> reversed once
+PASS  R10 void || new payment -> 950
+PASS  R11 older-page void || current void of same entry -> exactly one reversal
+PASS  R12 forced deadlock: Postgres aborts one side (40P01), the other completes exactly once
+-- Linkage, immutability, one-way void
+PASS  F1 new entry linked server-side to the active loan
+PASS  F1b client-supplied wrong mortgage_id refused
+PASS  F2 current void reverses exactly
+PASS  F2b repeated void is a no-op
+PASS  F3 un-void refused
+PASS  F4 fact edit refused
+PASS  F4b delete refused
+PASS  F5 older-page void (plain UPDATE) runs the conditional core: reversed
+PASS  F5b client can't set void details without voiding
+-- Resets (separate principal/escrow epochs; same-value; stale; old browsers)
+PASS  F6 principal reset
+PASS  F6b void payment after principal reset -> skipped, balance unchanged
+PASS  F6c ...creates one principal review cause
+PASS  F6d escrow unaffected by principal reset: deposit void reverses
+PASS  F7 same-value reset (deliberate confirmation) accepted
+PASS  F7b ...counts as a reset: later void skips
+PASS  F8 stale form (version moved) refused, nothing saved
+PASS  F8b old-browser changed balance refused (ZM5M6)
+PASS  F8c old-browser unchanged resend + other edit allowed, not a reset
+PASS  F8d counters can't be set directly
+-- Inactive/replaced loan (frozen, no review cause)
+PASS  F9 void on replaced loan: A frozen, B untouched
+PASS  F9b no review cause for an inactive loan
+PASS  F9c reset on inactive loan refused
+-- Unlinked legacy entries
+PASS  F10 legacy void: flag only, balance unchanged
+PASS  F10b ...principal review cause on the active loan
+-- Escrow refusals and order
+PASS  F11 void deposit used by a later disbursement -> refused, not voided
+PASS  F11b ...refusal and escrow review cause committed together
+PASS  F11c older-page same void -> ZM5M3 raised, nothing recorded
+PASS  F11d repeated refused void is idempotent (one refusal effect, one open cause)
+PASS  F12 void disbursement then deposit -> both reverse
+PASS  F12b the successful void closes the earlier refusal cause
+-- Over-original refusal (owner choice 3)
+PASS  F13 void raising balance above original -> refused, review cause
+PASS  F13b older-page same void -> ZM5M4
+-- Review resolution is per balance
+PASS  F14 two open causes (principal + escrow)
+PASS  F14a a reset that names no causes resolves none (M2)
+PASS  F14b a cause raised during review (after the user looked) exists
+PASS  F14c confirming resolves only the causes shown; the new one and escrow stay open
+PASS  F14d escrow cause can't be resolved through a principal reset
+-- Permissions and audit
+PASS  F15 clients can't write effects
+PASS  F15b clients can't write review causes
+PASS  F15c another workspace sees none of A's effects
+PASS  F15d another workspace can't void A's entry
+PASS  F16 audit rows for a void
+PASS  F16b audit rows for a reset
+-- Historical entries (B4): applied as today, flagged when dated on/before the latest statement/figure date
+PASS  H1 entry dated before the figure was entered: applied AND flagged
+PASS  H1b the flag carries the entry and balance-update context
+PASS  H2 an entry dated after the figure date is applied, not flagged
+PASS  H3 statement date known: dated on/before it -> flagged; after it -> not
+PASS  H3b the statement date is stored as given
+PASS  H4 confirming the balance with the shown ids resolves the flag
+PASS  H4b a reset without a statement date leaves it unknown (not defaulted)
+PASS  H5 voiding a flagged entry reverses it and closes its flag
+PASS  H6 escrow: flagged on the escrow balance only
+PASS  H7 future statement date refused
+-- Review context (B3)
+PASS  B3 reset-skip cause records entry date/type/principal and when the balance was updated
+PASS  B3b refused cause: entry still active (not voided) with its context
+-- Versions
+PASS  V1 principal version bumps on apply, reversal and reset
+PASS  V2 two resets from the same version: first wins, second refused stale
+-- T3 M1/M2/M4/M7/M8 additions
+PASS  M7 an escrow entry doesn't make a principal-only reset stale
+PASS  M7b ...but an escrow reset from the old escrow version is stale
+PASS  M1 a new loan's opening balances are recorded as an initial reset effect
+PASS  M2 legacy cause is NOT resolved by a principal confirmation
+PASS  M2b ...only by explicit acknowledgement
+PASS  M4 marking every action_items task complete can't hide a review cause
+PASS  M4b an open cause survives generic task completion
+PASS  M8 a legacy void takes the active loan lock (waits for the reset, then records its cause)
+-- Authorization and hardening of the controlled paths
+PASS  S1 another workspace can't reset
+PASS  S1b another workspace can't acknowledge A's review
+PASS  S1c another workspace can't insert against A's loan
+PASS  S2 clients can't execute internal functions
+PASS  S2b the loan guard runs with the caller's rights (not SECURITY DEFINER)
+PASS  S3 every SECURITY DEFINER mortgage function pins search_path
+PASS  S3b anon can execute none of the public functions
+PASS  S4 audit check kept every earlier table name and added the two new ones
+== RESULT (candidate): 86 passed, 0 failed
