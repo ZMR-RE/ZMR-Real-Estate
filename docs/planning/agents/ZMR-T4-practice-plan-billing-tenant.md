@@ -74,22 +74,38 @@
   - **Anything unexpected → STOP** and report.
 
 ## 3. Existing-data preservation (full-row fingerprints)
-Tool: `docs/planning/agents/practice/bt_preserve.py`. It only **produces** read-only SELECTs, which run **only** through `btpractice.sh select`, and **compares** the results offline.
+Tool: `docs/planning/agents/practice/bt_preserve.py`, with offline tests in `bt_preserve_test.py`. It only **produces** read-only SELECTs, which run **only** through `btpractice.sh select`, and **compares** the results offline.
 
-1. **Baseline, before any write:** `select "$(bt_preserve.py fp-sql)"`. Saved as `bt-baseline.txt`.
-   - **What it records:** for **every row** of `accounts`, `account_members`, `llcs`, `property_ownership_interests`, `property_ownership_versions`, `properties`, `units`, `leases`, `lease_tenants`, `lease_billing_terms`, `tenants`, `invoices`, `invoice_lines`, `payments`, `documents`, `financial_transactions`, `financial_periods`, `tenancy_charge_rules`, `entity_document_branding` and `audit_log`: its table, its key, and the **md5 of the whole row** as jsonb.
-   - **Covers:** any change to any column of an existing row, including each existing lease's rent, end date and archive flag, and each tenant link and its billing-recipient flag.
+1. **Baseline, before any write:** `select "$(bt_preserve.py fp-sql)"`, saved as `bt-baseline.txt`.
+   - **What it records:** for **every row** of 21 tables, its table, key and **md5 of the whole row** as jsonb. The tables: `accounts`, `account_members`, `llcs`, `properties`, `property_ownership_interests`, `property_ownership_versions`, `units`, `leases`, `lease_tenants`, `lease_billing_terms`, `tenants`, `tenancy_charge_rules`, `invoices`, `invoice_lines`, `payments`, `documents`, `financial_transactions`, `financial_periods`, `entity_document_branding`, `action_items` and `audit_log`.
+   - **Covers:** any change to any column of an existing row, including each lease's rent, end date and archive flag, each tenant link and billing flag, each action item and each audit row.
    - **Window start time** (UTC) recorded.
-2. **After cleanup:** the same `fp-sql`, saved as `bt-after.txt`, and `new-sql <start>` (the full JSON of rows created or updated since the start), saved as `bt-new.txt`.
-3. **Compare:** `bt_preserve.py compare bt-baseline.txt bt-after.txt bt-new.txt bt-fixtures.txt`. PASS only if:
-   - every baseline row exists with an **identical** fingerprint (changed or missing rows are listed and fail);
-   - every new row is an **explicitly identified `ZMR-TEST-BT` fixture**: either it mentions `zmr-test-bt`, or it references a fixture already identified (repeated until stable);
-   - **any other new row is UNEXPLAINED and fails.** For example, a link onto a pre-existing lease, an audit row about a pre-existing record, or a row with no timestamp.
-   - The identified fixture ids (table and key) are written out and listed in the results; nothing else is excluded.
-4. **Offline tests (done):**
-   - unchanged data plus four fixtures (property, unit, lease, link) → PASS, all four identified;
-   - an existing lease's row changed, plus a new link onto an existing lease → FAIL, naming both;
-   - both generated queries pass the runner's read-only guard.
+2. **After cleanup:** the same `fp-sql`, saved as `bt-after.txt`, and `new-sql <start>`, saved as `bt-new.txt`.
+   - `new-sql` returns the full JSON of every row written since the start, using each table's own timestamp: `created_at`/`updated_at`, `recorded_at` for ownership interests, `changed_at` for `audit_log`.
+   - Tables with no timestamp column (`property_ownership_versions`) return all rows.
+3. **Compare:** `bt_preserve.py compare bt-baseline.txt bt-after.txt bt-new.txt bt-fixtures.txt`. PASS only if every baseline row exists with an **identical** fingerprint, **and** every new row is an **explicitly identified `ZMR-TEST-BT` fixture** under its table's rule:
+   - **Starting records:** `properties` (address/name), `llcs` (name/display name) and `tenants` (name) count only if that column contains `zmr-test-bt`.
+   - **Everything else counts only if all of its named references point at fixtures already identified:**
+     - `units` → property;
+     - `leases` → property **and** unit;
+     - `lease_tenants` → lease **and** tenant;
+     - billing terms and charge rules → lease;
+     - ownership interests → property **and** owner;
+     - ownership versions → property;
+     - branding → entity;
+     - **`audit_log` → `record_id`**;
+     - **`action_items` → every non-null lease/unit/property** (at least one present). This covers the renewal reminders fixture leases generate.
+   - **Never test records:** `accounts`, `account_members`, `invoices`, `invoice_lines`, `payments`, `documents` and `financial_*`. Any new row there fails.
+   - **Anything else is UNEXPLAINED and fails.** For example: an audit row about a pre-existing record (even if its text mentions ZMR-TEST-BT), a reminder for a pre-existing lease, a link between a pre-existing lease and a fixture tenant (or the reverse), or a row with no details.
+   - The identified fixtures (table and key) are written out and listed in the results; nothing else is excluded.
+4. **Offline tests (`bt_preserve_test.py`, 9, all passing):**
+   - a full fixture set, including an audit row via `record_id`, a renewal reminder via lease/unit/property, and an ownership version with no timestamp → PASS, every fixture identified;
+   - an audit row about an existing record → FAIL, including one whose text mentions ZMR-TEST-BT;
+   - a reminder for an existing lease → FAIL;
+   - a link from an existing lease to a fixture tenant, or from a fixture lease to an existing tenant → FAIL;
+   - changed existing lease, action-item and audit rows → FAIL, each named;
+   - new rows in payments, or in invoices without details → FAIL;
+   - both generated queries pass the runner's read-only guard and cover `action_items`, `audit_log` and `property_ownership_versions`, using `changed_at` and `recorded_at`.
 
 **Also before and after:** the count and latest timestamp per table, as a quick cross-check (secondary to the fingerprints).
 
