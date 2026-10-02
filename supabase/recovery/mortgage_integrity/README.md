@@ -55,3 +55,11 @@ kept, later work preserved, both states type-check, and reintroduction exact.
 - The same rule applies to Practice.
 - Both drafts are exercised by `supabase/tests/mortgage_integrity/run.sh --control` (disable) and `recovery.sh`
   (disable, then enable).
+
+## After option B (H2, `20261005100000`) is applied: do NOT use `disable_draft.sql` as it stands
+
+- `disable_draft.sql` drops the integrity insert triggers on `mortgage_payments` and `mortgage_escrow_transactions`.
+- After H2, those same insert functions also carry the **duplicate rule** (the one added line).
+- Using this draft after H2 would therefore **remove duplicate protection from normal inserts**: identical entries, including ones matching history entries, would no longer be refused.
+- History inserts would still be checked by their own triggers.
+- If a database disable is ever needed after H2, the draft must first be **revised and re-reviewed** to keep a duplicate check on normal inserts (or the duplicate loss explicitly accepted by the owner). See `supabase/recovery/mortgage_history/README.md`.

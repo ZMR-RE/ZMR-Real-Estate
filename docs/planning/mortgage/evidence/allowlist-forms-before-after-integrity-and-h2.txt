@@ -1,0 +1,6 @@
+BEFORE integrity  form: CHECK ((table_name = ANY (ARRAY['properties'::text, 'llcs'::…
+  names (8): contact_links,contact_methods,contacts,financial_periods,financial_transactions,llcs,mortgage_details,properties
+AFTER integrity   form: CHECK ((table_name = ANY ('{contact_links,contact_methods,co…
+  names (10): contact_links,contact_methods,contacts,financial_periods,financial_transactions,llcs,mortgage_details,mortgage_escrow_transactions,mortgage_payments,properties
+  integrity dropped: []  added: [mortgage_escrow_transactions,mortgage_payments]
+AFTER H2 (fixed)  names (12); dropped: [] added: [mortgage_history_escrow,mortgage_history_payments]

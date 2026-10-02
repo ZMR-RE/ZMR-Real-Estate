@@ -38,3 +38,10 @@ Pages opened before the roll-back behave the same until reloaded.
 - To use it: review and approve, copy it into `supabase/migrations/` under a new timestamp, and apply it with the exact-set procedure.
 - To re-enable: drop that trigger in another reviewed forward migration.
 - Existing history rows stay excluded from cash under H1's R2 either way.
+
+## Interaction with the integrity recovery drafts
+
+- The integrity `disable_draft.sql` (`supabase/recovery/mortgage_integrity/`) drops the normal insert triggers.
+- After H2 those triggers enforce the duplicate rule for normal entries, so that draft would **remove duplicate protection from normal inserts**.
+- It must not be used after H2 without a revised, re-reviewed version (see that README).
+- The H2 `disable_draft.sql` here does **not** have this effect: it only blocks new history inserts.
