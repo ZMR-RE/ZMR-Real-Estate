@@ -49,6 +49,10 @@ const PROPERTY_COLUMNS = ['ac_type', 'basement', 'bathroom_count', 'bedroom_coun
 function completePropertyRows() {
   // Units and lease-tenant links in a real database always carry account_id.
   for (const lt of reviewDb.lease_tenants as Record<string, unknown>[]) if (!('account_id' in lt)) lt.account_id = 'review-account'
+  // Leases in a real database always carry these columns (null when empty).
+  for (const l of reviewDb.leases as Record<string, unknown>[]) {
+    for (const col of ['late_fee', 'move_in_fee', 'end_reason']) if (!(col in l)) l[col] = null
+  }
   for (const u of reviewDb.units as Record<string, unknown>[]) {
     if (!('account_id' in u)) u.account_id = 'review-account'
     if (!('archived' in u)) u.archived = false
