@@ -8,13 +8,16 @@ interface AddPersonIssuerProps {
   // The chosen issuer: a newly added person, or an existing record the owner
   // picked instead. Nothing else changes until the box is saved.
   onChosen: (issuer: EntityOption, isNew: boolean) => void
+  // Tells the Billing settings form when this step opens or closes, so the
+  // form hides its own Save/Cancel meanwhile: one Save and one Cancel at a time.
+  onOpenChange?: (open: boolean) => void
 }
 
 // Billing settings › Invoice issuer › + Add person. Adds a person as an owner
 // record (kind Individual) so they can issue invoices — without recording any
 // ownership of this or any other property. Same-name records are offered,
 // never forced: two different people can share a name.
-export function AddPersonIssuer({ accountId, existing, onChosen }: AddPersonIssuerProps) {
+export function AddPersonIssuer({ accountId, existing, onChosen, onOpenChange }: AddPersonIssuerProps) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [matches, setMatches] = useState<EntityOption[] | null>(null)
@@ -26,6 +29,7 @@ export function AddPersonIssuer({ accountId, existing, onChosen }: AddPersonIssu
 
   const close = () => {
     setOpen(false)
+    onOpenChange?.(false)
     setName('')
     setMatches(null)
     setError(null)
@@ -49,7 +53,7 @@ export function AddPersonIssuer({ accountId, existing, onChosen }: AddPersonIssu
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)}>
+      <button type="button" onClick={() => { setOpen(true); onOpenChange?.(true) }}>
         + Add person
       </button>
     )

@@ -34,6 +34,7 @@ export function PropertyBillingSettingsSection({ propertyId }: PropertyBillingSe
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [addedNote, setAddedNote] = useState<string | null>(null)
+  const [addingPerson, setAddingPerson] = useState(false)
 
   // Entity defaults are owned by Branding & documents, so they're re-read
   // whenever this box loads or enters Edit (cross-module freshness).
@@ -118,6 +119,7 @@ export function PropertyBillingSettingsSection({ propertyId }: PropertyBillingSe
         <AddPersonIssuer
           accountId={accountId}
           existing={entities}
+          onOpenChange={setAddingPerson}
           onChosen={(issuer, isNew) => {
             if (isNew) setEntities((prev) => [...prev, issuer].sort((a, b) => a.name.localeCompare(b.name)))
             setDraft((d) => ({ ...d, entityId: issuer.id }))
@@ -142,10 +144,12 @@ export function PropertyBillingSettingsSection({ propertyId }: PropertyBillingSe
         Approved, unissued invoices need approving again; issued invoices keep theirs.
       </p>
       {error && <p className="billing-callout billing-callout--error" role="alert">{error}</p>}
-      <div className="billing-actions">
-        <button type="submit" disabled={saving}>Save</button>
-        <button type="button" onClick={exit}>Cancel</button>
-      </div>
+      {!addingPerson && (
+        <div className="billing-actions">
+          <button type="submit" disabled={saving}>Save</button>
+          <button type="button" onClick={exit}>Cancel</button>
+        </div>
+      )}
     </form>
   )
 
@@ -162,6 +166,7 @@ export function PropertyBillingSettingsSection({ propertyId }: PropertyBillingSe
       onEditStart={() => {
         setDraft({ entityId: row?.billing_entity_id ?? '', override: row?.payment_instructions_override ?? '' })
         setAddedNote(null)
+        setAddingPerson(false)
         refresh()
       }}
     />
