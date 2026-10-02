@@ -2,6 +2,8 @@
 // Shared by Units › + Add lease and Property Overview › Tenants › Add tenant,
 // so both entry points behave the same.
 
+import { getLeaseStatus } from './leaseStatus'
+
 export interface TenantChoice {
   id: string
   label: string
@@ -120,11 +122,11 @@ export function nameMatchesFor<T extends TenantChoice>(all: T[], selectable: T[]
 // Unit card summary when nothing is current: tenancies (with tenants) that
 // start later, soonest first — shown as "Upcoming from <date>", never as a
 // "$0 — Not set up" warning. Archived or tenantless leases are left out.
-export function upcomingTenancies<T extends { archived: boolean; start_date: string; tenants: unknown[] }>(
+export function upcomingTenancies<T extends { archived: boolean; start_date: string; end_date: string | null; tenants: unknown[] }>(
   leases: T[],
   today: string = new Date().toISOString().slice(0, 10),
 ): T[] {
   return leases
-    .filter((l) => !l.archived && l.tenants.length > 0 && l.start_date > today)
+    .filter((l) => !l.archived && l.tenants.length > 0 && getLeaseStatus(l, today) === 'upcoming')
     .sort((a, b) => a.start_date.localeCompare(b.start_date))
 }
