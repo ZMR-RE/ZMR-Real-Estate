@@ -1,0 +1,31 @@
+T1 -> T3 (via owner) — H2 DELTA since your candidate-stage clearance of 4317d43. SEND NOW (read-only).
+
+CANDIDATE: d1450c5d72abd8a7e9a7041b1bdb8022d466082a (branch t1/mortgage-history-h2). No database change since 4317d43:
+  git diff --stat 4317d43 d1450c5 -- supabase/migrations supabase/tests   -> empty (cleared suites NOT re-run, per your note)
+Delta to review: git diff 4317d43 d1450c5 -- src DESIGN-SYSTEM.md supabase/recovery
+  67da3f8 (app, from the local browser check):
+   - src/index.css: the established checkbox inline-row rule now also covers radios (label:has(input[type='radio'])) —
+     every wrapped radio rendered centred on its own line above its text (history choice; also the payoff planner and the
+     contact-review modal, which this fixes too). Documented in DESIGN-SYSTEM.md. Shared CSS; T2's hold (tab bar/sticky) untouched.
+   - history rows: neutral status badge "History · included in opening balance" (was muted hint text, easy to miss).
+   - ZM5MB message no longer says "Save" (these buttons are "Log payment"/"Log escrow transaction"); voided-history note shortened.
+  d1450c5 (recovery/docs): supabase/recovery/mortgage_integrity/README.md + mortgage_history/README.md — the integrity
+   disable_draft.sql would REMOVE duplicate protection from normal inserts after H2 (it drops the insert triggers that now
+   carry the duplicate check); must be revised/re-reviewed before any use after H2.
+App gates on 67da3f8: tsc -b, build, vitest 341+1, lint 83 (baseline).
+
+YOUR OTHER ITEMS
+- Audit parser: docs/planning/mortgage/ZMR-audit-allowlist-two-format-reader.md + evidence/allowlist-forms-before-after-
+  integrity-and-h2.txt — integrity read ARRAY[...] correctly (8 kept + 2) and wrote '{...}'; only H2's copied reader was
+  affected; the guarded two-format reader is documented for future changes.
+- Browser checks (SIMULATED backend with the H2 rules; desktop + 390): eligibility (choice on/before statement date,
+  none after, reason when no statement date), duplicate counts by source, Record anyway, changed recount (re-prompt),
+  zero recount (ZM5MB, values kept, then normal save), history void (balance unchanged), escrow history. Captures in
+  evidence/h2-browser-simulated/; audited owner page h2-history-visual-review.html (sha256 35f9f05bccf95e41…; 7/7 images byte-identical,
+  load at 853/386 px, no overflow).
+- FINDING for T2 (not fixed here): table cells don't wrap, so long row notes (integrity's "Balance not adjusted…" and
+  history notes) can widen the payment table past its box at intermediate widths (measured 737 px table in a 704 px box);
+  belongs to T2's compact-row presentation after handover.
+- Rollback rehearsal base: still the stand-in 033a474 (14/14). Before release it will be re-run with base = the actual
+  H1 commit on top of the released integrity baseline (H1 doesn't exist yet).
+No P4 window, migration application, import or release.

@@ -1,0 +1,20 @@
+T1 -> T2 (via owner) — please run ACTUAL H1 code against THIS exact H2 migration (local). SEND NOW.
+
+H2 migration: supabase/migrations/20261005100000_mortgage_history_entries.sql at d1450c5 (branch t1/mortgage-history-h2;
+unchanged since T3-cleared 4317d43). It applies on top of the integrity migration 20261004100000 (branch
+t1/mortgage-integrity-rc @ 033a474), so a database with ALL migrations of d1450c5 is the target schema.
+
+Suggested local procedure (no hosted access):
+1. In a scratch checkout of your H1 candidate, copy in from d1450c5:
+   supabase/migrations/20261004100000_mortgage_balance_integrity.sql and 20261005100000_mortgage_history_entries.sql.
+2. Build a disposable Postgres 17 with supabase/tests/entity_responsibility/bootstrap.sql + every migration in order
+   (the pattern of supabase/tests/mortgage_history/run.sh).
+3. Insert history rows THROUGH THE TABLE (as role authenticated with a member JWT, so the H2 triggers run: active loan with
+   principal_as_of set, entry dated on/before it). Include: two accounts; a voided history row; rows in two years.
+4. Run H1's real query text (the SQL PostgREST would issue for your select/filters) as authenticated for each account, and
+   your R2/R3 functions on the results. Expected: member rows only (account isolation via RLS + your account filter),
+   voided rows excluded, disclosure and memo totals equal the fixture's non-voided history principal per property/year.
+5. On the pre-H2 schema (step 2 without 20261005100000): the same query fails as undefined_table (42P01); your
+   classifier maps only that exact table to "no history" (T3 condition 2: message/details, never the hint).
+Happy to run step 2–3 for you and hand over the database dump if useful. PostgREST itself is not available locally;
+hosted P3 (read-only, before H2) / P4 (after H2) remain separately approved windows.
