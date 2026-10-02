@@ -1,0 +1,41 @@
+T4 → T3 (via planning): review request — billing + tenant follow-up delta 179e56b..f35d08b, and the re-pin to f35d08b
+October 2, 2026. Read-only review. No Practice window, migration or deployment is requested.
+T3 has already cleared application 179e56b and its 48-file recovery pins. This asks ONLY for what changed since.
+Supersedes ZMR-T4-request-T3-review-owner-fixes.txt.
+
+1) APPLICATION DELTA 179e56b..f35d08b (planner follow-ups; tenant 16a99ed..69b8ef7 = 493391a, 69b8ef7; merges otherwise)
+   Final application hash: f35d08b068aa298abe1da1d9e10ea83c92398224 on t4/practice-billing-tenant.
+   The exact publish hash (f35d08b + docs-only commits) is given in the T4 report and assignments log.
+   Files: src/modules/leases/LeaseList.tsx, leases.css, leaseStatus.ts (new), leaseStatus.test.ts (new),
+   leasesQueries.ts, leaseFormLogic.ts (+ test fixture), src/modules/tenants/PropertyTenantsOverview.tsx.
+   a. Lease history at every width (493391a, 69b8ef7): container query on the Lease history wrapper
+      (.lease-history-container, container-type: inline-size). Below 780 px each row is a labelled card (data-label);
+      in Edit (not readOnly) below 1080 px. Wider boxes keep the table.
+      Please confirm: module CSS only (src/index.css unchanged vs 179e56b); thead th stays position: sticky with no
+      scroll container added in table mode; the colSpan edit/end rows still render in card mode.
+      Evidence: windows 320..1920, view and Edit — nothing past the box edge, no page sideways scroll; worst case
+      (50-character co-tenant names, five-figure amounts) fits at 1260/1280/1300 (view) and 1560/1600 (Edit).
+      Earlier thresholds 760/1000 failed the worst case by 9 px / 43 px and were raised.
+   b. One status rule (493391a): getLeaseStatus moved unchanged into pure src/modules/leases/leaseStatus.ts (optional
+      today parameter; re-exported from leasesQueries.ts so existing importers are untouched).
+      listAllTenantsEverAtProperty now also selects start_date and builds rows with propertyTenantRows() -> status
+      ('active' | 'upcoming' | 'ended'), replacing isCurrent (end_date null or >= today), which labelled a future
+      tenancy "Current". PropertyTenantsOverview: Current, then Upcoming, then Past; same badge variants as LeaseList.
+      upcomingTenancies() (unit card "Upcoming from …") now uses getLeaseStatus(l, today) === 'upcoming'.
+      Please confirm: the only query change is the added start_date column (a read; account scoping unchanged); no
+      other consumer used PropertyTenantRow.isCurrent.
+   Tests: leaseStatus.test.ts (boundaries; Tenants rows upcoming/active/ended; one row per tenant per lease).
+   Evidence: clean clone of f35d08b — tsc -b clean, build OK, vitest 311 passed / 1 skipped, oxlint 83 (baseline),
+   119 migrations (none added), every changed file tracked. Visual: owner-review-billing-tenant/index.html items
+   13–14 (img/c4). Not re-run on hosted Practice.
+
+2) RECOVERY RE-PIN 179e56b -> f35d08b (recovery logic unchanged)
+   bt-scoped-recovery.sh and bt-recovery-rehearsal.sh: RELEASE=f35d08b (BASE d9cdcb3 unchanged); comments updated.
+   The cleared 48-file set plus leaseStatus.ts and leaseStatus.test.ts (added by the release) = 50 files
+   (33 restored, 17 removed). All other changed files in 179e56b..f35d08b were already in the 48.
+   Rehearsal --with-build: 18/18 PASS (final merge alone covers 1 of 50; tests 280+1 after recovery, 311+1 after
+   reintroduction). Output: release/bt-recovery-rehearsal-output-f35d08b.txt (earlier outputs kept).
+   A dry run of the script on the exact publish hash is in the T4 report.
+
+Reply with clearance or findings per part (1, 2). T4 will not deploy; release needs the owner's approval naming the
+exact publish hash.

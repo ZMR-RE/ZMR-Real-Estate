@@ -3,13 +3,13 @@
 # fetches or touches any remote, deploy, account or database.
 #
 # usage: bt-recovery-rehearsal.sh <source-repo> <scratch-dir> [--with-build]
-#   <source-repo> must contain d9cdcb3 and 179e56b. <scratch-dir> must not exist.
+#   <source-repo> must contain d9cdcb3 and f35d08b. <scratch-dir> must not exist.
 #   --with-build also runs npm ci, build and vitest at base, recovery and reintroduction.
 set -uo pipefail
 SRC=${1:?source repo}; S=${2:?scratch dir}; BUILD=${3:-}
 HERE=$(cd "$(dirname "$0")" && pwd); TOOL=$HERE/bt-scoped-recovery.sh
 BASE=d9cdcb3aa4aec84c68c78b183593b2a130ede3d7
-RELEASE=179e56b747ef8284cd24af8339a34bb6a3c04470
+RELEASE=f35d08b068aa298abe1da1d9e10ea83c92398224
 [ -e "$S" ] && { echo "scratch dir exists: $S" >&2; exit 1; }
 git clone -q "$SRC" "$S" && cd "$S" && git remote remove origin
 git config user.name "T4 rehearsal"; git config user.email "noreply@example.test"

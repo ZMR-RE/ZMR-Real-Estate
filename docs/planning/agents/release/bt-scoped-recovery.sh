@@ -3,8 +3,8 @@
 # Local git only: it never pushes, fetches or touches any remote or deploy.
 #
 # The release fast-forwards main from BASE (live d9cdcb3) through RELEASE
-# (application candidate 179e56b; later commits on the branch are docs-only)
-# via a CHAIN of merges (billing 588388f..9c36aca, tenant 2d8aa76..16a99ed, T2
+# (application candidate f35d08b; later commits on the branch are docs-only)
+# via a CHAIN of merges (billing 588388f..9c36aca, tenant 2d8aa76..69b8ef7, T2
 # dropdown 999d716, docs). Reverting only the final merge would undo just the
 # last delta (finding R1), so this restores EVERY application file changed
 # anywhere in BASE..RELEASE to its BASE content, on top of current main, and
@@ -26,7 +26,7 @@ set -euo pipefail
 REPO=${1:?usage: bt-scoped-recovery.sh <repo> [--dry-run]}
 DRY=${2:-}
 BASE=d9cdcb3aa4aec84c68c78b183593b2a130ede3d7     # live production before this release
-RELEASE=179e56b747ef8284cd24af8339a34bb6a3c04470  # billing + tenant + dropdown application candidate
+RELEASE=f35d08b068aa298abe1da1d9e10ea83c92398224  # billing + tenant + dropdown application candidate
 cd "$REPO"
 
 [ -z "$(git status --porcelain)" ] || { echo "REFUSED: working tree not clean" >&2; exit 2; }
@@ -74,7 +74,7 @@ git commit -q -m "Recover: restore the billing issuer + tenant entry release's a
 
 Restores all ${#FILES[@]} application files changed anywhere in $BASE..$RELEASE
 ($RESTORED restored, $ADDED release-added files removed): billing
-588388f..9c36aca, tenant entry 2d8aa76..16a99ed and T2 dropdown 999d716
+588388f..9c36aca, tenant entry 2d8aa76..69b8ef7 and T2 dropdown 999d716
 together, not just the final merge. Keeps docs/**, root *.md and supabase/**; newer unrelated work is
 untouched. Reintroduce the release only by reverting THIS commit."
 echo "recovery commit: $(git rev-parse HEAD) (${#FILES[@]} files)"
