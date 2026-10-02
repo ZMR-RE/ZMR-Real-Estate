@@ -90,6 +90,15 @@ class Preserve(unittest.TestCase):
         self.assertIn('UNEXPLAINED new row: payments|PAY1', out)
         self.assertIn('UNEXPLAINED new row: invoices|INV1 (no row details)', out)
 
+    def test_pretty_printed_cli_output_is_parsed(self):
+        # The real `supabase db query` output: log lines, then an indented JSON
+        # document with the aggregate under rows[0].jsonb_agg.
+        rows = [{'t': t, 'k': k, 'j': j} for (t, k), j in FIX.items()]
+        doc = {'boundary': 'x', 'rows': [{'jsonb_agg': rows}], 'warning': 'untrusted'}
+        d = tempfile.mkdtemp(); p = os.path.join(d, 'n')
+        Path(p).write_text('Using workdir /x\nInitialising login role...\n' + json.dumps(doc, indent=2))
+        self.assertEqual(len(bp.parse_new(p)), len(FIX))
+
     def test_generated_sql_is_read_only_and_covers_tables(self):
         guard_ok = lambda q: re.match(r'^\s*(select|with)\s', q, re.I) and not re.search(
             r';|\b(insert|update|delete|alter|drop|create|grant|revoke|truncate|copy|call|do)\b', q, re.I)

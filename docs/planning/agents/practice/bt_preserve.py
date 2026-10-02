@@ -82,9 +82,31 @@ def parse_fp(path):
 
 
 def parse_new(path):
+    """The CLI prints one JSON document (pretty-printed or compact), possibly after
+    log lines. Decode it from its first '{' and return the first list of
+    {t, k, j} objects found anywhere inside it."""
     text = Path(path).read_text()
-    start = text.find('[{')
-    return [] if start < 0 else json.JSONDecoder().raw_decode(text[start:])[0]
+    start = text.find('{')
+    if start < 0:
+        return []
+    doc = json.JSONDecoder().raw_decode(text[start:])[0]
+
+    def find(node):
+        if isinstance(node, list):
+            if node and all(isinstance(x, dict) and {'t', 'k', 'j'} <= x.keys() for x in node):
+                return node
+            for x in node:
+                found = find(x)
+                if found is not None:
+                    return found
+        elif isinstance(node, dict):
+            for v in node.values():
+                found = find(v)
+                if found is not None:
+                    return found
+        return None
+
+    return find(doc) or []
 
 
 def qualifies(table, row, fixture_keys):
