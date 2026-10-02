@@ -4,6 +4,7 @@ import { TenantForm } from '../tenants/TenantForm'
 import type { TenantOption } from '../tenants/useTenants'
 import type { TenantInput } from '../tenants/tenantsQueries'
 import type { LeaseInput } from './leasesQueries'
+import { useSingleFlight } from './singleFlight'
 import { slotOptions, tenantsNamed, uniqueTenantIds, withSameNameDetails } from './leaseFormLogic'
 
 interface LeaseFormProps {
@@ -56,25 +57,42 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
     setAddingTenantForSlot(null)
   }
 
+  // One inline tenant creation at a time; once a person is created for this
+  // slot, no second one until "+ Add new tenant" is opened again.
+  const tenantFlight = useSingleFlight()
+  const openNewTenant = (slot: number) => {
+    tenantFlight.reset()
+    setAddingTenantForSlot(slot)
+  }
+
   const handleCreateTenant = async (input: TenantInput, confirmedNew = false) => {
-    if (addingTenantForSlot === null) return
+    const slot = addingTenantForSlot
+    if (slot === null) return
     const matches = tenantsNamed(tenantOptions, input.name)
     if (!confirmedNew && matches.length > 0) {
       setNameMatch({ input, matches })
       return
     }
-    setNameMatch(null)
-    setCreatingTenant(true)
-    const result = await onCreateTenant(input)
-    setCreatingTenant(false)
-
+    const run = await tenantFlight.run(
+      async () => {
+        setNameMatch(null)
+        setCreatingTenant(true)
+        try {
+          return await onCreateTenant(input)
+        } finally {
+          setCreatingTenant(false)
+        }
+      },
+      (result) => !('error' in result),
+    )
+    if (!run.ran) return
+    const result = run.value
     if ('error' in result) {
       setCreateTenantError(result.error)
       return
     }
 
     setCreateTenantError(null)
-    const slot = addingTenantForSlot
     setTenantIds((prev) => prev.map((id, i) => (i === slot ? result.id : id)))
     setAddingTenantForSlot(null)
   }
@@ -116,7 +134,7 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
               value={tenantId}
               onChange={(id) => setTenantIds((prev) => prev.map((existing, idx) => (idx === i ? id : existing)))}
               placeholder="Select a tenant…"
-              onAddNew={() => setAddingTenantForSlot(i)}
+              onAddNew={() => openNewTenant(i)}
               addNewLabel="+ Add new tenant"
             />
             {tenantIds.length > 1 && (

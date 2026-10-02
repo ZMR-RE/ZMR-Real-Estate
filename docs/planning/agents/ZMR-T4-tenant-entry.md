@@ -130,3 +130,39 @@ These make the review page behave like the real database for these screens:
 Shared-file holds are recorded at 21:53 UTC (tenants and leases files, `UnitsSection`, and the Tenants/Units wiring in `PropertyProfileOverviewTab.tsx`) and extended on October 1. The extension covers `src/shared/EditableSection.tsx` (the optional `addLabel`), `UnitCard.tsx`, the new lease/tenant files and one `DESIGN-SYSTEM.md` entry. `PropertyProfile.tsx` (T2's hold) and `index.css` are untouched.
 
 **Harness-only additions:** `?persist=1` (tenancy rows survive a reload in that tab).
+
+## Repeated-submit fix (found while preparing the Practice test build `3a75340`)
+**Defect:** three Save clicks in one burst on a new tenancy created three leases. The rent would then be counted three times. The cause: Save, and the inline "Add tenant", were guarded only by `disabled={saving}`, React state that updates too late to stop clicks in the same burst. Units › + Add lease had the same pattern before this slice.
+
+**Fix (frontend):** one shared, immediate in-flight guard, `src/modules/leases/singleFlight.ts`.
+- **Where it's used:**
+  - new-lease, resumed-lease and co-tenant saves, in `useAddTenancy.save` (Tenants › + Add tenant) and `useLeases.add` (Units › + Add lease);
+  - inline new-tenant creation in `LeaseForm`, from both entry points.
+- **Burst:** while a save is running, another call is ignored immediately, before any re-render, however slow the response.
+- **Failure:** a failed or thrown save releases the guard, so retry works.
+- **Success:** the form that just saved is locked until a new add starts (+ Add lease, a unit change, or "+ Add new tenant" opened again). A late click in the moment before the form closes can't save twice.
+- **Retry id:** the half-saved lease's id is also held in a ref, so a retry always reads the latest id.
+- **Limit:** a browser guard only. It doesn't replace the separately proposed atomic, idempotent database operation for a lease and its tenants.
+
+**Tests:** `singleFlight.test.ts`, 7:
+- a five-call burst during a slow save runs once;
+- a failure, or a thrown error, releases the guard;
+- after a success, nothing runs until reset;
+- against a slow fake database:
+  - a burst of new-tenancy Saves gives 1 lease, 1 link, rent once;
+  - a burst of co-tenant Saves gives 1 link, no lease, rent untouched;
+  - a failed link, then a retry burst, finishes the same lease once.
+
+**Browser checks** (local review harness, simulated backend, fictional data; `?slow-writes=MS` delays tenancy inserts, harness-only):
+
+| # | Path | Input | Result |
+|---|---|---|---|
+| 1 | Tenants › + Add tenant › Unit 1 › separate, Morgan, $777, writes delayed 1.5 s | 3 scripted Save clicks, then 3 **real** clicks and 3 **real** Enter presses while saving | **1** lease, **1** link (4 → 5 leases); the view shows "Added to Unit 1: Morgan Demo" |
+| 2 | Same, $888, with a simulated link failure | Burst of 3 → failure message (1 lease, 0 links); then a retry burst of 3 | Still **1** lease; now 1 link |
+| 3 | Tenants › Unit 1 › Add co-tenant › + Add new tenant "Burst Person" | 4 clicks on Add tenant, then a burst of 3 Saves | **1** "Burst Person" tenant; **1** new link on Riley's lease; no new lease; Riley's $1,450 unchanged |
+| 4 | Units › Unit A › + Add lease › separate, Sam, $555, with a simulated link failure | Burst of 3 → failure; retry burst of 3 | **1** lease, **1** link; Casey's $1,720 unchanged |
+| 5 | Reload and resume (`?persist=1`): Tenants › Unit 2 › separate, Casey, $1,234, with a simulated link failure | Burst → failure (1 unfinished lease) → **full reload** → offered "Unfinished tenancy … ID … rent $1,234.00" → Resume (prefilled 1234) → burst of 3 Saves | Still **5** leases; the $1,234 lease is linked to Casey; 0 unfinished |
+
+**Evidence:** `evidence/tenant-entry-repeat-submit/01`. The table above holds the read-back results from each run.
+
+**Harness note:** the first slow-response run produced extra leases. That came from a bug in the new `?slow-writes` wrapper, which replaced the awaitable builder with a promise, so every save threw at once and released the guard. The wrapper was fixed to keep the builder and only delay its answers, and all runs above use the fixed version. That bad run touched only simulated data and was discarded.

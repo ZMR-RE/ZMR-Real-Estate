@@ -83,6 +83,28 @@ base.from = (table: string) => {
     const insert = qb.insert.bind(qb)
     qb.insert = (p: MockRow | MockRow[]) => insert(Array.isArray(p) ? p.map((r) => ({ ...defaults, ...r })) : { ...defaults, ...p })
   }
+  // ?slow-writes=MS: tenancy inserts (leases, lease links, tenants) answer
+  // after MS milliseconds, so repeated clicks during a slow save can be tested.
+  const slowMs = Number(new URLSearchParams(window.location.search).get('slow-writes') ?? 0)
+  if (slowMs > 0 && (table === 'leases' || table === 'lease_tenants' || table === 'tenants')) {
+    const insert = qb.insert.bind(qb)
+    const slow = <T,>(v: T) => new Promise<T>((r) => setTimeout(() => r(v), slowMs))
+    qb.insert = (p: MockRow | MockRow[]) => {
+      // Keep the builder (callers chain .select().single() or await it
+      // directly); only delay its answers.
+      const r = insert(p) as { then: (ok: (v: unknown) => unknown, no?: (e: unknown) => unknown) => Promise<unknown>; select: (c?: string) => { single: () => Promise<unknown> } }
+      const then = r.then.bind(r)
+      r.then = (ok, no) => then(slow).then(ok, no)
+      const select = r.select.bind(r)
+      r.select = (c?: string) => {
+        const sel = select(c)
+        const single = sel.single.bind(sel)
+        sel.single = () => single().then(slow)
+        return sel
+      }
+      return r
+    }
+  }
   if (table === 'lease_tenants' && failNextLeaseLinks) {
     const insert = qb.insert.bind(qb)
     qb.insert = (p: MockRow | MockRow[]) => {
