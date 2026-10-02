@@ -952,6 +952,18 @@ dd {
   overflow: clip;
 }
 
+/* Shared picker inside a box (T4's tenant entry finding, Oct 1, 2026): the
+   clip above also cut off an open SearchableSelect menu (absolutely
+   positioned, up to 240px), so its lower options — e.g. "+ Add new tenant"
+   — were hidden, and a tap there landed on the box underneath. While a
+   menu is open (it's only rendered when open), the box stops clipping so
+   the whole menu shows and receives its own clicks; it clips again as soon
+   as the menu closes. `visible` creates no scroll container, so sticky
+   headers inside the box are unaffected. */
+.collapsible-section:has(.searchable-select-menu) {
+  overflow: visible;
+}
+
 .collapsible-section > summary {
   cursor: pointer;
   list-style: none;
