@@ -44,8 +44,8 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     return ok
   }
 
-  const logPayment = async (input: MortgagePaymentInput): Promise<boolean> => {
-    const ok = await payments.logPayment(input)
+  const logPayment = async (input: MortgagePaymentInput, historyOnly = false): Promise<boolean> => {
+    const ok = await payments.logPayment(input, historyOnly)
     if (ok) {
       scenario.clearResult()
       await refreshAll()
@@ -59,14 +59,29 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     return ok
   }
 
-  const logEscrowTransaction = async (input: MortgageEscrowTransactionInput): Promise<boolean> => {
-    const ok = await escrow.logEscrowTransaction(input)
+  const logEscrowTransaction = async (input: MortgageEscrowTransactionInput, historyOnly = false): Promise<boolean> => {
+    const ok = await escrow.logEscrowTransaction(input, historyOnly)
     if (ok) await refreshAll()
     return ok
   }
 
   const voidEscrowTransaction = async (id: string): Promise<boolean> => {
     const ok = await escrow.voidEscrowTransaction(id)
+    if (ok) await refreshAll()
+    return ok
+  }
+
+  const confirmPaymentDuplicate = async (): Promise<boolean> => {
+    const ok = await payments.confirmDuplicate()
+    if (ok) {
+      scenario.clearResult()
+      await refreshAll()
+    }
+    return ok
+  }
+
+  const confirmEscrowDuplicate = async (): Promise<boolean> => {
+    const ok = await escrow.confirmEscrowDuplicate()
     if (ok) await refreshAll()
     return ok
   }
@@ -92,6 +107,9 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     paymentFormInitialValues: payments.paymentFormInitialValues,
     logPayment,
     voidPayment,
+    paymentDuplicate: payments.duplicate,
+    confirmPaymentDuplicate,
+    dismissPaymentDuplicate: payments.dismissDuplicate,
 
     escrowTransactions: escrow.escrowTransactions,
     loggingEscrowTransaction: escrow.loggingEscrowTransaction,
@@ -99,6 +117,9 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     escrowTransactionFormInitialValues: escrow.escrowTransactionFormInitialValues,
     logEscrowTransaction,
     voidEscrowTransaction,
+    escrowDuplicate: escrow.escrowDuplicate,
+    confirmEscrowDuplicate,
+    dismissEscrowDuplicate: escrow.dismissEscrowDuplicate,
 
     extraAmount: scenario.extraAmount,
     setExtraAmount: scenario.setExtraAmount,

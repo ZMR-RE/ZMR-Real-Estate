@@ -8,6 +8,18 @@ import {
   type MortgageEscrowTransactionInput,
 } from './mortgagePayoffQueries'
 import { friendlyDatabaseError, voidRefusalMessage } from './mortgageBalanceIntegrity'
+import { createHistoryEscrow, listHistoryEscrow, voidHistoryEntry } from './mortgageHistoryQueries'
+import { saveMortgageEntry } from './mortgageHistoryEntry'
+
+// One list row: a normal escrow entry, or a history-only item already included in the opening escrow balance (option B).
+export type EscrowRow = MortgageEscrowTransaction & { history: boolean }
+
+export interface PendingEscrowDuplicate {
+  input: MortgageEscrowTransactionInput
+  historyOnly: boolean
+  total: number
+  message: string
+}
 
 function todayDateString() {
   return new Date().toISOString().slice(0, 10)
@@ -29,7 +41,8 @@ const BLANK_ESCROW_TRANSACTION: MortgageEscrowTransactionInput = {
 export function useMortgageEscrow(propertyId: string) {
   const { accountId } = useAuth()
 
-  const [escrowTransactions, setEscrowTransactions] = useState<MortgageEscrowTransaction[]>([])
+  const [escrowTransactions, setEscrowTransactions] = useState<EscrowRow[]>([])
+  const [duplicate, setDuplicate] = useState<PendingEscrowDuplicate | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [loggingEscrowTransaction, setLoggingEscrowTransaction] = useState(false)
@@ -37,16 +50,24 @@ export function useMortgageEscrow(propertyId: string) {
 
   const refresh = useCallback(async () => {
     setLoading(true)
-    const { data, error: fetchError } = await listMortgageEscrowTransactions(propertyId)
+    const [{ data, error: fetchError }, { data: history, error: historyError }] = await Promise.all([
+      listMortgageEscrowTransactions(propertyId),
+      listHistoryEscrow(propertyId),
+    ])
     setLoading(false)
 
-    if (fetchError) {
-      setError(fetchError.message)
+    if (fetchError || historyError) {
+      setError((fetchError ?? historyError)!.message)
       return
     }
 
     setError(null)
-    setEscrowTransactions(data ?? [])
+    const rows: EscrowRow[] = [
+      ...(data ?? []).map((t) => ({ ...t, history: false })),
+      ...(history ?? []).map((h) => ({ ...h, void_outcome: null, history: true })),
+    ]
+    rows.sort((a, b) => (a.transaction_date < b.transaction_date ? 1 : a.transaction_date > b.transaction_date ? -1 : 0))
+    setEscrowTransactions(rows)
   }, [propertyId])
 
   useEffect(() => {
@@ -58,26 +79,40 @@ export function useMortgageEscrow(propertyId: string) {
   // composition hook re-reads it via useMortgageDetails.refresh() rather
   // than computing the new balance client-side, same reasoning as
   // logPayment in useMortgagePayments.
-  const logEscrowTransaction = async (input: MortgageEscrowTransactionInput): Promise<boolean> => {
+  const attempt = async (input: MortgageEscrowTransactionInput, historyOnly: boolean, ack: number | null): Promise<boolean> => {
     if (!accountId) return false
-
     setLoggingEscrowTransaction(true)
-    const { error: escrowSaveError } = await createMortgageEscrowTransaction(accountId, propertyId, input)
+    const outcome = await saveMortgageEntry(
+      (a) => (historyOnly ? createHistoryEscrow(accountId, propertyId, input, a) : createMortgageEscrowTransaction(accountId, propertyId, input, a)),
+      input.transaction_date,
+      ack,
+    )
     setLoggingEscrowTransaction(false)
-
-    if (escrowSaveError) {
-      setEscrowTransactionError(escrowSaveError.message)
+    if (outcome.kind === 'duplicate') {
+      setEscrowTransactionError(null)
+      setDuplicate({ input, historyOnly, total: outcome.counts.total, message: outcome.message })
       return false
     }
-
-    setEscrowTransactionError(null)
-    return true
+    setDuplicate(null)
+    setEscrowTransactionError(outcome.kind === 'error' ? outcome.message : null)
+    return outcome.kind === 'saved'
   }
+
+  const logEscrowTransaction = (input: MortgageEscrowTransactionInput, historyOnly = false) => attempt(input, historyOnly, null)
+  const confirmDuplicate = () => (duplicate ? attempt(duplicate.input, duplicate.historyOnly, duplicate.total) : Promise.resolve(false))
+  const dismissDuplicate = () => setDuplicate(null)
 
   // The only "removal" path (roadmap 9.20) — never a hard DELETE. The database reverses the entry's balance effect
   // exactly once when that is safe; otherwise it voids without adjusting (the row shows why), or refuses and opens an
   // Action Queue balance review (balance integrity, 20261004100000).
   const voidEscrowTransaction = async (id: string): Promise<boolean> => {
+    if (escrowTransactions.find((t) => t.id === id)?.history) {
+      setLoggingEscrowTransaction(true)
+      const { error: historyVoidError } = await voidHistoryEntry('escrow', id)
+      setLoggingEscrowTransaction(false)
+      setEscrowTransactionError(historyVoidError ? friendlyDatabaseError(historyVoidError) : null)
+      return !historyVoidError
+    }
     setLoggingEscrowTransaction(true)
     const { data: result, error: voidError } = await voidMortgageActivity('escrow', id)
     setLoggingEscrowTransaction(false)
@@ -103,6 +138,9 @@ export function useMortgageEscrow(propertyId: string) {
     error,
     loggingEscrowTransaction,
     escrowTransactionError,
+    escrowDuplicate: duplicate,
+    confirmEscrowDuplicate: confirmDuplicate,
+    dismissEscrowDuplicate: dismissDuplicate,
     escrowTransactionFormInitialValues: BLANK_ESCROW_TRANSACTION,
     logEscrowTransaction,
     voidEscrowTransaction,

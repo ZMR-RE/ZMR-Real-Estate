@@ -1,0 +1,7 @@
+# pg_get_functiondef diff, before vs after 20261005100000 (T3 condition 3)
+## mortgage_payment_apply_locked
+22a23
+>   perform public.mortgage_enforce_duplicate_rule('payment', new.account_id, new.property_id, l.id, new.payment_date, new.amount, null, new.duplicate_ack_matches);
+## mortgage_escrow_apply_locked
+24a25
+>   perform public.mortgage_enforce_duplicate_rule('escrow', new.account_id, new.property_id, l.id, new.transaction_date, new.amount, new.transaction_type, new.duplicate_ack_matches);

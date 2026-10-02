@@ -1,9 +1,10 @@
 import type { MortgagePayment } from './mortgagePayoffQueries'
 import { mortgageCurrencyFormatter as currencyFormatter } from './mortgagePayoffFormat'
 import { voidedRowNote } from './mortgageBalanceIntegrity'
+import { historyRowNote } from './mortgageHistoryEntry'
 
 interface MortgagePaymentListProps {
-  payments: MortgagePayment[]
+  payments: Array<MortgagePayment & { history?: boolean }>  // history: option B entry (no balance effect)
   onVoid: (id: string) => void
   voiding: boolean
 }
@@ -31,7 +32,8 @@ export function MortgagePaymentList({ payments, onVoid, voiding }: MortgagePayme
               <td>
                 {payment.payment_date}
                 {payment.voided ? ' (voided)' : ''}
-                {payment.voided && voidedRowNote(payment.void_outcome) && (
+                {payment.history && <span className="field-hint"> {historyRowNote(payment.voided)}</span>}
+                {!payment.history && payment.voided && voidedRowNote(payment.void_outcome) && (
                   <span className="field-hint"> {voidedRowNote(payment.void_outcome)}</span>
                 )}
               </td>

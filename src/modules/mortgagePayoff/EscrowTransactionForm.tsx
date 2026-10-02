@@ -1,28 +1,59 @@
 import { useState, type FormEvent } from 'react'
+import { DuplicateEntryPrompt } from './DuplicateEntryPrompt'
+import { HistoryChoiceField } from './HistoryChoiceField'
+import { effectiveHistoryOnly } from './mortgageHistoryEntry'
 import type { EscrowTransactionType, MortgageEscrowTransactionInput } from './mortgagePayoffQueries'
 
 interface EscrowTransactionFormProps {
   initialValues: MortgageEscrowTransactionInput
   saving: boolean
   error: string | null
-  onSave: (input: MortgageEscrowTransactionInput) => Promise<boolean>
+  onSave: (input: MortgageEscrowTransactionInput, historyOnly: boolean) => Promise<boolean>
+  // Option B: the balance's statement date (null = unknown) decides whether "history only" is offered.
+  statementDate: string | null | undefined
+  // An identical entry exists (nothing saved; values kept) — "Record anyway" resubmits with the shown count.
+  duplicateMessage: string | null
+  onConfirmDuplicate: () => Promise<boolean>
+  onDismissDuplicate: () => void
 }
 
-export function EscrowTransactionForm({ initialValues, saving, error, onSave }: EscrowTransactionFormProps) {
+export function EscrowTransactionForm({
+  initialValues,
+  saving,
+  error,
+  onSave,
+  statementDate,
+  duplicateMessage,
+  onConfirmDuplicate,
+  onDismissDuplicate,
+}: EscrowTransactionFormProps) {
   const [values, setValues] = useState<MortgageEscrowTransactionInput>(initialValues)
+  const [historySelected, setHistorySelected] = useState(false)
+  const reset = () => {
+    setValues(initialValues)
+    setHistorySelected(false)
+  }
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
-    const succeeded = await onSave(values)
-    if (succeeded) {
-      setValues(initialValues)
-    }
+    const succeeded = await onSave(values, effectiveHistoryOnly(values.transaction_date, statementDate, historySelected))
+    if (succeeded) reset()
   }
 
   return (
     <form className="escrow-transaction-form" onSubmit={handleSubmit}>
       <h3>Log an escrow transaction</h3>
       {error && <p role="alert">{error}</p>}
+      {duplicateMessage && (
+        <DuplicateEntryPrompt
+          message={duplicateMessage}
+          busy={saving}
+          onConfirm={async () => {
+            if (await onConfirmDuplicate()) reset()
+          }}
+          onDismiss={onDismissDuplicate}
+        />
+      )}
 
       <label htmlFor="escrow_transaction_date">
         Date<span className="required-marker">*</span>
@@ -69,6 +100,14 @@ export function EscrowTransactionForm({ initialValues, saving, error, onSave }: 
         onChange={(e) => setValues((prev) => ({ ...prev, description: e.target.value || null }))}
       />
 
+
+      <HistoryChoiceField
+        idPrefix="escrow"
+        entryDate={values.transaction_date}
+        statementDate={statementDate}
+        historyOnly={historySelected}
+        onChange={setHistorySelected}
+      />
       <button type="submit" disabled={saving}>
         {saving ? 'Logging…' : 'Log escrow transaction'}
       </button>

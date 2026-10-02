@@ -1,0 +1,88 @@
+== H2 applied; migrations: 121   HEAD 033a474   2026-10-02T03:50:23Z
+PASS  generated migration matches its generator (no hand edits)
+== T3 condition 3: normal insert functions identical to 20261004100000 except the duplicate check
+PASS  payment insert: exactly one added line, nothing removed
+PASS  payment insert: the added line is the duplicate rule
+PASS  escrow insert: exactly one added line, nothing removed
+PASS  escrow insert: the added line is the duplicate rule
+PASS  duplicate rule runs before the balance update (payment)
+PASS  duplicate rule runs before the balance update (escrow)
+== T3 condition 4: audit allowlist keeps every existing table name
+PASS  no previously allowed table name dropped
+PASS  allowlist includes mortgage_payments
+PASS  allowlist includes mortgage_escrow_transactions
+PASS  allowlist includes mortgage_details
+PASS  allowlist includes mortgage_history_payments
+PASS  allowlist includes mortgage_history_escrow
+PASS  allowlist grew by exactly the two history tables
+PASS  allowlist before H2 was read (non-empty, includes the integrity tables)
+PASS  every previously allowed table name still accepts an audit row (10 names)
+== T3 condition 1: duplicate-count routine is private
+PASS  authenticated cannot execute it
+PASS  anon cannot execute it
+PASS  PUBLIC has no execute
+== T1-1 invariant: history entries never touch the loan, effects or causes
+PASS  history payment on/before the statement date inserts
+PASS  history escrow item inserts
+PASS  loan row byte-identical after both inserts
+PASS  no effects or causes created
+PASS  void of the history payment leaves the loan identical
+PASS  declared_as_of comes from the loan (client value ignored)
+== T1-2 eligibility (ZM5MC)
+PASS  no statement date -> refused
+PASS  dated after the statement date -> refused
+PASS  on the statement date -> allowed
+PASS  property with no active loan -> refused
+PASS  targeting the earlier (voided) loan -> refused
+== T1-3 permissions (mirror mortgage_payments; append-only)
+PASS  owner reads own history rows
+PASS  another account's member sees nothing
+PASS  another account's member can't void them
+PASS  another account's member can't insert into this account
+PASS  anon can't read
+PASS  owner can't delete (no DELETE grant)
+PASS  no-delete trigger as a server role too
+PASS  policies identical in form to mortgage_payments
+PASS  authenticated privileges = mortgage_payments minus DELETE/TRUNCATE
+PASS  direct call of the private routine as authenticated -> refused
+== T1-4 duplicates (rule 5: loan + history + same-property unlinked, under the loan lock)
+PASS  normal payment recorded
+PASS  history entry identical to a normal one -> ZM5MA
+PASS  same total, different split -> still ZM5MA
+PASS  history recorded on another date
+PASS  normal entry identical to a history one -> ZM5MA (refused BEFORE any balance update)
+PASS  ...loan unchanged by the refused insert
+PASS  refusal detail carries per-source counts
+PASS  override with the shown count -> recorded
+PASS  stale override (count now 2, ack 1) -> ZM5MA again
+PASS  history override with the current count (2) -> recorded
+PASS  override when nothing matches -> ZM5MB, nothing saved
+PASS  voided entries never block
+PASS  different amount -> no match
+PASS  escrow: other type doesn't match
+PASS  escrow: same type matches -> ZM5MA
+PASS  another loan never matches
+PASS  unlinked same-property entry counted -> ZM5MA
+PASS  unlinked entry left unchanged (no loan assigned)
+PASS  unlinked entry on another property not counted
+PASS  older-page-style plain insert (no override column) refused against history -> ZM5MA
+PASS  cross-table race: normal committed, history refused ZM5MA
+== T1-5 voids and immutability
+PASS  void after the loan was voided and replaced -> allowed
+PASS  ...neither loan changed
+PASS  voided_at set automatically
+PASS  un-void refused
+PASS  changing an amount refused
+PASS  changing declared_as_of refused
+PASS  void details can't be set without voiding
+PASS  normal entry: override count immutable
+== T1-6 audit
+PASS  history inserts and voids are audited under their own table names
+PASS  audit captures declared_as_of and the override count
+== Recovery draft: disable new history inserts; existing rows, duplicate rule and voids kept
+PASS  disabled: a new history insert is refused
+PASS  disabled: existing history rows kept byte-identical
+PASS  disabled: normal insert still checked against history rows (duplicate rule on)
+PASS  disabled: an existing history row can still be voided
+
+== 75 passed, 0 failed

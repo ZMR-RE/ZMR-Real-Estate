@@ -41,12 +41,18 @@ export function PropertyProfileMortgageTab({ property, marketValue }: PropertyPr
     paymentFormInitialValues,
     logPayment,
     voidPayment,
+    paymentDuplicate,
+    confirmPaymentDuplicate,
+    dismissPaymentDuplicate,
     escrowTransactions,
     loggingEscrowTransaction,
     escrowTransactionError,
     escrowTransactionFormInitialValues,
     logEscrowTransaction,
     voidEscrowTransaction,
+    escrowDuplicate,
+    confirmEscrowDuplicate,
+    dismissEscrowDuplicate,
     extraAmount,
     setExtraAmount,
     extraMode,
@@ -121,6 +127,10 @@ export function PropertyProfileMortgageTab({ property, marketValue }: PropertyPr
           saving={loggingPayment}
           error={paymentError}
           onSave={logPayment}
+          statementDate={mortgageDetails.principal_as_of}
+          duplicateMessage={paymentDuplicate?.message ?? null}
+          onConfirmDuplicate={confirmPaymentDuplicate}
+          onDismissDuplicate={dismissPaymentDuplicate}
         />
       )}
 
@@ -136,6 +146,10 @@ export function PropertyProfileMortgageTab({ property, marketValue }: PropertyPr
           saving={loggingEscrowTransaction}
           error={escrowTransactionError}
           onSave={logEscrowTransaction}
+          statementDate={mortgageDetails.escrow_as_of}
+          duplicateMessage={escrowDuplicate?.message ?? null}
+          onConfirmDuplicate={confirmEscrowDuplicate}
+          onDismissDuplicate={dismissEscrowDuplicate}
         />
       )}
 

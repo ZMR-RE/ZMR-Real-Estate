@@ -29,9 +29,13 @@ export interface MortgageDetails {
   // and an escrow change never makes a principal-only update stale.
   principal_version: number
   escrow_version: number
+  // Statement dates of the two balances (NULL = unknown). Read-only here; they decide where history-only entries are
+  // allowed (option B). Optional so callers building a loan record client-side needn't set them.
+  principal_as_of?: string | null
+  escrow_as_of?: string | null
 }
 
-export type MortgageDetailsInput = Omit<MortgageDetails, 'id' | 'property_id' | 'principal_version' | 'escrow_version'> & {
+export type MortgageDetailsInput = Omit<MortgageDetails, 'id' | 'property_id' | 'principal_version' | 'escrow_version' | 'principal_as_of' | 'escrow_as_of'> & {
   // Not a column: the statement date the balance figures come from (optional). Stored as the balances' as-of date on
   // create, or sent with a balance update; never defaulted.
   balance_statement_date?: string | null
@@ -45,7 +49,7 @@ export async function getMortgageDetails(propertyId: string) {
   return supabase
     .from('mortgage_details')
     .select(
-      'id, property_id, lender_name, original_loan_amount, current_balance, interest_rate, monthly_payment, loan_start_date, term_years, escrow_balance, loan_number, loan_type, principal_version, escrow_version',
+      'id, property_id, lender_name, original_loan_amount, current_balance, interest_rate, monthly_payment, loan_start_date, term_years, escrow_balance, loan_number, loan_type, principal_version, escrow_version, principal_as_of, escrow_as_of',
     )
     .eq('property_id', propertyId)
     .eq('voided', false)
@@ -170,10 +174,11 @@ export async function createMortgagePayment(
   accountId: string,
   propertyId: string,
   input: MortgagePaymentInput,
+  ackMatches: number | null = null, // duplicate rule (20261005100000): the identical-entry count the user confirmed
 ) {
   return supabase
     .from('mortgage_payments')
-    .insert({ ...input, account_id: accountId, property_id: propertyId })
+    .insert({ ...input, account_id: accountId, property_id: propertyId, ...(ackMatches ? { duplicate_ack_matches: ackMatches } : {}) })
     .select()
     .single()
 }
@@ -212,10 +217,11 @@ export async function createMortgageEscrowTransaction(
   accountId: string,
   propertyId: string,
   input: MortgageEscrowTransactionInput,
+  ackMatches: number | null = null, // duplicate rule (20261005100000)
 ) {
   return supabase
     .from('mortgage_escrow_transactions')
-    .insert({ ...input, account_id: accountId, property_id: propertyId })
+    .insert({ ...input, account_id: accountId, property_id: propertyId, ...(ackMatches ? { duplicate_ack_matches: ackMatches } : {}) })
     .select()
     .single()
 }

@@ -19,6 +19,7 @@ $PG/psql -h 127.0.0.1 -p $PORT -U postgres -X -q -d postgres -c "create database
 $Q -v ON_ERROR_STOP=1 -f "$REPO/supabase/tests/entity_responsibility/bootstrap.sql" >/dev/null || exit 2
 for f in "$REPO"/supabase/migrations/*.sql; do
   [ "$f" = "$NEW" ] && continue
+  [[ "$(basename "$f")" > "$(basename "$NEW")" ]] && continue   # only migrations OLDER than the integrity one (later ones depend on it)
   $Q -v ON_ERROR_STOP=1 -f "$f" >/dev/null 2>"$WORK/err" || { echo "FAILED: $f"; cat "$WORK/err"; exit 2; }
 done
 echo "== baseline: $(ls "$REPO"/supabase/migrations/*.sql | grep -vc 20261004100000) migrations (without 20261004100000)"
