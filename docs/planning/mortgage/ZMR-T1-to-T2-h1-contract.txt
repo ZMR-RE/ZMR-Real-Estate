@@ -1,0 +1,24 @@
+T1 -> T2 (via owner) — H1 table contract: CONFIRMED, plus T3 condition 2. SEND NOW. Reply only if you need an amendment
+before either candidate is finalized.
+
+Confirmed against T1's H2 candidate 4317d43 (migration 20261005100000_mortgage_history_entries.sql):
+  table public.mortgage_history_payments
+    account_id       uuid, not null
+    property_id      uuid, not null
+    payment_date     date, not null
+    principal_amount numeric(10,2), not null, >= 0
+    voided           boolean, not null, default false
+  RLS: is_account_member(account_id) (same as mortgage_payments); anon has no access. H1 should still filter
+  account_id = the current account and voided = false (as listMortgagePaymentsForAccount does).
+  Other columns exist (id, mortgage_id, amount, interest_amount, declared_as_of, duplicate_ack_matches, voided_at,
+  void_reason, created_at) but H1 needs none of them. Escrow history (mortgage_history_escrow) doesn't feed cash; H1
+  doesn't read it.
+
+T3 CONDITION 2 (H1 missing-table fallback):
+- Treat as "no history entries" ONLY when the error identifies the exact table mortgage_history_payments in its MESSAGE
+  or DETAILS: PostgREST PGRST205 ("Could not find the table 'public.mortgage_history_payments' in the schema cache") or
+  42P01 (relation "public.mortgage_history_payments" does not exist) — whichever hosted returns, recorded in P3.
+- NEVER decide from the HINT: PGRST205's hint can name a DIFFERENT table ("Perhaps you meant the table
+  'public.mortgage_payments'").
+- Every other error (other table, other code, network, 401/403) stays an error; never a silent empty result.
+- After H2's migration the schema-cache reload must be confirmed in the window (A4).
