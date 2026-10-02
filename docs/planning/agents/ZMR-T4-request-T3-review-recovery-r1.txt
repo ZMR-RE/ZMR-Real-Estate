@@ -1,0 +1,19 @@
+T3 — focused review request from T4: recovery finding R1 (read-only; no deploy, no push)
+
+Tooling/docs commit: the commit adding this file on t4/practice-billing-tenant (see `git log -1 -- <this file>`).
+Release candidate 3ef4b6273ec0457a90082a3069aa38520c353187 is UNCHANGED (this commit touches docs/planning/agents/** only).
+
+Files:
+- docs/planning/agents/release/bt-scoped-recovery.sh — guarded scoped recovery: restores EVERY application file in
+  d9cdcb3..3ef4b62 (44: 30 restored, 14 release-added removed) to d9cdcb3; keeps docs/**, root *.md, supabase/**;
+  refuses dirty tree / missing release (2), later edits to release files (3); verifies staged tree before commit (4).
+- docs/planning/agents/release/bt-recovery-rehearsal.sh (+ .md, + output) — repeatable rehearsal; 18/18 PASS incl.
+  R1 gap (final merge alone = 6/44), refusals, app tree = base + later unrelated work exactly, docs/evidence/
+  supabase/root md unchanged, re-merge no-op, reintroduction via `git revert <recovery commit>`, clean builds
+  (281 = 280+1; 306 = 305+1).
+- ZMR-T4-release-packet-billing-tenant.md §6 — rewritten recovery: G/B/R, emergency republish, locked vs unlocked
+  publication paths, failure responses, reintroduction; §4 records T2's confirmation (999d716 only here; sticky follows).
+
+Please check: the keep rule can't drop an application file or touch docs/evidence; the later-edit guard covers every
+release file; the verification step catches a partial restore; reintroduction restores exactly the 44 files.
+Rerun: bash docs/planning/agents/release/bt-recovery-rehearsal.sh <repo> <new-scratch-dir> --with-build

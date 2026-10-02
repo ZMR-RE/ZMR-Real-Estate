@@ -54,7 +54,7 @@
    - clean-clone build of exactly `3ef4b62`;
    - `git ls-files` covers every import;
    - migrations compared exactly (expected: none pending);
-   - **T2 coordination (requested, `ZMR-T4-request-T2-dropdown-999d716.txt`):** `999d716` ships **only** inside this release. T2's sticky candidate `059764d` is sequenced after it, or, if T2 must ship first, `3ef4b62` is re-integrated and re-reviewed. T2's written confirmation is required before publication.
+   - **T2 coordination: CONFIRMED** (relayed by planning, October 2). `999d716` ships **only** inside this release, and T2's sticky address follows it. If that sequencing ever changes, re-integrate `3ef4b62` on the actual baseline and send the delta back to T3.
    - **Recovery pin:** re-confirm at release that the live deploy is still `6abecfa88ba3c700072e1197`. T4 hasn't read Netlify (no production access in this step), so the deploy id is taken from the Stage 1 release record. If it differs, update §6 before publishing.
 
 ## 5. Publication (only after gate 3)
@@ -70,7 +70,61 @@
    **Before opening any property page or the Action Queue,** run the read-only reminder pre-check (`ZMR-T4-practice-plan-billing-tenant.md` §T3 warning). Property KPI and Units pages run the account-wide renewal-reminder backfill, and that's a production write.
 5. Record the release (hashes, deploy id, checks) and its status: released; live visual check done or outstanding.
 
-## 6. Recovery (frontend only)
-- **Rollback target:** the immediate prior verified deploy, `6abecfa88ba3c700072e1197` (`d9cdcb3`). Republishing it is emergency recovery only.
-- **Follow-up:** a scoped `git revert -m 1` of this release on `main`, so a later push can't reintroduce it. Preserve unrelated later commits; never force-push.
-- **Data:** no database change to roll back. Tenancies and people created after release are ordinary user data and are kept.
+## 6. Recovery (frontend only; finding R1 fixed)
+**Names:**
+- **G** = the last verified good deploy before this release: `6abecfa88ba3c700072e1197` (`d9cdcb3`). Re-confirm at release (§4).
+- **B** = this release's deploy (`3ef4b62`).
+- **R** = the recovery deploy built from the scoped recovery commit.
+
+**Never use `git revert -m 1 3ef4b62`.** This release fast-forwards through five merges. Reverting only the final merge undoes 6 of the 44 application files and leaves billing, most of tenant entry and the dropdown fix live (finding R1).
+
+**Database:** this release changes none, so there's nothing to roll back. Tenancies, links, people and issuer choices created after the release are ordinary user data and are kept. The previous dashboard reads them (same schema).
+
+Recovery is **one continuous procedure.** The production window stays held, and no other release proceeds until step 6 passes.
+
+**A. Emergency republish** (only if the live site is broken by B, and only if nothing has shipped on top of B):
+1. Republish **G**.
+2. Verify: `published_deploy` = G; routes return 200; Property › Overview shows the previous Tenants box (no "+ Add tenant").
+3. Record whether auto-publishing is now **locked**. In Netlify, republishing an older deploy locks auto-publishing.
+
+**If a later release shipped on top of B** (for example T2's sticky address), don't republish an older site that would drop newer work. Go straight to B-recovery; G is then that later release's verified deploy.
+
+**B. Scoped application recovery on `main`** (starts immediately after A, or directly):
+1. In a clean checkout of current `origin/main`, run `docs/planning/agents/release/bt-scoped-recovery.sh <checkout> --dry-run`, check the plan (44 files), then run it without `--dry-run`. It makes **one** local commit that:
+   - restores every application file changed in `d9cdcb3..3ef4b62` to `d9cdcb3`;
+   - keeps `docs/**`, root `*.md` and `supabase/**`;
+   - leaves newer unrelated work untouched.
+
+   **If it refuses:**
+   - **dirty tree, or release not in history:** fix the checkout and rerun;
+   - **a later commit touched a release file (exit 3):** **stop**. Don't widen the scope or force it. Fix forward with a narrowly scoped change, reviewed by T3, and keep G live meanwhile;
+   - **verification mismatch (exit 4):** nothing was committed. Stop and report.
+2. **Prove the commit before pushing:**
+   - `git diff --name-only HEAD~1 HEAD` lists only release application files, nothing under `docs/` or `supabase/`;
+   - each listed file equals `d9cdcb3`, or is absent;
+   - the application tree equals `d9cdcb3` plus any newer unrelated work (`bt-recovery-rehearsal.sh` shows the method);
+   - a clean clone builds, and its tests equal live's set plus any newer work's.
+3. **Name G and record the lock state** (locked after A, or unlocked). Push normally: `git push origin <recovery_sha>:refs/heads/main`, a fast-forward, **never forced**. Netlify builds **R**.
+4. **Checks on R** (wait for `ready`, with `commit_ref` = the recovery commit):
+   - **no later release:** R's files are identical to G's;
+   - **later work exists:** R is byte-identical to a clean-clone production build of the recovery commit, and differs from the latest deploy only by this release's bundle changes;
+   - routes return 200;
+   - Tenants shows no "+ Add tenant", and Billing settings shows the previous issuer field.
+5. **Publication: locked and unlocked are different paths**, each used only as authorized:
+   - **Unlocked:** R publishes automatically, so the checks in step 4 run on the live site.
+     - **Any check fails:** immediately republish G, verify `published_deploy` = G, record the lock this creates, stop all pushes to `main`, keep the window held and report.
+     - **All pass:** go to step 6.
+   - **Locked:** R builds but doesn't publish. Run step 4 on R's permalink (`https://<R>--zmr-real-estate.netlify.app`).
+     - **Any check fails:** R stays unpublished, G stays live, and the lock and window stay held. Stop and report.
+     - **All pass:** publish R, then **unlock auto-publishing**. Never unlock before R has passed.
+6. **Verify:** `published_deploy` = R with `commit_ref` = the recovery commit; auto-publishing unlocked; routes return 200.
+7. **Record and hand back:** the incident, G, R, the recovery commit and the lock handling, in the assignments file. Close the window, tell T1, T2 and T3, and reopen the release as a defect to fix forward.
+
+**Reintroducing the release afterwards.** Re-merging `3ef4b62` or any of its branches does **nothing** ("Already up to date").
+- On then-current `main`, run **`git revert <recovery commit>`**. That restores exactly the 44 application files to their `3ef4b62` versions on top of newer work. It conflicts if newer work has since edited those files; resolve that as a reviewed change.
+- Then apply the defect fix as a separate commit.
+- Then a full clean-clone verification, T3 review and a **new scoped release approval** against the then-live baseline.
+
+**Rehearsed locally:** `release/bt-recovery-rehearsal.md`, 18/18 PASS. That covers the R1 gap demonstration, all refusals, the dry run, the scoped recovery with later unrelated work preserved, an application tree equal to base + U, docs/evidence/`supabase`/root `*.md` unchanged, the no-op re-merge, reintroduction by revert, and clean builds with test counts.
+
+**Not rehearsed** (needs production or Netlify): A, the lock and unlock handling, deploy comparison and routes.
