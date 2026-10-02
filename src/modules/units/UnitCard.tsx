@@ -183,6 +183,7 @@ export function UnitCard({
           initial={leaseForm.initial}
           tenantsOnly={leaseForm.tenantsOnly}
           tenantOptions={leaseForm.tenantOptions}
+          allTenantOptions={tenantOptions}
           onCreateTenant={addTenant}
           saving={leaseSaving}
           todayDateString={todayDateString}

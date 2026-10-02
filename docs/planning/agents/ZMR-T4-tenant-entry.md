@@ -166,3 +166,30 @@ Shared-file holds are recorded at 21:53 UTC (tenants and leases files, `UnitsSec
 **Evidence:** `evidence/tenant-entry-repeat-submit/01`. The table above holds the read-back results from each run.
 
 **Harness note:** the first slow-response run produced extra leases. That came from a bug in the new `?slow-writes` wrapper, which replaced the awaitable builder with a promise, so every save threw at once and released the guard. The wrapper was fixed to keep the builder and only delay its answers, and all runs above use the fixed version. That bad run touched only simulated data and was discarded.
+
+## F-P1 same-name check and empty-state text (after the hosted test of `3e75bcd`)
+**F-P1 (found on Practice):** in the co-tenant form, the same-name check used only the people that form may select. That list leaves out people already on the tenancy, so a same-name person on the tenancy produced no prompt and a second record was created silently.
+
+**Fix:** `nameMatchesFor` (leaseFormLogic) checks a new tenant's name against **every** tenant on the account. Both entry points now pass that full list, as `allTenantOptions`, to `LeaseForm`. The picker still offers only the selectable people; a co-tenant form still leaves out people already on the tenancy.
+
+**The prompt now shows:**
+- "Use existing: …" only for people this slot can actually pick;
+- "Already on this tenancy: … — details" or "Already chosen above: … — details" as information only, with no button;
+- "Create a different person with this name", always available.
+
+When nobody can be picked, the text reads "They can't be added again here. If the person you're adding is someone else with the same name, create a different person."
+
+**Empty state:** the Tenants box now says "No tenants yet — use + Add tenant above, or + Add lease on a unit in Units." It previously pointed only to Units.
+
+**Tests:** 3 new in `leaseFormLogic.test.ts` (on-tenancy shown, not offered; chosen-above shown, not offered; no match), 302 in total.
+
+**Browser checks** (local review harness, simulated backend, fictional data):
+- **Co-tenant on Jordan & Sam's tenancy, new "jordan  SAMPLE":** the prompt shows "Already on this tenancy: Jordan Sample — jordan@example.com", with no "Use existing", and nothing is created until a choice is made. "Create a different person" made exactly 1 person and filled the slot.
+- **Separate tenancy, Riley in slot 1, new "riley example" in slot 2:** "Already chosen above: Riley Example — …", with no "Use existing".
+- **Separate tenancy, new "Jordan Sample":** "Use existing" is offered for both same-name people, with details (unchanged behaviour).
+- **Property with no tenancies:** the new empty-state text shows.
+- **Evidence:** `evidence/tenant-entry-fp1-empty-state/01–02`.
+
+**Kept separate (not in this candidate):**
+- the unit-status pick-list setup (adding a unit needs a status, and an empty list blocks it);
+- the Units › Lease history refresh after a partial failure started from Tenants.

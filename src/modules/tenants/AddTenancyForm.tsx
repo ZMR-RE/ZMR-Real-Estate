@@ -58,6 +58,7 @@ export function AddTenancyForm({ propertyId, onSaved, onCancel }: AddTenancyForm
         <LeaseForm
           key={`${a.unitId}:${form.key}`}
           tenantOptions={form.tenantOptions}
+          allTenantOptions={a.tenantOptions}
           onCreateTenant={a.addTenant}
           saving={a.saving}
           todayDateString={todayDateString()}
