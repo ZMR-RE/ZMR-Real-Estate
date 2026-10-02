@@ -1,5 +1,7 @@
 # Owner visual review: billing issuer + tenant entry
 
+**Superseded for review by** `owner-review-billing-tenant/index.html` (fresh captures of `3ef4b62`, with source labels). Kept for history.
+
 **Candidate:** `3ef4b62`. Screens are from the real app frame with fictional data:
 - most from the local review page, with a **simulated backend**, at 1280 px unless noted;
 - Practice-hosted shots are marked **[Practice]**.

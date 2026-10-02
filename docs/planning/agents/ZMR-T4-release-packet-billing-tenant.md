@@ -6,7 +6,7 @@
 | | Hash |
 |---|---|
 | **Release candidate** | **`3ef4b6273ec0457a90082a3069aa38520c353187`** (branch `t4/practice-billing-tenant`) |
-| Production baseline (checked October 2; `origin/main`) | `d9cdcb3aa4aec84c68c78b183593b2a130ede3d7` (deploy `6abecfa88ba3c700072e1197`, 119 migrations) |
+| Production baseline (`origin/main` re-checked October 2, 02:32 UTC: `d9cdcb3aa4aec84c68c78b183593b2a130ede3d7`) | `d9cdcb3aa4aec84c68c78b183593b2a130ede3d7` (deploy `6abecfa88ba3c700072e1197`, 119 migrations) |
 | Billing | `588388f4b6ad5ee1588d02821f6875d84fa0b323` (T3-cleared) |
 | Tenant entry | `5692647a26c08fb9150095f0d2abdd7ecdd51e47`: T3-cleared `2d8aa76` plus the F-P1/empty-state delta (**T3 review pending**) |
 | Dropdown fix (T2) | `999d716238a71c4bd06e9eb5851f62f6535f31b2`, merged unchanged |
@@ -47,14 +47,15 @@
 
 ## 4. Gates before publication (all required)
 1. T3 clears `2d8aa76..5692647` (and confirms `3ef4b62` = `3e75bcd` + that delta + docs).
-2. The owner accepts the visual review (`ZMR-T4-owner-visual-review-billing-tenant.md`).
+2. The owner accepts the visual review: page `docs/planning/agents/owner-review-billing-tenant/index.html` (12 numbered items with screenshots from `3ef4b62`; supersedes the earlier markdown list). Visual acceptance is **not** release approval.
 3. **Owner's explicit scoped release approval** for exactly `3ef4b62`.
 4. **At release time:**
    - re-check that `origin/main` is still `d9cdcb3` and the live deploy is still `6abecfa8…`. If either moved, **stop**: re-integrate on the actual baseline, re-verify, and send any new delta to T3. Never ship over unreleased work;
    - clean-clone build of exactly `3ef4b62`;
    - `git ls-files` covers every import;
    - migrations compared exactly (expected: none pending);
-   - **T2 coordination:** `999d716` ships here. Confirm with T2 via planning that it's not also being released separately, and that T2's sticky candidate `059764d` is sequenced after this release, or re-integrated if it ships first.
+   - **T2 coordination (requested, `ZMR-T4-request-T2-dropdown-999d716.txt`):** `999d716` ships **only** inside this release. T2's sticky candidate `059764d` is sequenced after it, or, if T2 must ship first, `3ef4b62` is re-integrated and re-reviewed. T2's written confirmation is required before publication.
+   - **Recovery pin:** re-confirm at release that the live deploy is still `6abecfa88ba3c700072e1197`. T4 hasn't read Netlify (no production access in this step), so the deploy id is taken from the Stage 1 release record. If it differs, update §6 before publishing.
 
 ## 5. Publication (only after gate 3)
 1. Record a production window in the assignments file. There's no database change, so no editing pause or backup is needed for data; note that.

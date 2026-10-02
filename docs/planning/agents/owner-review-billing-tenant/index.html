@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Billing & Tenant Review</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --surface: #ffffff; --text: #17202a; --muted: #5b6673; --border: #d9dee5;
+    --accent: #1f5fa8; --local-bg: #e8f0fb; --local-fg: #1f4f8a; --hosted-bg: #e7f5ec; --hosted-fg: #1d6b3b;
+    --new-bg: #fff3d6; --new-fg: #7a5500; --gap-bg: #fdecec; --gap-fg: #8a1f1f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f141a; --surface: #171d25; --text: #e6ebf1; --muted: #9aa6b4; --border: #2a3440;
+      --accent: #7fb0ea; --local-bg: #1b2a3d; --local-fg: #a9c8f0; --hosted-bg: #17301f; --hosted-fg: #9fd8b1;
+      --new-bg: #3a2f12; --new-fg: #f1d48a; --gap-bg: #3a1a1a; --gap-fg: #f2b0b0;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f141a; --surface: #171d25; --text: #e6ebf1; --muted: #9aa6b4; --border: #2a3440;
+    --accent: #7fb0ea; --local-bg: #1b2a3d; --local-fg: #a9c8f0; --hosted-bg: #17301f; --hosted-fg: #9fd8b1;
+    --new-bg: #3a2f12; --new-fg: #f1d48a; --gap-bg: #3a1a1a; --gap-fg: #f2b0b0;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 40px 0 12px; }
+  p { margin: 0 0 12px; }
+  .muted { color: var(--muted); }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin: 16px 0; }
+  .chip { display: inline-block; font-size: .78rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin: 0 6px 6px 0; }
+  .local { background: var(--local-bg); color: var(--local-fg); }
+  .hosted { background: var(--hosted-bg); color: var(--hosted-fg); }
+  .new { background: var(--new-bg); color: var(--new-fg); }
+  .gap { background: var(--gap-bg); color: var(--gap-fg); }
+  nav ol { columns: 2; column-gap: 32px; padding-left: 20px; margin: 0; }
+  @media (max-width: 640px) { nav ol { columns: 1; } }
+  nav a { color: var(--accent); }
+  article { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin: 20px 0; scroll-margin-top: 12px; }
+  article h3 { margin: 0 0 6px; font-size: 1.1rem; display: flex; gap: 10px; align-items: baseline; }
+  .num { flex: none; display: inline-grid; place-items: center; min-width: 2rem; height: 2rem; border-radius: 50%; background: var(--accent); color: var(--surface); font-weight: 700; }
+  .check { margin: 8px 0 12px; }
+  /* One screenshot per row so desktop captures stay readable; phone captures keep their natural width. */
+  .shots { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  figure { margin: 0; }
+  figure a { display: block; }
+  figure img { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: 6px; background: #0b0f14; }
+  figure.phone { max-width: 320px; }
+  figcaption { font-size: .85rem; color: var(--muted); margin-top: 6px; }
+  ul { margin: 0 0 12px; padding-left: 20px; }
+  li { margin-bottom: 4px; }
+  code { font-size: .88em; }
+  .reply { border-left: 4px solid var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Billing issuer &amp; tenant entry: visual review</h1>
+  <p class="muted">Candidate <code>3ef4b62</code> · prepared October 2, 2026 · <strong>not live</strong></p>
+
+  <div class="panel reply">
+    <p><strong>How to reply:</strong> “Accept all”, or list item numbers with the change you want (for example, “6: shorter wording”). Accepting the visuals is <strong>not</strong> a release approval; the release is a separate yes.</p>
+    <p class="muted">Already approved, not asked again: Tenants → “+ Add tenant”, and the direct “+ Add person” issuer path.</p>
+  </div>
+
+  <div class="panel">
+    <p><strong>What the labels mean</strong></p>
+    <p><span class="chip local">Local · 3ef4b62 · simulated backend</span> Captured on October 2 from the release candidate, in the real app frame, on the local review page with a simulated backend. All names, addresses and amounts are <strong>fictional</strong>. Tenancy IDs there look like “mock-41z”; real ones look like “2407e38b”.</p>
+    <p><span class="chip hosted">Hosted Practice · 3e75bcd</span> Captured during the hosted Practice test of the earlier build <code>3e75bcd</code>, with fictional <code>ZMR-TEST-BT</code> records.</p>
+    <p><span class="chip new">Changed after the hosted test</span> Same-name wording and empty-state text changed in <code>3ef4b62</code>. They're shown only from new local captures and were not re-tested on Practice.</p>
+    <p class="muted">Desktop shots are 1280 px wide; phone shots are 390 px; one is 900 px. Desktop shots fill the page width; on a phone, tap any image to open it full size.</p>
+  </div>
+
+  <nav class="panel" aria-label="Items">
+    <ol>
+      <li><a href="#i1">Billing settings: issuer label, instructions without an issuer</a></li>
+      <li><a href="#i2">+ Add person step (desktop and phone)</a></li>
+      <li><a href="#i3">Saved issuer shown as “Person”, and their profile</a></li>
+      <li><a href="#i4">Billing same-name prompt</a></li>
+      <li><a href="#i5">Tenants: “+ Add tenant” beside Edit</a></li>
+      <li><a href="#i6">Co-tenant or separate tenancy choice</a></li>
+      <li><a href="#i7">Co-tenant form: people only, no rent</a></li>
+      <li><a href="#i8">Unfinished tenancy: offered by ID, resumed</a></li>
+      <li><a href="#i9">Same-name people: details and final prompts</a></li>
+      <li><a href="#i10">Empty Tenants box: final wording</a></li>
+      <li><a href="#i11">Units › + Add lease: same choice and resume</a></li>
+      <li><a href="#i12">Picker menus not cut off (1280 / 900 / 390)</a></li>
+    </ol>
+  </nav>
+
+  <h2>Billing settings <span class="muted">(Property › Overview › Billing settings)</span></h2>
+
+  <article id="i1">
+    <h3><span class="num">1</span> Issuer label, and saved instructions shown without an issuer</h3>
+    <p class="check">Check: the yellow note says no issuer is chosen, and the property's own payment instructions still show. In Edit, the field reads “Invoice issuer (person or business)”, followed by “+ Add person” and the explanation.</p>
+    <span class="chip local">Local · 3ef4b62 · simulated backend</span>
+    <div class="shots">
+      <figure><a href="img/01a-billing-no-issuer-instructions-visible.jpg"><img src="img/01a-billing-no-issuer-instructions-visible.jpg" alt="Billing settings view with no issuer chosen and the property's payment instructions visible" loading="lazy"></a><figcaption>1a · View, no issuer chosen</figcaption></figure>
+      <figure><a href="img/01b-billing-edit-issuer-label-and-hint.jpg"><img src="img/01b-billing-edit-issuer-label-and-hint.jpg" alt="Billing settings edit form with the Invoice issuer (person or business) field, + Add person and hints" loading="lazy"></a><figcaption>1b · Edit form</figcaption></figure>
+    </div>
+  </article>
+
+  <article id="i2">
+    <h3><span class="num">2</span> “+ Add person” step</h3>
+    <p class="check">Check: the hint explains the person is saved right away and stays even if Billing settings is cancelled, and that it doesn't make them an owner. Repeated clicks or Enter create only one person.</p>
+    <span class="chip local">Local · 3ef4b62 · simulated backend</span>
+    <div class="shots">
+      <figure><a href="img/02a-add-person-step.jpg"><img src="img/02a-add-person-step.jpg" alt="Add person step with full name field and hint" loading="lazy"></a><figcaption>2a · Desktop</figcaption></figure>
+      <figure class="phone"><a href="img/02b-add-person-step-phone.jpg"><img src="img/02b-add-person-step-phone.jpg" alt="Add person step on a phone-width screen" loading="lazy"></a><figcaption>2b · Phone (390 px)</figcaption></figure>
+    </div>
+  </article>
+
+  <article id="i3">
+    <h3><span class="num">3</span> Saved issuer shown as “Person”, and their profile</h3>
+    <p class="check">Check: the issuer shows “Person”, with a link to add their invoice code. Their profile says Individual, with “No properties linked yet”.</p>
+    <span class="chip local">Local · 3ef4b62 · simulated backend</span>
+    <div class="shots">
+      <figure><a href="img/03a-saved-issuer-person.jpg"><img src="img/03a-saved-issuer-person.jpg" alt="Billing settings view showing Taylor Fictional as the issuer, labelled Person" loading="lazy"></a><figcaption>3a · Billing settings after Save</figcaption></figure>
+      <figure><a href="img/03b-issuer-profile-individual.jpg"><img src="img/03b-issuer-profile-individual.jpg" alt="Issuer profile showing Individual and no linked properties" loading="lazy"></a><figcaption>3b · Issuer profile</figcaption></figure>
+    </div>
+  </article>
+
+  <article id="i4">
+    <h3><span class="num">4</span> Billing same-name prompt</h3>
+    <p class="check">Check: a name already in your records offers “Use existing” or “Add a different person with this name”. Reuse is never forced.</p>
+    <span class="chip local">Local · 3ef4b62 · simulated backend</span>
+    <div class="shots wide">
+      <figure><a href="img/04-billing-same-name-prompt.jpg"><img src="img/04-billing-same-name-prompt.jpg" alt="Prompt saying taylor fictional is already in your records with Use existing and Add a different person buttons" loading="lazy"></a><figcaption>4 · Same name entered again</figcaption></figure>
+    </div>
+  </article>
+
+  <h2>Tenants <span class="muted">(Property › Overview › Tenants)</span></h2>
+
+  <article id="i5">
+    <h3><span class="num">5</span> “+ Add tenant” beside Edit</h3>
+    <p class="check">Check: the button is visible while the box is collapsed and opens it straight into the form. Edit still opens the same form.</p>
+    <span class="chip local">Local · 3ef4b62 · simulated backend</span>
+    <div class="shots wide">
+      <figure><a href="img/05-tenants-add-tenant-beside-edit.jpg"><img src="img/05-tenants-add-tenant-beside-edit.jpg" alt="Collapsed Tenants box with + Add tenant and Edit buttons" loading="lazy"></a><figcaption>5 · Collapsed Tenants box</figcaption></figure>
+    </div>
+  </article>
+
+  <article id="i6">
+    <h3><span class="num">6</span> Co-tenant or separate tenancy</h3>
+    <p class="check">Check: when the unit already has a tenancy, you must choose. A co-tenant shares its rent and adds no new rent; a separate tenancy has its own rent, counted in addition.</p>
+    <span class="chip local">Local · 3ef4b62 · simulated backend</span>
+    <div class="shots">
+      <figure><a href="img/06a-choice-cotenant-or-separate.jpg"><img src="img/06a-choice-cotenant-or-separate.jpg" alt="Choice between a co-tenant on the existing tenancy and a separate tenancy" loading="lazy"></a><figcaption>6a · Desktop</figcaption></figure>
+      <figure class="phone"><a href="img/06b-choice-phone.jpg"><img src="img/06b-choice-phone.jpg" alt="The same choice on a phone-width screen" loading="lazy"></a><figcaption>6b · Phone (390 px)</figcaption></figure>
+    </div>
+  </article>
+
+  <article id="i7">
+    <h3><span class="num">7</span> Co-tenant form: people only</h3>
+    <p class="check">Check: the note says the tenancy's rent, dates and fees stay as they are. There are no rent or date fields, only people and Save.</p>
+    <span class="chip local">Local · 3ef4b62 · simulated backend</span>
+    <div class="shots wide">
+      <figure><a href="img/07-cotenant-form-no-rent.jpg"><img src="img/07-cotenant-form-no-rent.jpg" alt="Co-tenant form with a tenant chosen and Save, without rent fields" loading="lazy"></a><figcaption>7 · Adding a co-tenant</figcaption></figure>
+    </div>
+  </article>
+
+  <article id="i8">
+    <h3><span class="num">8</span> Unfinished tenancy: offered by ID, resumed</h3>
+    <p class="check">Check: after a save that didn't finish (here a simulated dropped connection, then a page reload), the tenancy is offered by its ID with its saved details. Resume pre-fills the rent and dates, and saving creates no second tenancy.</p>
+    <span class="chip local">Local · 3ef4b62 · simulated backend</span>
+    <div class="shots">
+      <figure><a href="img/08a-unfinished-offered-by-id.jpg"><img src="img/08a-unfinished-offered-by-id.jpg" alt="Unfinished tenancy offered with ID, saved date, start date and rent" loading="lazy"></a><figcaption>8a · Offered after reload</figcaption></figure>
+      <figure><a href="img/08b-resume-prefilled.jpg"><img src="img/08b-resume-prefilled.jpg" alt="Resume form with tenant chosen and rent 1600 pre-filled" loading="lazy"></a><figcaption>8b · Resume, $1,600 pre-filled</figcaption></figure>
+    </div>
+  </article>
+
+  <article id="i9">
+    <h3><span class="num">9</span> Same-name people: details and final prompts</h3>
+    <p class="check">Check: same-name people show email or phone and the date added. A person already on the tenancy is listed but <em>not</em> offered. “Create a different person with this name” is always available.</p>
+    <span class="chip local">Local · 3ef4b62 · simulated backend</span> <span class="chip new">Changed after the hosted test (9c, 9d)</span>
+    <div class="shots">
+      <figure><a href="img/09a-picker-same-name-details.jpg"><img src="img/09a-picker-same-name-details.jpg" alt="Tenant picker listing two Jordan Sample people with their details" loading="lazy"></a><figcaption>9a · Picker shows details for same names</figcaption></figure>
+      <figure><a href="img/09b-separate-same-name-prompt.jpg"><img src="img/09b-separate-same-name-prompt.jpg" alt="Prompt offering Use existing for two same-name people or Create a different person" loading="lazy"></a><figcaption>9b · Separate tenancy: Use existing or create different</figcaption></figure>
+      <figure><a href="img/09c-cotenant-same-name-prompt-final.jpg"><img src="img/09c-cotenant-same-name-prompt-final.jpg" alt="Co-tenant prompt saying they can't be added again here, listing Already on this tenancy, with Create a different person" loading="lazy"></a><figcaption>9c · <strong>New:</strong> co-tenant form, person already on this tenancy</figcaption></figure>
+      <figure class="phone"><a href="img/09d-cotenant-same-name-prompt-phone.jpg"><img src="img/09d-cotenant-same-name-prompt-phone.jpg" alt="The same co-tenant prompt on a phone-width screen" loading="lazy"></a><figcaption>9d · <strong>New:</strong> same prompt on phone</figcaption></figure>
+    </div>
+  </article>
+
+  <article id="i10">
+    <h3><span class="num">10</span> Empty Tenants box: final wording</h3>
+    <p class="check">Check: “No tenants yet — use + Add tenant above, or + Add lease on a unit in Units.”</p>
+    <span class="chip local">Local · 3ef4b62 · simulated backend</span> <span class="chip new">Changed after the hosted test</span>
+    <div class="shots wide">
+      <figure><a href="img/10-empty-state-final.jpg"><img src="img/10-empty-state-final.jpg" alt="Empty Tenants box with the new wording" loading="lazy"></a><figcaption>10 · Property with no tenancies</figcaption></figure>
+    </div>
+  </article>
+
+  <h2>Units <span class="muted">(Property › Overview › Units › Edit › + Add lease)</span></h2>
+
+  <article id="i11">
+    <h3><span class="num">11</span> Same choice and resume from Units</h3>
+    <p class="check">Check: “+ Add lease” on a unit asks the same co-tenant or separate question, and offers an unfinished tenancy by ID.</p>
+    <span class="chip local">Local · 3ef4b62 · simulated backend</span>
+    <div class="shots">
+      <figure><a href="img/11a-units-choice.jpg"><img src="img/11a-units-choice.jpg" alt="Unit 1 card showing the co-tenant or separate tenancy choice" loading="lazy"></a><figcaption>11a · Unit with a current tenancy</figcaption></figure>
+      <figure><a href="img/11b-units-unfinished-offered.jpg"><img src="img/11b-units-unfinished-offered.jpg" alt="Unit 2 card offering the unfinished tenancy by ID" loading="lazy"></a><figcaption>11b · Unit with an unfinished tenancy</figcaption></figure>
+    </div>
+  </article>
+
+  <h2>Picker menus</h2>
+
+  <article id="i12">
+    <h3><span class="num">12</span> Menus no longer cut off at a box's edge</h3>
+    <p class="check">Check: the menu shows in full over the box below it, and its last option (“+ Add new tenant”) is reachable. Menus scroll inside themselves after a few rows.</p>
+    <span class="chip local">Local · 3ef4b62 · simulated backend (12a–12c)</span> <span class="chip hosted">Hosted Practice · 3e75bcd (12d)</span>
+    <div class="shots">
+      <figure><a href="img/12a-menu-1280.jpg"><img src="img/12a-menu-1280.jpg" alt="Tenant picker menu at 1280 px extending past the Tenants box" loading="lazy"></a><figcaption>12a · 1280 px</figcaption></figure>
+      <figure><a href="img/12b-menu-900.jpg"><img src="img/12b-menu-900.jpg" alt="Tenant picker menu at 900 px" loading="lazy"></a><figcaption>12b · 900 px</figcaption></figure>
+      <figure class="phone"><a href="img/12c-menu-390.jpg"><img src="img/12c-menu-390.jpg" alt="Tenant picker menu at 390 px" loading="lazy"></a><figcaption>12c · 390 px</figcaption></figure>
+      <figure class="phone"><a href="img/12d-hosted-3e75bcd-menu-390.jpg"><img src="img/12d-hosted-3e75bcd-menu-390.jpg" alt="Hosted Practice capture of the picker at 390 px with same-name details" loading="lazy"></a><figcaption>12d · Hosted Practice, 390 px. Lower resolution (browser zoom), menu not scrolled to its last row; the hosted test confirmed by measurement that the last row is reachable.</figcaption></figure>
+    </div>
+  </article>
+
+  <h2>Gaps and observations <span class="muted">(reported plainly)</span></h2>
+  <div class="panel">
+    <span class="chip gap">Not shown</span>
+    <ul>
+      <li>The Rent ops draft-blocker wording (“…add one on their profile”) isn't captured. It only appears on an invoice draft, and drafts were out of scope for this review and the Practice test.</li>
+      <li>Items 9 (co-tenant prompt) and 10 changed after the hosted test. They're verified locally and under review by T3, but weren't re-run on Practice.</li>
+    </ul>
+    <span class="chip gap">Existing behaviour, not changed in this candidate (your call whether to queue)</span>
+    <ul>
+      <li>1a / 3a: payment instructions display in large text in a narrow column.</li>
+      <li>1b: “+ Add person” stretches across the full field width, unlike other buttons.</li>
+      <li>9c: the inline new-tenant form shows two Cancel buttons, and its button says “Add tenant” rather than “Save”.</li>
+      <li>8b: “+ Add another tenant” sits beside the “Start date” label in the lease form.</li>
+      <li>11b: a unit card shows “Rent: $0 — Not set up” when its only tenancy is upcoming, because cards summarise the current tenancy.</li>
+      <li>Recorded separately: adding a unit needs a status, so an empty status list blocks it. Units › Lease history refreshes only after a reload when a save started from Tenants didn't finish.</li>
+    </ul>
+  </div>
+
+  <h2>What happens after this review</h2>
+  <div class="panel">
+    <ol>
+      <li>T3 clears the final delta (<code>2d8aa76..5692647</code>). In progress.</li>
+      <li>Your visual decision on items 1–12.</li>
+      <li>Your separate, explicit release approval for exactly <code>3ef4b62</code>.</li>
+      <li>At release time: production still at <code>d9cdcb3</code>, a clean build, the T2 dropdown fix shipping only inside this release, then publish, a read-only live check, and recovery pinned to the prior deploy.</li>
+    </ol>
+  </div>
+</main>
+</body>
+</html>
