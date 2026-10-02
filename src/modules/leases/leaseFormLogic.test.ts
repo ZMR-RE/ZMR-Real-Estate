@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { leaseFormForChoice, leaseFormInitial, missingTenantIds, slotOptions, tenantDetail, tenantsNamed, unfinishedLeases, uniqueTenantIds, withSameNameDetails } from './leaseFormLogic'
+import { leaseFormForChoice, leaseFormInitial, missingTenantIds, nameMatchesFor, slotOptions, tenantDetail, tenantsNamed, unfinishedLeases, uniqueTenantIds, withSameNameDetails } from './leaseFormLogic'
 
 const options = [
   { id: 't1', label: 'Riley Example' },
@@ -181,5 +181,32 @@ describe('createLease retry after a partial failure', () => {
     expect(retry.error).toBeNull()
     expect(db.leases).toHaveLength(1)
     expect(db.links.map((l) => l.tenant_id)).toEqual(['t1', 't2'])
+  })
+})
+
+describe('same-name check for a new tenant (F-P1)', () => {
+  const all = [
+    { id: 's1', label: 'ZMR Same Name', detail: 's1@example.test' },
+    { id: 's2', label: 'zmr  same name', detail: 's2@example.test' },
+    { id: 'x', label: 'Other Person', detail: '' },
+  ]
+
+  it('co-tenant form: a same-name person already on the tenancy is shown, not offered', () => {
+    const selectable = all.filter((o) => o.id !== 's1') // s1 is on this tenancy
+    const m = nameMatchesFor(all, selectable, [], 'ZMR SAME  name')
+    expect(m.onTenancy.map((o) => o.id)).toEqual(['s1'])
+    expect(m.selectable.map((o) => o.id)).toEqual(['s2'])
+    expect(m.chosenAbove).toEqual([])
+  })
+
+  it('a same-name person already chosen in another slot is shown as chosen above, not offered again', () => {
+    const m = nameMatchesFor(all, all, ['s2'], 'zmr same name')
+    expect(m.chosenAbove.map((o) => o.id)).toEqual(['s2'])
+    expect(m.selectable.map((o) => o.id)).toEqual(['s1'])
+  })
+
+  it('no same-name person anywhere: nothing to show', () => {
+    const m = nameMatchesFor(all, all, [], 'Brand New')
+    expect([...m.selectable, ...m.chosenAbove, ...m.onTenancy]).toEqual([])
   })
 })

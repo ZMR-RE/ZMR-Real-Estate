@@ -64,7 +64,7 @@ export function PropertyTenantsOverview({ propertyId }: PropertyTenantsOverviewP
   if (rows.length === 0) {
     return (
       <>
-        <p className="empty-state">No tenants yet — add your first one in Units below.</p>
+        <p className="empty-state">No tenants yet — use + Add tenant above, or + Add lease on a unit in Units.</p>
         <ManageTenantsLink />
       </>
     )

@@ -5,7 +5,7 @@ import type { TenantOption } from '../tenants/useTenants'
 import type { TenantInput } from '../tenants/tenantsQueries'
 import type { LeaseInput } from './leasesQueries'
 import { useSingleFlight } from './singleFlight'
-import { slotOptions, tenantsNamed, uniqueTenantIds, withSameNameDetails } from './leaseFormLogic'
+import { nameMatchesFor, slotOptions, uniqueTenantIds, withSameNameDetails } from './leaseFormLogic'
 
 interface LeaseFormProps {
   tenantOptions: TenantOption[]
@@ -19,6 +19,10 @@ interface LeaseFormProps {
   // Adding co-tenants to an existing tenancy: people only — its rent, dates
   // and fees stay as they are, so no dates or rent fields are shown.
   tenantsOnly?: boolean
+  // Every tenant on the account, for the same-name check only. The picker
+  // still offers just tenantOptions (a co-tenant form leaves out people
+  // already on the tenancy). Defaults to tenantOptions.
+  allTenantOptions?: TenantOption[]
 }
 
 // Roadmap item 4 — a lease has one-or-more tenants (the actual fix for
@@ -27,7 +31,7 @@ interface LeaseFormProps {
 // this is a repeatable array of the same single-select SearchableSelect
 // TenantAssignmentForm used, one row per co-tenant slot, rather than
 // building a new shared multi-select just for this one form.
-export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateString, onSave, onCancel, initial, tenantsOnly = false }: LeaseFormProps) {
+export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateString, onSave, onCancel, initial, tenantsOnly = false, allTenantOptions }: LeaseFormProps) {
   const [tenantIds, setTenantIds] = useState<(string | null)[]>([null])
   // Which slot (if any) is currently showing the inline "add new tenant"
   // form — at most one at a time, same single-flag approach
@@ -47,7 +51,7 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
   // A "new" tenant whose name matches someone already saved (for example a
   // person created before a lease failed or was cancelled): offer that person
   // first, so nobody is created twice. Creating another is still possible.
-  const [nameMatch, setNameMatch] = useState<{ input: TenantInput; matches: TenantOption[] } | null>(null)
+  const [nameMatch, setNameMatch] = useState<{ input: TenantInput; matches: ReturnType<typeof nameMatchesFor<TenantOption>> } | null>(null)
 
   const chooseExistingTenant = (id: string) => {
     const slot = addingTenantForSlot
@@ -68,8 +72,10 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
   const handleCreateTenant = async (input: TenantInput, confirmedNew = false) => {
     const slot = addingTenantForSlot
     if (slot === null) return
-    const matches = tenantsNamed(tenantOptions, input.name)
-    if (!confirmedNew && matches.length > 0) {
+    const chosenElsewhere = tenantIds.filter((id, i): id is string => id !== null && i !== slot)
+    const matches = nameMatchesFor(allTenantOptions ?? tenantOptions, tenantOptions, chosenElsewhere, input.name)
+    const anyMatch = matches.selectable.length + matches.chosenAbove.length + matches.onTenancy.length > 0
+    if (!confirmedNew && anyMatch) {
       setNameMatch({ input, matches })
       return
     }
@@ -148,13 +154,26 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
       {nameMatch && (
         <div role="status">
           <p>
-            <strong>A tenant named “{nameMatch.input.name.trim()}” already exists.</strong> If it’s the same person, use the existing record so their history stays in one place. If it’s someone else with the same name, create a different person.
+            <strong>A tenant named “{nameMatch.input.name.trim()}” already exists.</strong>{' '}
+            {nameMatch.matches.selectable.length > 0
+              ? 'If it’s the same person, use the existing record so their history stays in one place. If it’s someone else with the same name, create a different person.'
+              : 'They can’t be added again here. If the person you’re adding is someone else with the same name, create a different person.'}
           </p>
           <p className="field-hint">
             You entered: {[nameMatch.input.email, nameMatch.input.phone].filter(Boolean).join(' · ') || 'no email or phone'}
           </p>
+          {nameMatch.matches.onTenancy.map((m) => (
+            <p key={m.id} className="field-hint">
+              Already on this tenancy: {m.label} — {m.detail}
+            </p>
+          ))}
+          {nameMatch.matches.chosenAbove.map((m) => (
+            <p key={m.id} className="field-hint">
+              Already chosen above: {m.label} — {m.detail}
+            </p>
+          ))}
           <div className="lease-form-tenant-row">
-            {nameMatch.matches.map((m) => (
+            {nameMatch.matches.selectable.map((m) => (
               <button key={m.id} type="button" onClick={() => chooseExistingTenant(m.id)}>
                 Use existing: {m.label} — {m.detail}
               </button>

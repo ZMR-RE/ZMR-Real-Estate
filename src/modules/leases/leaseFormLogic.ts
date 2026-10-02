@@ -101,3 +101,18 @@ export function leaseFormForChoice<T extends TenantChoice>(
   const onLease = new Set(choice.lease.tenants.map((t) => t.id))
   return { key: `cotenant:${choice.lease.id}`, initial: undefined, tenantsOnly: true, tenantOptions: tenantOptions.filter((t) => !onLease.has(t.id)) }
 }
+
+// Same-name check for a "new" tenant, against EVERY tenant on the account —
+// not just the people this slot may pick. Matches this slot may pick are
+// offered ("Use existing"); the rest are shown for information only: people
+// already on this tenancy (co-tenant form) or already chosen in another slot.
+export function nameMatchesFor<T extends TenantChoice>(all: T[], selectable: T[], chosenElsewhere: string[], name: string) {
+  const matches = tenantsNamed(all, name)
+  const canPick = new Set(selectable.map((o) => o.id))
+  const elsewhere = new Set(chosenElsewhere)
+  return {
+    selectable: matches.filter((m) => canPick.has(m.id) && !elsewhere.has(m.id)),
+    chosenAbove: matches.filter((m) => elsewhere.has(m.id)),
+    onTenancy: matches.filter((m) => !canPick.has(m.id) && !elsewhere.has(m.id)),
+  }
+}
