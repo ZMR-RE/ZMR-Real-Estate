@@ -54,3 +54,11 @@
   flex-wrap: wrap;
   gap: var(--space-2);
 }
+
+/* Lease history sits inside a unit card, and on desktop a table doesn't
+   scroll sideways (.table-scroll), so its cells must fit: co-tenant names
+   wrap instead of widening the table, and dates use the short month form. */
+.lease-history-table td.lease-history-tenants {
+  white-space: normal;
+  min-width: 10ch;
+}

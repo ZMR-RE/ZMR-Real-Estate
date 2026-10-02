@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { formatDateOnly } from '../../shared/dateFormat'
+import { formatDateOnlyShort } from '../../shared/dateFormat'
 import { getLeaseStatus, type Lease, type LeaseInput } from './leasesQueries'
+import './leases.css'
 
 interface LeaseListProps {
   leases: Lease[]
@@ -194,7 +195,7 @@ export function LeaseList({
 
   return (
     <div className="table-scroll">
-      <table>
+      <table className="lease-history-table">
         <thead>
           <tr>
             <th>Tenant(s)</th>
@@ -236,9 +237,9 @@ export function LeaseList({
             const status = getLeaseStatus(lease)
             return (
               <tr key={lease.id} className={lease.archived ? 'row-voided' : ''}>
-                <td>{lease.tenants.map((t) => t.name).join(', ') || '—'}</td>
-                <td>{formatDateOnly(lease.start_date)}</td>
-                <td>{lease.end_date ? formatDateOnly(lease.end_date) : 'Ongoing'}</td>
+                <td className="lease-history-tenants">{lease.tenants.map((t) => t.name).join(', ') || '—'}</td>
+                <td>{formatDateOnlyShort(lease.start_date)}</td>
+                <td>{lease.end_date ? formatDateOnlyShort(lease.end_date) : 'Ongoing'}</td>
                 <td>{formatMoney(lease.rent_amount)}</td>
                 <td>{formatMoney(lease.late_fee)}</td>
                 <td>{formatMoney(lease.move_in_fee)}</td>
