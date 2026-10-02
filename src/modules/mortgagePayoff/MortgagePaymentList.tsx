@@ -1,7 +1,6 @@
 import type { MortgagePayment } from './mortgagePayoffQueries'
 import { mortgageCurrencyFormatter as currencyFormatter } from './mortgagePayoffFormat'
-import { voidedRowNote } from './mortgageBalanceIntegrity'
-import { historyRowNote } from './mortgageHistoryEntry'
+import { HISTORY_BADGE, listRowNote } from './mortgageHistoryEntry'
 
 interface MortgagePaymentListProps {
   payments: Array<MortgagePayment & { history?: boolean }>  // history: option B entry (no balance effect)
@@ -32,18 +31,13 @@ export function MortgagePaymentList({ payments, onVoid, voiding }: MortgagePayme
               <td>
                 {payment.payment_date}
                 {payment.voided ? ' (voided)' : ''}
-                {payment.history &&
-                  (payment.voided ? (
-                    <span className="field-hint"> {historyRowNote(true)}</span>
-                  ) : (
-                    <>
-                      {' '}
-                      <span className="status-badge status-badge-neutral">{historyRowNote(false)}</span>
-                    </>
-                  ))}
-                {!payment.history && payment.voided && voidedRowNote(payment.void_outcome) && (
-                  <span className="field-hint"> {voidedRowNote(payment.void_outcome)}</span>
+                {payment.history && !payment.voided && (
+                  <>
+                    {' '}
+                    <span className="status-badge status-badge-neutral">{HISTORY_BADGE}</span>
+                  </>
                 )}
+                {listRowNote(payment) && <span className="table-row-note">{listRowNote(payment)}</span>}
               </td>
               <td>{currencyFormatter.format(Number(payment.amount))}</td>
               <td>{currencyFormatter.format(Number(payment.principal_amount))}</td>

@@ -1,6 +1,6 @@
 // Option B (H2): pure decisions for recording mortgage entries with the history-only choice and the duplicate rule
 // (no React, no Supabase — the hooks inject the queries). Contract v5 rules 1, 5 and 7.
-import { friendlyDatabaseError, isSimultaneousChange } from './mortgageBalanceIntegrity'
+import { friendlyDatabaseError, isSimultaneousChange, voidedRowNote } from './mortgageBalanceIntegrity'
 
 type DbError = { code?: string | null; message: string; details?: string | null }
 type Result = { error: DbError | null }
@@ -24,9 +24,19 @@ export function effectiveHistoryOnly(entryDate: string, statementDate: string | 
   return selected && historyChoice(entryDate, statementDate).kind === 'available'
 }
 
-// Row label for a history entry in the payment / escrow lists.
+// Short badge on an active history row; kept to one word so it never needs to wrap or clip in a narrow cell.
+export const HISTORY_BADGE = 'History'
+
+// Explanation for a history entry in the payment / escrow lists (shown as a wrapping row note).
 export function historyRowNote(voided: boolean): string {
-  return voided ? 'History only; balance not affected.' : 'History · included in opening balance'
+  return voided ? 'History only; balance not affected.' : 'Included in the opening balance.'
+}
+
+// The one wrapping note a payment / escrow row shows, if any: history rows explain their status;
+// voided normal rows explain the void outcome.
+export function listRowNote(row: { history?: boolean; voided: boolean; void_outcome: string | null }): string | null {
+  if (row.history) return historyRowNote(row.voided)
+  return row.voided ? voidedRowNote(row.void_outcome) : null
 }
 
 export interface DuplicateCounts {

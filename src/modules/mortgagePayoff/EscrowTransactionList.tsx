@@ -1,6 +1,5 @@
 import type { MortgageEscrowTransaction } from './mortgagePayoffQueries'
-import { voidedRowNote } from './mortgageBalanceIntegrity'
-import { historyRowNote } from './mortgageHistoryEntry'
+import { HISTORY_BADGE, listRowNote } from './mortgageHistoryEntry'
 import { mortgageCurrencyFormatter as currencyFormatter } from './mortgagePayoffFormat'
 
 interface EscrowTransactionListProps {
@@ -33,18 +32,13 @@ export function EscrowTransactionList({ transactions, onVoid, voiding }: EscrowT
               <td>
                 {transaction.transaction_type === 'deposit' ? 'Deposit' : 'Disbursement'}
                 {transaction.voided ? ' (voided)' : ''}
-                {transaction.history &&
-                  (transaction.voided ? (
-                    <span className="field-hint"> {historyRowNote(true)}</span>
-                  ) : (
-                    <>
-                      {' '}
-                      <span className="status-badge status-badge-neutral">{historyRowNote(false)}</span>
-                    </>
-                  ))}
-                {!transaction.history && transaction.voided && voidedRowNote(transaction.void_outcome) && (
-                  <span className="field-hint"> {voidedRowNote(transaction.void_outcome)}</span>
+                {transaction.history && !transaction.voided && (
+                  <>
+                    {' '}
+                    <span className="status-badge status-badge-neutral">{HISTORY_BADGE}</span>
+                  </>
                 )}
+                {listRowNote(transaction) && <span className="table-row-note">{listRowNote(transaction)}</span>}
               </td>
               <td>
                 {transaction.transaction_type === 'disbursement' ? '−' : '+'}

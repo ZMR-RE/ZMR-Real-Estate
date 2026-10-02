@@ -1345,6 +1345,21 @@ dd {
   color: var(--text);
 }
 
+/* A row's explanatory note inside a table cell (e.g. a mortgage history or
+   void-outcome note). Tables keep cells on one line (td white-space:nowrap),
+   so a sentence-length note sits on its own line under the cell value and
+   wraps within a readable measure instead of widening the table past its
+   box. Scoped to this class; every other cell keeps nowrap. */
+.table-row-note {
+  display: block;
+  max-width: 34ch;
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 /* Roadmap 7.31 — Property Information Edit mode: single column, one
    field per row (the form-usability research this item cites). Reused
    anywhere else an editable form wants the same treatment, not just

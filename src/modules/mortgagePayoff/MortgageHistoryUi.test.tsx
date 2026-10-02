@@ -46,8 +46,10 @@ describe('MortgagePaymentList with history rows', () => {
         voiding={false}
       />,
     )
-    expect(html).toContain('History · included in opening balance')
-    expect(html).toContain('History only; balance not affected.')
+    expect(html).toContain('<span class="status-badge status-badge-neutral">History</span>')
+    expect((html.match(/class="status-badge /g) ?? []).length).toBe(1) // active history row only
+    expect(html).toContain('<span class="table-row-note">Included in the opening balance.</span>')
+    expect(html).toContain('<span class="table-row-note">History only; balance not affected.</span>')
     expect((html.match(/>Void</g) ?? []).length).toBe(2)
   })
 })

@@ -162,6 +162,12 @@ of screens in the app.
   than what's actually recorded (e.g. a premium with no stored
   annual/installment basis yet). Not a validation error and not a
   required marker — purely informational.
+- **`.table-row-note`** (H2, mortgage history) — a sentence-length note
+  about one table row (history status, void outcome), rendered on its own
+  line under the cell value. Wraps within 34ch even though table cells are
+  `white-space: nowrap`, so a long note never widens a table past its box.
+  Pair with a one-word `.status-badge` when the row also needs a status
+  label; keep badge text short so it never clips at phone width.
 - **`.field-error`** (M3, manual bookkeeping) — inline validation message
   directly under an invalid field (danger color, `--text-sm`), paired with
   `aria-invalid`/`aria-describedby` on the input, which also gets a

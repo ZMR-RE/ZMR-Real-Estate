@@ -4,6 +4,7 @@ import {
   effectiveHistoryOnly,
   historyChoice,
   historyRowNote,
+  listRowNote,
   parseDuplicateCounts,
   saveMortgageEntry,
 } from './mortgageHistoryEntry'
@@ -83,7 +84,18 @@ describe('saveMortgageEntry', () => {
 
 describe('historyRowNote', () => {
   it('labels active and voided history rows', () => {
-    expect(historyRowNote(false)).toBe('History · included in opening balance')
+    expect(historyRowNote(false)).toBe('Included in the opening balance.')
     expect(historyRowNote(true)).toBe('History only; balance not affected.')
+  })
+})
+
+describe('listRowNote', () => {
+  it('explains history rows, voided normal rows with an outcome note, and nothing else', () => {
+    expect(listRowNote({ history: true, voided: false, void_outcome: null })).toBe('Included in the opening balance.')
+    expect(listRowNote({ history: true, voided: true, void_outcome: null })).toBe('History only; balance not affected.')
+    expect(listRowNote({ voided: true, void_outcome: 'skipped_reset_after_entry' })).toBe(
+      'Balance not adjusted: it was reset after this entry. Check it against your statement.',
+    )
+    expect(listRowNote({ voided: false, void_outcome: null })).toBeNull()
   })
 })
