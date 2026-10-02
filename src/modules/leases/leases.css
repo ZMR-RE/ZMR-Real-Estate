@@ -68,15 +68,16 @@
    labels, so every column stays readable without scrolling sideways.
    Keyed to the list's own width (container query), the same pattern as
    the transaction list in index.css; wider cards keep the table and its
-   sticky header. In Edit, each row also carries Edit / End lease /
-   Archive, which needs about 980 px as a table, so editing switches to
-   cards below 1000 px. */
+   sticky header. 780 px: the table with long co-tenant names and
+   five-figure amounts needs about 771 px. In Edit, each row also carries
+   Edit / End lease / Archive, which needs about 1,065 px as a table with
+   long names, so editing switches to cards below 1080 px. */
 .lease-history-container {
   container-type: inline-size;
   container-name: lease-history;
 }
 
-@container lease-history (max-width: 760px) {
+@container lease-history (max-width: 780px) {
   .lease-history-table,
   .lease-history-table tbody,
   .lease-history-table tr,
@@ -109,7 +110,7 @@
   }
 }
 
-@container lease-history (max-width: 1000px) {
+@container lease-history (max-width: 1080px) {
   .lease-history-container--editing .lease-history-table,
   .lease-history-container--editing .lease-history-table tbody,
   .lease-history-container--editing .lease-history-table tr,
