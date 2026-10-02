@@ -80,8 +80,23 @@ A lease with no tenants whose end date has passed is **history**, not unfinished
 - **Tests:** `leaseFormLogic.test.ts`, 12, adding `leaseFormForChoice` and `saveTenancy` (co-tenant links only; resume finishes the chosen lease; one lease per tenancy).
 - **Evidence:** `evidence/tenant-entry-units-choice/01–02`.
 
+## Dropdown verification against T2's fix 999d716 (evidence 028b4b4)
+- **Environment:** a throwaway clone of this candidate (`6de7a0d`) with T2's `999d716` merged; the merge is clean and changes only `src/index.css`. The local review harness ran with the simulated backend and fictional data. **Not a candidate**; T2's fix ships through T2's own release.
+- **Method:** each flow was set up as far as "Create separate tenancy", the tenant picker was opened with a real click, and the menu's last option, "+ Add new tenant", was checked to be the element under its own center point. Then it was clicked for real.
+
+| Flow | 1280 | 900 | 390 |
+|---|---|---|---|
+| Tenants › + Add tenant › Unit 1 | menu 157px past the box bottom and fully shown; the click opened the new-tenant form; Specs & measurements below didn't toggle | same; form opened, box below untouched | same; form opened, box below untouched |
+| Units › Unit A › + Add lease | menu over the nested history boxes, fully shown; form opened; no nested box toggled | same | same |
+
+- **Every case:** while the menu is open the box's overflow is `visible`; it went back to `clip` after the menu closed (checked at 1280). No horizontal scroll at any width. The sticky tab bar stayed pinned in the screenshots.
+- **Measurement:** 1280 used the real window; 900 and 390 used same-origin frames of exactly that width, because the browser window can't be resized that small.
+- **Evidence:** `evidence/tenant-entry-dropdown-999d716/01–06`.
+- **Ended-lease check, same environment:** an extra simulated lease on 410 › Unit 2 (2024, ended, no tenants, $1,200). Both + Add tenant and + Add lease showed only the co-tenant/separate choice, with no "Unfinished tenancy" and no "rent twice" text. Lease history still lists it as Ended.
+- **Harness note:** Lease history shows "$NaN" for late and move-in fees on the harness's sample leases, which omit those fields. A real database returns null for them. This is a pre-existing gap in the simulated data, not an app change.
+
 ## Defect found, not fixed here (shared CSS, T2's index.css)
-`.collapsible-section { overflow: clip }` (from the sticky-headers work) cuts off a picker's dropdown where it runs past the bottom of a box. In the Tenants form, with few fields below the picker, "+ Add new tenant" can be hidden or a click can land on the next box. **Workaround:** typing a name narrows the list so the options fit. The fix belongs in the shared box rule, without breaking sticky headers. A **dropdown verification request for T2** (repro steps and acceptance at 1280/900/390, with sticky headers preserved) is recorded in the assignments file. This candidate is **not** called dropdown-verified until T2's fix is checked against it.
+`.collapsible-section { overflow: clip }` (from the sticky-headers work) cuts off a picker's dropdown where it runs past the bottom of a box. In the Tenants form, with few fields below the picker, "+ Add new tenant" can be hidden or a click can land on the next box. **Workaround:** typing a name narrows the list so the options fit. The fix belongs in the shared box rule, without breaking sticky headers. T2's fix `999d716` has since been verified against this candidate's final Tenants and Units flows; see the section above. This candidate doesn't include it.
 
 ## Earlier verification (local review harness, simulated backend, fictional data)
 **Scenario A** (`?fail-lease-links=1`, 410 Example Street › Unit 2, which already has Jordan & Sam):
