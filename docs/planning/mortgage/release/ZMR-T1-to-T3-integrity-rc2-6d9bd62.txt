@@ -1,0 +1,18 @@
+T1 -> T3 (via owner) — mortgage integrity RE-BASELINED onto new live 90abc8a: INTEGRATION DELTA. SEND NOW (read-only).
+
+NEW CANDIDATE: 6d9bd623558725a2aa8cc19b6d8610663df9c219 (branch t1/mortgage-integrity-rc2) = merge of the reviewed rc
+033a474 onto live main 90abc8adc1dbd12df6040c45b23deeb52dd336b6 (deploy 6abf2f38db19970008251e2c, 119 migrations;
+45 commits since d9cdcb3: billing/tenant, dropdown). Supersedes 033a474 as the release candidate.
+INTEGRATION DELTA: git diff 033a474 6d9bd62 == git diff d9cdcb3 90abc8a (live's own changes; already released).
+  - Clean merge, no conflicts: no file is changed on both sides (d9cdcb3..90abc8a ∩ d9cdcb3..033a474 = empty).
+  - Live added no migration (119, identical set) -> the integrity migration blob is unchanged (b279fcb4, = abf2b35); the
+    pending set on production would still be exactly 20261004100000.
+  - No mortgage / Action Queue file changed by the merge (so the owner-review captures and B-1/Action Queue browser
+    evidence still apply).
+EVIDENCE (fresh clones): live 90abc8a: vitest 311+1, lint 83. Candidate 6d9bd62: tsc -b, build, vitest 354+1 (= 311 +
+integrity's 43), lint 83 (= live). Scoped-revert rehearsal (6d9bd62 -> base 90abc8a, 28 application files): 14/14.
+REUSED (unchanged inputs): integrity 92/92, preservation 8/8, recovery 13/13, release-check rehearsal 12/12, Practice
+re-check of 9f1f37e, browser evidence for 2113318/9f7653c/033a474.
+RE-PINNED (docs/planning/mortgage/release/): mortgage-integrity-release.sh RELEASE=6d9bd62 (sha256 acd130b17c9bd1d7ce3f1e1c26d07ce3bfff3ff9fa3c1029fc53d86a10b0db37); SQL pins unchanged;
+packet v3: revert base 90abc8a, G = 6abf2f38db19970008251e2c, exact-commit push 6d9bd62.
+H2 stays separate (on 033a474; will be re-based after the integrity release). No release approval for either.
