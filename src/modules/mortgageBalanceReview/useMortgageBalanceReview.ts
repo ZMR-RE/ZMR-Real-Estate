@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { acknowledgeMortgageReviewCause, resetMortgageBalance } from '../mortgagePayoff/mortgagePayoffQueries'
-import { friendlyDatabaseError } from '../mortgagePayoff/mortgageBalanceIntegrity'
+import { reviewActionError } from '../mortgagePayoff/mortgageBalanceIntegrity'
 import { groupReviewCauses, type BalanceToConfirm, type LoanReview } from './mortgageBalanceReview'
 import { listOpenReviewCauses } from './mortgageBalanceReviewQueries'
 
@@ -31,7 +31,7 @@ export function useMortgageBalanceReview() {
     setBusy(true)
     const { error: actionError } = await action()
     setBusy(false)
-    setError(actionError ? friendlyDatabaseError(actionError) : null)
+    setError(actionError ? reviewActionError(actionError) : null)
     setReloadKey((k) => k + 1)
   }
 

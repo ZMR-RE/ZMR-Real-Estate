@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { saveMortgageDetails, type MortgageDetailsSaveDeps } from './mortgageDetailsSave'
-import { friendlyDatabaseError, isSimultaneousChange } from './mortgageBalanceIntegrity'
+import { STALE_BALANCE_REVIEW_MESSAGE, friendlyDatabaseError, isSimultaneousChange, reviewActionError } from './mortgageBalanceIntegrity'
 import type { BalanceResetRequest, MortgageDetails, MortgageDetailsInput } from './mortgagePayoffQueries'
 
 // B-1 (hosted Practice, abf2b35): a refused save used to replace the whole Mortgage tab. Every refusal must now return
@@ -41,23 +41,45 @@ describe('saveMortgageDetails — server refusals keep the form (B-1)', () => {
     expect(calls.reset[0]).toMatchObject({ mortgageId: 'loan-1', principal: 148900, principalVersion: 6, escrow: null, escrowVersion: null, statementDate: '2099-01-01' })
   })
 
-  it('balance changed since the form opened (ZM5M5): shows the stored figures and adopts the stored record', async () => {
-    const { d, calls } = deps({ reset: { data: null, error: { code: 'ZM5M5', message: 'The balance changed since you opened this form. Nothing was saved.' } } })
+  // The real server text (migration 20261004100000) ends with "Reload…" — never shown: reloading would discard entries.
+  const SERVER_ZM5M5 = 'The balance changed since you opened this form (a payment, escrow entry or another edit). Your entries were not saved. Reload, compare with your statement, then save again.'
+
+  it('balance changed since the form opened (ZM5M5): stored vs entered figures, no reload advice, stored record adopted', async () => {
+    const { d, calls } = deps({ reset: { data: null, error: { code: 'ZM5M5', message: SERVER_ZM5M5 } } })
     const r = await saveMortgageDetails(d, loan, input({ current_balance: '148900' }))
     expect(r.ok).toBe(false)
     expect(r.details).toEqual(stored)
-    expect(r.error).toContain('Current balance: 148500.00; escrow: 1000.00.')
+    expect(r.error).toBe(
+      'The balance changed while you were editing (a payment, an escrow entry or another edit), so nothing was saved. ' +
+        'Your entries are still in the form; no need to reload. ' +
+        'Stored now: principal $148,500.00, escrow $1,000.00. In this form: principal $148,900.00, escrow $1,000.00. ' +
+        'Check both against your statement. To use the figures in this form, Save again. To keep the stored figures, ' +
+        'type them into the balance fields before saving, or Cancel to discard all your changes.',
+    )
+    expect(r.error).not.toMatch(/reload,|Reload,/)
     expect(calls.fetchLatest).toBe(1)
     expect(calls.update).toBe(0)
   })
 
-  it('ZM5M5 when the latest figures cannot be read: still refused with the server message', async () => {
+  it('ZM5M5, then Save again with the same entries: checked against the adopted record and saved (deliberate choice)', async () => {
+    const first = deps({ reset: { data: null, error: { code: 'ZM5M5', message: SERVER_ZM5M5 } } })
+    const r1 = await saveMortgageDetails(first.d, loan, input({ current_balance: '148900' }))
+    const second = deps()
+    const r2 = await saveMortgageDetails(second.d, r1.details!, input({ current_balance: '148900' }))
+    expect(r2.ok).toBe(true)
+    expect(second.calls.reset[0]).toMatchObject({ principal: 148900, principalVersion: stored.principal_version })
+  })
+
+  it('ZM5M5 when the latest figures cannot be read: still refused, no server reload text, how to see current figures', async () => {
     const { d } = deps({
-      reset: { data: null, error: { code: 'ZM5M5', message: 'The balance changed since you opened this form.' } },
+      reset: { data: null, error: { code: 'ZM5M5', message: SERVER_ZM5M5 } },
       fetchLatest: { data: null, error: { message: 'network' } },
     })
     const r = await saveMortgageDetails(d, loan, input({ current_balance: '148900' }))
-    expect(r).toEqual({ ok: false, error: 'The balance changed since you opened this form.' })
+    expect(r.ok).toBe(false)
+    expect(r.details).toBeUndefined()
+    expect(r.error).toContain("The current figures couldn't be loaded just now: copy your entries, then Cancel and reopen Edit to see them.")
+    expect(r.error).not.toContain('Reload, compare')
   })
 
   it('out-of-date page refusal (ZM5M6) and other server messages pass through with the not-saved note', async () => {
@@ -169,5 +191,17 @@ describe('saveMortgageDetails — existing error handling keeps working', () => 
     expect((await saveMortgageDetails(both.d, loan, input({ current_balance: '148900' }))).ok).toBe(true)
     expect(both.calls.reset).toHaveLength(1)
     expect(both.calls.update).toBe(1)
+  })
+})
+
+describe('Action Queue confirmation errors (reviewActionError)', () => {
+  it('ZM5M5 says the figures were refreshed and to confirm again; never the server reload text', () => {
+    const m = reviewActionError({ code: 'ZM5M5', message: 'The balance changed since you opened this form (a payment, escrow entry or another edit). Your entries were not saved. Reload, compare with your statement, then save again.' })
+    expect(m).toBe(STALE_BALANCE_REVIEW_MESSAGE)
+    expect(m).not.toContain('Reload')
+  })
+  it('other errors keep the existing mapping', () => {
+    expect(reviewActionError({ code: '40P01', message: 'deadlock detected' })).toBe('Changed at the same time somewhere else, so nothing was saved. Try again.')
+    expect(reviewActionError({ code: 'ZM5M7', message: 'This mortgage is inactive; its balances are kept as they were.' })).toBe('This mortgage is inactive; its balances are kept as they were.')
   })
 })

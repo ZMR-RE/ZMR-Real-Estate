@@ -1,6 +1,7 @@
 // Mortgage balance integrity (migration 20261004100000) — pure helpers for the Mortgage tab: how a save is split
 // between ordinary loan details and a versioned balance reset, and what each void outcome means for the user.
 import type { MortgageDetails, MortgageDetailsInput } from './mortgagePayoffQueries'
+import { mortgageCurrencyFormatter } from './mortgagePayoffFormat'
 
 export type VoidOutcome =
   | 'reversed'
@@ -96,4 +97,34 @@ export function voidRefusalMessage(outcome: string | null): string | null {
     default:
       return null
   }
+}
+
+// Stale-balance conflict (ZM5M5). The server's text says "Reload…", which is wrong for this app: the Mortgage form keeps
+// the user's entries (reloading would discard them) and the Action Queue refreshes itself. So the server text is never
+// shown; these messages say what happened and how to compare.
+const money = (value: string | number | null | undefined) =>
+  value === null || value === undefined || String(value).trim() === '' ? 'none' : mortgageCurrencyFormatter.format(Number(value))
+
+export function staleBalanceFormMessage(
+  stored: Pick<MortgageDetails, 'current_balance' | 'escrow_balance'> | null,
+  entered: Pick<MortgageDetailsInput, 'current_balance' | 'escrow_balance'>,
+): string {
+  const what = 'The balance changed while you were editing (a payment, an escrow entry or another edit), so nothing was saved. Your entries are still in the form; no need to reload.'
+  if (!stored) {
+    return `${what} The current figures couldn't be loaded just now: copy your entries, then Cancel and reopen Edit to see them.`
+  }
+  return (
+    `${what} Stored now: principal ${money(stored.current_balance)}, escrow ${money(stored.escrow_balance)}. ` +
+    `In this form: principal ${money(entered.current_balance)}, escrow ${money(entered.escrow_balance)}. ` +
+    'Check both against your statement. To use the figures in this form, Save again. To keep the stored figures, ' +
+    'type them into the balance fields before saving, or Cancel to discard all your changes.'
+  )
+}
+
+export const STALE_BALANCE_REVIEW_MESSAGE =
+  'The balance changed after this review was shown, so nothing was confirmed. The figures below have been refreshed; check them against your statement and confirm again.'
+
+// Errors from the Action Queue's balance confirmation.
+export function reviewActionError(error: { code?: string | null; message: string }): string {
+  return error.code === 'ZM5M5' ? STALE_BALANCE_REVIEW_MESSAGE : friendlyDatabaseError(error)
 }

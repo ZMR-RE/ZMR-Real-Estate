@@ -1,5 +1,5 @@
 import type { BalanceResetRequest, MortgageDetails, MortgageDetailsInput } from './mortgagePayoffQueries'
-import { friendlyDatabaseError, isSimultaneousChange, planMortgageSave } from './mortgageBalanceIntegrity'
+import { friendlyDatabaseError, isSimultaneousChange, planMortgageSave, staleBalanceFormMessage } from './mortgageBalanceIntegrity'
 
 // The save flow behind "Save mortgage details", kept free of React and Supabase so every refusal path is testable.
 // The query functions are passed in by useMortgageDetails.
@@ -59,15 +59,13 @@ export async function saveMortgageDetails(
     })
     if (resetError) {
       if (resetError.code === 'ZM5M5') {
-        // The balance changed since the form opened: show the stored figures so the user can compare and save again.
+        // The balance changed since the form opened: adopt the stored record (so the next Save is checked against it)
+        // and show the stored figures beside the ones still in the form. Never the server's "Reload…" text (B-1 keeps
+        // the entries; reloading would discard them).
         const { data: latest } = await deps.fetchLatest()
         return latest
-          ? {
-              ok: false,
-              details: latest,
-              error: `${resetError.message} Current balance: ${latest.current_balance}; escrow: ${latest.escrow_balance ?? 'none'}.`,
-            }
-          : { ok: false, error: resetError.message }
+          ? { ok: false, details: latest, error: staleBalanceFormMessage(latest, input) }
+          : { ok: false, error: staleBalanceFormMessage(null, input) }
       }
       return { ok: false, error: `${friendlyDatabaseError(resetError)} ${NOT_SAVED}` }
     }
