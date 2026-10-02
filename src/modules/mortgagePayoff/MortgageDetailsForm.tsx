@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { Fragment, useState, type FormEvent } from 'react'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
 import { formatCurrencyInputOnBlur } from './mortgagePayoffFormat'
 import type { MortgageDetailsInput } from './mortgagePayoffQueries'
@@ -193,7 +193,17 @@ export function MortgageDetailsForm({
       />
 
       {/* Beside Save, where the user is looking when a save is refused (the form is long). */}
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <p role="alert">
+          {/* Multi-line messages (stale-balance conflict) show one fact or choice per line. */}
+          {error.split('\n').map((line, i) => (
+            <Fragment key={i}>
+              {i > 0 && <br />}
+              {line}
+            </Fragment>
+          ))}
+        </p>
+      )}
       <button type="submit" disabled={saving}>
         {saving ? 'Saving…' : 'Save mortgage details'}
       </button>

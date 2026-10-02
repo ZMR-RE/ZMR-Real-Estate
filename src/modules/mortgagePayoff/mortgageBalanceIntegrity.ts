@@ -109,16 +109,20 @@ export function staleBalanceFormMessage(
   stored: Pick<MortgageDetails, 'current_balance' | 'escrow_balance'> | null,
   entered: Pick<MortgageDetailsInput, 'current_balance' | 'escrow_balance'>,
 ): string {
-  const what = 'The balance changed while you were editing (a payment, an escrow entry or another edit), so nothing was saved. Your entries are still in the form; no need to reload.'
+  const what = 'The balance changed while you were editing, so nothing was saved. Your entries are still here; no need to reload.'
   if (!stored) {
-    return `${what} The current figures couldn't be loaded just now: copy your entries, then Cancel and reopen Edit to see them.`
+    return `${what}\nThe current figures couldn't be loaded just now: copy your entries, then Cancel and reopen Edit to see them.`
   }
-  return (
-    `${what} Stored now: principal ${money(stored.current_balance)}, escrow ${money(stored.escrow_balance)}. ` +
-    `In this form: principal ${money(entered.current_balance)}, escrow ${money(entered.escrow_balance)}. ` +
-    'Check both against your statement. To use the figures in this form, Save again. To keep the stored figures, ' +
-    'type them into the balance fields before saving, or Cancel to discard all your changes.'
-  )
+  // One fact or choice per line (the form shows each line separately): figures first, then the three choices.
+  return [
+    what,
+    `Stored now: principal ${money(stored.current_balance)} · escrow ${money(stored.escrow_balance)}`,
+    `In this form: principal ${money(entered.current_balance)} · escrow ${money(entered.escrow_balance)}`,
+    'Check your statement, then choose one:',
+    '• Save again to use the figures in this form.',
+    '• To keep the stored figures, type them into the balance fields, then save.',
+    '• Cancel discards all your changes.',
+  ].join('\n')
 }
 
 export const STALE_BALANCE_REVIEW_MESSAGE =

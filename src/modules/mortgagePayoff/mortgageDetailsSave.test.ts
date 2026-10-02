@@ -49,13 +49,15 @@ describe('saveMortgageDetails — server refusals keep the form (B-1)', () => {
     const r = await saveMortgageDetails(d, loan, input({ current_balance: '148900' }))
     expect(r.ok).toBe(false)
     expect(r.details).toEqual(stored)
-    expect(r.error).toBe(
-      'The balance changed while you were editing (a payment, an escrow entry or another edit), so nothing was saved. ' +
-        'Your entries are still in the form; no need to reload. ' +
-        'Stored now: principal $148,500.00, escrow $1,000.00. In this form: principal $148,900.00, escrow $1,000.00. ' +
-        'Check both against your statement. To use the figures in this form, Save again. To keep the stored figures, ' +
-        'type them into the balance fields before saving, or Cancel to discard all your changes.',
-    )
+    expect(r.error!.split('\n')).toEqual([
+      'The balance changed while you were editing, so nothing was saved. Your entries are still here; no need to reload.',
+      'Stored now: principal $148,500.00 · escrow $1,000.00',
+      'In this form: principal $148,900.00 · escrow $1,000.00',
+      'Check your statement, then choose one:',
+      '• Save again to use the figures in this form.',
+      '• To keep the stored figures, type them into the balance fields, then save.',
+      '• Cancel discards all your changes.',
+    ])
     expect(r.error).not.toMatch(/reload,|Reload,/)
     expect(calls.fetchLatest).toBe(1)
     expect(calls.update).toBe(0)

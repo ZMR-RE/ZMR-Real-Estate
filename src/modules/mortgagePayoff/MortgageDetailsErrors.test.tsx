@@ -56,3 +56,20 @@ describe('MortgagePropertySummary with a refused void', () => {
     expect(alert).toBeLessThan(html.indexOf('Void mortgage'))
   })
 })
+
+describe('MortgageDetailsForm with a multi-line conflict message', () => {
+  const lines = ['The balance changed while you were editing, so nothing was saved.', 'Stored now: principal $1.00 · escrow $2.00', '• Cancel discards all your changes.']
+  const html = renderToStaticMarkup(
+    <MortgageDetailsForm initialValues={loan} saving={false} error={lines.join('\n')} canCancel onSave={() => {}} onCancel={() => {}} />,
+  )
+  it('shows every line, separated by line breaks, inside one alert beside Save', () => {
+    const alert = html.slice(html.indexOf('<p role="alert">'), html.indexOf('</p>', html.indexOf('<p role="alert">')))
+    expect(alert.split('<br/>')).toHaveLength(3)
+    for (const line of lines) expect(alert).toContain(line)
+    expect(html.indexOf('<p role="alert">')).toBeLessThan(html.indexOf('Save mortgage details'))
+  })
+  it('a single-line message has no line breaks', () => {
+    const one = renderToStaticMarkup(<MortgageDetailsForm initialValues={loan} saving={false} error="One line." canCancel onSave={() => {}} onCancel={() => {}} />)
+    expect(one).toContain('<p role="alert">One line.</p>')
+  })
+})
