@@ -66,6 +66,9 @@ The new `?persist=1` keeps the tenant, lease and link rows across a real page re
 - **Tests (`leaseFormLogic.test.ts`, 10):** these add same-name labels and details, unfinished detection, prefill, resume found from saved rows only (one lease, rent once), and co-tenant links only with the rent untouched.
 - **Evidence:** `evidence/tenant-entry-t3/01–12`.
 
+## T3 ended-lease finding (fixed)
+A lease with no tenants whose end date has passed is **history**, not unfinished work. It's no longer offered as "Unfinished tenancy". The "could count its rent twice" warning no longer appears for it: an ended lease's rent isn't counted now, so the warning was false. It stays as it is in Lease history and is never deleted or changed. Only a current or upcoming lease with no tenants (no end date, or ending today or later) is offered for resume, and every choice is still explicit. Test: `unfinishedLeases` includes a lease ending today and excludes one that ended earlier.
+
 ## Units › + Add lease verification (local review harness, simulated backend, fictional data; 27 Sample Road › Unit A, Casey at $1,720)
 - **Same choice:** "+ Add lease" shows "Unit A already has a current or upcoming tenancy. What are you adding?" with "Add co-tenant" and "Create separate tenancy".
 - **Co-tenant:** the picker didn't offer Casey; chose Morgan. With `?fail-lease-links=1` armed, the first Save showed the failure and created no lease; the second Save linked Morgan. Result: still 4 leases, Casey's lease links Casey and Morgan, the rent is still $1,720, and the card reads "Tenant(s): Casey Placeholder, Morgan Demo".

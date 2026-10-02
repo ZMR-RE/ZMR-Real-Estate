@@ -42,11 +42,15 @@ describe('lease form rules', () => {
 
   it('an unfinished tenancy is a live lease with no tenants linked', () => {
     const leases = [
-      { id: 'l1', archived: false, tenants: [] },
-      { id: 'l2', archived: true, tenants: [] },
-      { id: 'l3', archived: false, tenants: [{ id: 't1' }] },
+      { id: 'l1', archived: false, end_date: null, tenants: [] },
+      { id: 'l2', archived: true, end_date: null, tenants: [] },
+      { id: 'l3', archived: false, end_date: null, tenants: [{ id: 't1' }] },
+      // Ended with no tenants: history, not unfinished work.
+      { id: 'l4', archived: false, end_date: '2025-12-31', tenants: [] },
+      // Ends today or later: still current, so still unfinished.
+      { id: 'l5', archived: false, end_date: '2026-10-01', tenants: [] },
     ]
-    expect(unfinishedLeases(leases).map((l) => l.id)).toEqual(['l1'])
+    expect(unfinishedLeases(leases, '2026-10-01').map((l) => l.id)).toEqual(['l1', 'l5'])
     expect(leaseFormInitial({ start_date: '2026-11-01', end_date: null, rent_amount: 1500, late_fee: null, move_in_fee: '50' })).toEqual({
       startDate: '2026-11-01', endDate: null, rentAmount: '1500', lateFee: null, moveInFee: '50',
     })
@@ -135,7 +139,7 @@ describe('createLease retry after a partial failure', () => {
     db.failLinksOnce = true
     await createLease('acct', 'prop', 'unit', input)
     // Screen memory is gone (Cancel / navigation / reload): only saved rows remain.
-    const saved = db.leases.map((l) => ({ ...(l as { id: string }), archived: false, tenants: db.links.filter((k) => k.lease_id === l.id) }))
+    const saved = db.leases.map((l) => ({ ...(l as { id: string; end_date: string | null }), archived: false, tenants: db.links.filter((k) => k.lease_id === l.id) }))
     const [unfinished] = unfinishedLeases(saved)
     expect(unfinished.id).toBe('lease-1')
     const resumed = await createLease('acct', 'prop', 'unit', input, unfinished.id)

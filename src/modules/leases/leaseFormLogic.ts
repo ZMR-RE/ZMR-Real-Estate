@@ -40,9 +40,14 @@ export function missingTenantIds(wanted: string[], alreadyLinked: string[]): str
 
 // A tenancy whose lease saved but whose tenant links never did (see
 // leaseEntryQueries.ts). Read from saved records, so it is still found after
-// Cancel, navigation or a reload.
-export function unfinishedLeases<T extends { archived: boolean; tenants: unknown[] }>(leases: T[]): T[] {
-  return leases.filter((l) => !l.archived && l.tenants.length === 0)
+// Cancel, navigation or a reload. Only a current or upcoming lease counts:
+// an ended lease with no tenants is history — never offered as unfinished
+// work, never warned about (its rent isn't counted now), and left as it is.
+export function unfinishedLeases<T extends { archived: boolean; end_date: string | null; tenants: unknown[] }>(
+  leases: T[],
+  today: string = new Date().toISOString().slice(0, 10),
+): T[] {
+  return leases.filter((l) => !l.archived && l.tenants.length === 0 && (l.end_date === null || l.end_date >= today))
 }
 
 export interface TenantDetails {
