@@ -1,0 +1,31 @@
+/* Tenancy entry choices (unfinished tenancy, co-tenant vs separate tenancy).
+   Module stylesheet — kept out of the shared index.css; existing tokens only. */
+
+.lease-choice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}
+
+.lease-choice p {
+  margin: 0;
+}
+
+/* One option: its description, then its button; wraps on phones. */
+.lease-choice-option {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* A standalone choice button keeps its natural width, like the others. */
+.lease-choice > button {
+  align-self: flex-start;
+}
