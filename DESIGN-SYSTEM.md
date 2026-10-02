@@ -200,6 +200,12 @@ of screens in the app.
   row hover highlights via `--surface-sunken`.
 - **`.tab-bar`** — underline-style tabs (Property Profile), underline in
   `--accent`. Mobile: horizontally scrollable rather than wrapping.
+- **`.property-sticky-header`** / **`.property-sticky-title`** — Property
+  Profile's address heading and tab bar in one sticky block, so the address
+  stays visible while scrolling. Compact heading (`--text-xl`), wraps long
+  addresses (never truncates). Its live height (`useStickyHeaderHeight`)
+  sets `--sticky-tab-bar-height` on `.property-profile`, so sticky table
+  headers on every property tab sit just below it.
 - **`.collapsible-section`** — `<details>`/`<summary>`-based, used for
   every grouped block on the Property Profile and KPI tabs (Units,
   Specs, Utilities, Security Deposits, Tenants, KPI cards). Rotating
