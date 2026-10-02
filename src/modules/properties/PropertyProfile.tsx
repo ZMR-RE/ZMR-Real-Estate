@@ -8,6 +8,7 @@ import { PropertyProfileMortgageTab } from './PropertyProfileMortgageTab'
 import { PropertyProfileActivityHistoryTab } from './PropertyProfileActivityHistoryTab'
 import { PropertyProfileDocumentsTab } from './PropertyProfileDocumentsTab'
 import { PropertyProfileKpiTab } from '../propertyKpi/PropertyProfileKpiTab'
+import { useStickyHeaderHeight } from './useStickyHeaderHeight'
 
 // Roadmap 7.9 — revised tab set. Roadmap 7.26 reverses the Activity &
 // Documents merge back into two tabs.
@@ -59,6 +60,7 @@ export function PropertyProfile() {
     refresh,
     latestMarketValue,
   } = usePropertyProfile(id!, initialTab)
+  const { measureHeader, heightStyle } = useStickyHeaderHeight()
 
   // Root-cause fix: `loading` used to gate the whole page unconditionally,
   // so every refresh() call (not just the initial one) — including the
@@ -84,19 +86,23 @@ export function PropertyProfile() {
   }
 
   return (
-    <div>
+    <div className="property-profile" style={heightStyle}>
       <Breadcrumb to="/properties" label="Property registry" />
       {/* Addendum to roadmap 7.39 (2) — reversed: the header stays
           visible on every tab, Overview included. 7.39 (2) had hidden
           it there on the theory that the hero photo banner (7.34)
           already covers the address, but that was a miscommunication —
           confirmed the header must never be hidden on any tab. */}
-      <div className="page-header-row">
-        <h1>{propertyLabel(property)}</h1>
-      </div>
-      {error && <p role="alert">{error}</p>}
+      {/* Owner request (Oct 1, 2026): the address stays visible with the
+          tabs while scrolling. Both sit in one sticky block (compact
+          heading, wraps rather than truncating), measured live so sticky
+          table headers below never slide underneath it. */}
+      <div className="property-sticky-header" ref={measureHeader}>
+        <div className="page-header-row">
+          <h1 className="property-sticky-title">{propertyLabel(property)}</h1>
+        </div>
 
-      <div className="tab-bar" role="tablist">
+        <div className="tab-bar" role="tablist">
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -108,7 +114,9 @@ export function PropertyProfile() {
             {t.label}
           </button>
         ))}
+        </div>
       </div>
+      {error && <p role="alert">{error}</p>}
 
       {tab === 'overview' && (
         <PropertyProfileOverviewTab
