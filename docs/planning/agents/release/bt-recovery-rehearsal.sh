@@ -3,13 +3,13 @@
 # fetches or touches any remote, deploy, account or database.
 #
 # usage: bt-recovery-rehearsal.sh <source-repo> <scratch-dir> [--with-build]
-#   <source-repo> must contain d9cdcb3 and 3ef4b62. <scratch-dir> must not exist.
+#   <source-repo> must contain d9cdcb3 and 179e56b. <scratch-dir> must not exist.
 #   --with-build also runs npm ci, build and vitest at base, recovery and reintroduction.
 set -uo pipefail
 SRC=${1:?source repo}; S=${2:?scratch dir}; BUILD=${3:-}
 HERE=$(cd "$(dirname "$0")" && pwd); TOOL=$HERE/bt-scoped-recovery.sh
 BASE=d9cdcb3aa4aec84c68c78b183593b2a130ede3d7
-RELEASE=3ef4b6273ec0457a90082a3069aa38520c353187
+RELEASE=179e56b747ef8284cd24af8339a34bb6a3c04470
 [ -e "$S" ] && { echo "scratch dir exists: $S" >&2; exit 1; }
 git clone -q "$SRC" "$S" && cd "$S" && git remote remove origin
 git config user.name "T4 rehearsal"; git config user.email "noreply@example.test"
@@ -24,7 +24,7 @@ echo "release application files: ${#FILES[@]}"
 
 # Released main = RELEASE (fast-forward from BASE), then later unrelated work U.
 git checkout -q -b rehearsal-main "$RELEASE"
-UNREL=src/shared/dateFormat.ts
+UNREL=src/shared/usStates.ts
 printf '%s\n' "${FILES[@]}" | grep -qxF "$UNREL" && { echo "pick another unrelated file" >&2; exit 1; }
 mkdir -p src/rehearsal docs/rehearsal
 cat > src/rehearsal/u.test.ts <<'EOF'

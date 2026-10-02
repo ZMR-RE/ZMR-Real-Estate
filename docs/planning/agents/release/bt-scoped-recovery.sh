@@ -2,8 +2,9 @@
 # Billing issuer + tenant entry release: scoped application recovery (T4).
 # Local git only: it never pushes, fetches or touches any remote or deploy.
 #
-# The release fast-forwards main from BASE (live d9cdcb3) to RELEASE (3ef4b62)
-# through a CHAIN of merges (billing 588388f, tenant 2d8aa76/5692647, T2
+# The release fast-forwards main from BASE (live d9cdcb3) through RELEASE
+# (application candidate 179e56b; later commits on the branch are docs-only)
+# via a CHAIN of merges (billing 588388f..9c36aca, tenant 2d8aa76..16a99ed, T2
 # dropdown 999d716, docs). Reverting only the final merge would undo just the
 # last delta (finding R1), so this restores EVERY application file changed
 # anywhere in BASE..RELEASE to its BASE content, on top of current main, and
@@ -25,7 +26,7 @@ set -euo pipefail
 REPO=${1:?usage: bt-scoped-recovery.sh <repo> [--dry-run]}
 DRY=${2:-}
 BASE=d9cdcb3aa4aec84c68c78b183593b2a130ede3d7     # live production before this release
-RELEASE=3ef4b6273ec0457a90082a3069aa38520c353187  # billing + tenant + dropdown release candidate
+RELEASE=179e56b747ef8284cd24af8339a34bb6a3c04470  # billing + tenant + dropdown application candidate
 cd "$REPO"
 
 [ -z "$(git status --porcelain)" ] || { echo "REFUSED: working tree not clean" >&2; exit 2; }
@@ -72,8 +73,8 @@ done
 git commit -q -m "Recover: restore the billing issuer + tenant entry release's application files to $BASE (scoped)
 
 Restores all ${#FILES[@]} application files changed anywhere in $BASE..$RELEASE
-($RESTORED restored, $ADDED release-added files removed): billing 588388f,
-tenant entry 2d8aa76/5692647 and T2 dropdown 999d716 together, not just the
-final merge. Keeps docs/**, root *.md and supabase/**; newer unrelated work is
+($RESTORED restored, $ADDED release-added files removed): billing
+588388f..9c36aca, tenant entry 2d8aa76..16a99ed and T2 dropdown 999d716
+together, not just the final merge. Keeps docs/**, root *.md and supabase/**; newer unrelated work is
 untouched. Reintroduce the release only by reverting THIS commit."
 echo "recovery commit: $(git rev-parse HEAD) (${#FILES[@]} files)"
