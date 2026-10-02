@@ -62,3 +62,82 @@
   white-space: normal;
   min-width: 10ch;
 }
+
+/* Narrow space (a 900 px window leaves a unit card's Lease history about
+   420 px; phones less): each tenancy becomes a stacked card with its own
+   labels, so every column stays readable without scrolling sideways.
+   Keyed to the list's own width (container query), the same pattern as
+   the transaction list in index.css; wider cards keep the table and its
+   sticky header. In Edit, each row also carries Edit / End lease /
+   Archive, which needs about 980 px as a table, so editing switches to
+   cards below 1000 px. */
+.lease-history-container {
+  container-type: inline-size;
+  container-name: lease-history;
+}
+
+@container lease-history (max-width: 760px) {
+  .lease-history-table,
+  .lease-history-table tbody,
+  .lease-history-table tr,
+  .lease-history-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .lease-history-table thead {
+    display: none;
+  }
+
+  .lease-history-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    padding: var(--space-2) 0;
+  }
+
+  .lease-history-table tbody td {
+    border-bottom: none;
+    white-space: normal;
+    padding: var(--space-1) var(--space-4);
+  }
+
+  .lease-history-table tbody td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--text);
+  }
+}
+
+@container lease-history (max-width: 1000px) {
+  .lease-history-container--editing .lease-history-table,
+  .lease-history-container--editing .lease-history-table tbody,
+  .lease-history-container--editing .lease-history-table tr,
+  .lease-history-container--editing .lease-history-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .lease-history-container--editing .lease-history-table thead {
+    display: none;
+  }
+
+  .lease-history-container--editing .lease-history-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    padding: var(--space-2) 0;
+  }
+
+  .lease-history-container--editing .lease-history-table tbody td {
+    border-bottom: none;
+    white-space: normal;
+    padding: var(--space-1) var(--space-4);
+  }
+
+  .lease-history-container--editing .lease-history-table tbody td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--text);
+  }
+}
