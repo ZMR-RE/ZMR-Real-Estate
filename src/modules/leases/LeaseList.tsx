@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { formatDateOnly } from '../../shared/dateFormat'
 import { getLeaseStatus, type Lease, type LeaseInput } from './leasesQueries'
 
 interface LeaseListProps {
@@ -236,8 +237,8 @@ export function LeaseList({
             return (
               <tr key={lease.id} className={lease.archived ? 'row-voided' : ''}>
                 <td>{lease.tenants.map((t) => t.name).join(', ') || '—'}</td>
-                <td>{lease.start_date}</td>
-                <td>{lease.end_date ?? 'Current'}</td>
+                <td>{formatDateOnly(lease.start_date)}</td>
+                <td>{lease.end_date ? formatDateOnly(lease.end_date) : 'Current'}</td>
                 <td>{formatMoney(lease.rent_amount)}</td>
                 <td>{formatMoney(lease.late_fee)}</td>
                 <td>{formatMoney(lease.move_in_fee)}</td>

@@ -5,6 +5,7 @@ import type { TenantOption } from '../tenants/useTenants'
 import type { TenantInput } from '../tenants/tenantsQueries'
 import type { LeaseInput } from './leasesQueries'
 import { useSingleFlight } from './singleFlight'
+import './leases.css'
 import { nameMatchesFor, slotOptions, uniqueTenantIds, withSameNameDetails } from './leaseFormLogic'
 
 interface LeaseFormProps {
@@ -122,17 +123,60 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
       </label>
       {tenantIds.map((tenantId, i) =>
         addingTenantForSlot === i ? (
-          <TenantForm
-            key={i}
-            saving={creatingTenant}
-            error={createTenantError}
-            onSave={handleCreateTenant}
-            onCancel={() => {
-              setAddingTenantForSlot(null)
-              setCreateTenantError(null)
-              setNameMatch(null)
-            }}
-          />
+          // One step at a time: this panel's Save tenant / Cancel act on the
+          // new person only; the lease form's own Save / Cancel return once
+          // the person is saved or the step is cancelled.
+          <div className="lease-new-tenant" key={i}>
+            <p className="lease-new-tenant-title">New tenant</p>
+            <TenantForm
+              saving={creatingTenant}
+              error={createTenantError}
+              onSave={handleCreateTenant}
+              saveLabel="Save tenant"
+              hideActions={nameMatch !== null}
+              onCancel={() => {
+                setAddingTenantForSlot(null)
+                setCreateTenantError(null)
+                setNameMatch(null)
+              }}
+            />
+            {nameMatch && (
+              <div role="status">
+                <p>
+                  <strong>“{nameMatch.input.name.trim()}” already exists.</strong>{' '}
+                  {nameMatch.matches.selectable.length > 0
+                    ? 'Use the existing record if it’s the same person; otherwise create a different person.'
+                    : 'They can’t be added again here. If this is someone else, create a different person.'}
+                </p>
+                <p className="field-hint">
+                  You entered: {[nameMatch.input.email, nameMatch.input.phone].filter(Boolean).join(' · ') || 'no email or phone'}
+                </p>
+                {nameMatch.matches.onTenancy.map((m) => (
+                  <p key={m.id} className="field-hint">
+                    Already on this tenancy: {m.label} — {m.detail}
+                  </p>
+                ))}
+                {nameMatch.matches.chosenAbove.map((m) => (
+                  <p key={m.id} className="field-hint">
+                    Already chosen above: {m.label} — {m.detail}
+                  </p>
+                ))}
+                <div className="lease-form-actions">
+                  {nameMatch.matches.selectable.map((m) => (
+                    <button key={m.id} type="button" onClick={() => chooseExistingTenant(m.id)}>
+                      Use existing: {m.label} — {m.detail}
+                    </button>
+                  ))}
+                  <button type="button" disabled={creatingTenant} onClick={() => handleCreateTenant(nameMatch.input, true)}>
+                    Create a different person with this name
+                  </button>
+                  <button type="button" disabled={creatingTenant} onClick={() => setNameMatch(null)}>
+                    Edit name
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="lease-form-tenant-row" key={i}>
             <SearchableSelect
@@ -151,50 +195,14 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
           </div>
         ),
       )}
-      {nameMatch && (
-        <div role="status">
-          <p>
-            <strong>A tenant named “{nameMatch.input.name.trim()}” already exists.</strong>{' '}
-            {nameMatch.matches.selectable.length > 0
-              ? 'If it’s the same person, use the existing record so their history stays in one place. If it’s someone else with the same name, create a different person.'
-              : 'They can’t be added again here. If the person you’re adding is someone else with the same name, create a different person.'}
-          </p>
-          <p className="field-hint">
-            You entered: {[nameMatch.input.email, nameMatch.input.phone].filter(Boolean).join(' · ') || 'no email or phone'}
-          </p>
-          {nameMatch.matches.onTenancy.map((m) => (
-            <p key={m.id} className="field-hint">
-              Already on this tenancy: {m.label} — {m.detail}
-            </p>
-          ))}
-          {nameMatch.matches.chosenAbove.map((m) => (
-            <p key={m.id} className="field-hint">
-              Already chosen above: {m.label} — {m.detail}
-            </p>
-          ))}
-          <div className="lease-form-tenant-row">
-            {nameMatch.matches.selectable.map((m) => (
-              <button key={m.id} type="button" onClick={() => chooseExistingTenant(m.id)}>
-                Use existing: {m.label} — {m.detail}
-              </button>
-            ))}
-            <button type="button" disabled={creatingTenant} onClick={() => handleCreateTenant(nameMatch.input, true)}>
-              Create a different person with this name
-            </button>
-          </div>
+      {addingTenantForSlot === null && (
+        <div>
+          <button type="button" onClick={() => setTenantIds((prev) => [...prev, null])}>
+            + Add another tenant
+          </button>
         </div>
       )}
-      {addingTenantForSlot === null && (
-        <button type="button" onClick={() => setTenantIds((prev) => [...prev, null])}>
-          + Add another tenant
-        </button>
-      )}
 
-      {tenantsOnly && selectedTenantIds.length > 0 && addingTenantForSlot === null && (
-        <button type="button" disabled={saving} onClick={handleSave}>
-          {saving ? 'Saving…' : 'Save'}
-        </button>
-      )}
 
       {!tenantsOnly && selectedTenantIds.length > 0 && addingTenantForSlot === null && (
         <>
@@ -238,15 +246,22 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
             value={moveInFee}
             onChange={(e) => setMoveInFee(e.target.value)}
           />
-
-          <button type="button" disabled={saving || !startDate} onClick={handleSave}>
-            {saving ? 'Saving…' : 'Save'}
-          </button>
         </>
       )}
-      <button type="button" onClick={onCancel} disabled={saving}>
-        Cancel
-      </button>
+      {/* The lease form's own actions, together; hidden while the new-tenant
+          step is open so there is only one Save and one Cancel on screen. */}
+      {addingTenantForSlot === null && (
+        <div className="lease-form-actions">
+          {selectedTenantIds.length > 0 && (
+            <button type="button" disabled={saving || (!tenantsOnly && !startDate)} onClick={handleSave}>
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          )}
+          <button type="button" onClick={onCancel} disabled={saving}>
+            Cancel
+          </button>
+        </div>
+      )}
     </div>
   )
 }

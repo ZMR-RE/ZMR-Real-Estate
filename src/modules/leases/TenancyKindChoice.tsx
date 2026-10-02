@@ -20,13 +20,12 @@ export function TenancyKindChoice({ unitLabel, currentLeases, onCoTenant, onSepa
   return (
     <div className="lease-choice" role="group" aria-label="What are you adding?">
       <p>
-        <strong>{unitLabel} already has a current or upcoming tenancy.</strong> What are you adding?
+        <strong>{unitLabel} already has a tenancy.</strong> What are you adding?
       </p>
       {currentLeases.map((l) => (
         <div key={l.id} className="lease-choice-option">
           <span>
-            <strong>A co-tenant on {names(l)}’s tenancy</strong> — joins it and shares its {formatRent(l.rent_amount)} rent (from{' '}
-            {formatDateOnly(l.start_date)}). No new rent is added.
+            <strong>Co-tenant on {names(l)}’s tenancy</strong> ({formatRent(l.rent_amount)}, from {formatDateOnly(l.start_date)}) — shares that rent; no new rent.
           </span>
           <button type="button" onClick={() => onCoTenant(l)}>
             Add co-tenant
@@ -35,8 +34,7 @@ export function TenancyKindChoice({ unitLabel, currentLeases, onCoTenant, onSepa
       ))}
       <div className="lease-choice-option">
         <span>
-          <strong>A separate tenancy with its own rent</strong> — a second rental arrangement on this unit; its rent is counted in addition. If the current
-          tenancy has ended, end it first with “+ End lease” in Units.
+          <strong>Separate tenancy</strong> — its own rent, counted in addition. If the current tenancy has ended, end it in Units first.
         </span>
         <button type="button" onClick={onSeparate}>
           Create separate tenancy

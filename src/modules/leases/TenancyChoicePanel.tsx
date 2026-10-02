@@ -28,14 +28,13 @@ export function TenancyChoicePanel({ tc, unitLabel }: TenancyChoicePanelProps) {
       )}
       {choice && (choice.kind !== 'new' || tc.current.length > 0) && (
         <p className="field-hint">
-          {choice.kind === 'resume' && <>Finishing tenancy ID {shortLeaseId(choice.lease.id)}: choose its tenant(s) and Save. No second tenancy is created.</>}
+          {choice.kind === 'resume' && <>Finishing tenancy {shortLeaseId(choice.lease.id)}: choose its tenant(s) and Save.</>}
           {choice.kind === 'cotenant' && (
             <>
-              Adding co-tenant(s) to {choice.lease.tenants.map((t) => t.name).join(' & ')}’s tenancy. Its {formatRent(choice.lease.rent_amount)} rent, dates and fees stay
-              as they are.
+              Adding co-tenant(s) to {choice.lease.tenants.map((t) => t.name).join(' & ')}’s tenancy. Its {formatRent(choice.lease.rent_amount)} rent and dates stay the same.
             </>
           )}
-          {choice.kind === 'new' && <>A separate tenancy with its own rent, counted in addition to the current one.</>}{' '}
+          {choice.kind === 'new' && <>Separate tenancy with its own rent.</>}{' '}
           {tc.canChange && (
             <button type="button" onClick={tc.reset}>
               Change

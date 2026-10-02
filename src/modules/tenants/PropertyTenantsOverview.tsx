@@ -23,7 +23,7 @@ function ManageTenantsLink() {
         if (target instanceof HTMLDetailsElement) target.open = true
       }}
     >
-      Manage tenants in Units ↓
+      Units and lease history ↓
     </a>
   )
 }

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { leaseFormForChoice, leaseFormInitial, missingTenantIds, nameMatchesFor, slotOptions, tenantDetail, tenantsNamed, unfinishedLeases, uniqueTenantIds, withSameNameDetails } from './leaseFormLogic'
+import { leaseFormForChoice, leaseFormInitial, missingTenantIds, nameMatchesFor, upcomingTenancies, slotOptions, tenantDetail, tenantsNamed, unfinishedLeases, uniqueTenantIds, withSameNameDetails } from './leaseFormLogic'
 
 const options = [
   { id: 't1', label: 'Riley Example' },
@@ -208,5 +208,18 @@ describe('same-name check for a new tenant (F-P1)', () => {
   it('no same-name person anywhere: nothing to show', () => {
     const m = nameMatchesFor(all, all, [], 'Brand New')
     expect([...m.selectable, ...m.chosenAbove, ...m.onTenancy]).toEqual([])
+  })
+})
+
+describe('unit card: upcoming tenancy instead of "$0 — Not set up"', () => {
+  it('lists future tenancies with tenants, soonest first; leaves out archived, tenantless and current ones', () => {
+    const leases = [
+      { id: 'later', archived: false, start_date: '2026-12-01', tenants: [{ id: 't1' }] },
+      { id: 'soon', archived: false, start_date: '2026-11-01', tenants: [{ id: 't2' }] },
+      { id: 'archived', archived: true, start_date: '2026-11-15', tenants: [{ id: 't3' }] },
+      { id: 'tenantless', archived: false, start_date: '2026-11-20', tenants: [] },
+      { id: 'current', archived: false, start_date: '2026-10-01', tenants: [{ id: 't4' }] },
+    ]
+    expect(upcomingTenancies(leases, '2026-10-02').map((l) => l.id)).toEqual(['soon', 'later'])
   })
 })

@@ -29,3 +29,28 @@
 .lease-choice > button {
   align-self: flex-start;
 }
+
+/* Lease form: the new-tenant step is its own panel with its own actions, so
+   only one Save and one Cancel show at a time; the lease form's Save and
+   Cancel sit together at the end. */
+.lease-new-tenant {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}
+
+.lease-new-tenant-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.lease-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
