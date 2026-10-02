@@ -83,6 +83,9 @@ export function AddPersonIssuer({ accountId, existing, onChosen }: AddPersonIssu
             <button type="button" disabled={saving} onClick={() => create(true)}>
               Add a different person with this name
             </button>
+            <button type="button" disabled={saving} onClick={() => setMatches(null)}>
+              Edit name
+            </button>
           </div>
         </div>
       )}
