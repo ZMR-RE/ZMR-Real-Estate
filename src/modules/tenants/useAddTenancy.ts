@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
-import { addCoTenants, createLease } from '../leases/leaseEntryQueries'
-import { unfinishedLeases } from '../leases/leaseFormLogic'
-import { getLeaseStatus, listLeasesForUnit, type Lease, type LeaseInput } from '../leases/leasesQueries'
+import { saveTenancy } from '../leases/leaseEntryQueries'
+import { listLeasesForUnit, type Lease, type LeaseInput } from '../leases/leasesQueries'
 import { partialLeaseMessage } from '../leases/useLeases'
+import { useTenancyChoice } from '../leases/useTenancyChoice'
 import { listUnits, type Unit } from '../units/unitsQueries'
 import { useTenants } from './useTenants'
 
@@ -12,24 +12,16 @@ export interface AddedTenant {
   name: string
 }
 
-// What the owner is adding, chosen explicitly when the unit already has a
-// tenancy (or an unfinished one): a separate tenancy with its own rent,
-// co-tenants on an existing tenancy (its rent unchanged), or finishing an
-// unfinished tenancy by its ID.
-export type TenancyChoice = { kind: 'new' } | { kind: 'resume'; lease: Lease } | { kind: 'cotenant'; lease: Lease }
-
 // Property Overview › Tenants › Add tenant: the same tenancy the Units box's
-// "+ Add lease" creates (one lease, one or more tenants, the same createLease
-// and LeaseForm), started from the property instead of from a unit. Choose a
-// unit of THIS property, then the tenant(s), dates and rent.
+// "+ Add lease" creates (one lease, one or more tenants, the same lease form
+// and the same tenancy choice), started from the property instead of from a
+// unit. Choose a unit of THIS property, then what you're adding.
 export function useAddTenancy(propertyId: string) {
   const { accountId } = useAuth()
   const { tenantOptions, addTenant } = useTenants(accountId)
   const [units, setUnits] = useState<Unit[] | null>(null)
   const [unitId, setUnitIdState] = useState('')
   const [unitLeases, setUnitLeases] = useState<{ unitId: string; leases: Lease[] }>({ unitId: '', leases: [] })
-  const [choice, setChoice] = useState<TenancyChoice | null>(null)
-  const [unfinishedSkipped, setUnfinishedSkipped] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // Set when a lease saved but its tenant links failed; the next Save
@@ -37,10 +29,12 @@ export function useAddTenancy(propertyId: string) {
   // After Cancel or a reload it's found again as an unfinished tenancy.
   const [pendingLeaseId, setPendingLeaseId] = useState<string | null>(null)
 
+  const leasesLoaded = unitId !== '' && unitLeases.unitId === unitId
+  const tc = useTenancyChoice(leasesLoaded ? unitLeases.leases : [], leasesLoaded, pendingLeaseId)
+
   const setUnitId = (id: string) => {
     setUnitIdState(id)
-    setChoice(null)
-    setUnfinishedSkipped(false)
+    tc.reset()
   }
 
   useEffect(() => {
@@ -61,30 +55,10 @@ export function useAddTenancy(propertyId: string) {
     listLeasesForUnit(accountId, unitId).then(({ data }) => setUnitLeases({ unitId, leases: data ?? [] }))
   }, [accountId, unitId])
 
-  const leasesLoaded = unitId !== '' && unitLeases.unitId === unitId
-  const leasesForUnit = leasesLoaded ? unitLeases.leases : []
-  const unfinished = unfinishedLeases(leasesForUnit)
-  const currentOnUnit = leasesForUnit.filter((l) => !l.archived && l.tenants.length > 0 && getLeaseStatus(l) !== 'ended')
-  const open = leasesLoaded && choice === null && pendingLeaseId === null
-  const needsUnfinishedChoice = open && unfinished.length > 0 && !unfinishedSkipped
-  const needsKindChoice = open && !needsUnfinishedChoice && currentOnUnit.length > 0
-  // Nothing to choose between: a plain new tenancy.
-  const effectiveChoice: TenancyChoice | null = choice ?? (leasesLoaded && !needsUnfinishedChoice && !needsKindChoice ? { kind: 'new' } : null)
-
-  const skipUnfinished = () => setUnfinishedSkipped(true)
-  // Back to the choices (not while a half-saved lease is being finished).
-  const changeChoice = () => {
-    setChoice(null)
-    setUnfinishedSkipped(false)
-  }
-
   const save = async (input: LeaseInput): Promise<AddedTenant[] | null> => {
-    if (!accountId || !unitId || !effectiveChoice) return null
+    if (!accountId || !unitId || !tc.choice) return null
     setSaving(true)
-    const { error: e, leaseId } =
-      effectiveChoice.kind === 'cotenant'
-        ? { ...(await addCoTenants(accountId, effectiveChoice.lease.id, input.tenantIds)), leaseId: null }
-        : await createLease(accountId, propertyId, unitId, input, pendingLeaseId ?? (effectiveChoice.kind === 'resume' ? effectiveChoice.lease.id : null))
+    const { error: e, leaseId } = await saveTenancy(accountId, propertyId, unitId, tc.choice, input, pendingLeaseId)
     setSaving(false)
     if (e) {
       setPendingLeaseId(leaseId)
@@ -102,14 +76,7 @@ export function useAddTenancy(propertyId: string) {
     unitId,
     setUnitId,
     leasesLoaded,
-    unfinished,
-    currentOnUnit,
-    needsUnfinishedChoice,
-    needsKindChoice,
-    choice: effectiveChoice,
-    choose: setChoice,
-    skipUnfinished,
-    changeChoice,
+    tc,
     tenantOptions,
     addTenant,
     saving,

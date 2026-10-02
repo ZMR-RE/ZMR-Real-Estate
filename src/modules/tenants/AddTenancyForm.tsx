@@ -1,7 +1,6 @@
 import { LeaseForm } from '../leases/LeaseForm'
-import { formatRent, leaseFormInitial, shortLeaseId } from '../leases/leaseFormLogic'
-import { UnfinishedTenancyChoice } from '../leases/UnfinishedTenancyChoice'
-import { TenancyKindChoice } from './TenancyKindChoice'
+import { leaseFormForChoice } from '../leases/leaseFormLogic'
+import { TenancyChoicePanel } from '../leases/TenancyChoicePanel'
 import { useAddTenancy, type AddedTenant } from './useAddTenancy'
 
 interface AddTenancyFormProps {
@@ -15,13 +14,12 @@ function todayDateString() {
 }
 
 // The Tenants box's Edit state: choose a unit of this property; if it has an
-// unfinished or current tenancy, choose what you're adding; then the existing
-// lease form (existing or new tenant, co-tenants, dates, rent).
+// unfinished or current tenancy, choose what you're adding (the same choice
+// as Units › + Add lease); then the lease form.
 export function AddTenancyForm({ propertyId, onSaved, onCancel }: AddTenancyFormProps) {
   const a = useAddTenancy(propertyId)
-  const unit = a.units.find((u) => u.id === a.unitId)
-  const unitLabel = unit?.unit_label ?? ''
-  const choice = a.choice
+  const unitLabel = a.units.find((u) => u.id === a.unitId)?.unit_label ?? ''
+  const choice = a.tc.choice
 
   if (!a.unitsLoaded) return <p>Loading…</p>
 
@@ -34,11 +32,7 @@ export function AddTenancyForm({ propertyId, onSaved, onCancel }: AddTenancyForm
     )
   }
 
-  const onlyCurrent = a.currentOnUnit
-  const resumeOrNewLease = choice?.kind === 'resume' ? choice.lease : null
-  const coTenantLease = choice?.kind === 'cotenant' ? choice.lease : null
-  const alreadyOn = new Set(coTenantLease?.tenants.map((t) => t.id) ?? [])
-  const canChange = a.pendingLeaseId === null && (a.unfinished.length > 0 || onlyCurrent.length > 0)
+  const form = a.unitId && choice ? leaseFormForChoice(choice, a.tenantOptions) : null
 
   return (
     <div className="inline-form">
@@ -57,51 +51,18 @@ export function AddTenancyForm({ propertyId, onSaved, onCancel }: AddTenancyForm
         ))}
       </select>
       {a.unitId && !a.leasesLoaded && <p>Loading…</p>}
-
-      {a.needsUnfinishedChoice && (
-        <UnfinishedTenancyChoice
-          leases={a.unfinished}
-          onResume={(lease) => a.choose({ kind: 'resume', lease })}
-          onStartNew={a.skipUnfinished}
-        />
-      )}
-      {a.needsKindChoice && (
-        <TenancyKindChoice
-          unitLabel={unitLabel}
-          currentLeases={onlyCurrent}
-          onCoTenant={(lease) => a.choose({ kind: 'cotenant', lease })}
-          onSeparate={() => a.choose({ kind: 'new' })}
-        />
-      )}
-
-      {choice && (
-        <p className="field-hint">
-          {resumeOrNewLease && <>Finishing tenancy ID {shortLeaseId(resumeOrNewLease.id)}: choose its tenant(s) and Save. No second tenancy is created.</>}
-          {coTenantLease && (
-            <>
-              Adding co-tenant(s) to {coTenantLease.tenants.map((t) => t.name).join(' & ')}’s tenancy. Its {formatRent(coTenantLease.rent_amount)} rent, dates and
-              fees stay as they are.
-            </>
-          )}
-          {choice.kind === 'new' && onlyCurrent.length > 0 && <>A separate tenancy with its own rent, counted in addition to the current one.</>}{' '}
-          {canChange && (
-            <button type="button" onClick={a.changeChoice}>
-              Change
-            </button>
-          )}
-        </p>
-      )}
+      {a.unitId && <TenancyChoicePanel tc={a.tc} unitLabel={unitLabel} />}
 
       {a.error && <p role="alert">{a.error}</p>}
-      {a.unitId && choice && (
+      {form && (
         <LeaseForm
-          key={`${a.unitId}:${choice.kind}:${resumeOrNewLease?.id ?? coTenantLease?.id ?? ''}`}
-          tenantOptions={coTenantLease ? a.tenantOptions.filter((t) => !alreadyOn.has(t.id)) : a.tenantOptions}
+          key={`${a.unitId}:${form.key}`}
+          tenantOptions={form.tenantOptions}
           onCreateTenant={a.addTenant}
           saving={a.saving}
           todayDateString={todayDateString()}
-          initial={resumeOrNewLease ? leaseFormInitial(resumeOrNewLease) : undefined}
-          tenantsOnly={coTenantLease !== null}
+          initial={form.initial}
+          tenantsOnly={form.tenantsOnly}
           onSave={async (input) => {
             const added = await a.save(input)
             if (added) onSaved(added, unitLabel)
@@ -109,7 +70,7 @@ export function AddTenancyForm({ propertyId, onSaved, onCancel }: AddTenancyForm
           onCancel={onCancel}
         />
       )}
-      {!(a.unitId && choice) && (
+      {!form && (
         <button type="button" onClick={onCancel}>Cancel</button>
       )}
     </div>

@@ -9,7 +9,7 @@ Built on live `d9cdcb3`. This is a separate candidate from the billing follow-up
 3. Choose an existing person, or create a new tenant. Add co-tenants as needed.
 4. Enter the dates and rent (not for a co-tenant), then Save.
 
-**Entry point:** the owner approved "Tenants → Add tenant", so "+ Add tenant" sits beside Edit in the box header, visible even when the box is collapsed. That explicit approval overrides the Edit-only box convention for this box. Edit stays; both open the box and the same edit state, and both hide while editing. It's one optional `EditableSection` prop (`addLabel`) that no other box uses. **Rule-file note for planning:** CLAUDE.md's Box interaction standard says approved deviations are "noted here"; T4 hasn't edited CLAUDE.md (it has the owner's uncommitted edits), so planning should add the note.
+**Entry point:** the owner approved "Tenants → Add tenant", so "+ Add tenant" sits beside Edit in the box header, visible even when the box is collapsed. That explicit approval overrides the Edit-only box convention for this box. Edit stays; both open the box and the same edit state, and both hide while editing. It's one optional `EditableSection` prop (`addLabel`) that no other box uses. **CLAUDE.md:** the approved deviation is now noted under the Box interaction standard on this candidate branch only. The owner's uncommitted main checkout is untouched; the note merges with the candidate.
 
 **After saving:**
 - the Tenants list and the Units box both refresh;
@@ -44,7 +44,13 @@ Built on live `d9cdcb3`. This is a separate candidate from the billing follow-up
 
 **Proposed durable fix (not built; needs separate migration review and approval):** one database function that inserts the lease and its tenant links together (atomic), so an unfinished tenancy can't arise at all. The frontend recovery above stays useful for any already-existing unfinished rows.
 
-**Not changed:** Units › "+ Add lease" got the unfinished-tenancy resume but not the co-tenant/separate choice. That path existed before this slice; adding the choice there is a separate decision.
+**Both entry points, one mechanism:** Units › "+ Add lease" asks the same questions as Tenants › + Add tenant: resume an unfinished tenancy, or add a co-tenant vs a separate tenancy. Both use the same pieces in `src/modules/leases/`:
+- `useTenancyChoice`, the choice state;
+- `TenancyChoicePanel`, built from `UnfinishedTenancyChoice` and `TenancyKindChoice`;
+- `leaseFormForChoice`, the form for the chosen kind;
+- `saveTenancy`, which saves co-tenant links only, finishes the resumed lease, or creates a new one.
+
+Planning confirmed this completes the approved flow; it isn't a new feature.
 
 ## T3 verification (local review harness, simulated backend, fictional data)
 The new `?persist=1` keeps the tenant, lease and link rows across a real page reload in that tab, so recovery is tested against saved rows.
@@ -60,8 +66,19 @@ The new `?persist=1` keeps the tenant, lease and link rows across a real page re
 - **Tests (`leaseFormLogic.test.ts`, 10):** these add same-name labels and details, unfinished detection, prefill, resume found from saved rows only (one lease, rent once), and co-tenant links only with the rent untouched.
 - **Evidence:** `evidence/tenant-entry-t3/01–12`.
 
+## Units › + Add lease verification (local review harness, simulated backend, fictional data; 27 Sample Road › Unit A, Casey at $1,720)
+- **Same choice:** "+ Add lease" shows "Unit A already has a current or upcoming tenancy. What are you adding?" with "Add co-tenant" and "Create separate tenancy".
+- **Co-tenant:** the picker didn't offer Casey; chose Morgan. With `?fail-lease-links=1` armed, the first Save showed the failure and created no lease; the second Save linked Morgan. Result: still 4 leases, Casey's lease links Casey and Morgan, the rent is still $1,720, and the card reads "Tenant(s): Casey Placeholder, Morgan Demo".
+- **Separate → partial failure → reload → resume:**
+  1. "Create separate tenancy" with Sam at $800; the link failed, leaving 5 leases with one unfinished.
+  2. After a full reload, "+ Add lease" offered "Unfinished tenancy". "Start a separate new tenancy instead" moved on to the co-tenant/separate choice; Cancel then "+ Add lease" offered the unfinished tenancy again.
+  3. Resume prefilled $800; chose Sam and saved. Result: **still 5 leases**, $800 stored once and linked to Sam, nothing unfinished; Casey's $1,720 lease unchanged.
+- **Tenants regression:** + Add tenant › Unit 1 shows the same choice. "Create separate tenancy" leads to the form, and "Change" returns to the choice.
+- **Tests:** `leaseFormLogic.test.ts`, 12, adding `leaseFormForChoice` and `saveTenancy` (co-tenant links only; resume finishes the chosen lease; one lease per tenancy).
+- **Evidence:** `evidence/tenant-entry-units-choice/01–02`.
+
 ## Defect found, not fixed here (shared CSS, T2's index.css)
-`.collapsible-section { overflow: clip }` (from the sticky-headers work) cuts off a picker's dropdown where it runs past the bottom of a box. In the Tenants form, with few fields below the picker, "+ Add new tenant" can be hidden or a click can land on the next box. **Workaround:** typing a name narrows the list so the options fit. The fix belongs in the shared box rule, without breaking sticky headers; it's proposed for T2/planning.
+`.collapsible-section { overflow: clip }` (from the sticky-headers work) cuts off a picker's dropdown where it runs past the bottom of a box. In the Tenants form, with few fields below the picker, "+ Add new tenant" can be hidden or a click can land on the next box. **Workaround:** typing a name narrows the list so the options fit. The fix belongs in the shared box rule, without breaking sticky headers. A **dropdown verification request for T2** (repro steps and acceptance at 1280/900/390, with sticky headers preserved) is recorded in the assignments file. This candidate is **not** called dropdown-verified until T2's fix is checked against it.
 
 ## Earlier verification (local review harness, simulated backend, fictional data)
 **Scenario A** (`?fail-lease-links=1`, 410 Example Street › Unit 2, which already has Jordan & Sam):

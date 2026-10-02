@@ -5,8 +5,8 @@ import type { Unit, UnitInput } from './unitsQueries'
 import { LeasingListingSection } from '../leasingListings/LeasingListingSection'
 import { LeaseHistorySection } from '../leases/LeaseHistorySection'
 import { LeaseForm } from '../leases/LeaseForm'
-import { leaseFormInitial, shortLeaseId } from '../leases/leaseFormLogic'
-import { UnfinishedTenancyChoice } from '../leases/UnfinishedTenancyChoice'
+import { leaseFormForChoice } from '../leases/leaseFormLogic'
+import { TenancyChoicePanel } from '../leases/TenancyChoicePanel'
 import { EndLeaseForm } from '../leases/LeaseList'
 import { useLeases } from '../leases/useLeases'
 import { getLeaseStatus } from '../leases/leasesQueries'
@@ -83,12 +83,11 @@ export function UnitCard({
     endLease,
     toggleArchived,
     todayDateString,
-    unfinished,
-    needsUnfinishedChoice,
-    resumedLease,
-    resume,
-    chooseSeparate,
+    tenancyChoice,
   } = useLeases(propertyId, unit.id)
+  // + Add lease: the same tenancy choice as Tenants › + Add tenant, then the
+  // lease form for what was chosen.
+  const leaseForm = isAdding && tenancyChoice.choice ? leaseFormForChoice(tenancyChoice.choice, tenantOptions) : null
 
   if (unitFormEditing) {
     return (
@@ -170,24 +169,20 @@ export function UnitCard({
         </>
       )}
 
-      {interactive && needsUnfinishedChoice && (
-        <>
-          <UnfinishedTenancyChoice leases={unfinished} onResume={resume} onStartNew={chooseSeparate} />
-          <button type="button" onClick={cancelForm}>
-            Cancel
-          </button>
-        </>
+      {interactive && isAdding && <TenancyChoicePanel tc={tenancyChoice} unitLabel={unit.unit_label} />}
+
+      {interactive && isAdding && !leaseForm && (
+        <button type="button" onClick={cancelForm}>
+          Cancel
+        </button>
       )}
 
-      {interactive && isAdding && resumedLease && (
-        <p className="field-hint">Finishing tenancy ID {shortLeaseId(resumedLease.id)}: choose its tenant(s) and Save. No second tenancy is created.</p>
-      )}
-
-      {interactive && isAdding && !needsUnfinishedChoice && (
+      {interactive && leaseForm && (
         <LeaseForm
-          key={resumedLease?.id ?? 'new'}
-          initial={resumedLease ? leaseFormInitial(resumedLease) : undefined}
-          tenantOptions={tenantOptions}
+          key={leaseForm.key}
+          initial={leaseForm.initial}
+          tenantsOnly={leaseForm.tenantsOnly}
+          tenantOptions={leaseForm.tenantOptions}
           onCreateTenant={addTenant}
           saving={leaseSaving}
           todayDateString={todayDateString}

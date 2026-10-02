@@ -83,3 +83,16 @@ export function leaseFormInitial(l: { start_date: string; end_date: string | nul
   const text = (v: string | number | null) => (v === null ? null : String(v))
   return { startDate: l.start_date, endDate: l.end_date, rentAmount: text(l.rent_amount), lateFee: text(l.late_fee), moveInFee: text(l.move_in_fee) }
 }
+
+// The lease form for a chosen kind of tenancy: resuming starts from the saved
+// lease; a co-tenant form shows people only and never offers someone already
+// on that tenancy. The key gives each choice a fresh form.
+export function leaseFormForChoice<T extends TenantChoice>(
+  choice: { kind: 'new' } | { kind: 'resume' | 'cotenant'; lease: Parameters<typeof leaseFormInitial>[0] & { id: string; tenants: { id: string }[] } },
+  tenantOptions: T[],
+) {
+  if (choice.kind === 'new') return { key: 'new', initial: undefined, tenantsOnly: false, tenantOptions }
+  if (choice.kind === 'resume') return { key: `resume:${choice.lease.id}`, initial: leaseFormInitial(choice.lease), tenantsOnly: false, tenantOptions }
+  const onLease = new Set(choice.lease.tenants.map((t) => t.id))
+  return { key: `cotenant:${choice.lease.id}`, initial: undefined, tenantsOnly: true, tenantOptions: tenantOptions.filter((t) => !onLease.has(t.id)) }
+}

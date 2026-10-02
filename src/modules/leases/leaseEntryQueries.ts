@@ -69,3 +69,21 @@ export async function createLease(
 export async function addCoTenants(accountId: string, leaseId: string, tenantIds: string[]) {
   return linkMissingTenants(accountId, leaseId, tenantIds)
 }
+
+// Saves what the owner chose to add: co-tenants link to the chosen tenancy;
+// otherwise a tenancy is created — or, when resuming or retrying, the same
+// lease is finished (`pendingLeaseId` first, then the resumed lease's ID).
+export async function saveTenancy(
+  accountId: string,
+  propertyId: string,
+  unitId: string,
+  choice: { kind: 'new' } | { kind: 'resume' | 'cotenant'; lease: { id: string } },
+  input: LeaseInput,
+  pendingLeaseId: string | null,
+): Promise<{ leaseId: string | null; error: { message: string } | null }> {
+  if (choice.kind === 'cotenant') {
+    const { error } = await addCoTenants(accountId, choice.lease.id, input.tenantIds)
+    return { leaseId: null, error }
+  }
+  return createLease(accountId, propertyId, unitId, input, pendingLeaseId ?? (choice.kind === 'resume' ? choice.lease.id : null))
+}

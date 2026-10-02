@@ -1,7 +1,7 @@
 import { formatDateOnly } from '../../shared/dateFormat'
-import { formatRent } from '../leases/leaseFormLogic'
-import type { Lease } from '../leases/leasesQueries'
-import '../leases/leases.css'
+import { formatRent } from './leaseFormLogic'
+import type { Lease } from './leasesQueries'
+import './leases.css'
 
 interface TenancyKindChoiceProps {
   unitLabel: string

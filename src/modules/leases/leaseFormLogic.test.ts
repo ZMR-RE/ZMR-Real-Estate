@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { leaseFormInitial, missingTenantIds, slotOptions, tenantDetail, tenantsNamed, unfinishedLeases, uniqueTenantIds, withSameNameDetails } from './leaseFormLogic'
+import { leaseFormForChoice, leaseFormInitial, missingTenantIds, slotOptions, tenantDetail, tenantsNamed, unfinishedLeases, uniqueTenantIds, withSameNameDetails } from './leaseFormLogic'
 
 const options = [
   { id: 't1', label: 'Riley Example' },
@@ -50,6 +50,15 @@ describe('lease form rules', () => {
     expect(leaseFormInitial({ start_date: '2026-11-01', end_date: null, rent_amount: 1500, late_fee: null, move_in_fee: '50' })).toEqual({
       startDate: '2026-11-01', endDate: null, rentAmount: '1500', lateFee: null, moveInFee: '50',
     })
+  })
+
+  it('one lease form per chosen kind: resume prefills, co-tenant shows people only and never someone already on it', () => {
+    const lease = { id: 'L1', start_date: '2026-11-01', end_date: null, rent_amount: 1600, late_fee: null, move_in_fee: null, tenants: [{ id: 't1' }] }
+    expect(leaseFormForChoice({ kind: 'new' }, options)).toMatchObject({ key: 'new', tenantsOnly: false, initial: undefined })
+    expect(leaseFormForChoice({ kind: 'resume', lease }, options)).toMatchObject({ key: 'resume:L1', tenantsOnly: false, initial: { rentAmount: '1600' } })
+    const co = leaseFormForChoice({ kind: 'cotenant', lease }, options)
+    expect(co.tenantsOnly).toBe(true)
+    expect(co.tenantOptions.map((o) => o.id)).toEqual(['t2', 't3'])
   })
 
   it('links only the tenants a lease is still missing', () => {
@@ -144,6 +153,21 @@ describe('createLease retry after a partial failure', () => {
     expect(db.leases).toHaveLength(1)
     expect(db.leases[0].rent_amount).toBe('1500')
     expect(db.links.map((l) => l.tenant_id)).toEqual(['t1', 't2'])
+  })
+
+  it('saveTenancy (both entry points): co-tenant links only; resume finishes the chosen lease; new creates one', async () => {
+    const { createLease, saveTenancy } = await import('./leaseEntryQueries')
+    await createLease('acct', 'prop', 'unit', { ...input, tenantIds: ['t1'] })
+    expect(await saveTenancy('acct', 'prop', 'unit', { kind: 'cotenant', lease: { id: 'lease-1' } }, { ...input, tenantIds: ['t2'], rentAmount: '9999' }, null)).toEqual({ leaseId: null, error: null })
+    expect(db.leases).toHaveLength(1)
+    expect(db.leases[0].rent_amount).toBe('1500')
+    db.failLinksOnce = true
+    const partial = await saveTenancy('acct', 'prop', 'unit', { kind: 'new' }, { ...input, tenantIds: ['t3'], rentAmount: '900' }, null)
+    expect(partial.leaseId).toBe('lease-2')
+    const resumed = await saveTenancy('acct', 'prop', 'unit', { kind: 'resume', lease: { id: 'lease-2' } }, { ...input, tenantIds: ['t3'], rentAmount: '900' }, null)
+    expect(resumed).toEqual({ leaseId: 'lease-2', error: null })
+    expect(db.leases).toHaveLength(2)
+    expect(db.links.map((l) => `${l.lease_id}:${l.tenant_id}`)).toEqual(['lease-1:t1', 'lease-1:t2', 'lease-2:t3'])
   })
 
   it('a retry after only some links saved adds just the missing ones', async () => {

@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { useTenants } from '../tenants/useTenants'
-import { createLease } from './leaseEntryQueries'
-import { unfinishedLeases } from './leaseFormLogic'
+import { saveTenancy } from './leaseEntryQueries'
 import {
   endLease as endLeaseQuery,
   listLeasesForUnit,
@@ -12,6 +11,7 @@ import {
   type LeaseInput,
 } from './leasesQueries'
 import { ensureLeaseRenewalReminders } from './leaseRenewalReminders'
+import { useTenancyChoice } from './useTenancyChoice'
 
 export const partialLeaseMessage = 'The lease was saved, but its tenants weren’t all linked. Save again to finish — it won’t create a second lease.'
 
@@ -35,13 +35,11 @@ export function useLeases(propertyId: string, unitId: string) {
   const [endingId, setEndingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   // A lease saved whose tenant links then failed: the next Save retries on
-  // this same lease instead of creating another (createLease). Also set when
-  // the owner resumes an unfinished tenancy found on this unit.
+  // this same lease instead of creating another (createLease).
   const [pendingLeaseId, setPendingLeaseId] = useState<string | null>(null)
-  const [resumedLease, setResumedLease] = useState<Lease | null>(null)
-  // Starting a separate tenancy while an unfinished one exists is an
-  // explicit choice, never the default.
-  const [separateChosen, setSeparateChosen] = useState(false)
+  // "+ Add lease" asks the same question as Tenants › + Add tenant when this
+  // unit has an unfinished or current tenancy (resume / co-tenant / separate).
+  const tc = useTenancyChoice(leases, !loading, pendingLeaseId)
 
   const refresh = useCallback(async () => {
     if (!accountId) return
@@ -70,14 +68,8 @@ export function useLeases(propertyId: string, unitId: string) {
   const startAdding = () => {
     setEditingId(null)
     setEndingId(null)
-    setResumedLease(null)
-    setSeparateChosen(false)
+    tc.reset()
     setIsAdding(true)
-  }
-
-  const resume = (lease: Lease) => {
-    setResumedLease(lease)
-    setPendingLeaseId(lease.id)
   }
 
   const startEditing = (id: string) => {
@@ -100,13 +92,13 @@ export function useLeases(propertyId: string, unitId: string) {
     // tenancy and offered next time.
     if (pendingLeaseId) refresh()
     setPendingLeaseId(null)
-    setResumedLease(null)
+    tc.reset()
   }
 
   const add = async (input: LeaseInput) => {
-    if (!accountId) return
+    if (!accountId || !tc.choice) return
     setSaving(true)
-    const { leaseId, error: saveError } = await createLease(accountId, propertyId, unitId, input, pendingLeaseId)
+    const { leaseId, error: saveError } = await saveTenancy(accountId, propertyId, unitId, tc.choice, input, pendingLeaseId)
     setSaving(false)
 
     if (saveError) {
@@ -115,16 +107,11 @@ export function useLeases(propertyId: string, unitId: string) {
       return
     }
     setPendingLeaseId(null)
-    setResumedLease(null)
+    tc.reset()
     setError(null)
     setIsAdding(false)
     await refresh()
   }
-
-  const unfinished = unfinishedLeases(leases)
-  // Adding on a unit with an unfinished tenancy: resume it or explicitly
-  // start a separate one before the form appears.
-  const needsUnfinishedChoice = isAdding && unfinished.length > 0 && !resumedLease && !separateChosen && !pendingLeaseId
 
   const save = async (id: string, input: Pick<LeaseInput, 'startDate' | 'endDate' | 'rentAmount' | 'lateFee' | 'moveInFee'>) => {
     setSaving(true)
@@ -186,10 +173,6 @@ export function useLeases(propertyId: string, unitId: string) {
     endLease,
     toggleArchived,
     todayDateString: todayDateString(),
-    unfinished,
-    needsUnfinishedChoice,
-    resumedLease,
-    resume,
-    chooseSeparate: () => setSeparateChosen(true),
+    tenancyChoice: tc,
   }
 }
