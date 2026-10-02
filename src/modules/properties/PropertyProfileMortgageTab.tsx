@@ -28,6 +28,7 @@ export function PropertyProfileMortgageTab({ property, marketValue }: PropertyPr
     isEditing,
     saving,
     error,
+    detailsError,
     formInitialValues,
     startEditing,
     cancelEditing,
@@ -59,6 +60,8 @@ export function PropertyProfileMortgageTab({ property, marketValue }: PropertyPr
     return <p>Loading mortgage details…</p>
   }
 
+  // Only a failure to LOAD the mortgage replaces the tab (there is nothing to show). A refused save or void is
+  // detailsError, shown inside the form or summary the user acted on, which stays on screen with their entries.
   if (error) {
     return <p role="alert">{error}</p>
   }
@@ -70,6 +73,7 @@ export function PropertyProfileMortgageTab({ property, marketValue }: PropertyPr
           key={mortgageDetails?.id ?? 'new'}
           initialValues={formInitialValues}
           saving={saving}
+          error={detailsError}
           canCancel={mortgageDetails !== null}
           onSave={save}
           onCancel={cancelEditing}
@@ -84,6 +88,7 @@ export function PropertyProfileMortgageTab({ property, marketValue }: PropertyPr
               onEdit={startEditing}
               onVoid={voidMortgage}
               voiding={saving}
+              error={detailsError}
             />
 
             <MortgagePayoffScenarioForm

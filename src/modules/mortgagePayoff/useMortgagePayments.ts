@@ -3,10 +3,11 @@ import { useAuth } from '../../shared/auth/AuthContext'
 import {
   createMortgagePayment,
   listMortgagePayments,
-  voidMortgagePayment,
+  voidMortgageActivity,
   type MortgagePayment,
   type MortgagePaymentInput,
 } from './mortgagePayoffQueries'
+import { friendlyDatabaseError, voidRefusalMessage } from './mortgageBalanceIntegrity'
 
 function todayDateString() {
   return new Date().toISOString().slice(0, 10)
@@ -71,17 +72,22 @@ export function useMortgagePayments(propertyId: string) {
     return true
   }
 
-  // The only "removal" path for a payment (roadmap 9.20, same as escrow) —
-  // never a hard DELETE. Doesn't reverse the payment's earlier effect on
-  // mortgage_details.current_balance; it corrects the record, not the
-  // balance.
+  // The only "removal" path (roadmap 9.20) — never a hard DELETE. The database reverses the entry's balance effect
+  // exactly once when that is safe; otherwise it voids without adjusting (the row shows why), or refuses and opens an
+  // Action Queue balance review (balance integrity, 20261004100000).
   const voidPayment = async (id: string): Promise<boolean> => {
     setLoggingPayment(true)
-    const { error: voidError } = await voidMortgagePayment(id)
+    const { data: result, error: voidError } = await voidMortgageActivity('payment', id)
     setLoggingPayment(false)
 
     if (voidError) {
-      setPaymentError(voidError.message)
+      setPaymentError(friendlyDatabaseError(voidError))
+      return false
+    }
+    // A refused void leaves the entry active; the database already opened the Action Queue balance review.
+    const refusal = voidRefusalMessage(result?.outcome ?? null)
+    if (refusal) {
+      setPaymentError(refusal)
       return false
     }
 

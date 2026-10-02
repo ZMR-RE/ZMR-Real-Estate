@@ -1,0 +1,3 @@
+Source: /Users/janki/.codex/attachments/bcd86978-94da-4619-ae45-c87df58ad5d5/Pasted text.txt (relayed by the owner/planning, 2026-10-01).
+Author: T3. Reviewed commit 4290a08 (evidence e62dff1). Copied unchanged by T1. SHA-256:
+60bb31a87c02dfff108bf747f0d843e839a3b5a0f0bbd59ec98143ff0967f6ff

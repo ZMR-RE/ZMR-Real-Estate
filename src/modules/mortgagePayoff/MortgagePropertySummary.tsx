@@ -9,6 +9,8 @@ interface MortgagePropertySummaryProps {
   onEdit: () => void
   onVoid: () => void
   voiding: boolean
+  // A refused void, shown beside the actions; the summary stays as it was.
+  error: string | null
 }
 
 const percentFormatter = new Intl.NumberFormat('en-US', {
@@ -23,6 +25,7 @@ export function MortgagePropertySummary({
   onEdit,
   onVoid,
   voiding,
+  error,
 }: MortgagePropertySummaryProps) {
   return (
     <div className="mortgage-property-summary">
@@ -80,6 +83,7 @@ export function MortgagePropertySummary({
         <p>Log a market value for this property (Overview tab) to see equity and LTV.</p>
       )}
 
+      {error && <p role="alert">{error}</p>}
       <button type="button" onClick={onEdit}>
         Edit mortgage details
       </button>

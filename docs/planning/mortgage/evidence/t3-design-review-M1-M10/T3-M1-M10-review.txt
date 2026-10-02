@@ -1,0 +1,109 @@
+T3 → T1 (via the owner): consolidated findings on mortgage integrity contract bed4174, against the owner's three decisions
+
+Verdict: the contract's direction is sound. The core design holds up:
+- locking the loan row first;
+- linking each entry to its loan on the server, with no backfill;
+- immutable entries with one-way voids;
+- an append-only effects record;
+- separate principal and escrow reset counters;
+- truthful refusals;
+- freezing inactive loans.
+
+The material corrections below must be incorporated before implementation. When T1 returns the fixed implementation, I'll review it against this list.
+
+I made no repo edits and had no production access. I reused my saved C1–C7 reproduction rather than re-running it.
+
+Material corrections
+
+M1. Older pages' balance edits are refused: enforce by which code path writes, not by a header. This applies the owner's choice 2.
+- Add a BEFORE UPDATE OF current_balance, escrow_balance trigger on mortgage_details. It raises "This page is out of date. Reload, then edit again. Nothing was saved." unless the write comes from a server-side writer.
+- Base the check on current_user, not on anything the client sends. The legitimate writers all run as the function owner: the add trigger, void/reversal, reset_mortgage_balance, and loan creation if routed through a function. A direct API update runs as authenticated. The guard function itself must not run with the owner's rights.
+- No version header and no client-settable flag are involved, so nothing can be spoofed.
+- Consequence: the existing add triggers currently run with the caller's rights. They must become server-side (definer) writers, or the guard would refuse every payment.
+- The exact compatibility effect on older pages:
+  - Edit → Save of any loan field is refused, including lender, rate and loan number. updateMortgageDetails(id, input) always resends both balances, and UPDATE OF fires even when a value is unchanged.
+  - Still work: creating a loan (an insert with opening balances), logging payments and escrow entries (now locked and linked on the server), voiding entries (under the new rules), and voiding a loan (it doesn't write balance columns).
+- Remove from the contract: the legacy_form_reset path, the older-page parts of tests 3 and 4, and the older-browser overwrite limits in §5.
+- The current frontend must:
+  - leave both balance columns out of ordinary edits;
+  - change balances only through reset_mortgage_balance;
+  - record a new loan's opening balances as an initial reset effect, with a statement date if known.
+
+M2. Resolving a review must not clear unrelated causes. §2.6 currently says "the reset closes it". Change to:
+- Each cause is recorded separately: loan (or property, for unlinked legacy entries), balance (principal or escrow), source entry, outcome and status.
+- A reset or confirmation of one balance resolves only the open causes for that balance on that loan, and only those that existed before the confirmation's balance version.
+- Causes created while the owner was reviewing stay open.
+- Unlinked legacy property causes are resolved only explicitly.
+- The item disappears only when no open causes remain.
+
+M3. "Confirm" must count as a reset. Closing a review by confirming a balance must be recorded as a same-value reset of that balance, with its statement date. That raises that balance's reset counter, so a later void of an earlier entry skips its reversal instead of correcting the balance a second time.
+
+M4. Deduplication is enforced by the database, and the item can't be closed with a generic checkbox.
+- action_items has no uniqueness or source key: no unique index, and lease reminders are deduplicated in the app.
+- Integrity reviews: build the Action Queue item from open cause rows, following the existing useNeedsEntity pattern. Then:
+  - deduplication is natural (one cause per entry and outcome, kept unique by a constraint);
+  - there are no stored reminder rows to drift;
+  - the generic "complete" checkbox can't make an unresolved cause disappear.
+- Monthly reviews (§2.8): keep them as their own kind with a database-enforced unique (loan, period). Neither kind ever completes or closes the other. The monthly task may only link read-only to open integrity causes.
+
+M5. Historical entries dated before a statement reset are counted twice.
+- Suppose the owner resets a balance from a Sept 30 statement, then records a historical payment dated Sept 1. The insert subtracts it again, even though the statement already included it.
+- The owner's priority is historical manual entry, so this needs a rule:
+  - every reset carries a statement_date (default: today);
+  - an entry dated on or before the latest statement date for that balance is stored but not applied;
+  - its outcome is "covered by statement", and it raises a cause unless the owner explicitly chooses to apply it;
+  - voiding it later reverses nothing.
+
+M6. Repeated refusals must not fail on the effects record's uniqueness rule. A void_refused effect, or another skip on the same entry, can occur more than once when the owner retries. With unique (source_kind, source_id, effect), the second refusal would hit a unique-violation error and roll back the clean refusal. Either use ON CONFLICT DO NOTHING for refusals, or exclude void_refused from that uniqueness rule. Keep the uniqueness rule for applied, reversed and reset.
+
+M7. The stale-form check must cover only the balance being reset.
+- One shared balance_version means an escrow deposit makes a principal-only statement reset fail, a false refusal.
+- Use separate principal and escrow version counters, and check only the counters for the balances included in the reset.
+- The reset counters already sit in the right place; the version counter should follow the same split.
+
+M8. Lock ordering and deadlock recovery. The lock order is otherwise sound:
+- adds and resets lock only the loan;
+- a current-frontend void locks the loan, then the entry (the loan link never changes, so reading it before locking is safe);
+- cause and effect rows are written while the loan is locked;
+- a legacy void with no loan link locks the property's active loan if there is one, otherwise it relies on the per-entry uniqueness rule.
+
+Remaining gaps:
+- The one cycle the contract states (an older-page void racing a current-frontend void of the same entry) ends with Postgres aborting one side (deadlock error 40P01). The current frontend must show it as "Changed at the same time — nothing was saved; try again" rather than a raw error.
+- Test 2 should check that side's message as well as the final state.
+
+M9. Audit table constraint. audit_log.table_name has a check constraint limited to ('properties','llcs','mortgage_details'). The migration must extend it for the two activity tables, or the new audit triggers will fail.
+
+M10. Update the test expectations to match M1 and M7.
+- Raw UPDATE cases (old C6/C7 style): the balance update is refused, and the payment applies.
+- Through reset_mortgage_balance:
+  - a reset holding the lock, then a payment: the payment waits, then applies after the reset (1950);
+  - a payment holding the lock, then a reset using a version read beforehand: refused as stale.
+- Also test:
+  - an escrow-only entry doesn't make a principal reset stale;
+  - a backdated entry after a statement reset (M5);
+  - repeated refusals (M6);
+  - partial resolution: resolving principal leaves the escrow cause open (M2);
+  - a cause raised during review stays open;
+  - generic completion can't hide causes (M4);
+  - the monthly (loan, period) task can't be duplicated across two tabs.
+
+Confirmed against the owner's decisions
+
+- Inactive or replaced loans: frozen, with no automatic review task. This is already the contract default (skipped_loan_inactive, replacement never touched, reports unaffected).
+- Over-original reversals: refused with a review, already specified. Define the test precisely: refuse when current_balance + principal_delta > original_loan_amount.
+- Older pages: refused until reload, covered by M1.
+- Negative escrow refusal: refused atomically and truthfully. Older pages get the message but no review item. Acceptable, and stated.
+
+Action Queue integration: owner T1, within this batch
+
+Files T1 can own inside actionQueue/:
+- a queries file for the cause rows;
+- useMortgageBalanceReview.ts;
+- MortgageBalanceReviewItem.tsx;
+- the database objects, in the mortgage migration.
+
+Shared-file check: ActionQueueBoard.tsx needs a small wiring change next to T2's NeedsEntityItem. Before editing it, T1 should run the shared-file ownership check with T2 and sequence if T2 is mid-edit. No other Action Queue behaviour changes.
+
+Monthly task: if the monthly review task (§2.8) ships in this batch, it uses its own kind and unique key (M4). If not, it's left out explicitly rather than half-built.
+
+Next: T1 incorporates M1–M10 and returns the fixed implementation (exact commit). I'll review it against this list and the saved C1–C7 control, with no production access.

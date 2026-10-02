@@ -1,0 +1,113 @@
+== CONTROL: forward migration rolled back (old triggers); defects expected
+== mode: --control   repo HEAD: e13340e   migrations: 111   2026-10-01T19:36:38Z
+-- Concurrency (T3 C1–C7 method)
+FAIL  R1 payment 100 || 50 -> 850   [expected '850.00/100.00' got '950.00/100.00']
+FAIL  R2 deposit 30 || 20 -> escrow 150   [expected '1000.00/150.00' got '1000.00/120.00']
+FAIL  R3 disbursement 80 || 80 -> second refused   [expected '1000.00/20.00 rows=1' got '1000.00/20.00 rows=2']
+FAIL  R4 principal 80 || 80 on 100 -> second refused   [expected '20.00/100.00 rows=1' got '20.00/100.00 rows=2']
+PASS  R5 payment || deposit (columns independent)
+FAIL  R6 reset to 2000 || then payment 50 -> 1950   [expected '1950.00/100.00' got '950.00/100.00']
+FAIL  R7 payment || then STALE reset -> reset refused, 900   [expected '900.00/100.00 changed since you opened' got '900.00/100.00 ']
+FAIL  R8 old-browser balance edit (C6/C7 path) refused, payment kept   [expected '900.00/100.00 out of date' got '2000.00/100.00 ']
+FAIL  R9 concurrent double void -> reversed once   [expected '1000.00/100.00 1' got '900.00/100.00 0']
+FAIL  R10 void || new payment -> 950   [expected '950.00/100.00' got '850.00/100.00']
+FAIL  R11 old-browser void || current void of same entry -> one reversal   [expected '1000.00/100.00 1' got '900.00/100.00 0']
+-- Linkage, immutability, one-way void
+FAIL  F1 new entry linked server-side to the active loan   [expected '51587594-296e-495e-9276-06064773b58d' got '']
+FAIL  F1b client-supplied wrong mortgage_id refused   [expected 'ZM5M1' got '23503']
+ERROR:  function void_mortgage_activity(unknown, unknown) does not exist
+LINE 1: ...ub='aaaaaaaa-0000-0000-0000-00000000000a'; select void_mortg...
+                                                             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+FAIL  F2 current void reverses exactly   [expected 'reversed 1000.00/100.00' got ' 900.00/100.00']
+ERROR:  function void_mortgage_activity(unknown, unknown) does not exist
+LINE 1: ...ub='aaaaaaaa-0000-0000-0000-00000000000a'; select void_mortg...
+                                                             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+FAIL  F2b repeated void is a no-op   [expected 'already_voided 1000.00/100.00' got ' 900.00/100.00']
+FAIL  F3 un-void refused   [expected 'ZM5M2' got 'OK']
+FAIL  F4 fact edit refused   [expected 'ZM5M2' got '23514']
+FAIL  F4b delete refused   [expected 'ZM5M2' got 'OK']
+FAIL  F5 old-browser void (plain UPDATE) reverses with outcome   [expected 'OK reversed 1000.00/100.00' got 'OK  860.00/100.00']
+FAIL  F5b client can't set void details without voiding   [expected 'ZM5M2' got 'OK']
+-- Resets (separate principal/escrow epochs; same-value; stale; old browsers)
+FAIL  F6 principal reset   [expected 'OK' got 'ERR']
+ERROR:  function void_mortgage_activity(unknown, unknown) does not exist
+LINE 1: ...ub='aaaaaaaa-0000-0000-0000-00000000000a'; select void_mortg...
+                                                             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+FAIL  F6b void payment after principal reset -> skipped, balance unchanged   [expected 'skipped_reset_after_entry 950.00/130.00' got ' 900.00/130.00']
+FAIL  F6c ...creates one principal review cause   [expected '1' got '0']
+ERROR:  function void_mortgage_activity(unknown, unknown) does not exist
+LINE 1: ...ub='aaaaaaaa-0000-0000-0000-00000000000a'; select void_mortg...
+                                                             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+FAIL  F6d escrow unaffected by principal reset: deposit void reverses   [expected 'reversed 950.00/100.00' got ' 900.00/130.00']
+FAIL  F7 same-value reset (deliberate confirmation) accepted   [expected 'OK' got 'ERR']
+ERROR:  function void_mortgage_activity(unknown, unknown) does not exist
+LINE 1: ...ub='aaaaaaaa-0000-0000-0000-00000000000a'; select void_mortg...
+                                                             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+FAIL  F7b ...counts as a reset: later void skips   [expected 'skipped_reset_after_entry 900.00/100.00' got ' 900.00/100.00']
+PASS  F8 stale form (version moved) refused, nothing saved
+FAIL  F8b old-browser changed balance refused (ZM5M6)   [expected 'ZM5M6' got 'OK']
+PASS  F8c old-browser unchanged resend + other edit allowed, not a reset
+FAIL  F8d counters can't be set directly   [expected 'ZM5M6' got 'OK']
+-- Inactive/replaced loan (frozen, no review cause)
+ERROR:  function void_mortgage_activity(unknown, unknown) does not exist
+LINE 1: ...ub='aaaaaaaa-0000-0000-0000-00000000000a'; select void_mortg...
+                                                             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+FAIL  F9 void on replaced loan: A frozen, B untouched   [expected 'skipped_loan_inactive A=900.00/100.00 B=500.00/0.00' got ' A=900.00/100.00 B=500.00/0.00']
+PASS  F9b no review cause for an inactive loan
+PASS  F9c reset on inactive loan refused
+-- Unlinked legacy entries
+ERROR:  function void_mortgage_activity(unknown, unknown) does not exist
+LINE 1: ...ub='aaaaaaaa-0000-0000-0000-00000000000a'; select void_mortg...
+                                                             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+FAIL  F10 legacy void: flag only, balance unchanged   [expected 'skipped_unlinked_legacy 1000.00/100.00 t' got ' 1000.00/100.00 t']
+FAIL  F10b ...principal review cause on the active loan   [expected '1' got '0']
+-- Escrow refusals and order
+ERROR:  function void_mortgage_activity(unknown, unknown) does not exist
+LINE 1: ...ub='aaaaaaaa-0000-0000-0000-00000000000a'; select void_mortg...
+                                                             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+FAIL  F11 void deposit used by a later disbursement -> refused, not voided   [expected 'refused_negative_escrow f 1000.00/10.00' got ' f 1000.00/10.00']
+FAIL  F11b ...refusal and escrow review cause committed together   [expected '1 1' got '0 0']
+FAIL  F11c old-browser same void -> ZM5M3, nothing recorded   [expected 'ZM5M3 1' got 'OK 0']
+ERROR:  function void_mortgage_activity(unknown, unknown) does not exist
+LINE 1: ...ub='aaaaaaaa-0000-0000-0000-00000000000a'; select void_mortg...
+                                                             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+ERROR:  function void_mortgage_activity(unknown, unknown) does not exist
+LINE 1: ...ub='aaaaaaaa-0000-0000-0000-00000000000a'; select void_mortg...
+                                                             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+FAIL  F12 void disbursement then deposit -> both reverse   [expected 'reversed reversed 1000.00/100.00' got '  1000.00/10.00']
+-- Over-original refusal (owner choice 3)
+ERROR:  function void_mortgage_activity(unknown, unknown) does not exist
+LINE 1: ...ub='aaaaaaaa-0000-0000-0000-00000000000a'; select void_mortg...
+                                                             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+FAIL  F13 void raising balance above original -> refused, review cause   [expected 'refused_over_original 950.00/0.00 1' got ' 950.00/0.00 0']
+FAIL  F13b old-browser same void -> ZM5M4   [expected 'ZM5M4' got 'OK']
+-- Review resolution is per balance
+ERROR:  function void_mortgage_activity(unknown, unknown) does not exist
+LINE 1: ...ub='aaaaaaaa-0000-0000-0000-00000000000a'; select void_mortg...
+                                                             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+ERROR:  function void_mortgage_activity(unknown, unknown) does not exist
+LINE 1: ...ub='aaaaaaaa-0000-0000-0000-00000000000a'; select void_mortg...
+                                                             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+FAIL  F14 two open causes (principal + escrow)   [expected '1/1' got '0/0']
+FAIL  F14b resolving principal leaves the escrow cause open   [expected '0/1' got '0/0']
+-- Permissions and audit
+PASS  F15 clients can't write effects
+PASS  F15b clients can't write review causes
+PASS  F15c another workspace sees none of A's effects
+FAIL  F15d another workspace can't void A's entry   [expected 'not found' got '']
+FAIL  F16 audit rows for a void   [expected 't' got 'f']
+PASS  F16b audit rows for a reset
+== RESULT (--control): 9 passed, 40 failed

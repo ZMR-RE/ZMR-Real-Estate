@@ -3,12 +3,15 @@ import { useAuth } from '../../shared/auth/AuthContext'
 import {
   createMortgageDetails,
   getMortgageDetails,
+  resetMortgageBalance,
   updateMortgageDetails,
   voidMortgageDetails,
   type MortgageDetails,
   type MortgageDetailsInput,
 } from './mortgagePayoffQueries'
 import { computeEquity, type EquitySnapshot } from './mortgagePayoffMath'
+import { friendlyDatabaseError } from './mortgageBalanceIntegrity'
+import { saveMortgageDetails } from './mortgageDetailsSave'
 
 const BLANK_MORTGAGE: MortgageDetailsInput = {
   lender_name: null,
@@ -37,7 +40,10 @@ export function useMortgageDetails(propertyId: string, marketValue: string | nul
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  // error: the loan couldn't be loaded (the tab can't show it). detailsError: a save or void was refused — shown in
+  // the box the user acted on, which stays as it was.
   const [error, setError] = useState<string | null>(null)
+  const [detailsError, setDetailsError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -59,34 +65,36 @@ export function useMortgageDetails(propertyId: string, marketValue: string | nul
   }, [refresh])
 
   const startEditing = () => {
-    setError(null)
+    setDetailsError(null)
     setIsEditing(true)
   }
 
   const cancelEditing = () => {
     if (!mortgageDetails) return // nothing to fall back to yet
-    setError(null)
+    setDetailsError(null)
     setIsEditing(false)
   }
 
+  // A refused save keeps the form open with the user's entries and shows the reason inside it (detailsError) —
+  // never the tab-level load error. The flow itself, including every refusal, lives in mortgageDetailsSave.ts.
   const save = async (input: MortgageDetailsInput): Promise<boolean> => {
     if (!accountId) return false
-
     setSaving(true)
-    const { data, error: saveError } = mortgageDetails
-      ? await updateMortgageDetails(mortgageDetails.id, input)
-      : await createMortgageDetails(accountId, propertyId, input)
+    const result = await saveMortgageDetails(
+      {
+        create: (values) => createMortgageDetails(accountId, propertyId, values),
+        reset: resetMortgageBalance,
+        update: updateMortgageDetails,
+        fetchLatest: () => getMortgageDetails(propertyId),
+      },
+      mortgageDetails,
+      input,
+    )
     setSaving(false)
-
-    if (saveError) {
-      setError(saveError.message)
-      return false
-    }
-
-    setError(null)
-    setMortgageDetails(data)
-    setIsEditing(false)
-    return true
+    if (result.details) setMortgageDetails(result.details)
+    setDetailsError(result.error)
+    if (result.ok) setIsEditing(false)
+    return result.ok
   }
 
   // The only "removal" path (roadmap 9.20) — never a hard DELETE. Leaves
@@ -101,11 +109,11 @@ export function useMortgageDetails(propertyId: string, marketValue: string | nul
     setSaving(false)
 
     if (voidError) {
-      setError(voidError.message)
+      setDetailsError(`${friendlyDatabaseError(voidError)} The mortgage was not voided.`)
       return false
     }
 
-    setError(null)
+    setDetailsError(null)
     return true
   }
 
@@ -120,6 +128,7 @@ export function useMortgageDetails(propertyId: string, marketValue: string | nul
     isEditing,
     saving,
     error,
+    detailsError,
     formInitialValues: mortgageDetails ?? BLANK_MORTGAGE,
     startEditing,
     cancelEditing,

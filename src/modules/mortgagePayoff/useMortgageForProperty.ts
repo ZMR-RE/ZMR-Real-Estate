@@ -77,6 +77,7 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     isEditing: details.isEditing,
     saving: details.saving,
     error,
+    detailsError: details.detailsError,
     formInitialValues: details.formInitialValues,
     startEditing: details.startEditing,
     cancelEditing: details.cancelEditing,

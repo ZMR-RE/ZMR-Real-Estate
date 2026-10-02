@@ -1,0 +1,10 @@
+PASS  disable: effects/causes/columns retained
+PASS  disable: activity audit triggers kept
+PASS  disable: integrity functions retained (re-enable needs them)
+PASS  disable: pre-integrity write behaviour (applied, not linked)
+PASS  disable: older-page balance edit possible again (pre-integrity)
+PASS  enable: new entries linked and applied again
+PASS  enable: older-page balance change refused again
+PASS  enable: entry recorded while disabled voids as unlinked legacy (no reversal, review cause)
+PASS  enable: entry recorded before the disable still reverses exactly
+PASS  recovery README forbids marking the migration reverted

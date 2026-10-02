@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { Fragment, useState, type FormEvent } from 'react'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
 import { formatCurrencyInputOnBlur } from './mortgagePayoffFormat'
 import type { MortgageDetailsInput } from './mortgagePayoffQueries'
@@ -6,6 +6,8 @@ import type { MortgageDetailsInput } from './mortgagePayoffQueries'
 interface MortgageDetailsFormProps {
   initialValues: MortgageDetailsInput
   saving: boolean
+  // A refused save, shown inside the form; the form keeps the user's entries.
+  error: string | null
   canCancel: boolean
   onSave: (input: MortgageDetailsInput) => void
   onCancel: () => void
@@ -14,6 +16,7 @@ interface MortgageDetailsFormProps {
 export function MortgageDetailsForm({
   initialValues,
   saving,
+  error,
   canCancel,
   onSave,
   onCancel,
@@ -163,6 +166,19 @@ export function MortgageDetailsForm({
         }
       />
 
+      <label htmlFor="balance_statement_date">Statement date for these balances</label>
+      <input
+        id="balance_statement_date"
+        type="date"
+        value={values.balance_statement_date ?? ''}
+        onChange={(e) => setValues((prev) => ({ ...prev, balance_statement_date: e.target.value || null }))}
+      />
+      <p className="field-hint">
+        Optional, and used only when you change a balance here: the statement date the new figure comes from. Entries dated
+        on or before it are flagged for review. To confirm an unchanged balance, use “matches my statement” in the Action
+        Queue.
+      </p>
+
       <label htmlFor="term_years">
         Term (years)<span className="required-marker">*</span>
       </label>
@@ -176,6 +192,18 @@ export function MortgageDetailsForm({
         required
       />
 
+      {/* Beside Save, where the user is looking when a save is refused (the form is long). */}
+      {error && (
+        <p role="alert">
+          {/* Multi-line messages (stale-balance conflict) show one fact or choice per line. */}
+          {error.split('\n').map((line, i) => (
+            <Fragment key={i}>
+              {i > 0 && <br />}
+              {line}
+            </Fragment>
+          ))}
+        </p>
+      )}
       <button type="submit" disabled={saving}>
         {saving ? 'Saving…' : 'Save mortgage details'}
       </button>

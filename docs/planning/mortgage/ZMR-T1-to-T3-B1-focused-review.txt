@@ -1,0 +1,50 @@
+T1 -> T3 (via owner) — focused review request: mortgage integrity B-1 fix. SEND NOW (read-only review).
+
+CANDIDATE (fixed): f245551ceee289b0dfd22e8178c82ea3e1894731, branch t1/mortgage-integrity-b1.
+Parent: abf2b35 (T3-cleared, Practice-tested). abf2b35 is NOT release-ready because of B-1.
+Review diff: git diff abf2b35 f245551 (8 files, application only; supabase/** unchanged, so the migration, the
+database suites and the recovery drafts are byte-identical to what T3 cleared).
+
+B-1 (hosted Practice, 2026-10-01; record docs/planning/mortgage/ZMR-mortgage-integrity-practice-results.md on
+t1/mortgage-integrity-final @ 44d8da3): a server refusal on "Save mortgage details" (seen: future statement date,
+22023) replaced the whole Mortgage tab with the message; the form and its entries were lost until reload.
+Root cause: useMortgageDetails kept load failures and save/void refusals in one `error`; PropertyProfileMortgageTab
+replaces the tab whenever `error` is set (correct only for a failed load).
+
+FIX
+- useMortgageDetails: `error` = load failure only (tab replacement kept: nothing to show). New `detailsError` = refused
+  save/void; cleared on Edit/Cancel/success.
+- MortgageDetailsForm shows detailsError beside Save; MortgagePropertySummary beside Void; both stay mounted (form key
+  unchanged, so entered values survive, including after the stored record is adopted).
+- Save flow moved, same substance, to React-free mortgageDetailsSave.ts (injected queries). Behaviour changes:
+  messages add "Nothing was saved; your entries are still in the form."; 40P01/40001 mapped for create/update/void too
+  (previously raw); after a partly applied save (balance reset committed, details update refused) the stored loan is
+  reloaded so the next attempt quotes the new version (previously the stale version caused a guaranteed ZM5M5).
+- Client-side refusal "enter 0.00 rather than leaving escrow blank" also used to replace the tab; now inline.
+
+PLEASE CHECK
+1. No refusal path can still reach the tab-level `error` (useMortgageDetails calls setError only in refresh).
+2. ZM5M5 and partial-save paths adopt the stored record without remounting the form (key = loan id).
+3. Void-mortgage refusal message and placement; a successful void still re-fetches and falls back to the create form.
+4. Payments/escrow paths untouched (they already separate paymentError/escrowTransactionError from load errors).
+
+EVIDENCE (fresh --no-local clone of f245551): tsc -b clean; build clean; vitest 310 passed + 1 skipped (abf2b35:
+296 + 1; +14: mortgageDetailsSave.test.ts 10, MortgageDetailsErrors.test.tsx 4); oxlint 83 warnings = baseline.
+
+GAP: not yet exercised in a browser against a backend (the Practice window is closed; a hosted re-check of the
+refused-save display needs a new coordinated window and owner approval). Static renders prove the form/summary keep
+values and show the alert; the flow tests prove every refusal returns ok:false without closing.
+
+FLAG — PARTIAL SAVE (please check explicitly)
+If the balance reset COMMITTED and then the ordinary details update failed, the message must not say "Nothing was
+saved". Current wording in f245551 (src/modules/mortgagePayoff/mortgageDetailsSave.ts:78), exactly:
+  `The balance was saved, but the other loan details were not: ${message} Your entries are still in the form.`
+where ${message} is friendlyDatabaseError(updateError) (the server message, or the 40P01/40001 retry sentence).
+The "Nothing was saved; your entries are still in the form." suffix is used ONLY on paths where nothing committed:
+create refused, reset refused (before any update), details-only update refused. Test:
+mortgageDetailsSave.test.ts "balance saved but other details refused" asserts the full string with toBe (so the
+not-saved suffix is absent) and that the stored loan is adopted (fetchLatest called once).
+Note for review: if the update failure is 40P01, ${message} is "Changed at the same time somewhere else, so nothing was
+saved. Try again." — inside the partial-save sentence this reads as contradictory ("The balance was saved, but … nothing
+was saved"). T1 flags this as a wording defect in f245551 for T3's decision; it is NOT changed here, to keep the
+candidate fixed for review.
