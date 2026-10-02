@@ -59,6 +59,11 @@ All counts are from read-only SQL.
 
 **Preservation:** the full-row fingerprints of all 436 pre-existing rows in 21 tables are identical before and after. Every pre-existing lease's rent, dates, archive flag and tenant links are unchanged, as are all action items (0 before and after) and audit rows. Every new row is an identified fixture: `evidence/practice-billing-tenant/03`, `04`, `07`, `08`.
 
+**Evidence file 09** (`09-new-rows-fixtures-only.json`) is the window's saved `bt-new` output, committed after the window **without re-running Practice**:
+- It's filtered to the 34 identified fixture rows. The 7 `property_ownership_versions` rows for pre-existing Practice properties are excluded; the query returns every row of that table because it has no timestamp, and their fingerprints were unchanged.
+- It was checked for secrets (tokens, keys, passwords, connection strings) and none were found. The only emails are the four `zmr-test-bt-…@example.test` addresses.
+- **T3 cleared the parser fix at `b31221d`.**
+
 **Closed:**
 - the test login is signed out;
 - the scratch clone's Practice link and env file are removed (the runner now refuses: "clone is not linked to Practice");
