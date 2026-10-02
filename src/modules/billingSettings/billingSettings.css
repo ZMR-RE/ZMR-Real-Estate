@@ -116,3 +116,15 @@
   border-radius: var(--radius-sm);
   background: var(--surface-sunken);
 }
+
+/* Payment instructions read as text, not as a short field value: the whole
+   row, normal weight, at most ~70 characters a line, line breaks kept. */
+.field-grid .billing-instructions {
+  grid-column: 1 / -1;
+}
+
+.field-grid .billing-instructions dd {
+  max-width: 70ch;
+  font-weight: 400;
+  white-space: pre-wrap;
+}

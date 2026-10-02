@@ -77,7 +77,7 @@ export function PropertyBillingSettingsSection({ propertyId }: PropertyBillingSe
           )}
           {entity?.invoice_code && <div className="field"><dt>Invoice code</dt><dd>{entity.invoice_code}</dd></div>}
           {effective.text && (
-            <div className="field">
+            <div className="field billing-instructions">
               <dt>Payment instructions</dt>
               <dd>
                 {effective.text}
@@ -127,10 +127,10 @@ export function PropertyBillingSettingsSection({ propertyId }: PropertyBillingSe
       )}
       {addedNote && <p className="field-hint" role="status">{addedNote}</p>}
       <p className="field-hint">
-        The person or business named on this property’s rent invoices. Choose it explicitly — it isn’t taken from the ownership list or from who is signed in. Already-issued invoices keep the issuer they were issued by.
+        The person or business on this property’s invoices. Choose it here — it isn’t taken from ownership. Issued invoices keep their issuer.
       </p>
       <p className="field-hint">
-        The list is your owner records. Not listed? Use <em>+ Add person</em> — it doesn’t make them an owner of any property. A record that doesn’t say “person” yet can be set to Individual under Identity on its profile.
+        Not listed? Use <em>+ Add person</em> (it doesn’t make them an owner). An existing owner record can be set to Individual on its profile.
       </p>
 
       <label htmlFor={`billing-pay-${propertyId}`}>This property’s payment instructions</label>
@@ -139,7 +139,7 @@ export function PropertyBillingSettingsSection({ propertyId }: PropertyBillingSe
         {draft.entityId && draft.entityId === row?.billing_entity_id && entityDefault
           ? `Leave blank to use ${entityName}’s default: “${entityDefault}”.`
           : 'Leave blank to use the invoice issuer’s default (Branding & documents).'}{' '}
-        An approved invoice that isn’t issued yet will need approving again; issued invoices keep the instructions they were issued with.
+        Approved, unissued invoices need approving again; issued invoices keep theirs.
       </p>
       {error && <p className="billing-callout billing-callout--error" role="alert">{error}</p>}
       <div className="billing-actions">

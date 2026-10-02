@@ -73,3 +73,8 @@ An issuer can be a person, so issuer-facing copy no longer says "entity":
   - after cancelling Billing settings and reopening Edit, both people are still listed once.
 - **Limitation:** this runs against the simulated backend, whose insert returns immediately. Against a real network the guard holds for the whole save.
 - **Evidence:** `evidence/billing-add-person-guard/01`.
+
+## Owner review fixes P4, P5 (October 2; owner chose "fix now")
+- **P4, readable payment instructions:** in the Billing settings view, the instructions now take the full row at normal weight, at most ~70 characters a line, with line breaks kept (`.billing-instructions` in `billingSettings.css`). Before, they were large semibold text squeezed into a third of the width.
+- **P5, shorter explanations:** the issuer field hints and the + Add person hint are shortened; their meaning is unchanged. "Saved right away as a person who can issue invoices — not as an owner. They stay even if you cancel Billing settings."
+- **Unchanged:** saving, the Save person guard and same-name behaviour.
