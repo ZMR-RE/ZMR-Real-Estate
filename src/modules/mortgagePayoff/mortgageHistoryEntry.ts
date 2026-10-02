@@ -26,7 +26,7 @@ export function effectiveHistoryOnly(entryDate: string, statementDate: string | 
 
 // Row label for a history entry in the payment / escrow lists.
 export function historyRowNote(voided: boolean): string {
-  return voided ? 'History only, so the balance was not affected.' : 'History · included in opening balance'
+  return voided ? 'History only; balance not affected.' : 'History · included in opening balance'
 }
 
 export interface DuplicateCounts {
@@ -72,7 +72,7 @@ export async function saveMortgageEntry(insert: (ack: number | null) => PromiseL
     return { kind: 'duplicate', counts, message: changed + duplicatePromptMessage(date, counts) }
   }
   if (error.code === 'ZM5MB') {
-    return { kind: 'error', message: 'The matching entry is no longer active, so this isn\'t a duplicate now. Nothing was saved; choose Save again to record it normally.' }
+    return { kind: 'error', message: 'The matching entry is no longer active, so this isn\'t a duplicate now. Nothing was saved; your entries are still in the form. Submit them again to record the entry normally.' }
   }
   // ZM5MC (history not eligible) and the rest: the database's own explanation, or the friendly retry text.
   if (isSimultaneousChange(error)) return { kind: 'error', message: friendlyDatabaseError(error) }  // already says nothing was saved

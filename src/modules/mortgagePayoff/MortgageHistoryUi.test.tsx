@@ -47,7 +47,7 @@ describe('MortgagePaymentList with history rows', () => {
       />,
     )
     expect(html).toContain('History · included in opening balance')
-    expect(html).toContain('History only, so the balance was not affected.')
+    expect(html).toContain('History only; balance not affected.')
     expect((html.match(/>Void</g) ?? []).length).toBe(2)
   })
 })

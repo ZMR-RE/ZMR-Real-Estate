@@ -69,7 +69,7 @@ describe('saveMortgageEntry', () => {
   })
   it('ZM5MB (nothing matches any more) -> save again normally', async () => {
     const r = await saveMortgageEntry(ins({ code: 'ZM5MB', message: 'srv' }).insert, '2026-08-10', 1)
-    expect(r).toEqual({ kind: 'error', message: "The matching entry is no longer active, so this isn't a duplicate now. Nothing was saved; choose Save again to record it normally." })
+    expect(r).toEqual({ kind: 'error', message: "The matching entry is no longer active, so this isn't a duplicate now. Nothing was saved; your entries are still in the form. Submit them again to record the entry normally." })
   })
   it('ZM5MC (history not eligible) -> the database explanation, values kept', async () => {
     const r = await saveMortgageEntry(ins({ code: 'ZM5MC', message: 'Set the statement date for this balance first.' }).insert, '2026-08-10', null)
@@ -84,6 +84,6 @@ describe('saveMortgageEntry', () => {
 describe('historyRowNote', () => {
   it('labels active and voided history rows', () => {
     expect(historyRowNote(false)).toBe('History · included in opening balance')
-    expect(historyRowNote(true)).toBe('History only, so the balance was not affected.')
+    expect(historyRowNote(true)).toBe('History only; balance not affected.')
   })
 })

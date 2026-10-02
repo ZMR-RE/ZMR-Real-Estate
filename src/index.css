@@ -732,15 +732,19 @@ button:focus-visible {
   border-color: var(--accent);
 }
 
-/* checkbox rows (label wraps the input) shouldn't stretch full width */
-label:has(input[type='checkbox']) {
+/* checkbox and radio rows (label wraps the input): the control sits inline at the start of its own label text, at
+   natural width — never stretched or centred on a line of its own above the text. Applies to every wrapped radio
+   dashboard-wide (payoff planner, contact review, mortgage history choice). */
+label:has(input[type='checkbox']),
+label:has(input[type='radio']) {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   font-weight: 400;
 }
 
-label:has(input[type='checkbox']) input {
+label:has(input[type='checkbox']) input,
+label:has(input[type='radio']) input {
   width: auto;
 }
 

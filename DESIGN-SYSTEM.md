@@ -119,8 +119,11 @@ of screens in the app.
   stays visible for audit purposes.
 - **Forms** — plain `<form>` capped at `480px`, `<label>` always above
   its input, no inline-editable fields by default (CLAUDE.md's Data
-  integrity rule: view-by-default, explicit Edit action). Checkbox rows
-  use `label:has(input[type=checkbox])` to avoid full-width stretching.
+  integrity rule: view-by-default, explicit Edit action). Checkbox and
+  radio rows (a `<label>` wrapping its input) use
+  `label:has(input[type=checkbox])` / `label:has(input[type=radio])`:
+  the control sits inline before its text at natural width, never
+  stretched or centred on its own line.
 - **`.field-group-row`** (INS-1) — lays whole `.property-field-group`
   sections side by side: 3 across on wide screens, 2 then 1 at the same
   breakpoints `.field-grid` uses. Different question from `.field-grid`

@@ -32,7 +32,15 @@ export function MortgagePaymentList({ payments, onVoid, voiding }: MortgagePayme
               <td>
                 {payment.payment_date}
                 {payment.voided ? ' (voided)' : ''}
-                {payment.history && <span className="field-hint"> {historyRowNote(payment.voided)}</span>}
+                {payment.history &&
+                  (payment.voided ? (
+                    <span className="field-hint"> {historyRowNote(true)}</span>
+                  ) : (
+                    <>
+                      {' '}
+                      <span className="status-badge status-badge-neutral">{historyRowNote(false)}</span>
+                    </>
+                  ))}
                 {!payment.history && payment.voided && voidedRowNote(payment.void_outcome) && (
                   <span className="field-hint"> {voidedRowNote(payment.void_outcome)}</span>
                 )}
