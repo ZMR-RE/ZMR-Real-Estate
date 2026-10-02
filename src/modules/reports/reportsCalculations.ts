@@ -6,7 +6,7 @@ import {
   type Transaction,
 } from '../financials/financialsQueries'
 import type { ChartAccount, CategoryMapping } from '../chartOfAccounts/chartOfAccountsQueries'
-import type { MortgagePaymentPrincipal } from './reportsQueries'
+import type { HistoryPaymentPrincipal, MortgagePaymentPrincipal } from './reportsQueries'
 import type { PortfolioMortgageRow } from '../mortgagePayoff/mortgagePayoffQueries'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { computeLedgerTotals, totalsByScheduleECategory } from '../financials/financialsCalculations'
@@ -74,6 +74,10 @@ export function computeProfitAndLoss(
 }
 
 export interface CashFlow {
+  // Option B (R3): principal of history-only mortgage entries in the year —
+  // a memo only, never part of netCashFlow (it is already in a loan's opening
+  // balance, and when cash tracking began isn't recorded).
+  historyPrincipalMemo: number
   netIncome: number
   depreciationAddBack: number
   cashFromOperations: number
@@ -95,12 +99,14 @@ export function computeCashFlow(
   profitAndLoss: ProfitAndLoss,
   principalPaid: number,
   capitalImprovementsPaid: number,
+  historyPrincipalMemo = 0,
 ): CashFlow {
   const depreciationAddBack = profitAndLoss.expenseLines.find((line) => line.category === 'depreciation')?.amount ?? 0
   const cents = (n: number) => Math.round(n * 100)
   const cashFromOperations = (cents(profitAndLoss.netIncome) + cents(depreciationAddBack)) / 100
 
   return {
+    historyPrincipalMemo,
     netIncome: profitAndLoss.netIncome,
     depreciationAddBack,
     cashFromOperations,
@@ -111,6 +117,8 @@ export function computeCashFlow(
 }
 
 export interface BalanceSheetRow {
+  // Option B (R2): history-only principal NOT deducted from cash — disclosed.
+  historyPrincipalNotDeducted: number
   propertyId: string
   propertyName: string
   marketValue: number | null
@@ -126,6 +134,7 @@ export interface BalanceSheet {
   totalMortgageBalance: number
   totalEquity: number
   propertiesMissingMarketValue: number
+  totalHistoryPrincipalNotDeducted: number
 }
 
 // "Cash" here is a cash-basis running balance since inception, not a
@@ -152,6 +161,10 @@ export function computeBalanceSheet(
   mortgagePaymentsAllTime: MortgagePaymentPrincipal[],
   portfolioMortgages: PortfolioMortgageRow[],
   latestMarketValues: Map<string, number>,
+  // Option B (R2): history-only entries (separate table) are never deducted
+  // here — not reliably placeable in the cash period, and possibly already in
+  // a Financials record — only reported back for disclosure.
+  historyPrincipalAllTime: HistoryPaymentPrincipal[] = [],
 ): BalanceSheet {
   const netCashByProperty = new Map<string, number>()
   for (const tx of transactionsAllTime) {
@@ -169,6 +182,11 @@ export function computeBalanceSheet(
     )
   }
 
+  const historyByProperty = new Map<string, number>()
+  for (const entry of historyPrincipalAllTime) {
+    historyByProperty.set(entry.property_id, (historyByProperty.get(entry.property_id) ?? 0) + Math.round(Number(entry.principal_amount) * 100))
+  }
+
   const mortgageBalanceByProperty = new Map(
     portfolioMortgages.map((m) => [m.property_id, Number(m.current_balance)]),
   )
@@ -181,7 +199,8 @@ export function computeBalanceSheet(
     const marketValue = latestMarketValues.get(property.id) ?? null
     const equity = marketValue === null ? null : marketValue + cash - mortgageBalance
 
-    return { propertyId: property.id, propertyName: propertyLabel(property), marketValue, cash, mortgageBalance, equity }
+    const historyPrincipalNotDeducted = (historyByProperty.get(property.id) ?? 0) / 100
+    return { historyPrincipalNotDeducted, propertyId: property.id, propertyName: propertyLabel(property), marketValue, cash, mortgageBalance, equity }
   })
 
   return {
@@ -191,5 +210,6 @@ export function computeBalanceSheet(
     totalMortgageBalance: rows.reduce((sum, row) => sum + row.mortgageBalance, 0),
     totalEquity: rows.reduce((sum, row) => sum + (row.equity ?? 0), 0),
     propertiesMissingMarketValue: rows.filter((row) => row.marketValue === null).length,
+    totalHistoryPrincipalNotDeducted: rows.reduce((sum, row) => sum + Math.round(row.historyPrincipalNotDeducted * 100), 0) / 100,
   }
 }
