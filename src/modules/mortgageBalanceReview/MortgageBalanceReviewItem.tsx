@@ -8,16 +8,25 @@ const KIND_LABEL = { principal: 'Principal balance', escrow: 'Escrow balance' } 
 // Action Queue item: mortgage balances to check against a statement — entries recorded for a period the balance may
 // already include, voids the system deliberately didn't reverse, and voids it refused (those entries are still active).
 export function MortgageBalanceReviewItem() {
-  const { reviews, error, busy, confirmBalance, acknowledge } = useMortgageBalanceReview()
+  const { reviews, loadError, actionError, busy, confirmBalance, acknowledge } = useMortgageBalanceReview()
   const [statementDate, setStatementDate] = useState('')
-  if (error && reviews.length === 0) return <p role="alert">{error}</p>
-  if (reviews.length === 0) return null
+  // An action's explanation stays visible even if the refresh leaves nothing to review.
+  if (reviews.length === 0) {
+    if (!loadError && !actionError) return null
+    return (
+      <>
+        {actionError && <p role="alert">{actionError}</p>}
+        {loadError && <p role="alert">{loadError}</p>}
+      </>
+    )
+  }
   return (
     <section className="card" aria-labelledby="mortgage_balance_review_heading">
       <h2 id="mortgage_balance_review_heading" className="property-details-title">
         Mortgage balance review <span className="status-badge status-badge-warning">{reviews.length}</span>
       </h2>
-      {error && <p role="alert">{error}</p>}
+      {actionError && <p role="alert">{actionError}</p>}
+      {loadError && <p role="alert">{loadError}</p>}
       <label htmlFor="mortgage_review_statement_date">Statement date you are checking against (optional)</label>
       <input id="mortgage_review_statement_date" type="date" value={statementDate} onChange={(e) => setStatementDate(e.target.value)} />
       {reviews.map((review) => (
