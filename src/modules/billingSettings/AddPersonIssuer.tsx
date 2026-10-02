@@ -68,10 +68,7 @@ export function AddPersonIssuer({ accountId, existing, onChosen }: AddPersonIssu
         // Enter adds the person; it must not submit the surrounding Billing settings form.
         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); create(false) } }}
       />
-      <p className="field-hint">
-        Adds them as a person who can issue invoices. It doesn’t make them an owner of this or any property. Save person saves them right away — they stay
-        in your records even if you then cancel Billing settings.
-      </p>
+      <p className="field-hint">Saved right away as a person who can issue invoices — not as an owner. They stay even if you cancel Billing settings.</p>
       {matches && (
         <div role="status">
           <p>
