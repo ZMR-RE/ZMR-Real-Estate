@@ -63,3 +63,13 @@ An issuer can be a person, so issuer-facing copy no longer says "entity":
 - Invoicing box on the profile: "this issuer" / "each issuer has its own sequence"; the code-lock messages likewise.
 - Branding & documents: "Open their profile", "Used only on their documents", "Name and address come from Identity on their profile. Payment instructions print on their invoices."; the profile's Branding description says "invoices and receipts they issue"; logo alt text "Logo"; logo load error "The issuer's logo couldn't be loaded."
 - **Not changed (ownership screens, outside this slice):** "this entity" in Linked properties, Contacts and Membership on the owner profile, and the Agents preview copy.
+
+## 5. Save person: one save at a time, and an accurate hint (pre-clearance fix)
+- **Guard:** while a save is running, another Enter in the name field or another click on Save person is ignored. The guard takes effect immediately, before the screen re-renders, so even very fast repeats can't create a second record. During the save the name field is disabled and the button reads "Saving…".
+- **Hint:** "Save person saves them right away — they stay in your records even if you then cancel Billing settings." This matches what happens: the person record is created at Save person, and only the property's issuer choice waits for Billing settings › Save.
+- **Verified (local review harness, simulated backend, fictional data; 9 Placeholder Lane):**
+  - three Enter key presses in one burst created **1** "Quinn Fictional";
+  - three Save person clicks in one burst created **1** "Avery Twice", which was chosen;
+  - after cancelling Billing settings and reopening Edit, both people are still listed once.
+- **Limitation:** this runs against the simulated backend, whose insert returns immediately. Against a real network the guard holds for the whole save.
+- **Evidence:** `evidence/billing-add-person-guard/01`.
