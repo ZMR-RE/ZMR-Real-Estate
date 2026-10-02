@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { saveTenancy } from '../leases/leaseEntryQueries'
+import { useSingleFlight } from '../leases/singleFlight'
 import { listLeasesForUnit, type Lease, type LeaseInput } from '../leases/leasesQueries'
 import { partialLeaseMessage } from '../leases/useLeases'
 import { useTenancyChoice } from '../leases/useTenancyChoice'
@@ -27,7 +28,16 @@ export function useAddTenancy(propertyId: string) {
   // Set when a lease saved but its tenant links failed; the next Save
   // finishes that lease instead of creating another, so the unit is fixed.
   // After Cancel or a reload it's found again as an unfinished tenancy.
-  const [pendingLeaseId, setPendingLeaseId] = useState<string | null>(null)
+  const [pendingLeaseId, setPendingLeaseIdState] = useState<string | null>(null)
+  // The same id, readable immediately by the next Save (state only catches up
+  // on the next render), so a retry always finishes this lease.
+  const pendingRef = useRef<string | null>(null)
+  const setPendingLeaseId = (id: string | null) => {
+    pendingRef.current = id
+    setPendingLeaseIdState(id)
+  }
+  // One save at a time; after a successful save this form can't save again.
+  const flight = useSingleFlight()
 
   const leasesLoaded = unitId !== '' && unitLeases.unitId === unitId
   const tc = useTenancyChoice(leasesLoaded ? unitLeases.leases : [], leasesLoaded, pendingLeaseId)
@@ -35,6 +45,7 @@ export function useAddTenancy(propertyId: string) {
   const setUnitId = (id: string) => {
     setUnitIdState(id)
     tc.reset()
+    flight.reset()
   }
 
   useEffect(() => {
@@ -56,18 +67,28 @@ export function useAddTenancy(propertyId: string) {
   }, [accountId, unitId])
 
   const save = async (input: LeaseInput): Promise<AddedTenant[] | null> => {
-    if (!accountId || !unitId || !tc.choice) return null
-    setSaving(true)
-    const { error: e, leaseId } = await saveTenancy(accountId, propertyId, unitId, tc.choice, input, pendingLeaseId)
-    setSaving(false)
-    if (e) {
-      setPendingLeaseId(leaseId)
-      setError(leaseId ? `${partialLeaseMessage} (${e.message})` : e.message)
-      return null
-    }
-    setPendingLeaseId(null)
-    setError(null)
-    return input.tenantIds.map((id) => ({ id, name: tenantOptions.find((t) => t.id === id)?.label ?? 'Tenant' }))
+    const choice = tc.choice
+    if (!accountId || !unitId || !choice) return null
+    const result = await flight.run(
+      async () => {
+        setSaving(true)
+        try {
+          const { error: e, leaseId } = await saveTenancy(accountId, propertyId, unitId, choice, input, pendingRef.current)
+          if (e) {
+            setPendingLeaseId(leaseId)
+            setError(leaseId ? `${partialLeaseMessage} (${e.message})` : e.message)
+            return null
+          }
+          setPendingLeaseId(null)
+          setError(null)
+          return input.tenantIds.map((id) => ({ id, name: tenantOptions.find((t) => t.id === id)?.label ?? 'Tenant' }))
+        } finally {
+          setSaving(false)
+        }
+      },
+      (added) => added !== null,
+    )
+    return result.ran ? result.value : null
   }
 
   return {
