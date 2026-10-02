@@ -1,0 +1,200 @@
+[
+ {
+  "width": 1280,
+  "tables": [
+   {
+    "table": "mortgage-payment-list",
+    "contentW": 1214,
+    "boxW": 1216,
+    "overflowPx": 0,
+    "firstColW": 289,
+    "pageHScroll": false,
+    "rows": 4,
+    "badges": [
+     {
+      "text": "History",
+      "fullyVisible": true,
+      "w": 59
+     }
+    ],
+    "notes": [
+     {
+      "text": "History only; balance not affected.",
+      "right": 306,
+      "lines": 1
+     },
+     {
+      "text": "Included in the opening balance.",
+      "right": 306,
+      "lines": 1
+     },
+     {
+      "text": "Balance not adjusted: it was reset after",
+      "right": 306,
+      "lines": 2
+     }
+    ]
+   },
+   {
+    "table": "escrow-transaction-list",
+    "contentW": 1214,
+    "boxW": 1216,
+    "overflowPx": 0,
+    "firstColW": 114,
+    "pageHScroll": false,
+    "rows": 2,
+    "badges": [
+     {
+      "text": "History",
+      "fullyVisible": true,
+      "w": 59
+     }
+    ],
+    "notes": [
+     {
+      "text": "Included in the opening balance.",
+      "right": 420,
+      "lines": 1
+     },
+     {
+      "text": "Balance not adjusted: it was reset after",
+      "right": 420,
+      "lines": 2
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "width": 768,
+  "tables": [
+   {
+    "table": "mortgage-payment-list",
+    "contentW": 702,
+    "boxW": 704,
+    "overflowPx": 0,
+    "firstColW": 289,
+    "pageHScroll": false,
+    "rows": 4,
+    "badges": [
+     {
+      "text": "History",
+      "fullyVisible": true,
+      "w": 59
+     }
+    ],
+    "notes": [
+     {
+      "text": "History only; balance not affected.",
+      "right": 306,
+      "lines": 1
+     },
+     {
+      "text": "Included in the opening balance.",
+      "right": 306,
+      "lines": 1
+     },
+     {
+      "text": "Balance not adjusted: it was reset after",
+      "right": 306,
+      "lines": 2
+     }
+    ]
+   },
+   {
+    "table": "escrow-transaction-list",
+    "contentW": 702,
+    "boxW": 704,
+    "overflowPx": 0,
+    "firstColW": 114,
+    "pageHScroll": false,
+    "rows": 2,
+    "badges": [
+     {
+      "text": "History",
+      "fullyVisible": true,
+      "w": 59
+     }
+    ],
+    "notes": [
+     {
+      "text": "Included in the opening balance.",
+      "right": 380,
+      "lines": 1
+     },
+     {
+      "text": "Balance not adjusted: it was reset after",
+      "right": 380,
+      "lines": 3
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "width": 390,
+  "tables": [
+   {
+    "table": "mortgage-payment-list",
+    "contentW": 543,
+    "boxW": 326,
+    "overflowPx": 219,
+    "firstColW": 174,
+    "pageHScroll": false,
+    "rows": 4,
+    "badges": [
+     {
+      "text": "History",
+      "fullyVisible": true,
+      "w": 59
+     }
+    ],
+    "notes": [
+     {
+      "text": "History only; balance not affected.",
+      "right": 191,
+      "lines": 2
+     },
+     {
+      "text": "Included in the opening balance.",
+      "right": 191,
+      "lines": 2
+     },
+     {
+      "text": "Balance not adjusted: it was reset after",
+      "right": 191,
+      "lines": 4
+     }
+    ]
+   },
+   {
+    "table": "escrow-transaction-list",
+    "contentW": 593,
+    "boxW": 326,
+    "overflowPx": 269,
+    "firstColW": 114,
+    "pageHScroll": false,
+    "rows": 2,
+    "badges": [
+     {
+      "text": "History",
+      "fullyVisible": true,
+      "w": 59
+     }
+    ],
+    "notes": [
+     {
+      "text": "Included in the opening balance.",
+      "right": 275,
+      "lines": 2
+     },
+     {
+      "text": "Balance not adjusted: it was reset after",
+      "right": 275,
+      "lines": 6
+     }
+    ]
+   }
+  ]
+ }
+]

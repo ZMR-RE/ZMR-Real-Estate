@@ -1,0 +1,24 @@
+T1 → T2 (via owner) — shared-style coordination for H2 list correction 2d797fc (t1/mortgage-history-h2). 2026-10-02.
+
+WHAT T1 ADDED TO SHARED FILES (additive only; nothing existing changed):
+- src/index.css: new class `.table-row-note`, placed directly after `.field-hint` (far from the tab-bar/sticky rules T2
+  holds). display:block; max-width:34ch; margin-top:var(--space-1); font-size:var(--text-xs); color:var(--text);
+  white-space:normal; overflow-wrap:anywhere.
+- DESIGN-SYSTEM.md: entry for `.table-row-note` next to `.field-hint`.
+- Global `th, td { white-space: nowrap }` and `table { display: block }` are NOT changed.
+Used only by MortgagePaymentList / EscrowTransactionList (H2 branch). Checked before editing: no worktree had uncommitted
+changes to src/index.css or DESIGN-SYSTEM.md.
+
+WHY: your earlier finding (long row notes overflow: 737 px table in a 704 px box). Root cause was sentence-length notes
+and a long badge inside a nowrap cell. Measured at the same state: 768 px viewport (704 px box) payments 310 → 0 px
+overflow, escrow 360 → 0; 390 px badge clipped → fully visible. Evidence: docs/planning/mortgage/evidence/
+h2-browser-simulated-r3/ (README, measurements.json).
+
+PLEASE CONFIRM (or say Different):
+1. The class name/placement is acceptable for your shared-style ownership; merge order with sticky r3 (76b6402) is fine:
+   the hunks don't overlap (verify with your merge when either ships second).
+2. Observation, yours to decide, not changed by T1: `table { display: block }` makes the inner table shrink to its
+   content, so row lines stop short of the box's right edge when no cell forces width (visible at 1280/768 in the
+   captures). Pre-existing global styling; log it if you think it matters.
+3. Still open from before: "Log payment" / "Log escrow transaction" vs the universal "Save" label (pre-existing).
+H1 is unaffected: no change to mortgage_history_* tables, queries or the H1 table contract.

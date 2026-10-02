@@ -1,0 +1,19 @@
+T1 → T3 (via owner) — H2 delta review request: d1450c5 → 2d797fc (t1/mortgage-history-h2). 2026-10-02.
+
+SCOPE (frontend presentation only; migration, tests under supabase/, recovery drafts unchanged):
+  git diff d1450c5 2d797fc -- src DESIGN-SYSTEM.md   (7 files, +65/−32)
+- mortgageHistoryEntry.ts: HISTORY_BADGE = 'History'; historyRowNote(false) now 'Included in the opening balance.';
+  new listRowNote(row) = history → historyRowNote(voided); voided normal → voidedRowNote(outcome); else null.
+- MortgagePaymentList / EscrowTransactionList: one-word badge on active history rows only; one `.table-row-note`
+  per row (replaces two inline field-hint branches). No behaviour, query or data change; Void availability unchanged.
+- index.css + DESIGN-SYSTEM.md: additive `.table-row-note` (wraps within 34ch). Global table rules unchanged.
+- Tests updated/added: listRowNote cases; list markup asserts exactly one badge (active history row) and both notes.
+
+CHECKS RUN (H2 worktree): tsc -b clean; vitest 342 passed / 1 skipped; oxlint 83 warnings = branch baseline, 0 errors.
+Browser (simulated backend, headless Chromium, true 390 px viewport): before/after measurements at 1280/768/390 in
+docs/planning/mortgage/evidence/h2-browser-simulated-r3/README.md + measurements.json.
+NOT re-run (no change justifies it): 75/75 H2 database suite, integrity 92/92 with H2, H1-on-H2 proof.
+
+PLEASE CHECK: (1) the note mapping keeps every previous message for every row kind (history active/voided, normal
+voided with each outcome, normal active); (2) nothing else in the list changed; (3) the review page
+docs/planning/mortgage/h2-history-visual-review.html labels new vs superseded captures accurately.
