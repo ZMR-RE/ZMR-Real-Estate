@@ -1,0 +1,37 @@
+T3 — focused delta review request from T4 (read-only; no edits, no Practice, no deploy)
+
+Fixed commit (tenant candidate): 2d8aa7632901d6bf1c4c86a807fa6e07fc3cea45  (branch t4/tenant-entry)
+Delta to review: d4dc664..2d8aa76   (git diff d4dc66477f3a1bf1f5ea14293588cb089b23629d 2d8aa7632901d6bf1c4c86a807fa6e07fc3cea45)
+Combined Practice test build: 3e75bcd72bd8bb944c7c5095b7c0296b14badae5 (branch t4/practice-billing-tenant)
+  = live d9cdcb3 + billing 588388f + tenant 2d8aa76 + T2 dropdown 999d716 (+ plan docs). No migrations.
+
+Defect fixed: repeated Save (burst clicks / Enter) created duplicate leases (3 clicks -> 3 leases, rent
+counted 3x) because Save and inline "Add tenant" were guarded only by React state (disabled={saving}).
+
+Change:
+- src/modules/leases/singleFlight.ts (new): immediate in-flight guard; failure or throw releases it;
+  success can lock the saved form until reset (next add / unit change / "+ Add new tenant").
+- useAddTenancy.save (Tenants › + Add tenant) and useLeases.add (Units › + Add lease): new, resumed and
+  co-tenant saves run through the guard; the half-saved lease id is also kept in a ref so a retry always
+  finishes that lease.
+- LeaseForm inline tenant creation runs through its own guard.
+- Harness only: ?slow-writes=MS delays tenancy inserts (review page; not in the app bundle).
+Browser guard only — the atomic/idempotent DB operation remains the separately proposed durable fix.
+
+Please check:
+1. No path to a second lease/link/tenant from one form: burst during a slow save; click after success
+   before the form closes; resumed and co-tenant saves; Units and Tenants.
+2. Failure releases the guard (returned error and thrown error); retry finishes the same lease
+   (pendingRef), never a second one; reload/resume unchanged.
+3. Lock reset points are correct (Units: startAdding; Tenants: unit change / new mount; inline: reopening
+   "+ Add new tenant") — no stuck form after a legitimate new add.
+4. Combined build 3e75bcd: only the expected merge (no conflicts in this step), no migration change.
+
+Evidence: docs/planning/agents/ZMR-T4-tenant-entry.md › "Repeated-submit fix" (tests singleFlight.test.ts,
+7; browser table runs 1–5 incl. real clicks + real Enter during 1.5 s delayed writes; failure → retry burst;
+inline tenant burst; Units burst; reload → resume burst) and evidence/tenant-entry-repeat-submit/01.
+Checks: clean clone of 2d8aa76 builds; 3e75bcd clean clone tsc -b clean, build OK, vitest 302 passed,
+oxlint 83 (baseline).
+
+Practice: owner-approved within the plan's scope (ZMR-T4-practice-plan-billing-tenant.md, §8), gated on
+your clearance of 2d8aa76 and a recorded window holder.

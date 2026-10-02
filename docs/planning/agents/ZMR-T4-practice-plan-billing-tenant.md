@@ -1,6 +1,17 @@
 # Billing + tenant entry: hosted Practice test plan (T4)
 
-**Status: PREPARED, NOT RUN.** Nothing has been written to Practice. No window has been claimed, no migration applied, no account or membership changed, and nothing deployed.
+**Status: APPROVED BY THE OWNER, within this scope; NOT RUN.** The window starts only after **T3 clears tenant fix `2d8aa76`** and a **Practice window holder is verified and recorded** (§1). Nothing has been written to Practice yet.
+
+**Superseded:** the tables below originally pinned test build `3a75340` and tenant `d4dc664`. Both had the repeated-Save defect, so **neither may be used**. The current pins are:
+
+| | Hash |
+|---|---|
+| **Test build** | **`3e75bcd72bd8bb944c7c5095b7c0296b14badae5`** |
+| Tenant candidate (with the repeated-submit guard) | `2d8aa7632901d6bf1c4c86a807fa6e07fc3cea45` |
+| Billing candidate | `588388f4b6ad5ee1588d02821f6875d84fa0b323` (unchanged) |
+| T2 dropdown fix | `999d716238a71c4bd06e9eb5851f62f6535f31b2` (unchanged) |
+
+`3e75bcd` merges `2d8aa76` cleanly onto the earlier build (plus this plan's docs). It has no migrations; the 119 files match live. **Local checks** (clean clone): type-check (`tsc -b --noEmit`) clean, build OK, vitest 302 passed / 1 skipped, oxlint 83 (baseline). **Smoke test** (review page, simulated backend, 1 s delayed writes): the dropdown shows in full, and a burst of three Saves created exactly **1** lease. `BT_BUILD` for the runner is `3e75bcd…`.
 
 ## 0. What is tested
 
@@ -33,7 +44,7 @@
 - **Units path:** the d9cdcb3 lease form behind Units › "+ Add lease" had the same state-only Save guard (not re-run here), so the defect likely predates this candidate.
 - **Billing is not affected:** Save person is already guarded in `588388f`.
 
-**Recommendation:** fix this in the tenant candidate first, with the same in-flight guard as Save person, then send the delta to T3 and rebuild the test build. Run the Practice window on the fixed build, not on `3a75340`. Check R2 below is expected to **fail** on `3a75340`.
+**Fixed in `2d8aa76`.** See `ZMR-T4-tenant-entry.md` › Repeated-submit fix: one shared in-flight guard covers new, resumed and co-tenant saves and inline tenant creation, in both entry points. It was checked with bursts, slow responses, failure then retry, and reload/resume. R2 and R3 below now expect exactly one lease or link.
 
 ## 1. Coordination: one window, one sign-in
 - **Practice holder:** T1 ended its window at 23:27 UTC. T1 applied `20261004100000` (mortgage balance integrity), so Practice should be at 120. **No holder is assumed.** T4 asks, via the owner or planning, for one written line: *"T4 holds Practice from <time>; no other terminal writes to Practice until T4's handback."* Without it, T4 does nothing, not even a read-only listing.
@@ -62,20 +73,25 @@
   - **Practice-only versions** are listed and assessed, never touched. `20261004100000` is expected; T1's hosted O1–O4 checks covered older pages against it.
   - **Anything unexpected → STOP** and report.
 
-## 3. Existing-data preservation
-**Baseline (read-only, before any write):** counts and the latest `updated_at`/`created_at` for:
-- `llcs`, `ownership_interests`, `properties`, `units`, `leases`, `lease_tenants`, `tenants`;
-- `invoices`, `payments`, `documents`, `financial_transactions`, `financial_periods`, `audit_log`, `account_members`.
+## 3. Existing-data preservation (full-row fingerprints)
+Tool: `docs/planning/agents/practice/bt_preserve.py`. It only **produces** read-only SELECTs, which run **only** through `btpractice.sh select`, and **compares** the results offline.
 
-Also recorded:
-- the ids of every pre-existing `ZMR-TEST-S1` and mortgage-test record;
-- for each pre-existing lease: rent, end date and tenant links.
+1. **Baseline, before any write:** `select "$(bt_preserve.py fp-sql)"`. Saved as `bt-baseline.txt`.
+   - **What it records:** for **every row** of `accounts`, `account_members`, `llcs`, `property_ownership_interests`, `property_ownership_versions`, `properties`, `units`, `leases`, `lease_tenants`, `lease_billing_terms`, `tenants`, `invoices`, `invoice_lines`, `payments`, `documents`, `financial_transactions`, `financial_periods`, `tenancy_charge_rules`, `entity_document_branding` and `audit_log`: its table, its key, and the **md5 of the whole row** as jsonb.
+   - **Covers:** any change to any column of an existing row, including each existing lease's rent, end date and archive flag, and each tenant link and its billing-recipient flag.
+   - **Window start time** (UTC) recorded.
+2. **After cleanup:** the same `fp-sql`, saved as `bt-after.txt`, and `new-sql <start>` (the full JSON of rows created or updated since the start), saved as `bt-new.txt`.
+3. **Compare:** `bt_preserve.py compare bt-baseline.txt bt-after.txt bt-new.txt bt-fixtures.txt`. PASS only if:
+   - every baseline row exists with an **identical** fingerprint (changed or missing rows are listed and fail);
+   - every new row is an **explicitly identified `ZMR-TEST-BT` fixture**: either it mentions `zmr-test-bt`, or it references a fixture already identified (repeated until stable);
+   - **any other new row is UNEXPLAINED and fails.** For example, a link onto a pre-existing lease, an audit row about a pre-existing record, or a row with no timestamp.
+   - The identified fixture ids (table and key) are written out and listed in the results; nothing else is excluded.
+4. **Offline tests (done):**
+   - unchanged data plus four fixtures (property, unit, lease, link) → PASS, all four identified;
+   - an existing lease's row changed, plus a new link onto an existing lease → FAIL, naming both;
+   - both generated queries pass the runner's read-only guard.
 
-**After cleanup:**
-- every count equals the baseline plus only the listed `ZMR-TEST-BT` additions;
-- no pre-existing row's timestamp has moved;
-- pre-existing leases' rent and links are unchanged, checked one by one, not by count;
-- `account_members` is unchanged.
+**Also before and after:** the count and latest timestamp per table, as a quick cross-check (secondary to the fingerprints).
 
 ## 4. Fictional records
 All are created through the dashboard and named `ZMR-TEST-BT`.
@@ -114,8 +130,8 @@ All are created through the dashboard and named `ZMR-TEST-BT`.
 | T6 | **[SIMULATED → REAL]** Ended lease with no tenants: Unit 2 separate tenancy 2025-01-01 to 2025-06-30, $1, with one failed link | SQL: an ended lease with 0 links. + Add tenant and + Add lease on Unit 2 show **no** "Unfinished tenancy" and no "rent twice" text. Lease history lists it as Ended. Then **Archive** it (cleanup). |
 | T7 | **[REAL]** Same name: + Add new tenant `zmr-test-bt same  name` (`…s2…`) after T-S1 exists | The prompt shows "Use existing: ZMR-TEST-BT Same Name — zmr-test-bt-s1@example.test · added …" and "You entered: zmr-test-bt-s2@example.test". "Create a different person" leaves 2 rows, and the picker labels both with their details. Then Cancel the lease form. |
 | R1 | **[INPUT BURST]** Save person (B2) | 1 row each, as above. |
-| R2 | **[INPUT BURST]** Lease Save: a separate tenancy on Unit 1 with T-S1 at $10, three Save clicks | **Expected to FAIL on `3a75340`** (see §0: 3 leases). On a fixed build: exactly 1. Any extra leases are archived and listed as residue. |
-| R3 | **[INPUT BURST]** "Add co-tenant" Save with T-S2, clicked three times | SQL: 1 link. A unique-constraint message, if one appears, is recorded as is. |
+| R2 | **[INPUT BURST]** Lease Save: a separate tenancy on Unit 1 with T-S1 at $10, three Save clicks, then Enter on Save | SQL: exactly **1** lease and **1** link (fixed in `2d8aa76`). Any extra lease = FAIL; it would be archived and listed as residue. |
+| R3 | **[INPUT BURST]** "Add co-tenant" Save with T-S2, clicked three times; inline "+ Add new tenant" `ZMR-TEST-BT Burst Tenant`, "Add tenant" clicked three times | SQL: exactly 1 new link, no new lease, rent unchanged; exactly 1 `ZMR-TEST-BT Burst Tenant`. |
 
 ### Dropdown (999d716 in the hosted build)
 | # | Check | Expected |
@@ -144,11 +160,15 @@ All are created through the dashboard and named `ZMR-TEST-BT`.
 ## 7. Window estimate
 About 75 minutes: ledger and baseline 10, records 10, billing 15, tenant and resume 25, dropdown 10, cleanup and verification 15.
 
-## 8. Approval requested (scope)
-**Yes authorizes:** one Practice window, coordinated as in §1, on the **fixed** test build (`3a75340` rebuilt with the repeated-Save guard, after T3's delta review). It includes:
-- one owner sign-in for `zmr-test-practice@example.test`;
-- `ZMR-TEST-BT` dashboard writes in the Practice test account only;
-- read-only SQL;
-- archive-only cleanup.
-
-**Not included:** migrations, account or membership changes, production, deployment, invoice issuing, sending or scheduling.
+## 8. Approval and gates
+- **Owner approval (recorded):** the corrected billing/tenant Practice test is approved within this scope:
+  - one coordinated window and the reserved Practice identity (`zmr-test-practice@example.test`);
+  - `ZMR-TEST-BT` fixtures only, with before/after comparison of existing records, including lease rents and tenant links;
+  - simulated failures kept distinct from hosted outcomes;
+  - archive-only cleanup, verification that existing records are preserved, and a recorded handback.
+- **Excluded:** migrations, account or membership changes, production access, deployment, and invoice issuing, sending or scheduling.
+- **Before starting:**
+  1. T3 clears `2d8aa76` (focused delta from `d4dc664`);
+  2. `3e75bcd` is confirmed as the build, unchanged;
+  3. the Practice holder is verified and recorded in the assignments file, with a written line;
+  4. the owner is asked **only** for the private sign-in, when the build and window are ready.
