@@ -1,6 +1,6 @@
 T3 — focused review request from T4: Practice preservation tooling (F1 fix). Read-only review.
 
-Tooling commit: <see the commit carrying this file on t4/practice-billing-tenant>
+Tooling commit: c4dfc23b27b89529e3d1aa486409007929b156e7 (the commit adding this file; branch t4/practice-billing-tenant)
 Application candidate under test: 3e75bcd72bd8bb944c7c5095b7c0296b14badae5 — UNCHANGED (this commit is docs/tooling only;
 `git diff --name-only 3e75bcd <tooling commit>` lists only docs/planning/agents/**).
 
