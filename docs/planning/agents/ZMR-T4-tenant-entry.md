@@ -193,3 +193,15 @@ When nobody can be picked, the text reads "They can't be added again here. If th
 **Kept separate (not in this candidate):**
 - the unit-status pick-list setup (adding a unit needs a status, and an empty list blocks it);
 - the Units › Lease history refresh after a partial failure started from Tenants.
+
+## Owner review fixes P1–P3, P5, P6 (October 2; owner chose "fix now")
+- **P1, one set of actions at a time:**
+  - The inline new-tenant step is its own panel ("New tenant") with **Save tenant** and **Cancel**. The lease form's **Save** and **Cancel** sit together at the end and are hidden while that panel is open, so only one Save and one Cancel show.
+  - The same-name question appears inside the panel and replaces its buttons until answered: "Use existing", "Create a different person with this name" or **Edit name** (back to the name).
+  - "+ Add another tenant" is on its own line instead of beside the Start date label.
+  - `TenantForm` gains optional `saveLabel` and `hideActions`. Its markup and defaults are unchanged for Capture and the Tenant profile.
+- **P2, upcoming tenancy:** a unit card with no current tenancy but a future one (with tenants) shows "Upcoming from <date>: <tenants>", its rent and any end date, not "Rent: $0 — Not set up". Truly vacant units keep the existing warning. The selection is `upcomingTenancies`, tested.
+- **P3, navigation wording:** "Manage tenants in Units ↓" → "Units and lease history ↓".
+- **P5, shorter explanations:** the co-tenant/separate choice, the unfinished-tenancy offer, the choice notes and the same-name prompt are each about half the length; the meaning is unchanged.
+- **P6, readable dates:** the unit card's lease end date and Lease history's start and end columns now read like "November 1, 2026" (`formatDateOnly`), not ISO.
+- **Unchanged:** save, resume, co-tenant, the one-at-a-time guard and duplicate checks. Only labels, layout and display changed. Tests: 303 (+1).

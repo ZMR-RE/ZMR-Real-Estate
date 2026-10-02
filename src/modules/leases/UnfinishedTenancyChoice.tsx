@@ -17,8 +17,7 @@ export function UnfinishedTenancyChoice({ leases, onResume, onStartNew }: Unfini
   return (
     <div className="lease-choice" role="status">
       <p>
-        <strong>Unfinished tenancy on this unit.</strong> A lease was saved, but its tenants were never linked. Resume it to finish it — starting another
-        could count its rent twice.
+        <strong>Unfinished tenancy on this unit.</strong> Its tenants weren’t saved. Resume it so the rent isn’t counted twice.
       </p>
       {leases.map((l) => (
         <div key={l.id} className="lease-choice-option">
@@ -34,7 +33,7 @@ export function UnfinishedTenancyChoice({ leases, onResume, onStartNew }: Unfini
       <button type="button" onClick={onStartNew}>
         Start a separate new tenancy instead
       </button>
-      <p className="field-hint">The unfinished tenancy is left as it is — never deleted or used without you choosing it. You can archive it in Lease history.</p>
+      <p className="field-hint">It’s never deleted or used unless you choose it. You can archive it in Lease history.</p>
     </div>
   )
 }
