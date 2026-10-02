@@ -85,7 +85,7 @@ export function BrandingDocumentsForm({ draft, onChange, onPendingLogo, saving, 
           </div>
         ))}
         {warnings.map((w) => <p key={w} className="branding-warning">{w}</p>)}
-        <p className="field-hint">Used only on this entity’s documents — the dashboard’s own theme never changes. Blank = standard colours.</p>
+        <p className="field-hint">Used only on their documents — the dashboard’s own theme never changes. Blank = standard colours.</p>
       </fieldset>
 
       <fieldset className="branding-fieldset">
@@ -98,7 +98,7 @@ export function BrandingDocumentsForm({ draft, onChange, onPendingLogo, saving, 
         <input id="branding-web" value={draft.contact.website} onChange={(e) => set({ contact: { ...draft.contact, website: e.target.value } })} />
         <label htmlFor="branding-pay">Default payment instructions</label>
         <textarea id="branding-pay" value={draft.paymentInstructions} onChange={(e) => set({ paymentInstructions: e.target.value })} />
-        <p className="field-hint">Name and address come from the entity’s Identity. Payment instructions print on this entity’s invoices.</p>
+        <p className="field-hint">Name and address come from Identity on their profile. Payment instructions print on their invoices.</p>
       </fieldset>
 
       <fieldset className="branding-fieldset">

@@ -53,8 +53,8 @@ export function invoiceFilename(number: string | null, periodStart: string, unit
 
 // Where the effective payment instructions come from, in words.
 export function paymentInstructionsSource(s: PrintSnapshot): string | null {
-  const entity = s.issuer ? s.issuer.display_name?.trim() || s.issuer.legal_name : 'the invoicing entity'
-  if (s.payment_instructions.source === 'property') return 'This property’s own instructions (overrides the entity default)'
+  const entity = s.issuer ? s.issuer.display_name?.trim() || s.issuer.legal_name : 'the invoice issuer'
+  if (s.payment_instructions.source === 'property') return 'This property’s own instructions (overrides the issuer’s default)'
   if (s.payment_instructions.source === 'entity') return `${entity}’s default (Branding & documents)`
   return null
 }
@@ -64,7 +64,7 @@ export function buildInvoiceRender(
   issued: { number: string; issuedAt: string } | null,
   logo: StationeryLogo | null,
 ): InvoiceRender {
-  if (!s.issuer) throw new Error('Choose the issuing entity before the invoice can be shown.')
+  if (!s.issuer) throw new Error('Choose the invoice issuer before the invoice can be shown.')
   const b = s.branding
   const unit = s.rental.unit_label ?? ''
   const status = !issued
@@ -126,7 +126,7 @@ export function buildInvoiceRender(
 // ZM348 check): which parts differ between the approved and current
 // snapshot, in the owner's words.
 const PART_LABEL: Record<string, string> = {
-  issuer: 'issuing entity details',
+  issuer: 'invoice issuer details',
   branding: 'branding (logo, colours, contact details, footer)',
   payment_instructions: 'payment instructions',
   recipients: 'billed tenants or their contact details',

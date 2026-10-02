@@ -65,6 +65,8 @@ const base = createMockSupabaseClient(reviewDb, review.rpc, joins)
 const insertDefaults: Record<string, MockRow> = {
   tenancy_charge_rules: { status: 'active', version: 1, applied_invoice_id: null, notes: null },
   tenancy_charge_statements: { billed_invoice_id: null, document_id: null },
+  // Column defaults a real database applies to a new owner record.
+  llcs: { archived: false, invoice_code: null, display_name: null },
 }
 const baseFrom = base.from.bind(base)
 base.from = (table: string) => {

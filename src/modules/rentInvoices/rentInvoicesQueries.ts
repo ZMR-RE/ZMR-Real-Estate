@@ -199,7 +199,7 @@ export async function openStoredInvoicePdf(storagePath: string, expectedSha256: 
 // The file is checked against the digest recorded with the logo version.
 export async function loadSnapshotLogo(logo: NonNullable<PrintSnapshot['branding']['logo']>): Promise<{ data: StationeryLogo | null; error: Error | null }> {
   const file = await supabase.storage.from('documents').download(logo.storage_path)
-  if (file.error || !file.data) return { data: null, error: new Error('The entity logo couldn’t be loaded.') }
+  if (file.error || !file.data) return { data: null, error: new Error('The issuer’s logo couldn’t be loaded.') }
   const bytes = await file.data.arrayBuffer()
   if ((await sha256Hex(bytes)) !== logo.sha256) return { data: null, error: new Error('The stored logo doesn’t match the version recorded for this invoice.') }
   const dataUrl = await new Promise<string>((resolve, reject) => {

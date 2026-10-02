@@ -103,3 +103,16 @@
 .charge-rule-statements { margin: 0; padding-left: var(--space-4); font-size: var(--text-sm); color: var(--text); }
 .charge-rule-actions button { min-height: 44px; }
 .charge-rule-form { border-top: 1px solid var(--border); padding-top: var(--space-3); margin-top: var(--space-2); }
+
+/* Billing settings › Invoice issuer › + Add person: a nested step inside the
+   issuer field, set apart so it isn't mistaken for the box's own fields. */
+.billing-add-person {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}

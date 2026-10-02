@@ -35,7 +35,7 @@ export function InvoiceEditForm({ invoice, issuers, busy, onSave, onCancel }: In
       <label htmlFor="inv-due">Due date<span className="required-marker">*</span></label>
       <input id="inv-due" type="date" value={v.dueDate} onChange={(e) => setV({ ...v, dueDate: e.target.value })} required />
 
-      <label htmlFor="inv-issuer">Issuing entity</label>
+      <label htmlFor="inv-issuer">Invoice issuer</label>
       <select id="inv-issuer" value={v.issuerId} disabled={invoice.revision_of !== null} onChange={(e) => setV({ ...v, issuerId: e.target.value })}>
         <option value="">Not chosen</option>
         {issuers.map((i) => (
