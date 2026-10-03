@@ -1,0 +1,103 @@
+== CONTROL: draft disable forward migration applied (pre-integrity triggers); defects expected
+== mode: --control   repo HEAD: 4290a08   migrations: 111   2026-10-01T20:29:59Z
+-- Concurrency (T3 C1–C7 method)
+FAIL  R1 payment 100 || 50 -> 850   [expected '850.00/100.00' got '950.00/100.00']
+FAIL  R2 deposit 30 || 20 -> escrow 150   [expected '1000.00/150.00' got '1000.00/120.00']
+FAIL  R3 disbursement 80 || 80 -> second refused   [expected '1000.00/20.00 rows=1' got '1000.00/20.00 rows=2']
+FAIL  R4 principal 80 || 80 on 100 -> second refused   [expected '20.00/100.00 rows=1' got '20.00/100.00 rows=2']
+PASS  R5 payment || deposit (columns independent)
+FAIL  R6 reset to 2000 || then payment 50 (dated after it) -> 1950   [expected '1950.00/100.00' got '950.00/100.00']
+FAIL  R6b reset today || payment dated today -> applied and flagged (the new figure may include it)   [expected '1950.00/100.00 1' got '950.00/100.00 0']
+FAIL  R7 payment || then STALE reset -> reset refused, 900   [expected '900.00/100.00 changed since you opened' got '2000.00/100.00 ']
+FAIL  R8 old-browser balance edit (C6/C7 path) refused, payment kept   [expected '900.00/100.00 out of date' got '2000.00/100.00 ']
+FAIL  R9 concurrent double void -> reversed once   [expected '1000.00/100.00 1' got '900.00/100.00 0']
+FAIL  R10 void || new payment -> 950   [expected '950.00/100.00' got '850.00/100.00']
+FAIL  R11 older-page void || current void of same entry -> exactly one reversal   [expected '1000.00/100.00 1' got '900.00/100.00 0']
+FAIL  R12 forced deadlock: Postgres aborts one side (40P01), the other completes exactly once   [expected '1 1000.00/100.00 1 t' got '0 900.00/100.00 0 t']
+-- Linkage, immutability, one-way void
+FAIL  F1 new entry linked server-side to the active loan   [expected 'd726ad42-4cbf-4312-a2bd-7fdd5c1801b0' got '']
+FAIL  F1b client-supplied wrong mortgage_id refused   [expected 'ZM5M1' got '23503']
+FAIL  F2 current void reverses exactly   [expected 'reversed 1000.00/100.00' got 'skipped_unlinked_legacy 900.00/100.00']
+FAIL  F2b repeated void is a no-op   [expected 'already_voided 1000.00/100.00' got 'already_voided 900.00/100.00']
+FAIL  F3 un-void refused   [expected 'ZM5M2' got 'OK']
+FAIL  F4 fact edit refused   [expected 'ZM5M2' got '23514']
+FAIL  F4b delete refused   [expected 'ZM5M2' got 'OK']
+FAIL  F5 older-page void (plain UPDATE) runs the conditional core: reversed   [expected 'OK reversed 1000.00/100.00' got 'OK  860.00/100.00']
+FAIL  F5b client can't set void details without voiding   [expected 'ZM5M2' got 'OK']
+-- Resets (separate principal/escrow epochs; same-value; stale; old browsers)
+PASS  F6 principal reset
+FAIL  F6b void payment after principal reset -> skipped, balance unchanged   [expected 'skipped_reset_after_entry 950.00/130.00' got 'skipped_unlinked_legacy 950.00/130.00']
+PASS  F6c ...creates one principal review cause
+FAIL  F6d escrow unaffected by principal reset: deposit void reverses   [expected 'reversed 950.00/100.00' got 'skipped_unlinked_legacy 950.00/130.00']
+PASS  F7 same-value reset (deliberate confirmation) accepted
+FAIL  F7b ...counts as a reset: later void skips   [expected 'skipped_reset_after_entry 900.00/100.00' got 'skipped_unlinked_legacy 900.00/100.00']
+FAIL  F8 stale form (version moved) refused, nothing saved   [expected 'ERR 900.00/100.00' got 'OK 1000.00/100.00']
+FAIL  F8b old-browser changed balance refused (ZM5M6)   [expected 'ZM5M6' got 'OK']
+FAIL  F8c old-browser unchanged resend + other edit allowed, not a reset   [expected 'OK 0/0' got 'OK 1/0']
+FAIL  F8d counters can't be set directly   [expected 'ZM5M6' got 'OK']
+-- Inactive/replaced loan (frozen, no review cause)
+FAIL  F9 void on replaced loan: A frozen, B untouched   [expected 'skipped_loan_inactive A=900.00/100.00 B=500.00/0.00' got 'skipped_unlinked_legacy A=900.00/100.00 B=500.00/0.00']
+FAIL  F9b no review cause for an inactive loan   [expected '0 0' got '0 1']
+PASS  F9c reset on inactive loan refused
+-- Unlinked legacy entries
+PASS  F10 legacy void: flag only, balance unchanged
+PASS  F10b ...principal review cause on the active loan
+-- Escrow refusals and order
+FAIL  F11 void deposit used by a later disbursement -> refused, not voided   [expected 'refused_negative_escrow f 1000.00/10.00' got 'skipped_unlinked_legacy t 1000.00/10.00']
+FAIL  F11b ...refusal and escrow review cause committed together   [expected '1 1' got '1 0']
+FAIL  F11c older-page same void -> ZM5M3 raised, nothing recorded   [expected 'ZM5M3 1' got 'OK 0']
+FAIL  F11d repeated refused void is idempotent (one refusal effect, one open cause)   [expected 'refused_negative_escrow 1 1' got 'already_voided 0 1']
+FAIL  F12 void disbursement then deposit -> both reverse   [expected 'reversed reversed 1000.00/100.00' got 'skipped_unlinked_legacy already_voided 1000.00/10.00']
+FAIL  F12b the successful void closes the earlier refusal cause   [expected '0' got '2']
+-- Over-original refusal (owner choice 3)
+FAIL  F13 void raising balance above original -> refused, review cause   [expected 'refused_over_original 950.00/0.00 1' got 'skipped_unlinked_legacy 950.00/0.00 1']
+FAIL  F13b older-page same void -> ZM5M4   [expected 'ZM5M4' got 'OK']
+-- Review resolution is per balance
+PASS  F14 two open causes (principal + escrow)
+PASS  F14a a reset that names no causes resolves none (M2)
+PASS  F14b a cause raised during review (after the user looked) exists
+FAIL  F14c confirming resolves only the causes shown; the new one and escrow stay open   [expected '1/1' got '2/1']
+PASS  F14d escrow cause can't be resolved through a principal reset
+-- Permissions and audit
+PASS  F15 clients can't write effects
+PASS  F15b clients can't write review causes
+PASS  F15c another workspace sees none of A's effects
+PASS  F15d another workspace can't void A's entry
+PASS  F16 audit rows for a void
+PASS  F16b audit rows for a reset
+-- Historical entries (B4): applied as today, flagged when dated on/before the latest statement/figure date
+FAIL  H1 entry dated before the figure was entered: applied AND flagged   [expected '900.00/100.00 1 possibly_covered_by_statement' got '900.00/100.00 0 ']
+FAIL  H1b the flag carries the entry and balance-update context   [expected 't' got '']
+PASS  H2 an entry dated after the figure date is applied, not flagged
+FAIL  H3 statement date known: dated on/before it -> flagged; after it -> not   [expected '1/0 980.00/100.00' got '0/0 980.00/100.00']
+PASS  H3b the statement date is stored as given
+PASS  H4 confirming the balance with the shown ids resolves the flag
+PASS  H4b a reset without a statement date leaves it unknown (not defaulted)
+FAIL  H5 voiding a flagged entry reverses it and closes its flag   [expected 'reversed 1000.00/100.00 0' got 'skipped_unlinked_legacy 950.00/100.00 1']
+FAIL  H6 escrow: flagged on the escrow balance only   [expected '1000.00/140.00 1/0' got '1000.00/140.00 0/0']
+PASS  H7 future statement date refused
+-- Review context (B3)
+PASS  B3 reset-skip cause records entry date/type/principal and when the balance was updated
+FAIL  B3b refused cause: entry still active (not voided) with its context   [expected 'f 100.00' got 't 100.00']
+-- Versions
+FAIL  V1 principal version bumps on apply, reversal and reset   [expected '1 2 3' got '0 0 1']
+PASS  V2 two resets from the same version: first wins, second refused stale
+-- T3 M1/M2/M4/M7/M8 additions
+PASS  M7 an escrow entry doesn't make a principal-only reset stale
+FAIL  M7b ...but an escrow reset from the old escrow version is stale   [expected 'ERR' got 'OK']
+FAIL  M1 a new loan's opening balances are recorded as an initial reset effect   [expected '1' got '0']
+PASS  M2 legacy cause is NOT resolved by a principal confirmation
+PASS  M2b ...only by explicit acknowledgement
+PASS  M4 marking every action_items task complete can't hide a review cause
+PASS  M4b an open cause survives generic task completion
+PASS  M8 a legacy void takes the active loan lock (waits for the reset, then records its cause)
+-- Authorization and hardening of the controlled paths
+PASS  S1 another workspace can't reset
+PASS  S1b another workspace can't acknowledge A's review
+FAIL  S1c another workspace can't insert against A's loan   [expected 'Not a member' got 'row-level security']
+PASS  S2 clients can't execute internal functions
+PASS  S2b the loan guard runs with the caller's rights (not SECURITY DEFINER)
+PASS  S3 every SECURITY DEFINER mortgage function pins search_path
+PASS  S3b anon can execute none of the public functions
+PASS  S4 audit check kept every earlier table name and added the two new ones
+== RESULT (--control): 37 passed, 49 failed

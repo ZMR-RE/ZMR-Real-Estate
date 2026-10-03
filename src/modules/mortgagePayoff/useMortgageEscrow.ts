@@ -3,10 +3,11 @@ import { useAuth } from '../../shared/auth/AuthContext'
 import {
   createMortgageEscrowTransaction,
   listMortgageEscrowTransactions,
-  voidMortgageEscrowTransaction,
+  voidMortgageActivity,
   type MortgageEscrowTransaction,
   type MortgageEscrowTransactionInput,
 } from './mortgagePayoffQueries'
+import { friendlyDatabaseError, voidRefusalMessage } from './mortgageBalanceIntegrity'
 
 function todayDateString() {
   return new Date().toISOString().slice(0, 10)
@@ -73,17 +74,22 @@ export function useMortgageEscrow(propertyId: string) {
     return true
   }
 
-  // The only "removal" path for an escrow transaction (roadmap 9.20) —
-  // never a hard DELETE. Note this doesn't reverse the deposit/disbursement
-  // already applied to escrow_balance (see voidMortgageEscrowTransaction);
-  // it corrects the record, not the balance.
+  // The only "removal" path (roadmap 9.20) — never a hard DELETE. The database reverses the entry's balance effect
+  // exactly once when that is safe; otherwise it voids without adjusting (the row shows why), or refuses and opens an
+  // Action Queue balance review (balance integrity, 20261004100000).
   const voidEscrowTransaction = async (id: string): Promise<boolean> => {
     setLoggingEscrowTransaction(true)
-    const { error: voidError } = await voidMortgageEscrowTransaction(id)
+    const { data: result, error: voidError } = await voidMortgageActivity('escrow', id)
     setLoggingEscrowTransaction(false)
 
     if (voidError) {
-      setEscrowTransactionError(voidError.message)
+      setEscrowTransactionError(friendlyDatabaseError(voidError))
+      return false
+    }
+    // A refused void leaves the entry active; the database already opened the Action Queue balance review.
+    const refusal = voidRefusalMessage(result?.outcome ?? null)
+    if (refusal) {
+      setEscrowTransactionError(refusal)
       return false
     }
 

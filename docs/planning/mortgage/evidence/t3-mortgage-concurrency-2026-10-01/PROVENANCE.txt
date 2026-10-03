@@ -1,0 +1,8 @@
+Copied unchanged from /Users/janki/ZMR-T3-evidence/mortgage-concurrency-2026-10-01/ on 2026-10-01 by T1.
+Author: T3. Files are T3's originals; SHA-256 below.
+
+77673034bf4967dad5e2c026e255e5d304d8db32a741b24a567031a1952238f2  README.md
+9b16deafd9bc7d2a7b1583f1e84a3d343f2895a2d75f7fefb98ff6217b4fdcfb  run.sh
+28225a14c14077f7f51292736d921802b4fdd50b25effed55db65fc6e9b52d3b  candidate_fix_row_lock.sql
+57d3044fd7cd3f4b584808d9eed40a021b2b9163e2dc56e8f2c729bc783cb306  results-live.txt
+40b4172cd986b80bbde75c721e0fd4d9bf3b71c1281acc7ea2a1ba5e008b09ff  results-fixed-control.txt

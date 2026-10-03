@@ -1,0 +1,86 @@
+[
+ {
+  "id": "I1",
+  "kind": "desktop",
+  "cssWidth": 528,
+  "cssHeight": 902,
+  "alertText": [
+   "A statement date can't be in the future. Nothing was saved; your entries are still in the form."
+  ]
+ },
+ {
+  "id": "I2",
+  "kind": "desktop",
+  "cssWidth": 528,
+  "cssHeight": 406,
+  "alertText": [
+   "The balance changed while you were editing, so nothing was saved. Your entries are still here; no need to reload.\nStored now: principal $149,000.00 · escrow $1,000.00\nIn this form: principal $148,000.00 · escrow $1,000.00\nCheck your statement, then choose one:\n• Save again to use the figures in this form.\n• To keep the stored figures, type them into the balance fields, then save.\n• Cancel discards all your changes."
+  ]
+ },
+ {
+  "id": "I3",
+  "kind": "desktop",
+  "cssWidth": 528,
+  "cssHeight": 262,
+  "alertText": [
+   "The balance was saved. Only the other loan details were not saved, because they were changed at the same time somewhere else. Your entries are still in the form; save again to apply them."
+  ]
+ },
+ {
+  "id": "I4",
+  "kind": "desktop",
+  "cssWidth": 1280,
+  "cssHeight": 494,
+  "alertText": [
+   "The balance changed after this review was shown, so nothing was confirmed. The figures below have been refreshed; check them against your statement and confirm again."
+  ],
+  "ops": [
+   "load-review-list",
+   "load-review-list",
+   "reset",
+   "load-review-list"
+  ]
+ },
+ {
+  "id": "I1",
+  "kind": "phone",
+  "cssWidth": 374,
+  "cssHeight": 974,
+  "alertText": [
+   "A statement date can't be in the future. Nothing was saved; your entries are still in the form."
+  ]
+ },
+ {
+  "id": "I2",
+  "kind": "phone",
+  "cssWidth": 374,
+  "cssHeight": 478,
+  "alertText": [
+   "The balance changed while you were editing, so nothing was saved. Your entries are still here; no need to reload.\nStored now: principal $149,000.00 · escrow $1,000.00\nIn this form: principal $148,000.00 · escrow $1,000.00\nCheck your statement, then choose one:\n• Save again to use the figures in this form.\n• To keep the stored figures, type them into the balance fields, then save.\n• Cancel discards all your changes."
+  ]
+ },
+ {
+  "id": "I3",
+  "kind": "phone",
+  "cssWidth": 374,
+  "cssHeight": 310,
+  "alertText": [
+   "The balance was saved. Only the other loan details were not saved, because they were changed at the same time somewhere else. Your entries are still in the form; save again to apply them."
+  ]
+ },
+ {
+  "id": "I4",
+  "kind": "phone",
+  "cssWidth": 390,
+  "cssHeight": 861,
+  "alertText": [
+   "The balance changed after this review was shown, so nothing was confirmed. The figures below have been refreshed; check them against your statement and confirm again."
+  ],
+  "ops": [
+   "load-review-list",
+   "load-review-list",
+   "reset",
+   "load-review-list"
+  ]
+ }
+]

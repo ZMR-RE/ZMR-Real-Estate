@@ -1,0 +1,66 @@
+T3 → planning conversation (relayed by the owner): mortgage integrity e13340e, with blockers and optional items separated
+
+I've closed the Stage 1 review; I'll repeat it only if its baseline or candidate changes.
+
+Code state: t1/mortgage-integrity is still at evidence commit 8f18f77, unchanged since my review. T1 has created t1/mortgage-integrity-r2 at the same commit, which suggests a correction is underway. To coordinate one fixed review commit, T1 should finish the corrections on -r2 and report its exact hash. I'll then review only the change since e13340e against the list below. I won't review in-progress code.
+
+No environment changes, no deployment, and nothing was re-run beyond my earlier review.
+
+Release blockers (must be fixed in the fixed commit)
+
+B1. Recovery: the database rollback and migration-history reset aren't usable, as you note they're unapproved.
+- supabase/rollback/…_down.sql plus migration repair --status reverted would leave the migration's columns, tables and constraint in place while history says it isn't applied. Re-applying would fail, and future exact-set checks would mislead.
+- The down script also removes the activity-table audit triggers.
+- Required:
+  - Primary recovery is frontend-only. The pre-integrity frontend works on the new database (inserts and voids work; balance edits are refused until roll-forward); document that degraded mode.
+  - Any database disable is a new reviewed forward migration to one defined state:
+    - both migrations recorded as applied;
+    - the new objects retained;
+    - the activity audit triggers kept;
+    - the frontend is the pre-integrity build.
+  - Remove the "reverted" repair step, or mark it never-to-be-used. Same rule for Practice.
+
+B2. Atomic refusal and review recording: resolving a review can clear causes the owner never saw.
+- Creating a refusal or skip cause doesn't change balance_version, so a cause added after the owner opened the review is resolved by "matches my latest statement", and by any edit-path reset.
+- Required: a confirmation resolves only the cause IDs it displayed. An edit-path reset must show open causes, or resolve only those it shows.
+- Recording itself is otherwise correct:
+  - in the current app, the refusal, its cause and "not voided" commit together;
+  - older pages raise the refusal and keep nothing, which is truthful and documented.
+
+B3. Review context is insufficient for a safe confirmation.
+- Every cause: show the source entry's date, type, amount or principal, and for reset skips when the reset happened.
+- Refused causes: state that the entry is still active (not voided) and what to do next.
+- Otherwise a confirmation can quietly close a void the owner still intends.
+
+B4. Historical entries after a statement reset, without inferring coverage from dates.
+- Record a statement date on every reset. Today the app never sends one; default to the reset date when none is given.
+- An entry dated on or before the latest statement date for that balance is applied as today and raises a review cause. Nothing is skipped automatically.
+
+Confirmed sound (no change needed)
+
+- Older-browser writes:
+  - a changed balance is refused (ZM5M6);
+  - an unchanged resend can't overwrite anything, because the guard compares against the locked, latest row, and it isn't treated as a confirmation;
+  - older pages' inserts are linked on the server;
+  - older pages' voids use the same conditional core;
+  - un-void, fact edits and deletes are refused.
+- Permissions:
+  - membership is checked in both client-callable functions;
+  - the internal void routine isn't callable by clients;
+  - the effects and causes tables are read-only for clients, per account;
+  - the add trigger refuses a loan from a different workspace;
+  - the internal markers can't be set through PostgREST, as I verified.
+- Concurrency: the loan row is locked first. The only deadlock is an older page and the current app voiding the same entry at once, and Postgres aborts one cleanly. Reversal happens exactly once (locks plus the unique index); T1's tests R1–R11 cover the races.
+- Done: M3, M4, M6, M9 and M10.
+- Sequencing with Stage 1: compatible. Migration 20261004100000 is newest, and the two candidates share no files apart from docs.
+
+Optional improvements (before production preferred; not blocking the Practice test)
+
+1. Separate principal and escrow version counters (M7). Today an escrow entry makes a principal-only reset fail as stale, which is safe but a false refusal.
+2. A clear deadlock message. Map the 40P01 error to "Changed at the same time — nothing was saved; try again."
+3. Harden the internal markers. The balance guard also requires current_user not to be authenticated/anon.
+4. Record opening balances. A new loan's opening balance becomes an initial reset effect.
+5. Owner choice: limit resets to the owner or manager roles. Today any member can reset, as with the existing activity-table permissions.
+6. Separate, cross-cutting: members can insert audit_log rows directly, so audit rows can be forged. That predates this work. Treat the effects table as authoritative.
+
+Practice clearance follows the fixed -r2 commit once B1–B4 pass my focused check. The test scope is the one I gave in my previous report. Production remains a separate owner decision.

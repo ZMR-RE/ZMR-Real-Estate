@@ -1,0 +1,158 @@
+T3 → planning conversation (relayed by the owner): mortgage integrity implementation e13340e (evidence 8f18f77) on live 4f696c3
+
+Verdict: the core is sound. The locked balance writes, server-side loan linking, immutable entries, one-way exactly-once voids, truthful refusals, and the refusal of older pages' balance edits all hold up. Not yet cleared for a Practice test. Four corrections, F1–F4 below, come first. With those in a fixed commit, plus my focused check of that change, it's cleared for the scoped Practice test described at the end. Not production.
+
+This was a review by reading code, plus git checks. No Practice or production access, no migrations applied, no deployment. I reused T1's evidence:
+- candidate suite 49/49;
+- control 40 failures;
+- preservation 5/5;
+- my original reproduction re-run on live, giving 5 wrong;
+- the existing suites, tsc, build and vitest.
+
+Each of my M1–M10 findings against the implementation
+
+#: M1 older pages' balance edits refused
+Status: Done differently, and safe
+Assessment: See "Older pages" below
+────────────────────────────────────────
+#: M2 resolving one balance doesn't clear others
+Status: Partly
+Assessment: Resolution is per balance, but causes the owner never saw get
+resolved too → F2
+────────────────────────────────────────
+#: M3 confirming counts as a reset
+Status: Done
+Assessment: "Matches my statement" is a same-value reset that moves the reset
+counter
+────────────────────────────────────────
+#: M4 deduplication and no checkbox bypass
+Status: Done
+Assessment: The item is built from open causes; a unique index allows one open
+cause per entry and cause; the generic "complete" checkbox can't hide a
+cause; monthly tasks are explicitly out of this batch
+────────────────────────────────────────
+#: M5 historical entries after a statement reset
+Status: Missing → F3
+Assessment: Statement dates are never collected by the app, and entries are
+always applied
+────────────────────────────────────────
+#: M6 repeated refusals
+Status: Done
+Assessment: void_refused is excluded from the once-only index
+────────────────────────────────────────
+#: M7 separate version per balance
+Status: Not done
+Assessment: One shared balance_version, so an escrow entry makes a principal
+reset fail as stale. That's safe but a false refusal; fix before production
+────────────────────────────────────────
+#: M8 lock order and deadlock message
+Status: Partly
+Assessment: The order is right (see below). The app doesn't handle the deadlock
+error 40P01; it would show a raw error. Fix before production
+────────────────────────────────────────
+#: M9 audit table constraint
+Status: Done
+Assessment: The new allowed-table list is a superset of live's; Stage 1 doesn't
+touch it
+────────────────────────────────────────
+#: M10 test expectations
+Status: Done
+Assessment: Concurrency R1–R11, resets, older-page paths, per-balance
+resolution and permissions are covered
+
+Key areas
+
+Authorization and workspace isolation: OK.
+- void_mortgage_activity and reset_mortgage_balance check membership.
+- The internal void routine is not callable by clients.
+- Clients can only read the effects and causes tables, and only for their own account. Inserts, updates and deletes are revoked.
+- The add trigger refuses a loan from a different workspace.
+- Note: "member" includes every role, which is the same as today's activity-table permissions. Whether resets should be limited to owner or manager is an owner choice, not a regression.
+
+The internal markers (zmr.mortgage_internal, zmr.mortgage_void): not reachable by clients today.
+- PostgREST runs no client SQL, and no function in the exposed schema wraps set_config. I checked live, Stage 1 and this migration.
+- Markers are transaction-local and switched off after each use.
+- Hardening (recommended): the balance guard runs with the caller's rights, so it can also require current_user not to be authenticated/anon. That ties the bypass to a server-side writer rather than to a setting name alone.
+
+Locking, exactly-once and refusals: OK.
+- Adds and resets lock the loan.
+- A current-app void locks the loan, then the entry (the loan link never changes, so reading it before locking is safe).
+- An older page's void locks the entry, then the loan. The only cycle is two simultaneous voids of the same entry, and Postgres aborts one cleanly.
+- Reversal happens at most once: guaranteed by the locks plus the unique index; repeated voids do nothing.
+- Refusals are truthful: in the current app, the refusal and its cause commit together and the entry stays not voided. On an older page the refusal is raised and nothing is kept.
+
+Older pages (unchanged balance resubmission allowed): safe, and it keeps the owner's choice.
+- The guard compares the submitted value with the stored row it has just locked. If another write landed first, Postgres re-runs the guard against the newest version.
+- So a stale form's balance always differs and is refused, with "ZM5M6 … reload".
+- An identical value can't overwrite anything. It doesn't count as a reset either, so it can't masquerade as a confirmation.
+- No stale overwrite and no balance change is possible from an older page. That matches the owner's decision, and it's less disruptive than my original refuse-every-edit proposal.
+
+Audit visibility and protection: both activity tables are now audited, and the insert path is supported.
+- Pre-existing weakness: members can insert audit_log rows directly (there's an insert policy), so audit rows can be forged. Rows can't be updated or deleted.
+- The effects table can't be written by clients, so treat it as the authoritative record for reversal decisions.
+- Tightening audit inserts is a separate, cross-cutting item, not this batch.
+
+Corrections required before the Practice test
+
+F1. The recovery procedure leaves the database inconsistent.
+- After running the down script, it calls migration repair --status reverted 20261004100000, while that migration's columns, tables, indexes and widened audit constraint all remain.
+- Migration history would then claim the migration isn't applied while its objects exist. Re-applying it would fail on objects that already exist, and the next exact-set check would mislead.
+- The down script also removes auditing of the activity tables, which loses audit coverage.
+
+Required:
+- Primary recovery is frontend-only. The pre-integrity frontend works on the new database (inserts and voids work; balance edits are refused until roll-forward). State that degraded mode.
+- If the database rules themselves must be disabled, use a new reviewed forward migration, never a "reverted" repair. It should produce one defined state:
+  - 20261004100000 stays recorded as applied;
+  - the disable migration is also applied;
+  - the new objects are retained;
+  - the activity audit triggers are kept;
+  - the frontend is the pre-integrity build.
+- Re-enabling later is another forward migration.
+- The same rule applies to Practice.
+
+F2. Resolving a review can clear causes the owner never saw.
+- A reset (whether a confirmation or an edit) resolves every open cause for that loan and balance.
+- Creating a skip cause doesn't change balance_version, so a legacy or reset-skip cause added while the owner is looking at the item still gets resolved by "matches my statement".
+
+Fix: the confirmation passes the cause IDs it displayed, and only those are resolved. Edit-path resets should do the same, or show the open causes before saving.
+
+F3. Historical entries after a statement reset (M5, reframed so nothing is inferred from dates).
+- Don't auto-apply or auto-skip based on dates.
+- Record a statement date on every reset; the app currently never sends one. Use the reset date when none is given.
+- When a new entry is dated on or before the latest statement date for that balance, still apply it as today, but add a review cause: "entered for a period your statement may already include — confirm the balance".
+- That flags it for a person instead of guessing.
+
+F4. Review items lack the context needed for a safe confirmation.
+- The item shows only the cause and the current balance.
+- For a skipped reversal, the owner needs the entry's date, type, amount (or principal) and when the reset happened, to judge whether the statement includes it.
+- For refused causes, the item must say the entry is still active (not voided) and what to do next. Otherwise "matches my statement" quietly closes a void the owner still intends.
+- The source link points at either table, but it can still be resolved with one query per source kind.
+
+Later, not blocking the Practice test
+
+- M7 (separate version per balance).
+- The 40P01 deadlock message.
+- The current_user hardening.
+- Recording a new loan's opening balance as an initial reset effect, so the effects record can rebuild the balance.
+
+Migration sequencing against Stage 1 (d9cdcb3): compatible
+
+- 20261004100000 is newer than every applied migration and than Stage 1's 20261002* migrations.
+- Apart from docs, the two candidates share no files; ActionQueueBoard.tsx is untouched by Stage 1.
+- If Stage 1 ships first: mortgage's pending set is exactly 1, a plain push, rebuilt on the new main.
+- If mortgage ships first: Stage 1 must be re-merged; its preflight becomes 111 → 120 migrations, with exactly 9 pending and --include-all (already in its procedure), plus a T3 integration check.
+
+Scoped Practice test (once F1–F4 are fixed and re-checked)
+
+- Practice only: apply exactly 20261004100000 with the exact-set procedure, in the Practice holder's window.
+- Identity and data: the reserved test identity, on a fictional ZMR-TEST loan.
+- Verify on hosted Supabase:
+  - the reset and void RPCs return the outcomes the app expects;
+  - the embed hint mortgage_details!review_mortgage_id works;
+  - older-page behaviour, using a 4f696c3 build: unchanged-balance save allowed, changed balance refused, a void reverses, a refused void shows its message;
+  - the review item now shows full context, and partial resolution works;
+  - the statement-date flag (F3).
+- Not needed hosted: concurrency (the local evidence suffices) and recovery.
+- Recovery for the test itself: if something fails, Practice is restored with the F1 forward migration only.
+
+Production remains a separate owner decision.

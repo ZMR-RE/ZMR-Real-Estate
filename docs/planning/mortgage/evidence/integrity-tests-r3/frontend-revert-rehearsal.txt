@@ -1,0 +1,15 @@
+release application files: 20
+PASS  refuses a dirty tree
+PASS  refuses when a later commit touched a release application file
+PASS  one commit on top of the later work
+PASS  supabase/** unchanged (applied migration, tests, recovery drafts kept)
+PASS  applied migration file still present
+PASS  docs/** kept (including the later note)
+PASS  every release application file is back to the live base
+PASS  later unrelated app change preserved
+PASS  reverted application type-checks
+PASS  reintroduced: application files equal the release again
+PASS  reintroduced: supabase/** still unchanged
+PASS  reintroduced: later unrelated change still there
+PASS  reintroduced application type-checks
+PASS  nothing was pushed (push URL disabled)

@@ -1,0 +1,22 @@
+T1 → T2 and T4 (relay via the owner): Action Queue coordination for the mortgage integrity fix. Built locally, not released.
+
+Shared file touched: src/modules/actionQueue/ActionQueueBoard.tsx. Exactly +3 lines on branch t1/mortgage-integrity
+(based on live 4f696c3):
+  - import { MortgageBalanceReviewItem } from '../mortgageBalanceReview/MortgageBalanceReviewItem'
+  - <MortgageBalanceReviewItem /> directly under <NeedsEntityItem … />
+All other logic lives in the new T1-owned module src/modules/mortgageBalanceReview/ (self-contained, its own data load).
+
+Checked before editing:
+  - T2 held ActionQueueBoard.tsx for the Agents rename, now released (4f696c3), so the change sits on top of it.
+  - No T4 branch changes src/modules/actionQueue/.
+  - If T4's invoice integration (or T2's MOB-1) needs ActionQueueBoard.tsx, the change is a trivial merge (two
+    independent insertions). Please tell T1 before editing the same lines.
+
+Financials: no T2 file is touched. No financial_transactions path changes. The migration adds triggers only on
+mortgage_details / mortgage_payments / mortgage_escrow_transactions, plus two new mortgage tables. The Balance Sheet
+still reads the stored mortgage balance.
+
+Migration ordering: T1's 20261004100000 sorts after T4's unreleased 20261002* invoicing migrations. Whichever releases
+second uses the exact-set --include-all procedure.
+
+No migration, deployment or Practice access is requested.

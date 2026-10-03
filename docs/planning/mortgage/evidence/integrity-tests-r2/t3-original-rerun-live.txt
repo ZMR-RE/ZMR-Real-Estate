@@ -1,0 +1,10 @@
+== mode: live   code: c15733c21c9f0a196c31c0f6e606b21ba64c5afd   port: 55441   2026-10-01T20:30:44Z
+applied      110 repo migrations + 0 extra
+C1 payment 100 || payment 50                               correct: 850.00 / escrow 100.00   payments=2 escrow_rows=0   observed: 950.00 / escrow 100.00   payments=2 escrow_rows=0   LOST/INCORRECT  | A: B:
+C2 escrow deposit 30 || deposit 20                         correct: 1000.00 / escrow 150.00  payments=0 escrow_rows=2   observed: 1000.00 / escrow 120.00  payments=0 escrow_rows=2   LOST/INCORRECT  | A: B:
+C3 disbursement 80 || 80 (escrow 100; 2nd must be refused) correct: 1000.00 / escrow 20.00   payments=0 escrow_rows=1   observed: 1000.00 / escrow 20.00   payments=0 escrow_rows=2   LOST/INCORRECT  | A: B:
+C4 principal 80 || 80 (balance 100; 2nd must be refused)   correct: 20.00 / escrow 100.00    payments=1 escrow_rows=0   observed: 20.00 / escrow 100.00    payments=2 escrow_rows=0   LOST/INCORRECT  | A: B:
+C5 payment 100 || escrow deposit 30 (different columns)    correct: 900.00 / escrow 130.00   payments=1 escrow_rows=1   observed: 900.00 / escrow 130.00   payments=1 escrow_rows=1   OK              | A: B:
+C6 manual edit to 2000 || then payment 50                  correct: 1950.00 / escrow 100.00  payments=1 escrow_rows=0   observed: 950.00 / escrow 100.00   payments=1 escrow_rows=0   LOST/INCORRECT  | A: B:
+C7 payment 100 || then manual edit to 2000 (absolute)      correct: 2000.00 / escrow 100.00  payments=1 escrow_rows=0   observed: 2000.00 / escrow 100.00  payments=1 escrow_rows=0   OK              | A: B:
+== RESULT (live): 5 case(s) with a lost or incorrect balance

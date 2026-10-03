@@ -1,0 +1,2 @@
+applied      111 migrations
+RESULT: 27 passed, 0 failed, 27 expected

@@ -1,5 +1,6 @@
 import type { MortgagePayment } from './mortgagePayoffQueries'
 import { mortgageCurrencyFormatter as currencyFormatter } from './mortgagePayoffFormat'
+import { voidedRowNote } from './mortgageBalanceIntegrity'
 
 interface MortgagePaymentListProps {
   payments: MortgagePayment[]
@@ -30,6 +31,9 @@ export function MortgagePaymentList({ payments, onVoid, voiding }: MortgagePayme
               <td>
                 {payment.payment_date}
                 {payment.voided ? ' (voided)' : ''}
+                {payment.voided && voidedRowNote(payment.void_outcome) && (
+                  <span className="field-hint"> {voidedRowNote(payment.void_outcome)}</span>
+                )}
               </td>
               <td>{currencyFormatter.format(Number(payment.amount))}</td>
               <td>{currencyFormatter.format(Number(payment.principal_amount))}</td>
