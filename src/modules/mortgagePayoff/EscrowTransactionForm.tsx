@@ -40,6 +40,7 @@ export function EscrowTransactionForm({
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
+    if (saving || duplicateMessage) return
     const succeeded = await onSave(values, effectiveHistoryOnly(values.transaction_date, statementDate, historySelected))
     if (succeeded) { reset(); onSaved?.() }
   }
@@ -59,6 +60,7 @@ export function EscrowTransactionForm({
         />
       )}
 
+      <fieldset className="mortgage-entry-fields" aria-label="Escrow details" disabled={saving || !!duplicateMessage}>
       <label htmlFor="escrow_transaction_date">
         Date<span className="required-marker">*</span>
       </label>
@@ -112,6 +114,7 @@ export function EscrowTransactionForm({
         historyOnly={historySelected}
         onChange={setHistorySelected}
       />
+      </fieldset>
       {!duplicateMessage && <div className="form-actions">
       {onCancel && <button type="button" onClick={onCancel} disabled={saving}>Cancel</button>}
       <button type="submit" disabled={saving}>

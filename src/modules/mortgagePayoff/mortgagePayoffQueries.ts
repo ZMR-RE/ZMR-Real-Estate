@@ -1,3 +1,4 @@
+import { readMortgageHistory } from './readMortgageHistory'
 import { supabase } from '../../shared/supabaseClient'
 
 export interface MortgageDetails {
@@ -161,12 +162,15 @@ export type MortgagePaymentInput = Omit<MortgagePayment, 'id' | 'property_id' | 
 // voided entries visibly marked, rather than making them disappear
 // entirely.
 export async function listMortgagePayments(propertyId: string) {
-  return supabase
+  return readMortgageHistory((from, to) => supabase
     .from('mortgage_payments')
-    .select('id, property_id, mortgage_id, payment_date, amount, principal_amount, interest_amount, voided, void_outcome')
+    .select('id, property_id, mortgage_id, payment_date, amount, principal_amount, interest_amount, voided, void_outcome', { count: 'exact' })
     .eq('property_id', propertyId)
     .order('payment_date', { ascending: false })
+    .order('id', { ascending: false })
+    .range(from, to)
     .returns<MortgagePayment[]>()
+  )
 }
 
 // The current_balance reduction happens in the mortgage_payments_apply_to_balance
@@ -204,12 +208,15 @@ export type MortgageEscrowTransactionInput = Omit<MortgageEscrowTransaction, 'id
 // TransactionList — the list stays the full history with voided entries
 // visibly marked, rather than making them disappear entirely.
 export async function listMortgageEscrowTransactions(propertyId: string) {
-  return supabase
+  return readMortgageHistory((from, to) => supabase
     .from('mortgage_escrow_transactions')
-    .select('id, property_id, transaction_date, transaction_type, amount, description, voided, void_outcome')
+    .select('id, property_id, transaction_date, transaction_type, amount, description, voided, void_outcome', { count: 'exact' })
     .eq('property_id', propertyId)
     .order('transaction_date', { ascending: false })
+    .order('id', { ascending: false })
+    .range(from, to)
     .returns<MortgageEscrowTransaction[]>()
+  )
 }
 
 // escrow_balance is updated by the apply_mortgage_escrow_transaction_to_balance

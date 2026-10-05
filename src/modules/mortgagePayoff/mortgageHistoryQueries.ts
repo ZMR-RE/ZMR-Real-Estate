@@ -1,3 +1,4 @@
+import { readMortgageHistory } from './readMortgageHistory'
 import { supabase } from '../../shared/supabaseClient'
 import type { EscrowTransactionType, MortgageEscrowTransactionInput, MortgagePaymentInput } from './mortgagePayoffQueries'
 
@@ -29,21 +30,27 @@ export interface HistoryEscrow {
 }
 
 export async function listHistoryPayments(propertyId: string) {
-  return supabase
+  return readMortgageHistory((from, to) => supabase
     .from('mortgage_history_payments')
-    .select('id, property_id, mortgage_id, payment_date, amount, principal_amount, interest_amount, declared_as_of, voided')
+    .select('id, property_id, mortgage_id, payment_date, amount, principal_amount, interest_amount, declared_as_of, voided', { count: 'exact' })
     .eq('property_id', propertyId)
     .order('payment_date', { ascending: false })
+    .order('id', { ascending: false })
+    .range(from, to)
     .returns<HistoryPayment[]>()
+  )
 }
 
 export async function listHistoryEscrow(propertyId: string) {
-  return supabase
+  return readMortgageHistory((from, to) => supabase
     .from('mortgage_history_escrow')
-    .select('id, property_id, transaction_date, transaction_type, amount, description, declared_as_of, voided')
+    .select('id, property_id, transaction_date, transaction_type, amount, description, declared_as_of, voided', { count: 'exact' })
     .eq('property_id', propertyId)
     .order('transaction_date', { ascending: false })
+    .order('id', { ascending: false })
+    .range(from, to)
     .returns<HistoryEscrow[]>()
+  )
 }
 
 // ackMatches: the number of identical entries the user was shown and confirmed ("Record anyway"); null otherwise.

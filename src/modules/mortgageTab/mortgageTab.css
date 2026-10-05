@@ -79,3 +79,5 @@
 .mortgage-history-list td button { margin:0; }
 
 @media(max-width:700px) { .mortgage-workspace svg text { font-size:22px; } }
+
+.mortgage-entry-fields { border:0; padding:0; margin:0; min-width:0; }

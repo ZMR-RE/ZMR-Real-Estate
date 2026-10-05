@@ -11,6 +11,7 @@ export function DuplicateEntryPrompt({ message, busy, onConfirm, onDismiss }: Du
   return (
     <div role="alert">
       <p>{message}</p>
+      <p className="field-hint">These details stay locked while you confirm. Cancel to edit them.</p>
       <button type="button" onClick={onConfirm} disabled={busy}>
         Record anyway (it's a separate payment)
       </button>{' '}
