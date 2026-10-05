@@ -1,3 +1,4 @@
+import { CostBasisSection } from '../depreciation/CostBasisSection'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { propertyLabel } from '../../shared/propertyLabel'
 import { Breadcrumb } from '../../shared/Breadcrumb'
@@ -134,9 +135,9 @@ export function PropertyProfile() {
           onDiscardDraftAndLoadLatest={discardDraftAndLoadLatest}
         />
       )}
-      {tab === 'financials' && <PropertyProfileTransactionsTab transactions={transactions} />}
+      {tab === 'financials' && <><PropertyProfileTransactionsTab transactions={transactions} /><CostBasisSection propertyId={property.id} purchasePrice={property.purchase_price} /></>}
       {tab === 'mortgage' && (
-        <PropertyProfileMortgageTab property={property} marketValue={latestMarketValue?.value ?? null} />
+        <PropertyProfileMortgageTab key={property.id} onOpenDocuments={() => setTab('documents')} property={property} marketValue={latestMarketValue?.value ?? null} />
       )}
       {tab === 'kpi' && <PropertyProfileKpiTab property={property} transactions={transactions} />}
       {tab === 'activity' && (

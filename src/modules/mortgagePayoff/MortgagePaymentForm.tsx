@@ -5,6 +5,8 @@ import { effectiveHistoryOnly } from './mortgageHistoryEntry'
 import type { MortgagePaymentInput } from './mortgagePayoffQueries'
 
 interface MortgagePaymentFormProps {
+  onCancel?: () => void
+  onSaved?: () => void
   initialValues: MortgagePaymentInput
   saving: boolean
   error: string | null
@@ -18,6 +20,8 @@ interface MortgagePaymentFormProps {
 }
 
 export function MortgagePaymentForm({
+  onCancel,
+  onSaved,
   initialValues,
   saving,
   error,
@@ -37,19 +41,19 @@ export function MortgagePaymentForm({
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     const succeeded = await onSave(values, effectiveHistoryOnly(values.payment_date, statementDate, historySelected))
-    if (succeeded) reset()
+    if (succeeded) { reset(); onSaved?.() }
   }
 
   return (
     <form className="mortgage-payment-form" onSubmit={handleSubmit}>
-      <h3>Log a payment</h3>
+      {!onCancel && <h3>Add payment</h3>}
       {error && <p role="alert">{error}</p>}
       {duplicateMessage && (
         <DuplicateEntryPrompt
           message={duplicateMessage}
           busy={saving}
           onConfirm={async () => {
-            if (await onConfirmDuplicate()) reset()
+            if (await onConfirmDuplicate()) { reset(); onSaved?.() }
           }}
           onDismiss={onDismissDuplicate}
         />
@@ -116,9 +120,12 @@ export function MortgagePaymentForm({
         historyOnly={historySelected}
         onChange={setHistorySelected}
       />
+      {!duplicateMessage && <div className="form-actions">
+      {onCancel && <button type="button" onClick={onCancel} disabled={saving}>Cancel</button>}
       <button type="submit" disabled={saving}>
-        {saving ? 'Logging…' : 'Log payment'}
+        {saving ? 'Saving…' : 'Save'}
       </button>
+      </div>}
     </form>
   )
 }

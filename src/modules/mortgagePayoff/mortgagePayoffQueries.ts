@@ -143,6 +143,7 @@ export async function voidMortgageDetails(id: string) {
 }
 
 export interface MortgagePayment {
+  mortgage_id?: string | null
   id: string
   property_id: string
   payment_date: string
@@ -153,7 +154,7 @@ export interface MortgagePayment {
   void_outcome: string | null
 }
 
-export type MortgagePaymentInput = Omit<MortgagePayment, 'id' | 'property_id' | 'voided' | 'void_outcome'>
+export type MortgagePaymentInput = Omit<MortgagePayment, 'id' | 'property_id' | 'mortgage_id' | 'voided' | 'void_outcome'>
 
 // Fetches voided rows too (not just active), same as
 // listMortgageEscrowTransactions — the list stays the full history with
@@ -162,7 +163,7 @@ export type MortgagePaymentInput = Omit<MortgagePayment, 'id' | 'property_id' | 
 export async function listMortgagePayments(propertyId: string) {
   return supabase
     .from('mortgage_payments')
-    .select('id, property_id, payment_date, amount, principal_amount, interest_amount, voided, void_outcome')
+    .select('id, property_id, mortgage_id, payment_date, amount, principal_amount, interest_amount, voided, void_outcome')
     .eq('property_id', propertyId)
     .order('payment_date', { ascending: false })
     .returns<MortgagePayment[]>()

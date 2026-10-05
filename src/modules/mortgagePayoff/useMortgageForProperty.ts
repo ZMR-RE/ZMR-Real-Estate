@@ -104,6 +104,7 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     payments: payments.payments,
     loggingPayment: payments.loggingPayment,
     paymentError: payments.paymentError,
+    beginPaymentEntry: payments.beginPaymentEntry,
     paymentFormInitialValues: payments.paymentFormInitialValues,
     logPayment,
     voidPayment,
@@ -118,6 +119,7 @@ export function useMortgageForProperty(propertyId: string, marketValue: string |
     logEscrowTransaction,
     voidEscrowTransaction,
     escrowDuplicate: escrow.escrowDuplicate,
+    beginEscrowEntry: escrow.beginEscrowEntry,
     confirmEscrowDuplicate,
     dismissEscrowDuplicate: escrow.dismissEscrowDuplicate,
 

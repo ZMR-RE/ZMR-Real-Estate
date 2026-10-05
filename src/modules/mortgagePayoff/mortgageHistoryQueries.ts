@@ -6,6 +6,7 @@ import type { EscrowTransactionType, MortgageEscrowTransactionInput, MortgagePay
 // eligibility (statement date set, entry on or before it, active loan) and the duplicate rule.
 
 export interface HistoryPayment {
+  mortgage_id?: string | null
   id: string
   property_id: string
   payment_date: string
@@ -30,7 +31,7 @@ export interface HistoryEscrow {
 export async function listHistoryPayments(propertyId: string) {
   return supabase
     .from('mortgage_history_payments')
-    .select('id, property_id, payment_date, amount, principal_amount, interest_amount, declared_as_of, voided')
+    .select('id, property_id, mortgage_id, payment_date, amount, principal_amount, interest_amount, declared_as_of, voided')
     .eq('property_id', propertyId)
     .order('payment_date', { ascending: false })
     .returns<HistoryPayment[]>()

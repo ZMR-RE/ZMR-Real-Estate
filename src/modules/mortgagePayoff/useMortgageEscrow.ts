@@ -141,6 +141,7 @@ export function useMortgageEscrow(propertyId: string) {
     escrowDuplicate: duplicate,
     confirmEscrowDuplicate: confirmDuplicate,
     dismissEscrowDuplicate: dismissDuplicate,
+    beginEscrowEntry: () => { setEscrowTransactionError(null); setDuplicate(null) },
     escrowTransactionFormInitialValues: BLANK_ESCROW_TRANSACTION,
     logEscrowTransaction,
     voidEscrowTransaction,

@@ -26,7 +26,7 @@ describe('MortgageDetailsForm with a refused save', () => {
   it('shows the refusal as an alert inside the form, just before Save', () => {
     const alert = html.indexOf(`<p role="alert">${refusal.replace("'", '&#x27;')}</p>`)
     expect(alert).toBeGreaterThan(html.indexOf('<form'))
-    expect(alert).toBeLessThan(html.indexOf('Save mortgage details'))
+    expect(alert).toBeLessThan(html.indexOf('>Save</button>'))
   })
 
   it('keeps the form and its values on screen (Save and Cancel still offered)', () => {
@@ -66,7 +66,7 @@ describe('MortgageDetailsForm with a multi-line conflict message', () => {
     const alert = html.slice(html.indexOf('<p role="alert">'), html.indexOf('</p>', html.indexOf('<p role="alert">')))
     expect(alert.split('<br/>')).toHaveLength(3)
     for (const line of lines) expect(alert).toContain(line)
-    expect(html.indexOf('<p role="alert">')).toBeLessThan(html.indexOf('Save mortgage details'))
+    expect(html.indexOf('<p role="alert">')).toBeLessThan(html.indexOf('>Save</button>'))
   })
   it('a single-line message has no line breaks', () => {
     const one = renderToStaticMarkup(<MortgageDetailsForm initialValues={loan} saving={false} error="One line." canCancel onSave={() => {}} onCancel={() => {}} />)

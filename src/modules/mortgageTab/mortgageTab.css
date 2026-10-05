@@ -1,0 +1,81 @@
+.mortgage-workspace { width:100%; min-width:0; }
+.mortgage-heading,.mortgage-section-actions,.mortgage-pager { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+.mortgage-heading h2,.mortgage-panel h2 { margin:0 0 .6rem; }
+.mortgage-heading p { margin:0 0 1rem; }
+.mortgage-summary-strip { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border:1px solid var(--border); border-radius:10px; }
+.mortgage-summary-strip>div { padding:1rem; min-width:0; }
+.mortgage-summary-strip span,.mortgage-summary-strip small,.mortgage-year-totals span { display:block; font-size:.82rem; }
+.mortgage-summary-strip strong { display:block; font-size:1.6rem; margin:.5rem 0; overflow-wrap:anywhere; }
+.mortgage-overview-grid { display:grid; grid-template-columns:minmax(0,1.8fr) minmax(240px,1fr); gap:1rem; margin:1rem 0; }
+.mortgage-panel { border:1px solid var(--border); border-radius:10px; padding:1.1rem; min-width:0; }
+.mortgage-scheduled-amount { display:block; font-size:1.6rem; }
+.mortgage-scheduled-amount small { display:block; font-size:.85rem; font-weight:normal; margin:.5rem 0 1rem; }
+.mortgage-year-totals { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1rem 0; }
+.mortgage-year-totals strong { font-size:1.3rem; }
+.mortgage-recorded-chart,.mortgage-projection-chart { display:block; width:100%; max-height:230px; }
+.mortgage-workspace svg text { fill:currentColor; font-size:11px; }
+.mortgage-balance-values { max-height:200px; overflow:auto; padding-left:1.2rem; }
+.mortgage-history-list { width:100%; min-width:0; }
+.mortgage-history-list table { display:table; width:100%; table-layout:auto; }
+.mortgage-history-list td { white-space:normal; overflow-wrap:anywhere; }
+.mortgage-history-list td:not(:first-child) { font-variant-numeric:tabular-nums; }
+.mortgage-pager { margin-top:.8rem; font-size:.85rem; }
+.mortgage-pager button { margin:0 .2rem; }
+.mortgage-planner-controls { display:flex; align-items:end; flex-wrap:wrap; gap:1rem; max-width:none; margin:1rem 0; }
+.mortgage-planner-controls label { flex:1; min-width:150px; }
+.mortgage-planner-controls button { margin-bottom:0; }
+.mortgage-planner-result { display:grid; grid-template-columns:1fr 1fr; gap:1rem; align-items:center; }
+.mortgage-plan-comparison { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.mortgage-plan { padding:1rem; border:1px solid var(--border); border-radius:8px; }
+.mortgage-plan h3 { margin:0 0 1rem; }
+.mortgage-plan dl { display:block; margin:0; }
+.mortgage-plan dt { font-size:.8rem; }
+.mortgage-plan dd { margin:0 0 .8rem; font-weight:600; }
+.mortgage-planner-saving { font-weight:600; font-size:1.1rem; }
+.mortgage-drawer { position:fixed; inset:0 0 0 auto; margin:0; width:min(480px,100vw); max-width:100vw; height:100dvh; max-height:100dvh; box-sizing:border-box; border:0; border-left:1px solid var(--border); padding:1.4rem; overflow:auto; color:var(--text); background:var(--bg); }
+.mortgage-drawer::backdrop { background:rgb(0 0 0 / 40%); }
+.mortgage-drawer form { max-width:none; width:100%; }
+.mortgage-drawer input,.mortgage-drawer select { box-sizing:border-box; max-width:100%; }
+@media(max-width:1000px) { .mortgage-summary-strip { grid-template-columns:repeat(2,minmax(0,1fr)); } .mortgage-overview-grid,.mortgage-planner-result { grid-template-columns:1fr; } }
+@media(max-width:700px) {
+ .mortgage-history-list table,.mortgage-history-list tbody { display:block; width:100%; }
+ .mortgage-history-list thead { display:none; }
+ .mortgage-history-list tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.6rem; padding:.8rem 0; border-bottom:1px solid var(--border); }
+ .mortgage-history-list td { display:block; padding:0; border:0; min-width:0; }
+ .mortgage-history-list td:before { content:attr(data-label); display:block; font-size:.75rem; opacity:.75; margin-bottom:.2rem; }
+ .mortgage-history-list td:first-child,.mortgage-history-list td:last-child { grid-column:1/-1; }
+ .mortgage-history-list td:last-child:empty { display:none; }
+ .mortgage-summary-strip>div { padding:.8rem; }
+ .mortgage-summary-strip strong { font-size:1.2rem; }
+ .mortgage-plan-comparison { gap:.5rem; }
+ .mortgage-plan { padding:.7rem; }
+ .mortgage-panel { padding:.8rem; }
+}
+/* Override the generic mobile form stack only inside this compact planner. */
+.mortgage-heading button,.mortgage-section-actions button { margin-top:0; }
+.mortgage-heading { margin-bottom:.7rem; gap:.5rem; }
+.mortgage-section-actions { margin-bottom:.75rem; }
+.mortgage-section-actions p { margin:0; }
+.mortgage-history-list td { padding:.45rem .6rem; }
+.mortgage-planner-controls { flex-direction:row; }
+.mortgage-planner-controls label { margin:0; }
+.mortgage-planner-controls input,.mortgage-planner-controls select { width:100%; }
+.mortgage-planner-controls button { margin:0; }
+@media(max-width:700px) {
+ .mortgage-planner-controls { flex-direction:column; align-items:stretch; }
+ .mortgage-planner-controls label { width:100%; min-width:0; }
+ .mortgage-history-list td { padding:0; }
+}
+
+.mortgage-drawer form > h2 { display:none; }
+@media(max-width:700px) {
+ .mortgage-payment-list tr { grid-template-columns:repeat(3,minmax(0,1fr)); }
+ .mortgage-history-list td:last-child { display:flex; justify-content:flex-end; }
+ .mortgage-history-list td:last-child:before { display:none; }
+ .mortgage-history-list td:last-child button { width:auto; margin:0; }
+ .mortgage-workspace .mortgage-history-list tbody tr:hover td { background:transparent; }
+ .mortgage-history-list .escrow-transaction-list td[data-label="Description"] { grid-column:1/-1; }
+}
+.mortgage-history-list td button { margin:0; }
+
+@media(max-width:700px) { .mortgage-workspace svg text { font-size:22px; } }

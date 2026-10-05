@@ -1,3 +1,6 @@
+import { usePagedList } from '../mortgageTab/usePagedList'
+import { HistoryPager } from '../mortgageTab/HistoryPager'
+import { readableDate } from '../mortgageTab/presentationLogic'
 import type { MortgageEscrowTransaction } from './mortgagePayoffQueries'
 import { HISTORY_BADGE, listRowNote } from './mortgageHistoryEntry'
 import { mortgageCurrencyFormatter as currencyFormatter } from './mortgagePayoffFormat'
@@ -9,12 +12,13 @@ interface EscrowTransactionListProps {
 }
 
 export function EscrowTransactionList({ transactions, onVoid, voiding }: EscrowTransactionListProps) {
+  const paged = usePagedList(transactions)
   if (transactions.length === 0) {
     return <p className="empty-state">No escrow transactions logged yet.</p>
   }
 
   return (
-    <div className="table-scroll">
+    <div className="mortgage-history-list">
       <table className="escrow-transaction-list">
         <thead>
           <tr>
@@ -26,10 +30,10 @@ export function EscrowTransactionList({ transactions, onVoid, voiding }: EscrowT
           </tr>
         </thead>
         <tbody>
-          {transactions.map((transaction) => (
+          {paged.items.map((transaction) => (
             <tr key={transaction.id} className={transaction.voided ? 'row-voided' : undefined}>
-              <td>{transaction.transaction_date}</td>
-              <td>
+              <td data-label="Date">{readableDate(transaction.transaction_date)}</td>
+              <td data-label="Type">
                 {transaction.transaction_type === 'deposit' ? 'Deposit' : 'Disbursement'}
                 {transaction.voided ? ' (voided)' : ''}
                 {transaction.history && !transaction.voided && (
@@ -40,12 +44,12 @@ export function EscrowTransactionList({ transactions, onVoid, voiding }: EscrowT
                 )}
                 {listRowNote(transaction) && <span className="table-row-note">{listRowNote(transaction)}</span>}
               </td>
-              <td>
+              <td data-label="Amount">
                 {transaction.transaction_type === 'disbursement' ? '−' : '+'}
                 {currencyFormatter.format(Number(transaction.amount))}
               </td>
-              <td>{transaction.description ?? '—'}</td>
-              <td>
+              <td data-label="Description">{transaction.description ?? '—'}</td>
+              <td data-label="Actions">
                 {!transaction.voided && (
                   <button type="button" onClick={() => onVoid(transaction.id)} disabled={voiding}>
                     Void
@@ -56,6 +60,7 @@ export function EscrowTransactionList({ transactions, onVoid, voiding }: EscrowT
           ))}
         </tbody>
       </table>
+      <HistoryPager {...paged} noun="entries" />
     </div>
   )
 }

@@ -356,3 +356,19 @@ media queries exist elsewhere:
 These are small and low-risk to leave as-is; call them out if a future
 pass wants to formalize them, but they aren't causing any visible
 inconsistency today.
+
+### Mortgage tab — approved full-width presentation
+
+`src/modules/mortgageTab/mortgageTab.css` owns this tab's layout. The desktop
+summary uses four columns; Balance & progress and Payment schedule share a row.
+At smaller widths they stack. Secondary sections use the existing collapsed
+`CollapsibleSection`, with payment and escrow histories limited to five entries
+per page. Phone history rows label every value and keep actions visible.
+
+Entry and loan-edit forms open in a native modal drawer with a single Save and
+Cancel action. Escape is disabled during a save. Existing error, duplicate and
+retry logic remains in the mortgage hooks. Failed submissions retain inputs.
+The planner requires Calculate and hides old results when inputs change;
+projections and recorded balance points are visually and verbally distinct.
+Audit points do not infer causes from coincident timestamps. Cost basis stays
+with the existing Financials section and calculations.

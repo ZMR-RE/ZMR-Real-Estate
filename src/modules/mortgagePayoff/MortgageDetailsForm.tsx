@@ -205,7 +205,7 @@ export function MortgageDetailsForm({
         </p>
       )}
       <button type="submit" disabled={saving}>
-        {saving ? 'Saving…' : 'Save mortgage details'}
+        {saving ? 'Saving…' : 'Save'}
       </button>
       {canCancel && (
         <button type="button" onClick={onCancel} disabled={saving}>

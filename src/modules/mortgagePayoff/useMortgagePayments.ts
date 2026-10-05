@@ -146,6 +146,7 @@ export function useMortgagePayments(propertyId: string) {
     duplicate,
     confirmDuplicate,
     dismissDuplicate,
+    beginPaymentEntry: () => { setPaymentError(null); setDuplicate(null) },
     refresh,
   }
 }
