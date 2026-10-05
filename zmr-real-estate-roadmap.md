@@ -3077,3 +3077,7 @@ See [ZMR-CURRENT-WORK.md](ZMR-CURRENT-WORK.md) for project-local approved decisi
 - [ ] OWN-AUDIT Audit each implemented scope against its complete acceptance/preservation criteria before marking complete or moving to the next scope.
 
 These stable amendment IDs do not renumber existing roadmap items. Future bookkeeping, legal transfers, portfolio reporting and operator CRM are tracked in the checkpoint/build map and remain outside this first implementation scope.
+
+
+## Owner-requested currency entry rollout — October 5, 2026
+- [ ] Apply the currency-entry safeguard consistently to all monetary inputs. Rule recorded only; no claim of full implementation. Shared helper and per-file inventory/checklist: docs/planning/currency-entry-safeguards.md. Start with Mortgage in a separately checked UI delta, then remaining modules. Preserve field-specific signs/ranges, reject invalid precision, show two decimals on blur and never shift the dollar value. Percentage/count fields excluded. Existing saved records unchanged.

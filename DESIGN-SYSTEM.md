@@ -372,3 +372,8 @@ The planner requires Calculate and hides old results when inputs change;
 projections and recorded balance points are visually and verbally distinct.
 Audit points do not infer causes from coincident timestamps. Cost basis stays
 with the existing Financials section and calculations.
+
+
+## Currency entry — required target, rollout pending (October 5, 2026)
+Owner requests a bank-style dollars-and-cents safeguard for every monetary field. Follow the Currency-entry safeguard in CLAUDE.md. Display 125 as 125.00 on blur without changing its dollar value; blank stays blank. Labels identify the currency and mobile inputs request a decimal keypad. Invalid precision, malformed values and out-of-range amounts must fail validation before persistence. Client formatting is not a substitute for server validation.
+Current shared currencyInput.ts is used by Capture, but truncates extra digits; it is not the completed dashboard-wide standard. Mortgage fields currently use cent steps but do not consistently pad decimals. Existing consumers must be audited and converted incrementally without changing stored data. The inventory and rollout are in docs/planning/currency-entry-safeguards.md. This documentation commit changes no application behavior and is separate from the already-approved P4 app candidate.
