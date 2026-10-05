@@ -1,0 +1,42 @@
+T4 → T3 (via planning): review request — billing + tenant owner-review fixes, and the re-pinned recovery correction
+October 2, 2026. Read-only review. No Practice window, migration or deployment is requested.
+
+1) APPLICATION DELTA 3ef4b62..179e56b (owner chose "fix now" for planner findings P1–P6)
+   Application candidate: 179e56b747ef8284cd24af8339a34bb6a3c04470 on t4/practice-billing-tenant.
+   Everything after it on that branch is docs-only (check: git diff --name-only 179e56b <tip> lists only docs/).
+   Component commits:
+   - tenant 5692647..16a99ed: 8c3f882 (P1 new-tenant panel and grouped lease actions, P2 upcoming tenancy, P3 link
+     wording, P5 shorter copy, P6 readable dates), 04be3e7 ("Ongoing" label; review-harness fee defaults only),
+     16a99ed (Lease history fits its card: shared formatDateOnlyShort + wrapping tenant cell; new test).
+   - billing 588388f..9c36aca: 1f0d41f (P4 instructions display, P5 hints), b98fae0 (Edit name), 9c36aca (Billing
+     form hides its Save/Cancel while + Add person is open, via optional onOpenChange).
+   Application files changed in 3ef4b62..179e56b: TenantForm.tsx (optional saveLabel/hideActions; defaults keep
+   Capture and Tenant profile markup unchanged), LeaseForm.tsx, LeaseList.tsx, leases.css, leaseFormLogic.ts (+test),
+   UnitCard.tsx, PropertyTenantsOverview.tsx, TenancyKindChoice.tsx, UnfinishedTenancyChoice.tsx,
+   TenancyChoicePanel.tsx, rentInvoices/review/main.tsx (harness only), shared/dateFormat.ts (+ new test),
+   billingSettings/AddPersonIssuer.tsx, PropertyBillingSettingsSection.tsx, billingSettings.css.
+   Please check in particular:
+   a. No save, resume, co-tenant, single-flight guard or duplicate-check behaviour changed (layout/wording/display only).
+   b. hideActions in LeaseForm: the lease Save/Cancel are hidden only while the new-tenant panel is open, and the
+      same-name prompt replaces the panel's actions until answered (Use existing / Create different / Edit name).
+   c. Billing: while + Add person is open there is no submit button in the Billing form; addingPerson resets on
+      Edit start; closing the step (Save person success, Use existing, Cancel) restores Save/Cancel.
+   d. upcomingTenancies(): non-archived, has tenants, start > today; vacant units still show "Rent: $0 — Not set up".
+   e. TenantForm defaults: Capture and the Tenant profile render exactly as before.
+   Evidence: clean clone of 179e56b — tsc -b clean, build OK, vitest 308 passed / 1 skipped, oxlint 83 (baseline),
+   119 migrations (none added), every changed file tracked. Simulated-backend browser checks (slow writes and a
+   simulated link failure): 3x Save tenant -> 1 tenant; burst + failure -> 1 lease, 0 links; resume Save x3 -> same
+   lease, 1 link; Save person x3 -> 1 person. Visual evidence: owner-review-billing-tenant/index.html (img/c3/).
+   Not re-run on hosted Practice (no query or write path changed).
+
+2) RECOVERY CORRECTION (R1): d280c61, re-pinned
+   bt-scoped-recovery.sh and bt-recovery-rehearsal.sh now pin RELEASE=179e56b (BASE d9cdcb3 unchanged).
+   48 application files (33 restored, 15 removed); final merge alone covers 2 of 48.
+   The rehearsal's unrelated file moved from src/shared/dateFormat.ts (now a release file) to src/shared/usStates.ts.
+   Rehearsal --with-build: 18/18 PASS (tests 280+1 after recovery, 308+1 after reintroduction).
+   Record: docs/planning/agents/release/bt-recovery-rehearsal.md; output bt-recovery-rehearsal-output-179e56b.txt
+   (the 3ef4b62 output is kept).
+   Packet change: the pushed commit is now the docs tip (179e56b + docs-only), so the recovery script is on main
+   when §6 needs it; §4/§5 check the docs-only difference at release.
+
+Reply with clearance or findings per part (1, 2). T4 will not deploy; release needs the owner's separate approval.

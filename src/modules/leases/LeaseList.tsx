@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { formatDateOnlyShort } from '../../shared/dateFormat'
 import { getLeaseStatus, type Lease, type LeaseInput } from './leasesQueries'
+import './leases.css'
 
 interface LeaseListProps {
   leases: Lease[]
@@ -192,8 +194,8 @@ export function LeaseList({
   }
 
   return (
-    <div className="table-scroll">
-      <table>
+    <div className={`table-scroll lease-history-container${readOnly ? '' : ' lease-history-container--editing'}`}>
+      <table className="lease-history-table">
         <thead>
           <tr>
             <th>Tenant(s)</th>
@@ -235,13 +237,13 @@ export function LeaseList({
             const status = getLeaseStatus(lease)
             return (
               <tr key={lease.id} className={lease.archived ? 'row-voided' : ''}>
-                <td>{lease.tenants.map((t) => t.name).join(', ') || '—'}</td>
-                <td>{lease.start_date}</td>
-                <td>{lease.end_date ?? 'Current'}</td>
-                <td>{formatMoney(lease.rent_amount)}</td>
-                <td>{formatMoney(lease.late_fee)}</td>
-                <td>{formatMoney(lease.move_in_fee)}</td>
-                <td>
+                <td data-label="Tenant(s)" className="lease-history-tenants">{lease.tenants.map((t) => t.name).join(', ') || '—'}</td>
+                <td data-label="Start date">{formatDateOnlyShort(lease.start_date)}</td>
+                <td data-label="End date">{lease.end_date ? formatDateOnlyShort(lease.end_date) : 'Ongoing'}</td>
+                <td data-label="Rent">{formatMoney(lease.rent_amount)}</td>
+                <td data-label="Late fee">{formatMoney(lease.late_fee)}</td>
+                <td data-label="Move-in fee">{formatMoney(lease.move_in_fee)}</td>
+                <td data-label="Status">
                   <span className={`status-badge ${STATUS_BADGE_VARIANTS[status]}`}>
                     {status === 'upcoming' ? 'Upcoming' : status === 'active' ? 'Active' : 'Ended'}
                   </span>

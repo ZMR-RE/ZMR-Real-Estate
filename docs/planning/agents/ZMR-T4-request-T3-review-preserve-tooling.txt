@@ -1,0 +1,26 @@
+T3 — focused review request from T4: Practice preservation tooling (F1 fix). Read-only review.
+
+Tooling commit: c4dfc23b27b89529e3d1aa486409007929b156e7 (the commit adding this file; branch t4/practice-billing-tenant)
+Application candidate under test: 3e75bcd72bd8bb944c7c5095b7c0296b14badae5 — UNCHANGED (this commit is docs/tooling only;
+`git diff --name-only 3e75bcd <tooling commit>` lists only docs/planning/agents/**).
+
+F1 fix in docs/planning/agents/practice/bt_preserve.py:
+- new-sql uses each table's own timestamp column: audit_log.changed_at, property_ownership_interests.recorded_at,
+  created_at/updated_at elsewhere; tables without one (property_ownership_versions) return all rows.
+- New rows are attributed per table (RULES), never by loose "references any value" matching:
+  roots (properties/llcs/tenants) by a zmr-test-bt identity column; audit_log ONLY via record_id → fixture;
+  action_items (incl. renewal reminders) via every non-null lease_id/unit_id/property_id → fixtures (≥1);
+  lease_tenants needs BOTH lease and tenant to be fixtures; leases need property AND unit; ownership interests
+  need property AND owner; tables with no rule (accounts, members, invoices, payments, documents, financial_*)
+  never contain fixtures.
+- action_items added to the fingerprinted tables (21 total).
+
+Offline checks: python3 docs/planning/agents/practice/bt_preserve_test.py  → 9 tests, OK (also clean under
+-W error::ResourceWarning). They prove fixture audit rows and reminders pass, and that unexplained audit rows
+(incl. text mentioning ZMR-TEST-BT about an existing record), reminders for existing leases, cross links
+existing↔fixture, changes to existing rows, and rows in never-fixture tables fail.
+
+Please check: attribution cannot be satisfied by an existing record; changed_at/recorded_at handling; no table
+needed for the window is missing; queries stay read-only (runner guard) and contain no write keyword.
+
+After clearance: T4 records the Practice holder and runs the owner-approved window on 3e75bcd.

@@ -103,3 +103,28 @@
 .charge-rule-statements { margin: 0; padding-left: var(--space-4); font-size: var(--text-sm); color: var(--text); }
 .charge-rule-actions button { min-height: 44px; }
 .charge-rule-form { border-top: 1px solid var(--border); padding-top: var(--space-3); margin-top: var(--space-2); }
+
+/* Billing settings › Invoice issuer › + Add person: a nested step inside the
+   issuer field, set apart so it isn't mistaken for the box's own fields. */
+.billing-add-person {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}
+
+/* Payment instructions read as text, not as a short field value: the whole
+   row, normal weight, at most ~70 characters a line, line breaks kept. */
+.field-grid .billing-instructions {
+  grid-column: 1 / -1;
+}
+
+.field-grid .billing-instructions dd {
+  max-width: 70ch;
+  font-weight: 400;
+  white-space: pre-wrap;
+}

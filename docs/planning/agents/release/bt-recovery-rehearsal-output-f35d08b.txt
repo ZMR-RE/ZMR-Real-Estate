@@ -1,0 +1,22 @@
+release application files: 50
+PASS  R1 gap: final merge alone covers 1 of 50 application files
+PASS  refuses a dirty tree (exit 2, HEAD unchanged)
+PASS  refuses a HEAD without the release (exit 2)
+PASS  refuses a later edit to a release file (exit 3, names the commit, HEAD unchanged)
+PASS  dry run leaves HEAD and tree unchanged
+plan: 50 application files from d9cdcb3aa4aec84c68c78b183593b2a130ede3d7..f35d08b068aa298abe1da1d9e10ea83c92398224 (33 restored to base, 17 added by the release and removed)
+recovery commit: 214d2a16b4e0bd73406407d9d3300dc28eeba03a (50 files)
+PASS  one recovery commit on top of U
+PASS  recovery commit touches only release application files
+PASS  nothing under docs/, supabase/ or root *.md changed
+PASS  all 50 release application files equal d9cdcb3aa4aec84c68c78b183593b2a130ede3d7 (or absent)
+PASS  application tree = base + later unrelated work U, exactly (0 differing paths)
+PASS  docs/ (incl. all evidence) and supabase/ identical to pre-recovery main
+PASS  root *.md (CLAUDE.md, DESIGN-SYSTEM.md, ...) identical to pre-recovery main
+PASS  U's unrelated edit and test still present
+PASS  re-merging f35d08b068aa298abe1da1d9e10ea83c92398224 is a no-op (Already up to date)
+PASS  reintroduced: all release application files equal f35d08b068aa298abe1da1d9e10ea83c92398224 again
+PASS  reintroduced tree differs from f35d08b068aa298abe1da1d9e10ea83c92398224 only by U/U2 paths
+PASS  recovery builds; tests = base 280 + U 1 (got 281)
+PASS  reintroduced builds; tests = release 311 + U 1 (got 312)
+summary: 18 passed, 0 failed (base d9cdcb3aa4aec84c68c78b183593b2a130ede3d7, release f35d08b068aa298abe1da1d9e10ea83c92398224, U d6fea179b369c3c9d28ae2df0140411d662506e2, recovery 214d2a16b4e0bd73406407d9d3300dc28eeba03a, reintroduced fda3793eec52aba3bea734a88e5da63d80ffcb73)

@@ -1,0 +1,8 @@
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-janki-Projects-ZMR-Real-Estate/bc46346e-3c57-4e04-a8e0-f0e5ed4f6391/scratchpad/clean-h1-d3009a9
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:31:35
+   Duration  206ms (transform 40ms, setup 0ms, import 90ms, tests 3ms, environment 0ms)

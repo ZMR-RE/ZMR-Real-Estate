@@ -41,7 +41,7 @@ export function EntityInvoicingSection({ entityId }: EntityInvoicingSectionProps
 
   const view = (
     <>
-      {!entity.invoice_code && <p className="billing-callout">No invoice code yet — invoices from this entity can be drafted but not issued.</p>}
+      {!entity.invoice_code && <p className="billing-callout">No invoice code yet — invoices from this issuer can be drafted but not issued.</p>}
       <dl className="field-grid">
         {entity.invoice_code && <div className="field"><dt>Invoice code</dt><dd>{entity.invoice_code}</dd></div>}
         {preview && <div className="field"><dt>Next invoice number</dt><dd>{preview}</dd></div>}
@@ -65,7 +65,7 @@ export function EntityInvoicingSection({ entityId }: EntityInvoicingSectionProps
           failure = (await setInvoiceSequenceStart(entityId, Number(form.start))).error
         }
         setSaving(false)
-        if (failure) return setError(failure.code === 'ZM347' ? 'This entity has already issued invoices, so its code can’t change.' : failure.message)
+        if (failure) return setError(failure.code === 'ZM347' ? 'This issuer has already issued invoices, so its code can’t change.' : failure.message)
         setError(null)
         await refresh()
         exit()
@@ -74,7 +74,7 @@ export function EntityInvoicingSection({ entityId }: EntityInvoicingSectionProps
       <label htmlFor={`code-${entityId}`}>Invoice code</label>
       <input id={`code-${entityId}`} value={form.code} disabled={started} maxLength={8} onChange={(e) => setForm({ ...form, code: e.target.value })} />
       <p className="field-hint">
-        {started ? 'Locked — this entity has issued invoices under this code.' : 'Up to 8 letters or digits, e.g. A or SRP. Numbers look like A-INV-000001; each entity has its own sequence.'}
+        {started ? 'Locked — this issuer has issued invoices under this code.' : 'Up to 8 letters or digits, e.g. A or SRP. Numbers look like A-INV-000001; each issuer has its own sequence.'}
       </p>
       {!started && (
         <>

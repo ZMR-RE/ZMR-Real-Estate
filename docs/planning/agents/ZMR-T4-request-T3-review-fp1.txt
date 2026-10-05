@@ -1,0 +1,24 @@
+T3 — focused delta review request from T4 (read-only; no Practice, no deploy)
+
+Tenant candidate: 5692647a26c08fb9150095f0d2abdd7ecdd51e47 (branch t4/tenant-entry)
+Delta: git diff 2d8aa7632901d6bf1c4c86a807fa6e07fc3cea45 5692647a26c08fb9150095f0d2abdd7ecdd51e47 -- src   (6 files, +72/-9)
+Combined release candidate: 3ef4b6273ec0457a90082a3069aa38520c353187 (branch t4/practice-billing-tenant)
+  = hosted-tested 3e75bcd + Practice evidence docs + merge of 5692647. App delta vs 3e75bcd = exactly the 6 files above.
+  git diff --stat 3e75bcd 3ef4b62 -- src ; no supabase/ change (119 migrations).
+
+Changes:
+1. F-P1 (found on Practice): same-name check now uses the full tenant list (nameMatchesFor in leaseFormLogic.ts;
+   LeaseForm prop allTenantOptions, passed by AddTenancyForm and UnitCard). Selectable options are unchanged
+   (co-tenant form still excludes people on the tenancy). Prompt: "Use existing" only for pickable people;
+   "Already on this tenancy" / "Already chosen above" shown as information only; "Create a different person
+   with this name" always kept.
+2. Tenants empty state: "No tenants yet — use + Add tenant above, or + Add lease on a unit in Units."
+
+Please check: no path offers or links a person already on the tenancy or chosen in another slot; the
+different-person path still creates exactly one person (guard from 2d8aa76 unchanged); no change to save,
+resume, guard, choice or query code.
+
+Evidence: ZMR-T4-tenant-entry.md › "F-P1 same-name check and empty-state text"; tests leaseFormLogic.test.ts
+(+3; 302 on the tenant branch, 305 on 3ef4b62); evidence/tenant-entry-fp1-empty-state/01–02 (local harness,
+simulated backend). Checks on 3ef4b62 (clean clone): tsc -b clean, build OK, vitest 305 passed, oxlint 83.
+Not re-run on Practice (see the release packet's evidence-reuse table).

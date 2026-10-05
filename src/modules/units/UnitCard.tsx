@@ -5,9 +5,12 @@ import type { Unit, UnitInput } from './unitsQueries'
 import { LeasingListingSection } from '../leasingListings/LeasingListingSection'
 import { LeaseHistorySection } from '../leases/LeaseHistorySection'
 import { LeaseForm } from '../leases/LeaseForm'
+import { leaseFormForChoice, upcomingTenancies } from '../leases/leaseFormLogic'
+import { TenancyChoicePanel } from '../leases/TenancyChoicePanel'
 import { EndLeaseForm } from '../leases/LeaseList'
 import { useLeases } from '../leases/useLeases'
 import { getLeaseStatus } from '../leases/leasesQueries'
+import { formatDateOnly } from '../../shared/dateFormat'
 import { getSecurityDepositForLease } from '../securityDeposits/securityDepositsQueries'
 import { UtilityRecordsSection } from '../utilities/UtilityRecordsSection'
 
@@ -81,7 +84,11 @@ export function UnitCard({
     endLease,
     toggleArchived,
     todayDateString,
+    tenancyChoice,
   } = useLeases(propertyId, unit.id)
+  // + Add lease: the same tenancy choice as Tenants › + Add tenant, then the
+  // lease form for what was chosen.
+  const leaseForm = isAdding && tenancyChoice.choice ? leaseFormForChoice(tenancyChoice.choice, tenantOptions) : null
 
   if (unitFormEditing) {
     return (
@@ -104,6 +111,9 @@ export function UnitCard({
   // Overlapping active leases are allowed (e.g. a brief tenant
   // transition), so this is a list, not a single value.
   const currentLeases = leases.filter((lease) => !lease.archived && getLeaseStatus(lease) === 'active')
+  // No current tenancy but one (with tenants) starting later: show it as
+  // upcoming, not as a "$0 — Not set up" warning.
+  const upcomingLeases = upcomingTenancies(leases)
 
   return (
     <div className={`unit-card${unit.archived ? ' row-voided' : ''}`}>
@@ -119,7 +129,15 @@ export function UnitCard({
           color) when there's no current lease or its rent isn't on
           file, same convention 7.55 (4) established, rather than the
           line disappearing or reading as blank/nothing-to-see. */}
-      {currentLeases.length === 0 ? (
+      {currentLeases.length === 0 && upcomingLeases.length > 0 ? (
+        upcomingLeases.map((lease) => (
+          <div key={lease.id} className="unit-current-lease">
+            <p>Upcoming from {formatDateOnly(lease.start_date)}: {lease.tenants.map((t) => t.name).join(', ')}</p>
+            <p>Rent: {lease.rent_amount !== null ? `${rentFormatter.format(Number(lease.rent_amount))}/mo` : 'not entered'}</p>
+            {lease.end_date && <p>Lease end date: {formatDateOnly(lease.end_date)}</p>}
+          </div>
+        ))
+      ) : currentLeases.length === 0 ? (
         <p className="unit-rent-value--warning">Rent: $0 — Not set up</p>
       ) : (
         currentLeases.map((lease) => (
@@ -128,7 +146,7 @@ export function UnitCard({
             <p className={lease.rent_amount === null ? 'unit-rent-value--warning' : undefined}>
               Rent: {lease.rent_amount !== null ? `${rentFormatter.format(Number(lease.rent_amount))}/mo` : '$0 — Not set up'}
             </p>
-            <p>Lease end date: {lease.end_date ?? 'Ongoing'}</p>
+            <p>Lease end date: {lease.end_date ? formatDateOnly(lease.end_date) : 'Ongoing'}</p>
           </div>
         ))
       )}
@@ -163,9 +181,21 @@ export function UnitCard({
         </>
       )}
 
-      {interactive && isAdding && (
+      {interactive && isAdding && <TenancyChoicePanel tc={tenancyChoice} unitLabel={unit.unit_label} />}
+
+      {interactive && isAdding && !leaseForm && (
+        <button type="button" onClick={cancelForm}>
+          Cancel
+        </button>
+      )}
+
+      {interactive && leaseForm && (
         <LeaseForm
-          tenantOptions={tenantOptions}
+          key={leaseForm.key}
+          initial={leaseForm.initial}
+          tenantsOnly={leaseForm.tenantsOnly}
+          tenantOptions={leaseForm.tenantOptions}
+          allTenantOptions={tenantOptions}
           onCreateTenant={addTenant}
           saving={leaseSaving}
           todayDateString={todayDateString}

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 
 interface EditableSectionProps {
   title: string
@@ -31,6 +31,11 @@ interface EditableSectionProps {
   // most callers derive their edit content straight from props, which
   // already stay current without this.
   onEditStart?: () => void
+  // Owner-approved exception, Tenants only (October 1, 2026): a visible
+  // "Add …" button beside Edit that opens the box and enters the same
+  // edit state, for boxes whose edit state is mainly for adding. Edit
+  // stays; both hide while editing. Omit it everywhere else.
+  addLabel?: string
 }
 
 // The one shared implementation of CLAUDE.md's Box interaction
@@ -64,12 +69,21 @@ export function EditableSection({
   view,
   edit,
   onEditStart,
+  addLabel,
 }: EditableSectionProps) {
   const [isEditing, setIsEditing] = useState(false)
+  const detailsRef = useRef<HTMLDetailsElement>(null)
 
   const startEditing = () => {
     onEditStart?.()
     setIsEditing(true)
+  }
+
+  // The add button can be used while the box is collapsed, so it also
+  // opens it — otherwise the form would start hidden.
+  const startAdding = () => {
+    if (detailsRef.current) detailsRef.current.open = true
+    startEditing()
   }
 
   const exitEditing = () => setIsEditing(false)
@@ -78,7 +92,7 @@ export function EditableSection({
   // per-box cardTintClass tint reverted, replaced by a single uniform
   // navy hover tint on the whole box (index.css).
   return (
-    <details id={id} className="collapsible-section editable-section" open={defaultOpen}>
+    <details ref={detailsRef} id={id} className="collapsible-section editable-section" open={defaultOpen}>
       <summary>
         <span className="collapsible-section-title">{title}</span>
         <span
@@ -87,6 +101,11 @@ export function EditableSection({
           onKeyDown={(e) => e.stopPropagation()}
         >
           {secondaryActions}
+          {addLabel && !isEditing && (
+            <button type="button" className="editable-section-edit" onClick={startAdding}>
+              {addLabel}
+            </button>
+          )}
           {!isEditing && (
             <button type="button" className="editable-section-edit" onClick={startEditing}>
               Edit

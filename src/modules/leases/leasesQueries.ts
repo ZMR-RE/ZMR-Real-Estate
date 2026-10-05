@@ -1,4 +1,5 @@
 import { supabase } from '../../shared/supabaseClient'
+import { getLeaseStatus, type LeaseStatus } from './leaseStatus'
 
 export interface LeaseTenantRef {
   id: string
@@ -16,6 +17,9 @@ export interface Lease {
   end_date: string | null
   end_reason: string | null
   archived: boolean
+  // When the lease row was saved — identifies an unfinished tenancy (a lease
+  // whose tenant links never saved) when offering to resume it.
+  created_at?: string
   tenants: LeaseTenantRef[]
 }
 
@@ -43,11 +47,12 @@ interface LeaseRow {
   end_date: string | null
   end_reason: string | null
   archived: boolean
+  created_at?: string
   lease_tenants: { tenant: LeaseTenantRef | null }[]
 }
 
 const LEASE_COLUMNS = `
-  id, property_id, unit_id, rent_amount, late_fee, move_in_fee, start_date, end_date, end_reason, archived,
+  id, property_id, unit_id, rent_amount, late_fee, move_in_fee, start_date, end_date, end_reason, archived, created_at,
   lease_tenants(tenant:tenants(id, name))
 `
 
@@ -62,19 +67,9 @@ function mapLease(row: LeaseRow): Lease {
   }
 }
 
-// Status is computed here, not stored — same "real-time check, not a
-// snapshot" approach as Insurance's getInsuranceStatus (insuranceQueries.ts).
-// No cron/scheduled-function infrastructure exists in this codebase to
-// keep a stored status column in sync as calendar time passes with no
-// write happening, so a stored column would just go stale.
-export type LeaseStatus = 'upcoming' | 'active' | 'ended'
-
-export function getLeaseStatus(lease: Pick<Lease, 'start_date' | 'end_date'>): LeaseStatus {
-  const today = new Date().toISOString().slice(0, 10)
-  if (lease.start_date > today) return 'upcoming'
-  if (lease.end_date !== null && lease.end_date < today) return 'ended'
-  return 'active'
-}
+// Status rule lives in leaseStatus.ts (pure, no Supabase); re-exported
+// here for the existing importers.
+export { getLeaseStatus, type LeaseStatus }
 
 // Every lease this unit has ever had, most recent first — the "Lease
 // history" sub-list (roadmap item 1: "all past leases: tenants, dates,
@@ -90,45 +85,6 @@ export async function listLeasesForUnit(accountId: string, unitId: string) {
 
   if (error) return { data: null, error }
   return { data: (data ?? []).map(mapLease), error: null }
-}
-
-// A lease is created with one-or-more tenants in one call — the actual
-// co-tenant fix this whole rebuild exists for. Not run inside a database
-// transaction/RPC (this codebase has no precedent for either — the
-// closest multi-step write, documentsQueries.ts's moveToDocuments, is
-// also a sequential storage-then-table write with an early return on
-// failure, not a DB transaction) — if the lease_tenants insert fails
-// after the lease insert succeeds, the orphaned lease row is still
-// visible (no tenants attached) rather than silently vanishing, which
-// is safer than a silent rollback a user wouldn't see.
-export async function createLease(
-  accountId: string,
-  propertyId: string,
-  unitId: string,
-  input: LeaseInput,
-) {
-  const { data: lease, error: leaseError } = await supabase
-    .from('leases')
-    .insert({
-      account_id: accountId,
-      property_id: propertyId,
-      unit_id: unitId,
-      rent_amount: input.rentAmount,
-      late_fee: input.lateFee,
-      move_in_fee: input.moveInFee,
-      start_date: input.startDate,
-      end_date: input.endDate,
-    })
-    .select('id')
-    .single()
-
-  if (leaseError || !lease) return { error: leaseError }
-
-  const { error: linkError } = await supabase
-    .from('lease_tenants')
-    .insert(input.tenantIds.map((tenantId) => ({ account_id: accountId, lease_id: lease.id, tenant_id: tenantId })))
-
-  return { error: linkError }
 }
 
 // Lease-level fields only (rent/fees/dates) — this v1 doesn't support
@@ -169,18 +125,19 @@ export interface PropertyTenantRow {
   leaseId: string
   unitId: string
   unitLabel: string
-  isCurrent: boolean
+  status: LeaseStatus
 }
 
 // Roadmap item 3 — Overview's Tenants box directory: every tenant ever
 // at this property (current highlighted, past shown secondary), each
-// row carrying enough to link to /tenants/:id. isCurrent is computed
-// per lease via getLeaseStatus, not a stored flag.
+// row carrying enough to link to /tenants/:id. Each row's status comes
+// from getLeaseStatus (the same upcoming/active/ended rule as Units and
+// Lease history), not a stored flag.
 export async function listAllTenantsEverAtProperty(accountId: string, propertyId: string) {
   const { data, error } = await supabase
     .from('leases')
     .select(
-      'id, end_date, unit:units!inner(id, unit_label, property_id), lease_tenants(tenant:tenants(id, name))',
+      'id, start_date, end_date, unit:units!inner(id, unit_label, property_id), lease_tenants(tenant:tenants(id, name))',
     )
     .eq('account_id', accountId)
     .eq('unit.property_id', propertyId)
@@ -192,6 +149,7 @@ export async function listAllTenantsEverAtProperty(accountId: string, propertyId
     .returns<
       {
         id: string
+        start_date: string
         end_date: string | null
         unit: { id: string; unit_label: string; property_id: string }
         lease_tenants: { tenant: LeaseTenantRef | null }[]
@@ -199,21 +157,34 @@ export async function listAllTenantsEverAtProperty(accountId: string, propertyId
     >()
 
   if (error) return { data: null, error }
+  return { data: propertyTenantRows(data ?? []), error: null }
+}
 
-  const today = new Date().toISOString().slice(0, 10)
+// One row per tenant per lease, in the leases' order, each with its
+// lease's status. A lease that hasn't started is 'upcoming', not current.
+export function propertyTenantRows(
+  leases: {
+    id: string
+    start_date: string
+    end_date: string | null
+    unit: { id: string; unit_label: string }
+    lease_tenants: { tenant: LeaseTenantRef | null }[]
+  }[],
+  today?: string,
+): PropertyTenantRow[] {
   const rows: PropertyTenantRow[] = []
   const seenPerLease = new Set<string>()
-  for (const lease of data ?? []) {
-    const isCurrent = lease.end_date === null || lease.end_date >= today
+  for (const lease of leases) {
+    const status = getLeaseStatus(lease, today)
     for (const lt of lease.lease_tenants) {
       if (!lt.tenant) continue
       const key = `${lease.id}:${lt.tenant.id}`
       if (seenPerLease.has(key)) continue
       seenPerLease.add(key)
-      rows.push({ tenant: lt.tenant, leaseId: lease.id, unitId: lease.unit.id, unitLabel: lease.unit.unit_label, isCurrent })
+      rows.push({ tenant: lt.tenant, leaseId: lease.id, unitId: lease.unit.id, unitLabel: lease.unit.unit_label, status })
     }
   }
-  return { data: rows, error: null }
+  return rows
 }
 
 // Roadmap item 8 — Monthly rent stat card. Sums rent_amount across

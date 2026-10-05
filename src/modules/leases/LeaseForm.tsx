@@ -4,6 +4,9 @@ import { TenantForm } from '../tenants/TenantForm'
 import type { TenantOption } from '../tenants/useTenants'
 import type { TenantInput } from '../tenants/tenantsQueries'
 import type { LeaseInput } from './leasesQueries'
+import { useSingleFlight } from './singleFlight'
+import './leases.css'
+import { nameMatchesFor, slotOptions, uniqueTenantIds, withSameNameDetails } from './leaseFormLogic'
 
 interface LeaseFormProps {
   tenantOptions: TenantOption[]
@@ -12,6 +15,15 @@ interface LeaseFormProps {
   todayDateString: string
   onSave: (input: LeaseInput) => void
   onCancel: () => void
+  // Resuming an unfinished tenancy: start from its saved dates, rent and fees.
+  initial?: Partial<Pick<LeaseInput, 'startDate' | 'endDate' | 'rentAmount' | 'lateFee' | 'moveInFee'>>
+  // Adding co-tenants to an existing tenancy: people only — its rent, dates
+  // and fees stay as they are, so no dates or rent fields are shown.
+  tenantsOnly?: boolean
+  // Every tenant on the account, for the same-name check only. The picker
+  // still offers just tenantOptions (a co-tenant form leaves out people
+  // already on the tenancy). Defaults to tenantOptions.
+  allTenantOptions?: TenantOption[]
 }
 
 // Roadmap item 4 — a lease has one-or-more tenants (the actual fix for
@@ -20,7 +32,7 @@ interface LeaseFormProps {
 // this is a repeatable array of the same single-select SearchableSelect
 // TenantAssignmentForm used, one row per co-tenant slot, rather than
 // building a new shared multi-select just for this one form.
-export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateString, onSave, onCancel }: LeaseFormProps) {
+export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateString, onSave, onCancel, initial, tenantsOnly = false, allTenantOptions }: LeaseFormProps) {
   const [tenantIds, setTenantIds] = useState<(string | null)[]>([null])
   // Which slot (if any) is currently showing the inline "add new tenant"
   // form — at most one at a time, same single-flag approach
@@ -28,33 +40,72 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
   const [addingTenantForSlot, setAddingTenantForSlot] = useState<number | null>(null)
   const [creatingTenant, setCreatingTenant] = useState(false)
   const [createTenantError, setCreateTenantError] = useState<string | null>(null)
-  const [startDate, setStartDate] = useState(todayDateString)
-  const [endDate, setEndDate] = useState('')
-  const [rentAmount, setRentAmount] = useState('')
-  const [lateFee, setLateFee] = useState('')
-  const [moveInFee, setMoveInFee] = useState('')
+  const [startDate, setStartDate] = useState(initial?.startDate ?? todayDateString)
+  const [endDate, setEndDate] = useState(initial?.endDate ?? '')
+  const [rentAmount, setRentAmount] = useState(initial?.rentAmount ?? '')
+  const [lateFee, setLateFee] = useState(initial?.lateFee ?? '')
+  const [moveInFee, setMoveInFee] = useState(initial?.moveInFee ?? '')
+  // Same-name people show their details in the picker, so the right one is chosen.
+  const pickerOptions = withSameNameDetails(tenantOptions)
 
-  const selectedTenantIds = tenantIds.filter((id): id is string => id !== null)
+  const selectedTenantIds = uniqueTenantIds(tenantIds)
+  // A "new" tenant whose name matches someone already saved (for example a
+  // person created before a lease failed or was cancelled): offer that person
+  // first, so nobody is created twice. Creating another is still possible.
+  const [nameMatch, setNameMatch] = useState<{ input: TenantInput; matches: ReturnType<typeof nameMatchesFor<TenantOption>> } | null>(null)
 
-  const handleCreateTenant = async (input: TenantInput) => {
-    if (addingTenantForSlot === null) return
-    setCreatingTenant(true)
-    const result = await onCreateTenant(input)
-    setCreatingTenant(false)
+  const chooseExistingTenant = (id: string) => {
+    const slot = addingTenantForSlot
+    if (slot === null) return
+    setTenantIds((prev) => prev.map((existing, i) => (i === slot ? id : existing)))
+    setNameMatch(null)
+    setAddingTenantForSlot(null)
+  }
 
+  // One inline tenant creation at a time; once a person is created for this
+  // slot, no second one until "+ Add new tenant" is opened again.
+  const tenantFlight = useSingleFlight()
+  const openNewTenant = (slot: number) => {
+    tenantFlight.reset()
+    setAddingTenantForSlot(slot)
+  }
+
+  const handleCreateTenant = async (input: TenantInput, confirmedNew = false) => {
+    const slot = addingTenantForSlot
+    if (slot === null) return
+    const chosenElsewhere = tenantIds.filter((id, i): id is string => id !== null && i !== slot)
+    const matches = nameMatchesFor(allTenantOptions ?? tenantOptions, tenantOptions, chosenElsewhere, input.name)
+    const anyMatch = matches.selectable.length + matches.chosenAbove.length + matches.onTenancy.length > 0
+    if (!confirmedNew && anyMatch) {
+      setNameMatch({ input, matches })
+      return
+    }
+    const run = await tenantFlight.run(
+      async () => {
+        setNameMatch(null)
+        setCreatingTenant(true)
+        try {
+          return await onCreateTenant(input)
+        } finally {
+          setCreatingTenant(false)
+        }
+      },
+      (result) => !('error' in result),
+    )
+    if (!run.ran) return
+    const result = run.value
     if ('error' in result) {
       setCreateTenantError(result.error)
       return
     }
 
     setCreateTenantError(null)
-    const slot = addingTenantForSlot
     setTenantIds((prev) => prev.map((id, i) => (i === slot ? result.id : id)))
     setAddingTenantForSlot(null)
   }
 
   const handleSave = () => {
-    if (selectedTenantIds.length === 0 || !startDate) return
+    if (selectedTenantIds.length === 0 || (!tenantsOnly && !startDate)) return
     onSave({
       tenantIds: selectedTenantIds,
       startDate,
@@ -72,24 +123,68 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
       </label>
       {tenantIds.map((tenantId, i) =>
         addingTenantForSlot === i ? (
-          <TenantForm
-            key={i}
-            saving={creatingTenant}
-            error={createTenantError}
-            onSave={handleCreateTenant}
-            onCancel={() => {
-              setAddingTenantForSlot(null)
-              setCreateTenantError(null)
-            }}
-          />
+          // One step at a time: this panel's Save tenant / Cancel act on the
+          // new person only; the lease form's own Save / Cancel return once
+          // the person is saved or the step is cancelled.
+          <div className="lease-new-tenant" key={i}>
+            <p className="lease-new-tenant-title">New tenant</p>
+            <TenantForm
+              saving={creatingTenant}
+              error={createTenantError}
+              onSave={handleCreateTenant}
+              saveLabel="Save tenant"
+              hideActions={nameMatch !== null}
+              onCancel={() => {
+                setAddingTenantForSlot(null)
+                setCreateTenantError(null)
+                setNameMatch(null)
+              }}
+            />
+            {nameMatch && (
+              <div role="status">
+                <p>
+                  <strong>“{nameMatch.input.name.trim()}” already exists.</strong>{' '}
+                  {nameMatch.matches.selectable.length > 0
+                    ? 'Use the existing record if it’s the same person; otherwise create a different person.'
+                    : 'They can’t be added again here. If this is someone else, create a different person.'}
+                </p>
+                <p className="field-hint">
+                  You entered: {[nameMatch.input.email, nameMatch.input.phone].filter(Boolean).join(' · ') || 'no email or phone'}
+                </p>
+                {nameMatch.matches.onTenancy.map((m) => (
+                  <p key={m.id} className="field-hint">
+                    Already on this tenancy: {m.label} — {m.detail}
+                  </p>
+                ))}
+                {nameMatch.matches.chosenAbove.map((m) => (
+                  <p key={m.id} className="field-hint">
+                    Already chosen above: {m.label} — {m.detail}
+                  </p>
+                ))}
+                <div className="lease-form-actions">
+                  {nameMatch.matches.selectable.map((m) => (
+                    <button key={m.id} type="button" onClick={() => chooseExistingTenant(m.id)}>
+                      Use existing: {m.label} — {m.detail}
+                    </button>
+                  ))}
+                  <button type="button" disabled={creatingTenant} onClick={() => handleCreateTenant(nameMatch.input, true)}>
+                    Create a different person with this name
+                  </button>
+                  <button type="button" disabled={creatingTenant} onClick={() => setNameMatch(null)}>
+                    Edit name
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="lease-form-tenant-row" key={i}>
             <SearchableSelect
-              options={tenantOptions}
+              options={slotOptions(pickerOptions, tenantIds, i)}
               value={tenantId}
               onChange={(id) => setTenantIds((prev) => prev.map((existing, idx) => (idx === i ? id : existing)))}
               placeholder="Select a tenant…"
-              onAddNew={() => setAddingTenantForSlot(i)}
+              onAddNew={() => openNewTenant(i)}
               addNewLabel="+ Add new tenant"
             />
             {tenantIds.length > 1 && (
@@ -101,12 +196,15 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
         ),
       )}
       {addingTenantForSlot === null && (
-        <button type="button" onClick={() => setTenantIds((prev) => [...prev, null])}>
-          + Add another tenant
-        </button>
+        <div>
+          <button type="button" onClick={() => setTenantIds((prev) => [...prev, null])}>
+            + Add another tenant
+          </button>
+        </div>
       )}
 
-      {selectedTenantIds.length > 0 && addingTenantForSlot === null && (
+
+      {!tenantsOnly && selectedTenantIds.length > 0 && addingTenantForSlot === null && (
         <>
           <label htmlFor="lease_start">
             Start date<span className="required-marker">*</span>
@@ -148,15 +246,22 @@ export function LeaseForm({ tenantOptions, onCreateTenant, saving, todayDateStri
             value={moveInFee}
             onChange={(e) => setMoveInFee(e.target.value)}
           />
-
-          <button type="button" disabled={saving || !startDate} onClick={handleSave}>
-            {saving ? 'Saving…' : 'Save lease'}
-          </button>
         </>
       )}
-      <button type="button" onClick={onCancel} disabled={saving}>
-        Cancel
-      </button>
+      {/* The lease form's own actions, together; hidden while the new-tenant
+          step is open so there is only one Save and one Cancel on screen. */}
+      {addingTenantForSlot === null && (
+        <div className="lease-form-actions">
+          {selectedTenantIds.length > 0 && (
+            <button type="button" disabled={saving || (!tenantsOnly && !startDate)} onClick={handleSave}>
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          )}
+          <button type="button" onClick={onCancel} disabled={saving}>
+            Cancel
+          </button>
+        </div>
+      )}
     </div>
   )
 }

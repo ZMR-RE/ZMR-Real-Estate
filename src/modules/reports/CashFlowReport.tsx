@@ -13,7 +13,8 @@ const money = formatMoney
 // subtracted (money that left the bank account without being P&L
 // expense) — see reportsCalculations.computeCashFlow.
 export function CashFlowReport({ cashFlow, year }: CashFlowReportProps) {
-  const { netIncome, depreciationAddBack, cashFromOperations, principalPaid, capitalImprovementsPaid, netCashFlow } = cashFlow
+  const { netIncome, depreciationAddBack, cashFromOperations, principalPaid, capitalImprovementsPaid, netCashFlow, historyPrincipalMemo } =
+    cashFlow
 
   return (
     <div>
@@ -51,6 +52,12 @@ export function CashFlowReport({ cashFlow, year }: CashFlowReportProps) {
           </tfoot>
         </table>
       </div>
+      {historyPrincipalMemo > 0 && (
+        <p className="field-hint">
+          Memo: {money(historyPrincipalMemo)} of mortgage principal paid in {year} is recorded as history (already included in a
+          loan’s opening balance). It is not part of net cash flow, because when cash tracking began isn’t recorded.
+        </p>
+      )}
     </div>
   )
 }

@@ -77,10 +77,29 @@ export function previewInvoiceNumber(code: string | null, next: number): string 
 // Which payment instructions a property's invoices print, and why.
 export function effectivePaymentInstructions(override: string | null, entityDefault: string | null, entityName: string | null) {
   const own = override?.trim() || null
-  if (own) return { text: own, source: 'This property’s own instructions (overrides the entity default)' }
+  if (own) return { text: own, source: entityName ? 'This property’s own instructions (overrides the issuer’s default)' : 'This property’s own instructions' }
   const inherited = entityDefault?.trim() || null
-  if (inherited) return { text: inherited, source: `Inherited from ${entityName ?? 'the invoicing entity'}’s default (Branding & documents)` }
+  if (inherited) return { text: inherited, source: `Inherited from ${entityName ?? 'the invoice issuer'}’s default (Branding & documents)` }
   return { text: null, source: null }
+}
+
+// The invoice issuer is any owner record: a person or a business. Shows
+// which, when the owner's profile says; never guessed from the name.
+export function issuerKindLabel(kind: 'individual' | 'entity' | null): string | null {
+  return kind === 'individual' ? 'Person' : kind === 'entity' ? 'Business' : null
+}
+
+export function issuerOptionLabel(o: { name: string; display_name: string | null; invoice_code: string | null; owner_kind: 'individual' | 'entity' | null }): string {
+  const kind = issuerKindLabel(o.owner_kind)
+  return `${o.display_name || o.name}${kind ? ` — ${kind.toLowerCase()}` : ''}${o.invoice_code ? ` (${o.invoice_code})` : ''}`
+}
+
+// Owner records with the same name as a person being added. Offered, never
+// forced: two different people may share a name.
+export function issuersNamed<T extends { name: string; display_name: string | null }>(options: T[], name: string): T[] {
+  const norm = (n: string) => n.trim().replace(/\s+/g, ' ').toLowerCase()
+  const key = norm(name)
+  return key ? options.filter((o) => norm(o.name) === key || (o.display_name !== null && norm(o.display_name) === key)) : []
 }
 
 export function continuityLabel(o: ContinuityOption): string {

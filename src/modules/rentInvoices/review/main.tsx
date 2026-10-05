@@ -5,6 +5,8 @@ import '../../../index.css'
 import { AppShell } from '../../../shared/AppShell'
 import { EntityProfile } from '../../llcs/EntityProfile'
 import { PropertyProfile } from '../../properties/PropertyProfile'
+import { PropertyRegistry } from '../../properties/PropertyRegistry'
+import { Settings } from '../../settings/Settings'
 import { RentOps } from '../../rentOps/RentOps'
 import { TenantProfile } from '../../tenants/TenantProfile'
 import { buildInvoiceRender } from '../invoiceDocument'
@@ -30,6 +32,10 @@ import { armUploadFailureFromUrl, review, reviewDb, seeded, supabase } from './r
 // states (a second issued invoice, a partial payment, a cancelled invoice).
 const params = new URLSearchParams(window.location.search)
 const longMode = params.has('long')
+// Add ?person=1 for the individual-issuer check: one fictional person's owner
+// record whose kind isn't set yet (as created earlier, e.g. by the property
+// wizard). Everything after that is done through the real screens.
+const personMode = params.has('person')
 
 function applyLongNames() {
   const set = (rows: Record<string, unknown>[], id: string, patch: Record<string, unknown>) => Object.assign(rows.find((r) => r.id === id)!, patch)
@@ -47,15 +53,33 @@ function applyLongNames() {
 const PROPERTY_COLUMNS = ['ac_type', 'basement', 'bathroom_count', 'bedroom_count', 'city', 'contact_email', 'contact_phone', 'county', 'county_assessor_use_code', 'created_at', 'exterior_wall_material', 'exterior_wall_materials', 'garage_parking_spaces', 'garage_spaces', 'heating_type', 'insurance_policy_number', 'insurance_provider', 'lease_terms', 'legacy_contact_reconciled_at', 'llc_id', 'lot_size', 'lot_size_unit', 'lot_size_value', 'municipal_zoning_code', 'owner_name', 'parking_notes', 'property_tax_id', 'property_type', 'purchase_date', 'purchase_method', 'purchase_price', 'square_footage', 'state', 'status', 'street_parking', 'township', 'updated_at', 'utilities', 'year_built', 'zip', 'zoning_use_code']
 
 function completePropertyRows() {
+  // Units and lease-tenant links in a real database always carry account_id.
+  for (const lt of reviewDb.lease_tenants as Record<string, unknown>[]) if (!('account_id' in lt)) lt.account_id = 'review-account'
+  // Leases in a real database always carry these columns (null when empty).
+  for (const l of reviewDb.leases as Record<string, unknown>[]) {
+    for (const col of ['late_fee', 'move_in_fee', 'end_reason']) if (!(col in l)) l[col] = null
+  }
+  for (const u of reviewDb.units as Record<string, unknown>[]) {
+    if (!('account_id' in u)) u.account_id = 'review-account'
+    if (!('archived' in u)) u.archived = false
+    if (!('status' in u)) u.status = ''
+  }
   for (const row of reviewDb.properties as Record<string, unknown>[]) {
     for (const col of PROPERTY_COLUMNS) if (!(col in row)) row[col] = col === 'exterior_wall_materials' ? [] : null // not null, default '{}'
   }
 }
 
+// Review page only: lets a reviewer inspect the simulated rows (e.g. that a
+// retried save made one lease, not two). Never part of the app bundle.
+;(window as unknown as { __reviewDb: unknown }).__reviewDb = reviewDb
+
 async function seed() {
   await seeded
   completePropertyRows()
   if (longMode) applyLongNames()
+  if (personMode) {
+    reviewDb.llcs.push({ id: 'ent-person', account_id: 'review-account', archived: false, name: 'Riley Example', display_name: null, invoice_code: null, owner_kind: null, mailing_address: '12 Example Court', mailing_city: 'Springfield', mailing_state: 'IL', mailing_zip: '62704' })
+  }
   const call = async (fn: string, args: Record<string, unknown>) => (await supabase.rpc(fn, args)).data
   const riley = (await call('create_invoice_draft', { p_lease_id: 'lease-riley', p_period_start: '2026-10-01' })) as string
   await call('update_invoice_draft', { p_id: riley, p_expected_version: 1, p_patch: { visible_note: 'Thank you!' } })
@@ -87,12 +111,28 @@ async function seed() {
 }
 
 
+// ?persist=1 (review page only): the tenancy rows (tenants, leases, links)
+// survive a real page reload in this tab, so recovery after leaving or
+// reloading is tested against saved rows rather than screen memory.
+const PERSIST_KEY = 'zmr-review-tenancy-rows'
+const PERSISTED = ['tenants', 'leases', 'lease_tenants'] as const
+function restorePersistedRows() {
+  if (!params.has('persist')) return
+  const saved = sessionStorage.getItem(PERSIST_KEY)
+  if (saved) for (const [table, rows] of Object.entries(JSON.parse(saved) as Record<string, Record<string, unknown>[]>)) reviewDb[table].splice(0, reviewDb[table].length, ...rows)
+  window.addEventListener('pagehide', () => {
+    sessionStorage.setItem(PERSIST_KEY, JSON.stringify(Object.fromEntries(PERSISTED.map((t) => [t, reviewDb[t]]))))
+  })
+}
+
 seed().then(() => {
+  restorePersistedRows()
   createRoot(document.getElementById('rent-invoices-review-root')!).render(
     <StrictMode>
       {/* ?path=/tenants/t-casey opens the real tenant profile (Tenancy & billing, Billing rules);
           ?path=/billing-boxes the Entity › Invoicing and Property › Billing settings boxes;
-          ?path=/entities/ent-a and ?path=/properties/prop-410 the full real profile pages. */}
+          ?path=/entities/ent-a and ?path=/properties/prop-410 the full real profile pages;
+          the Properties and Settings nav links work too. */}
       <MemoryRouter initialEntries={[params.get('path') || '/rent-ops']}>
         <Routes>
           <Route element={<AppShell />}>
@@ -101,6 +141,8 @@ seed().then(() => {
             <Route path="/billing-boxes" element={<ReviewBillingBoxes />} />
             <Route path="/entities/:id" element={<EntityProfile />} />
             <Route path="/properties/:id" element={<PropertyProfile />} />
+            <Route path="/properties" element={<PropertyRegistry />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>
       </MemoryRouter>

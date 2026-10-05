@@ -11,6 +11,11 @@ interface TenantFormProps {
   error: string | null
   onSave: (input: TenantInput) => void
   onCancel: () => void
+  // Inline use inside the lease form: name the save action for what it saves
+  // ("Save tenant"), and hide this form's own actions while a same-name
+  // question is being answered. Other uses keep the defaults.
+  saveLabel?: string
+  hideActions?: boolean
 }
 
 const BLANK_TENANT: TenantInput = {
@@ -22,7 +27,7 @@ const BLANK_TENANT: TenantInput = {
 
 // A plain div, not a <form> — mirrors LlcForm/VendorForm's inline-create
 // shape so it can nest inside another form without invalid markup.
-export function TenantForm({ initialValues, saving, error, onSave, onCancel }: TenantFormProps) {
+export function TenantForm({ initialValues, saving, error, onSave, onCancel, saveLabel, hideActions = false }: TenantFormProps) {
   const [values, setValues] = useState<TenantInput>(initialValues ?? BLANK_TENANT)
   const isEditing = initialValues !== undefined
 
@@ -62,12 +67,16 @@ export function TenantForm({ initialValues, saving, error, onSave, onCancel }: T
         onChange={(e) => setValues((prev) => ({ ...prev, notes: e.target.value || null }))}
       />
 
-      <button type="button" disabled={saving || !values.name.trim()} onClick={() => onSave(values)}>
-        {saving ? 'Saving…' : isEditing ? 'Save' : 'Add tenant'}
-      </button>
-      <button type="button" onClick={onCancel} disabled={saving}>
-        Cancel
-      </button>
+      {!hideActions && (
+        <>
+          <button type="button" disabled={saving || !values.name.trim()} onClick={() => onSave(values)}>
+            {saving ? 'Saving…' : saveLabel ?? (isEditing ? 'Save' : 'Add tenant')}
+          </button>
+          <button type="button" onClick={onCancel} disabled={saving}>
+            Cancel
+          </button>
+        </>
+      )}
     </div>
   )
 }

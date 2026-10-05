@@ -41,8 +41,8 @@ describe('invoice document from the print snapshot', () => {
     expect(paymentInstructionsSource({ ...snapshot, payment_instructions: { text: null, source: null } })).toBeNull()
   })
 
-  it('refuses to show an invoice with no issuing entity', () => {
-    expect(() => buildInvoiceRender({ ...snapshot, issuer: null }, null, null)).toThrow(/issuing entity/)
+  it('refuses to show an invoice with no invoice issuer', () => {
+    expect(() => buildInvoiceRender({ ...snapshot, issuer: null }, null, null)).toThrow(/invoice issuer/)
   })
 
   it('reports what printed content changed since approval, in plain words', () => {

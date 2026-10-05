@@ -6,7 +6,8 @@ import { listTransactions } from '../financials/financialsQueries'
 import { listChartOfAccounts, listCategoryMappings } from '../chartOfAccounts/chartOfAccountsQueries'
 import { listPortfolioMortgages } from '../mortgagePayoff/mortgagePayoffQueries'
 import { listLatestValuesForAccount } from '../propertyValueHistory/propertyValueHistoryQueries'
-import { listMortgagePaymentsForAccount } from './reportsQueries'
+import { listHistoryPaymentPrincipalsForAccount, listMortgagePaymentsForAccount } from './reportsQueries'
+import { resolveHistoryPrincipal, sumHistoryPrincipal } from './reportsHistory'
 import { computeLedgerTotals } from '../financials/financialsCalculations'
 import { getTransactionYearRange } from '../financials/financialYearsQueries'
 import { buildYearOptions } from '../financials/transactionEntry'
@@ -63,6 +64,8 @@ export function useReports() {
       { data: allTimeTransactions, error: allTimeTxError },
       { data: allTimePrincipalPayments, error: allTimePrincipalError },
       { data: latestMarketValueRows, error: marketValuesError },
+      yearHistoryResult,
+      allTimeHistoryResult,
     ] = await Promise.all([
       listChartOfAccounts(accountId),
       listCategoryMappings(accountId),
@@ -72,7 +75,13 @@ export function useReports() {
       listTransactions(accountId, { propertyId: propertyFilter }),
       listMortgagePaymentsForAccount(accountId),
       listLatestValuesForAccount(accountId, 'market_value'),
+      listHistoryPaymentPrincipalsForAccount(accountId, { year }),
+      listHistoryPaymentPrincipalsForAccount(accountId),
     ])
+    // Option B (H1): "table doesn't exist yet" means no history entries; any
+    // other failure is reported like the other queries above.
+    const yearHistory = resolveHistoryPrincipal(yearHistoryResult)
+    const allTimeHistory = resolveHistoryPrincipal(allTimeHistoryResult)
     setLoading(false)
 
     const fetchError =
@@ -83,7 +92,9 @@ export function useReports() {
       yearPrincipalError?.message ??
       allTimeTxError?.message ??
       allTimePrincipalError?.message ??
-      marketValuesError?.message
+      marketValuesError?.message ??
+      yearHistory.error ??
+      allTimeHistory.error
     if (fetchError) {
       setError(fetchError)
       return
@@ -98,7 +109,14 @@ export function useReports() {
     const principalPaidThisYear = (yearPrincipalPayments ?? [])
       .filter((payment) => !propertyFilter || payment.property_id === propertyFilter)
       .reduce((sum, payment) => sum + Number(payment.principal_amount), 0)
-    setCashFlow(computeCashFlow(pnl, principalPaidThisYear, computeLedgerTotals(yearTransactions ?? []).capitalImprovements))
+    setCashFlow(
+      computeCashFlow(
+        pnl,
+        principalPaidThisYear,
+        computeLedgerTotals(yearTransactions ?? []).capitalImprovements,
+        sumHistoryPrincipal(yearHistory.rows, propertyFilter),
+      ),
+    )
 
     const scopedProperties = propertyFilter ? properties.filter((p) => p.id === propertyFilter) : properties
     setBalanceSheet(
@@ -108,6 +126,7 @@ export function useReports() {
         allTimePrincipalPayments ?? [],
         portfolioMortgages ?? [],
         latestMarketValues,
+        allTimeHistory.rows,
       ),
     )
   }, [accountId, propertyFilter, year, properties])

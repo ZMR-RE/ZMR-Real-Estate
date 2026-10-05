@@ -6,6 +6,7 @@ export interface Tenant {
   email: string | null
   phone: string | null
   notes: string | null
+  created_at?: string
 }
 
 export interface TenantInput {
@@ -15,7 +16,7 @@ export interface TenantInput {
   notes: string | null
 }
 
-const TENANT_COLUMNS = 'id, name, email, phone, notes'
+const TENANT_COLUMNS = 'id, name, email, phone, notes, created_at'
 
 export async function listTenants(accountId: string) {
   return supabase.from('tenants').select(TENANT_COLUMNS).eq('account_id', accountId).order('name').returns<Tenant[]>()

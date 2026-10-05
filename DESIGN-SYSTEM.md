@@ -209,6 +209,12 @@ of screens in the app.
   row hover highlights via `--surface-sunken`.
 - **`.tab-bar`** — underline-style tabs (Property Profile), underline in
   `--accent`. Mobile: horizontally scrollable rather than wrapping.
+- **`.property-sticky-header`** / **`.property-sticky-title`** — Property
+  Profile's address heading and tab bar in one sticky block, so the address
+  stays visible while scrolling. Compact heading (`--text-xl`), wraps long
+  addresses (never truncates). Its live height (`useStickyHeaderHeight`)
+  sets `--sticky-tab-bar-height` on `.property-profile`, so sticky table
+  headers on every property tab sit just below it.
 - **`.collapsible-section`** — `<details>`/`<summary>`-based, used for
   every grouped block on the Property Profile and KPI tabs (Units,
   Specs, Utilities, Security Deposits, Tenants, KPI cards). Rotating
@@ -244,6 +250,15 @@ of screens in the app.
 - A page that draws nothing counts as a failure, not a preview.
 - Callers pass the bytes, an accessible label, an object URL of the same bytes (for the fallbacks) and a filename.
 - First used by Settings › Entities › Branding & documents.
+
+### Tenancy entry choices (leases module)
+
+`src/modules/leases/leases.css` — used where adding a tenancy needs an explicit choice first (resume an unfinished tenancy; add a co-tenant vs a separate tenancy).
+
+- **`.lease-choice`** — sunken, bordered panel (`--surface-sunken`, `--border`, `--radius-sm`) holding the explanation and the options.
+- **`.lease-choice-option`** — one option: its description, then its button; wraps on phones.
+
+**Box header "Add" button (`EditableSection` `addLabel`)** — owner-approved for Property Overview › Tenants only ("+ Add tenant"). It sits beside Edit, uses the same button style, opens the box and enters the same edit state. Not a default for other boxes.
 
 ### Agents workspace preview (T4, preview-only, not shipped)
 

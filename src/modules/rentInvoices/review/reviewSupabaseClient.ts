@@ -16,12 +16,16 @@ export const reviewDb = buildReviewDb()
 const objects = new Map<string, Blob>()
 let failNextInvoiceUpload = false
 let failNextInvoiceLink = false
+// ?fail-lease-links=1: the next tenant-link save for a new lease fails once
+// (the lease row itself saves) — the partial failure Add tenant must recover from.
+let failNextLeaseLinks = false
 // Armed by main.tsx after seeding, so the seed's own PDF upload succeeds.
 export const armUploadFailureFromUrl = () => {
   const q = new URLSearchParams(window.location.search)
   failNextInvoiceUpload = q.get('fail-upload') === '1'
   // ?fail-link=1: the upload succeeds, then linking it to the invoice fails once.
   failNextInvoiceLink = q.get('fail-link') === '1'
+  failNextLeaseLinks = q.get('fail-lease-links') === '1'
 }
 
 // Store the entity logo file and record its digest, as an upload would.
@@ -65,6 +69,11 @@ const base = createMockSupabaseClient(reviewDb, review.rpc, joins)
 const insertDefaults: Record<string, MockRow> = {
   tenancy_charge_rules: { status: 'active', version: 1, applied_invoice_id: null, notes: null },
   tenancy_charge_statements: { billed_invoice_id: null, document_id: null },
+  // Column defaults a real database applies to a new owner record.
+  llcs: { archived: false, invoice_code: null, display_name: null },
+  // Column defaults a real database applies to a new lease or tenant.
+  leases: { archived: false, end_reason: null },
+  tenants: { notes: null },
 }
 const baseFrom = base.from.bind(base)
 base.from = (table: string) => {
@@ -74,6 +83,36 @@ base.from = (table: string) => {
     const insert = qb.insert.bind(qb)
     qb.insert = (p: MockRow | MockRow[]) => insert(Array.isArray(p) ? p.map((r) => ({ ...defaults, ...r })) : { ...defaults, ...p })
   }
+  // ?slow-writes=MS: tenancy inserts (leases, lease links, tenants) answer
+  // after MS milliseconds, so repeated clicks during a slow save can be tested.
+  const slowMs = Number(new URLSearchParams(window.location.search).get('slow-writes') ?? 0)
+  if (slowMs > 0 && (table === 'leases' || table === 'lease_tenants' || table === 'tenants')) {
+    const insert = qb.insert.bind(qb)
+    const slow = <T,>(v: T) => new Promise<T>((r) => setTimeout(() => r(v), slowMs))
+    qb.insert = (p: MockRow | MockRow[]) => {
+      // Keep the builder (callers chain .select().single() or await it
+      // directly); only delay its answers.
+      const r = insert(p) as { then: (ok: (v: unknown) => unknown, no?: (e: unknown) => unknown) => Promise<unknown>; select: (c?: string) => { single: () => Promise<unknown> } }
+      const then = r.then.bind(r)
+      r.then = (ok, no) => then(slow).then(ok, no)
+      const select = r.select.bind(r)
+      r.select = (c?: string) => {
+        const sel = select(c)
+        const single = sel.single.bind(sel)
+        sel.single = () => single().then(slow)
+        return sel
+      }
+      return r
+    }
+  }
+  if (table === 'lease_tenants' && failNextLeaseLinks) {
+    const insert = qb.insert.bind(qb)
+    qb.insert = (p: MockRow | MockRow[]) => {
+      if (!failNextLeaseLinks) return insert(p)
+      failNextLeaseLinks = false
+      return Promise.resolve({ data: null, error: { message: 'Simulated failure linking the tenants (network dropped)' } })
+    }
+  }
   return qb as unknown as ReturnType<typeof baseFrom>
 }
 // The shared harness builder has no .neq(); the billing-rules box uses it.
@@ -81,6 +120,23 @@ base.from = (table: string) => {
 const builderProto = Object.getPrototypeOf(base.from('tenancy_charge_rules')) as { neq?: unknown }
 builderProto.neq = function (this: { filters: ((r: MockRow) => boolean)[] }, col: string, val: unknown) {
   this.filters.push((r) => r[col] !== val)
+  return this
+}
+
+// Embedded filters such as .eq('unit.property_id', id) (Property › Tenants)
+// filter on the joined row. Review page only, like .neq above.
+const builderEq = (builderProto as { eq: (c: string, v: unknown) => unknown }).eq
+;(builderProto as { eq: unknown }).eq = function (this: { filters: ((r: MockRow) => boolean)[]; join?: (r: MockRow) => MockRow }, col: string, val: unknown) {
+  if (!col.includes('.')) return builderEq.call(this, col, val)
+  const [rel, field] = col.split('.')
+  const join = this.join
+  this.filters.push((r) => ((join ? join(r) : r)[rel] as MockRow | null)?.[field] === val)
+  return this
+}
+
+// .not('end_date', 'is', null) — lease renewal reminders (Units cards) use it.
+;(builderProto as { not?: unknown }).not = function (this: { filters: ((r: MockRow) => boolean)[] }, col: string, op: string, val: unknown) {
+  if (op === 'is' || op === 'eq') this.filters.push((r) => r[col] !== val)
   return this
 }
 

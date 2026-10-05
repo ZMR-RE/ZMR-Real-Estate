@@ -1,0 +1,4 @@
+data/
+pg.log
+err.txt
+migrations/

@@ -31,7 +31,7 @@ export function EntityBrandingSettings({ initialEntityId }: { initialEntityId: s
           b.selectEntity(id)
         }}
       />
-      {b.entityId && <p className="field-hint"><Link to={`/entities/${b.entityId}`}>Open entity profile</Link> — name and address are edited under Identity there.</p>}
+      {b.entityId && <p className="field-hint"><Link to={`/entities/${b.entityId}`}>Open their profile</Link> — name and address are edited under Identity there.</p>}
       {b.error && <p className="branding-warning" role="alert">{b.error}</p>}
       {b.identity && !b.loading && (
         <div className="branding-layout">

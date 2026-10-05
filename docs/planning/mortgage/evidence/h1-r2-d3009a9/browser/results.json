@@ -1,0 +1,284 @@
+[
+  {
+    "w": 1440,
+    "build": "live",
+    "scenario": "before",
+    "alert": "",
+    "balanceSheet": [
+      "Property | Market value | Cash | Mortgage balance | Equity",
+      "000 Fictional Test Way | $330,000.00 | $372.28 | $212,480.55 | $117,891.73",
+      "200 ZMR-TEST-T2 Second St | $250,000.00 | $1,450.00 | $0.00 | $251,450.00",
+      "Total | $580,000.00 | $1,822.28 | $212,480.55 | $369,341.73"
+    ],
+    "disclosure": "",
+    "cashFlow": [
+      "Net income (from Profit & Loss) | $2,193.52",
+      "+ Depreciation (non-cash, added back) | $0.00",
+      "= Cash from operations | $2,193.52",
+      "− Mortgage principal paid | $371.24",
+      "− Capital improvements paid | $0.00",
+      "Net cash flow | $1,822.28"
+    ],
+    "memo": "",
+    "scrollWidth": 1440,
+    "overflow": false,
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "w": 1440,
+    "build": "h1",
+    "scenario": "before",
+    "alert": "",
+    "balanceSheet": [
+      "Property | Market value | Cash | Mortgage balance | Equity",
+      "000 Fictional Test Way | $330,000.00 | $372.28 | $212,480.55 | $117,891.73",
+      "200 ZMR-TEST-T2 Second St | $250,000.00 | $1,450.00 | $0.00 | $251,450.00",
+      "Total | $580,000.00 | $1,822.28 | $212,480.55 | $369,341.73"
+    ],
+    "disclosure": "",
+    "cashFlow": [
+      "Net income (from Profit & Loss) | $2,193.52",
+      "+ Depreciation (non-cash, added back) | $0.00",
+      "= Cash from operations | $2,193.52",
+      "− Mortgage principal paid | $371.24",
+      "− Capital improvements paid | $0.00",
+      "Net cash flow | $1,822.28"
+    ],
+    "memo": "",
+    "scrollWidth": 1440,
+    "overflow": false,
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "w": 1440,
+    "build": "h1",
+    "scenario": "after",
+    "alert": "",
+    "balanceSheet": [
+      "Property | Market value | Cash | Mortgage balance | Equity",
+      "000 Fictional Test Way | $330,000.00 | $372.28 | $212,480.55 | $117,891.73",
+      "200 ZMR-TEST-T2 Second St | $250,000.00 | $1,450.00 | $0.00 | $251,450.00",
+      "Total | $580,000.00 | $1,822.28 | $212,480.55 | $369,341.73"
+    ],
+    "disclosure": "History-only mortgage principal not deducted from cash (cash opening date not recorded):000 Fictional Test Way: $669.31200 ZMR-TEST-T2 Second St: $150.50",
+    "cashFlow": [
+      "Net income (from Profit & Loss) | $2,193.52",
+      "+ Depreciation (non-cash, added back) | $0.00",
+      "= Cash from operations | $2,193.52",
+      "− Mortgage principal paid | $371.24",
+      "− Capital improvements paid | $0.00",
+      "Net cash flow | $1,822.28"
+    ],
+    "memo": "Memo: $369.31 of mortgage principal paid in 2026 is recorded as history (already included in a loan’s opening balance). It is not part of net cash flow, because when cash tracking began isn’t recorded.",
+    "scrollWidth": 1440,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 1440,
+    "build": "h1",
+    "scenario": "error",
+    "alert": "permission denied for table mortgage_history_payments",
+    "balanceSheet": [],
+    "disclosure": "",
+    "cashFlow": [],
+    "memo": "",
+    "scrollWidth": 1440,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 1440,
+    "build": "h1",
+    "scenario": "hintonly",
+    "alert": "Could not find the table 'public.mortgage_history_paymnts' in the schema cache",
+    "balanceSheet": [],
+    "disclosure": "",
+    "cashFlow": [],
+    "memo": "",
+    "scrollWidth": 1440,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 768,
+    "build": "h1",
+    "scenario": "before",
+    "alert": "",
+    "balanceSheet": [
+      "Property | Market value | Cash | Mortgage balance | Equity",
+      "000 Fictional Test Way | $330,000.00 | $372.28 | $212,480.55 | $117,891.73",
+      "200 ZMR-TEST-T2 Second St | $250,000.00 | $1,450.00 | $0.00 | $251,450.00",
+      "Total | $580,000.00 | $1,822.28 | $212,480.55 | $369,341.73"
+    ],
+    "disclosure": "",
+    "cashFlow": [
+      "Net income (from Profit & Loss) | $2,193.52",
+      "+ Depreciation (non-cash, added back) | $0.00",
+      "= Cash from operations | $2,193.52",
+      "− Mortgage principal paid | $371.24",
+      "− Capital improvements paid | $0.00",
+      "Net cash flow | $1,822.28"
+    ],
+    "memo": "",
+    "scrollWidth": 768,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 768,
+    "build": "h1",
+    "scenario": "after",
+    "alert": "",
+    "balanceSheet": [
+      "Property | Market value | Cash | Mortgage balance | Equity",
+      "000 Fictional Test Way | $330,000.00 | $372.28 | $212,480.55 | $117,891.73",
+      "200 ZMR-TEST-T2 Second St | $250,000.00 | $1,450.00 | $0.00 | $251,450.00",
+      "Total | $580,000.00 | $1,822.28 | $212,480.55 | $369,341.73"
+    ],
+    "disclosure": "History-only mortgage principal not deducted from cash (cash opening date not recorded):000 Fictional Test Way: $669.31200 ZMR-TEST-T2 Second St: $150.50",
+    "cashFlow": [
+      "Net income (from Profit & Loss) | $2,193.52",
+      "+ Depreciation (non-cash, added back) | $0.00",
+      "= Cash from operations | $2,193.52",
+      "− Mortgage principal paid | $371.24",
+      "− Capital improvements paid | $0.00",
+      "Net cash flow | $1,822.28"
+    ],
+    "memo": "Memo: $369.31 of mortgage principal paid in 2026 is recorded as history (already included in a loan’s opening balance). It is not part of net cash flow, because when cash tracking began isn’t recorded.",
+    "scrollWidth": 768,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 768,
+    "build": "h1",
+    "scenario": "error",
+    "alert": "permission denied for table mortgage_history_payments",
+    "balanceSheet": [],
+    "disclosure": "",
+    "cashFlow": [],
+    "memo": "",
+    "scrollWidth": 768,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 768,
+    "build": "h1",
+    "scenario": "hintonly",
+    "alert": "Could not find the table 'public.mortgage_history_paymnts' in the schema cache",
+    "balanceSheet": [],
+    "disclosure": "",
+    "cashFlow": [],
+    "memo": "",
+    "scrollWidth": 768,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 390,
+    "build": "live",
+    "scenario": "before",
+    "alert": "",
+    "balanceSheet": [
+      "Property | Market value | Cash | Mortgage balance | Equity",
+      "000 Fictional Test Way | $330,000.00 | $372.28 | $212,480.55 | $117,891.73",
+      "200 ZMR-TEST-T2 Second St | $250,000.00 | $1,450.00 | $0.00 | $251,450.00",
+      "Total | $580,000.00 | $1,822.28 | $212,480.55 | $369,341.73"
+    ],
+    "disclosure": "",
+    "cashFlow": [
+      "Net income (from Profit & Loss) | $2,193.52",
+      "+ Depreciation (non-cash, added back) | $0.00",
+      "= Cash from operations | $2,193.52",
+      "− Mortgage principal paid | $371.24",
+      "− Capital improvements paid | $0.00",
+      "Net cash flow | $1,822.28"
+    ],
+    "memo": "",
+    "scrollWidth": 390,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 390,
+    "build": "h1",
+    "scenario": "before",
+    "alert": "",
+    "balanceSheet": [
+      "Property | Market value | Cash | Mortgage balance | Equity",
+      "000 Fictional Test Way | $330,000.00 | $372.28 | $212,480.55 | $117,891.73",
+      "200 ZMR-TEST-T2 Second St | $250,000.00 | $1,450.00 | $0.00 | $251,450.00",
+      "Total | $580,000.00 | $1,822.28 | $212,480.55 | $369,341.73"
+    ],
+    "disclosure": "",
+    "cashFlow": [
+      "Net income (from Profit & Loss) | $2,193.52",
+      "+ Depreciation (non-cash, added back) | $0.00",
+      "= Cash from operations | $2,193.52",
+      "− Mortgage principal paid | $371.24",
+      "− Capital improvements paid | $0.00",
+      "Net cash flow | $1,822.28"
+    ],
+    "memo": "",
+    "scrollWidth": 390,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 390,
+    "build": "h1",
+    "scenario": "after",
+    "alert": "",
+    "balanceSheet": [
+      "Property | Market value | Cash | Mortgage balance | Equity",
+      "000 Fictional Test Way | $330,000.00 | $372.28 | $212,480.55 | $117,891.73",
+      "200 ZMR-TEST-T2 Second St | $250,000.00 | $1,450.00 | $0.00 | $251,450.00",
+      "Total | $580,000.00 | $1,822.28 | $212,480.55 | $369,341.73"
+    ],
+    "disclosure": "History-only mortgage principal not deducted from cash (cash opening date not recorded):000 Fictional Test Way: $669.31200 ZMR-TEST-T2 Second St: $150.50",
+    "cashFlow": [
+      "Net income (from Profit & Loss) | $2,193.52",
+      "+ Depreciation (non-cash, added back) | $0.00",
+      "= Cash from operations | $2,193.52",
+      "− Mortgage principal paid | $371.24",
+      "− Capital improvements paid | $0.00",
+      "Net cash flow | $1,822.28"
+    ],
+    "memo": "Memo: $369.31 of mortgage principal paid in 2026 is recorded as history (already included in a loan’s opening balance). It is not part of net cash flow, because when cash tracking began isn’t recorded.",
+    "scrollWidth": 390,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 390,
+    "build": "h1",
+    "scenario": "error",
+    "alert": "permission denied for table mortgage_history_payments",
+    "balanceSheet": [],
+    "disclosure": "",
+    "cashFlow": [],
+    "memo": "",
+    "scrollWidth": 390,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 390,
+    "build": "h1",
+    "scenario": "hintonly",
+    "alert": "Could not find the table 'public.mortgage_history_paymnts' in the schema cache",
+    "balanceSheet": [],
+    "disclosure": "",
+    "cashFlow": [],
+    "memo": "",
+    "scrollWidth": 390,
+    "overflow": false,
+    "errors": []
+  }
+]

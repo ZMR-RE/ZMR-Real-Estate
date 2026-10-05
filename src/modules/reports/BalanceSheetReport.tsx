@@ -11,8 +11,15 @@ const money = formatMoney
 // (see reportsCalculations.computeBalanceSheet for why: assets and
 // liabilities are a point-in-time position, not a period flow).
 export function BalanceSheetReport({ balanceSheet }: BalanceSheetReportProps) {
-  const { rows, totalMarketValue, totalCash, totalMortgageBalance, totalEquity, propertiesMissingMarketValue } =
-    balanceSheet
+  const {
+    rows,
+    totalMarketValue,
+    totalCash,
+    totalMortgageBalance,
+    totalEquity,
+    propertiesMissingMarketValue,
+    totalHistoryPrincipalNotDeducted,
+  } = balanceSheet
 
   if (rows.length === 0) {
     return <p className="empty-state">No properties yet.</p>
@@ -29,6 +36,21 @@ export function BalanceSheetReport({ balanceSheet }: BalanceSheetReportProps) {
           market value on file — {propertiesMissingMarketValue === 1 ? 'its' : 'their'} equity is left blank rather than
           guessed, and {propertiesMissingMarketValue === 1 ? "it's" : "they're"} excluded from the totals below.
         </p>
+      )}
+
+      {totalHistoryPrincipalNotDeducted > 0 && (
+        <div className="field-hint">
+          <p>History-only mortgage principal not deducted from cash (cash opening date not recorded):</p>
+          <ul>
+            {rows
+              .filter((row) => row.historyPrincipalNotDeducted > 0)
+              .map((row) => (
+                <li key={row.propertyId}>
+                  {row.propertyName}: {money(row.historyPrincipalNotDeducted)}
+                </li>
+              ))}
+          </ul>
+        </div>
       )}
 
       <div className="table-scroll">

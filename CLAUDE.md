@@ -198,6 +198,11 @@ This file is auto-loaded by Claude Code at the start of every session in this pr
 - This standard applies to every box on every screen, present and
   future, without exception unless a specific deviation is explicitly
   approved and noted here.
+- Approved deviation (owner, October 1, 2026): Property Overview ›
+  Tenants shows a visible "+ Add tenant" button in the box's top-right
+  corner beside Edit. It opens the box into the same edit state as
+  Edit (which remains). This exception applies to that box only; it is
+  not a default for other boxes.
 
 ## Empty field visibility
 - In a box's view-only state, a field with no value is omitted

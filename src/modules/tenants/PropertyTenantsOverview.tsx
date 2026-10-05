@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/AuthContext'
-import { listAllTenantsEverAtProperty, type PropertyTenantRow } from '../leases/leasesQueries'
+import { listAllTenantsEverAtProperty, type LeaseStatus, type PropertyTenantRow } from '../leases/leasesQueries'
 
 interface PropertyTenantsOverviewProps {
   propertyId: string
@@ -13,6 +13,14 @@ interface PropertyTenantsOverviewProps {
 // (Stage 7's /tenants/:id). Tenant assignment itself still happens
 // per-unit (a tenancy belongs to one unit's own lease), so this box
 // always links down to Units for that, same as before.
+// Same status rule and badge colours as Units › Lease history; this box
+// keeps its "Current"/"Past" wording for active and ended tenancies.
+const STATUS_BADGE: Record<LeaseStatus, { label: string; variant: string }> = {
+  active: { label: 'Current', variant: 'status-badge-success' },
+  upcoming: { label: 'Upcoming', variant: 'status-badge-accent' },
+  ended: { label: 'Past', variant: 'status-badge-neutral' },
+}
+
 function ManageTenantsLink() {
   return (
     <a
@@ -23,7 +31,7 @@ function ManageTenantsLink() {
         if (target instanceof HTMLDetailsElement) target.open = true
       }}
     >
-      Manage tenants in Units ↓
+      Units and lease history ↓
     </a>
   )
 }
@@ -64,17 +72,18 @@ export function PropertyTenantsOverview({ propertyId }: PropertyTenantsOverviewP
   if (rows.length === 0) {
     return (
       <>
-        <p className="empty-state">No tenants yet — add your first one in Units below.</p>
+        <p className="empty-state">No tenants yet — use + Add tenant above, or + Add lease on a unit in Units.</p>
         <ManageTenantsLink />
       </>
     )
   }
 
-  // Current first, then past — each tier keeps its own tenant-name
-  // order (listAllTenantsEverAtProperty already sorts by lease
-  // start_date desc, which reads naturally within each tier).
-  const current = rows.filter((row) => row.isCurrent)
-  const past = rows.filter((row) => !row.isCurrent)
+  // Current, then upcoming, then past — each tier keeps its own
+  // tenant-name order (listAllTenantsEverAtProperty already sorts by
+  // lease start_date desc, which reads naturally within each tier).
+  const current = rows.filter((row) => row.status === 'active')
+  const upcoming = rows.filter((row) => row.status === 'upcoming')
+  const past = rows.filter((row) => row.status === 'ended')
 
   return (
     <>
@@ -88,16 +97,14 @@ export function PropertyTenantsOverview({ propertyId }: PropertyTenantsOverviewP
             </tr>
           </thead>
           <tbody>
-            {[...current, ...past].map((row) => (
-              <tr key={`${row.leaseId}:${row.tenant.id}`} className={row.isCurrent ? '' : 'property-tenant-row-past'}>
+            {[...current, ...upcoming, ...past].map((row) => (
+              <tr key={`${row.leaseId}:${row.tenant.id}`} className={row.status === 'ended' ? 'property-tenant-row-past' : ''}>
                 <td>
                   <Link to={`/tenants/${row.tenant.id}`}>{row.tenant.name}</Link>
                 </td>
                 <td>{row.unitLabel}</td>
                 <td>
-                  <span className={`status-badge ${row.isCurrent ? 'status-badge-success' : 'status-badge-neutral'}`}>
-                    {row.isCurrent ? 'Current' : 'Past'}
-                  </span>
+                  <span className={`status-badge ${STATUS_BADGE[row.status].variant}`}>{STATUS_BADGE[row.status].label}</span>
                 </td>
               </tr>
             ))}

@@ -1,0 +1,15 @@
+T2 — coordination request from T4 (via planning; no code change requested)
+
+Your dropdown fix 999d716238a71c4bd06e9eb5851f62f6535f31b2 (t2/dropdown-clip-fix; evidence 028b4b4) is merged
+UNCHANGED into T4's combined release candidate 3ef4b6273ec0457a90082a3069aa38520c353187 and was hosted-tested there
+(Practice, 3e75bcd: Tenants + Units menus at 1280/900/390 PASS).
+
+Please confirm, in the planning conversation:
+1. 999d716 will ship ONLY inside this combined release — not released separately and not folded into another
+   T2 release (e.g. sticky candidate 059764d) before it.
+2. Sequencing for T2's sticky candidate 059764d (also edits src/index.css): after this release, re-integrated on the
+   new baseline. If T2 must ship first, tell T4 before publication so 3ef4b62 is re-integrated on the actual
+   baseline and the delta goes back to T3.
+3. No further edits to 999d716 are planned (any change would need a new T3 delta on the combined candidate).
+
+Production baseline checked by T4: origin/main = d9cdcb3aa4aec84c68c78b183593b2a130ede3d7 (02:32 UTC). No deployment authorized.

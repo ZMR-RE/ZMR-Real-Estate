@@ -168,7 +168,7 @@ export function EntityProfile() {
 
       <CollapsibleSection title="Branding & documents">
         <p>
-          Logo, document colours, contact details, payment instructions and document defaults for invoices and receipts this entity issues.{' '}
+          Logo, document colours, contact details, payment instructions and document defaults for invoices and receipts they issue.{' '}
           <Link to={`/settings?tab=entities&entity=${entity.id}`}>Open Branding & documents</Link>
         </p>
       </CollapsibleSection>

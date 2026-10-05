@@ -1,0 +1,10 @@
+T3 — focused review request from T4: bt_preserve.py parse fix made during the Practice window (read-only review).
+
+Change: parse_new() now decodes the whole JSON document the CLI prints (it pretty-prints, after log lines) and
+returns the first list of {t,k,j} objects found inside it. Previously it searched for a compact "[{", found none,
+and reported every new row as "no row details" (fail-closed). Attribution RULES, fingerprinting, the queries and
+the pass/fail logic are unchanged. New offline test: test_pretty_printed_cli_output_is_parsed (10 tests pass).
+The window's comparison was re-run on the SAME saved files (bt-baseline/bt-after/bt-new) → 436/436 unchanged,
+34 new = 34 identified fixtures, 0 unexplained (evidence/practice-billing-tenant/04).
+Please confirm the parser cannot accept rows from outside the {t,k,j} aggregate or skip rows.
+Commit: the one adding this file on t4/practice-billing-tenant. App build 3e75bcd unchanged.
