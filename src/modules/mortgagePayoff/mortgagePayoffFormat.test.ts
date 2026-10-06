@@ -56,8 +56,8 @@ describe('formatCurrencyInputOnBlur', () => {
     expect(formatCurrencyInputOnBlur('1264.14')).toBe('1264.14')
   })
 
-  it('rounds a third-decimal string to two places', () => {
-    expect(formatCurrencyInputOnBlur('12.345')).toBe('12.35')
+  it('preserves excess precision so validation can reject it', () => {
+    expect(formatCurrencyInputOnBlur('12.345')).toBe('12.345')
   })
 
   // PostgREST returns a `numeric` column as a bare JSON number, not a
@@ -74,7 +74,7 @@ describe('formatCurrencyInputOnBlur', () => {
 
   it('never coerces a blank field to "0.00" — blank stays blank', () => {
     expect(formatCurrencyInputOnBlur('')).toBe('')
-    expect(formatCurrencyInputOnBlur('   ')).toBe('   ')
+    expect(formatCurrencyInputOnBlur('   ')).toBe('')
   })
 
   it('leaves unparseable text unchanged for the input\'s own validation to catch', () => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import {
   createMortgageDetails,
@@ -39,6 +39,8 @@ export function useMortgageDetails(propertyId: string, marketValue: string | nul
   const [mortgageDetails, setMortgageDetails] = useState<MortgageDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
+  // A background refresh must not silently advance the conflict-check baseline of an open form.
+  const editBaseline = useRef<MortgageDetails | null | undefined>(undefined)
   const [saving, setSaving] = useState(false)
   // error: the loan couldn't be loaded (the tab can't show it). detailsError: a save or void was refused — shown in
   // the box the user acted on, which stays as it was.
@@ -57,7 +59,9 @@ export function useMortgageDetails(propertyId: string, marketValue: string | nul
 
     setError(null)
     setMortgageDetails(data ?? null)
-    setIsEditing(!data)
+    // Loading data must not cancel an edit opened while this request was in flight.
+    // Only a successful Save or explicit Cancel closes an existing-loan form.
+    if (!data) setIsEditing(true)
   }, [propertyId])
 
   useEffect(() => {
@@ -65,6 +69,7 @@ export function useMortgageDetails(propertyId: string, marketValue: string | nul
   }, [refresh])
 
   const startEditing = () => {
+    editBaseline.current = mortgageDetails
     setDetailsError(null)
     setIsEditing(true)
   }
@@ -73,6 +78,7 @@ export function useMortgageDetails(propertyId: string, marketValue: string | nul
     if (!mortgageDetails) return // nothing to fall back to yet
     setDetailsError(null)
     setIsEditing(false)
+    editBaseline.current = undefined
   }
 
   // A refused save keeps the form open with the user's entries and shows the reason inside it (detailsError) —
@@ -87,13 +93,17 @@ export function useMortgageDetails(propertyId: string, marketValue: string | nul
         update: updateMortgageDetails,
         fetchLatest: () => getMortgageDetails(propertyId),
       },
-      mortgageDetails,
+      editBaseline.current === undefined ? mortgageDetails : editBaseline.current,
       input,
     )
     setSaving(false)
-    if (result.details) setMortgageDetails(result.details)
+    if (result.details) {
+      setMortgageDetails(result.details)
+      // A displayed conflict/partial-save message explicitly prepares the next retry.
+      editBaseline.current = result.details
+    }
     setDetailsError(result.error)
-    if (result.ok) setIsEditing(false)
+    if (result.ok) { setIsEditing(false); editBaseline.current = undefined }
     return result.ok
   }
 

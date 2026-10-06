@@ -51,6 +51,8 @@ describe('MortgagePropertySummary with a refused void', () => {
         voiding={false} error="Changed at the same time somewhere else, so nothing was saved. Try again. The mortgage was not voided." />,
     )
     expect(html).toContain('$149,000.00')
+    expect(html).toContain('January 1, 2020')
+    expect(html).not.toContain('2020-01-01')
     const alert = html.indexOf('<p role="alert">Changed at the same time')
     expect(alert).toBeGreaterThan(-1)
     expect(alert).toBeLessThan(html.indexOf('Void mortgage'))

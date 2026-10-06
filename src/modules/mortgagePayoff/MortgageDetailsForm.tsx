@@ -1,3 +1,5 @@
+import { CurrencyAmountInput } from '../../shared/CurrencyAmountInput'
+import { currencyAmountError } from '../../shared/currencyAmount'
 import { Fragment, useState, type FormEvent } from 'react'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
 import { formatCurrencyInputOnBlur } from './mortgagePayoffFormat'
@@ -43,9 +45,23 @@ export function MortgageDetailsForm({
       setValues((prev) => ({ ...prev, [key]: e.target.value || null })),
   })
 
+  const [amountError, setAmountError] = useState<string | null>(null)
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
-    onSave(values)
+    if (saving) return
+    const invalid =
+      currencyAmountError(values.original_loan_amount, {required:true,min:'0.01',max:'9999999999.99'}) ||
+      currencyAmountError(values.current_balance, {required:true,min:'0',max:'9999999999.99'}) ||
+      currencyAmountError(values.monthly_payment, {required:true,min:'0.01',max:'99999999.99'}) ||
+      currencyAmountError(values.escrow_balance, {min:'0',max:'9999999999.99'})
+    if (invalid) { setAmountError(invalid); return }
+    setAmountError(null)
+    onSave({...values,
+      original_loan_amount: formatCurrencyInputOnBlur(values.original_loan_amount),
+      current_balance: formatCurrencyInputOnBlur(values.current_balance),
+      monthly_payment: formatCurrencyInputOnBlur(values.monthly_payment),
+      escrow_balance: String(values.escrow_balance ?? '').trim() ? formatCurrencyInputOnBlur(values.escrow_balance!) : null,
+    })
   }
 
   return (
@@ -79,32 +95,28 @@ export function MortgageDetailsForm({
       <label htmlFor="original_loan_amount">
         Original loan amount ($)<span className="required-marker">*</span>
       </label>
-      <input
+      <CurrencyAmountInput
         id="original_loan_amount"
-        type="number"
-        min="0"
-        step="0.01"
-        inputMode="decimal"
+        max="9999999999.99"
+
+        min="0.01"
+
         value={values.original_loan_amount}
-        onChange={(e) => setValues((prev) => ({ ...prev, original_loan_amount: e.target.value }))}
-        onBlur={(e) =>
-          setValues((prev) => ({ ...prev, original_loan_amount: formatCurrencyInputOnBlur(e.target.value) }))
-        }
+        onValueChange={(value) => setValues((prev) => ({ ...prev, original_loan_amount: value }))}
         required
       />
 
       <label htmlFor="current_balance">
         Current balance ($)<span className="required-marker">*</span>
       </label>
-      <input
+      <CurrencyAmountInput
         id="current_balance"
-        type="number"
+        max="9999999999.99"
+
         min="0"
-        step="0.01"
-        inputMode="decimal"
+
         value={values.current_balance}
-        onChange={(e) => setValues((prev) => ({ ...prev, current_balance: e.target.value }))}
-        onBlur={(e) => setValues((prev) => ({ ...prev, current_balance: formatCurrencyInputOnBlur(e.target.value) }))}
+        onValueChange={(value) => setValues((prev) => ({ ...prev, current_balance: value }))}
         required
       />
 
@@ -125,15 +137,14 @@ export function MortgageDetailsForm({
       <label htmlFor="monthly_payment">
         Monthly payment — P&I ($)<span className="required-marker">*</span>
       </label>
-      <input
+      <CurrencyAmountInput
         id="monthly_payment"
-        type="number"
-        min="0"
-        step="0.01"
-        inputMode="decimal"
+        max="99999999.99"
+
+        min="0.01"
+
         value={values.monthly_payment}
-        onChange={(e) => setValues((prev) => ({ ...prev, monthly_payment: e.target.value }))}
-        onBlur={(e) => setValues((prev) => ({ ...prev, monthly_payment: formatCurrencyInputOnBlur(e.target.value) }))}
+        onValueChange={(value) => setValues((prev) => ({ ...prev, monthly_payment: value }))}
         required
       />
 
@@ -149,21 +160,15 @@ export function MortgageDetailsForm({
       />
 
       <label htmlFor="escrow_balance">Escrow balance ($)</label>
-      <input
+      <CurrencyAmountInput
         id="escrow_balance"
-        type="number"
+        max="9999999999.99"
+
         min="0"
-        step="0.01"
-        inputMode="decimal"
+
         placeholder="Leave blank if no escrow account"
         value={values.escrow_balance ?? ''}
-        onChange={(e) => setValues((prev) => ({ ...prev, escrow_balance: e.target.value || null }))}
-        onBlur={(e) =>
-          setValues((prev) => ({
-            ...prev,
-            escrow_balance: e.target.value === '' ? null : formatCurrencyInputOnBlur(e.target.value),
-          }))
-        }
+        onValueChange={(value) => setValues((prev) => ({ ...prev, escrow_balance: value || null }))}
       />
 
       <label htmlFor="balance_statement_date">Statement date for these balances</label>
@@ -193,6 +198,7 @@ export function MortgageDetailsForm({
       />
 
       {/* Beside Save, where the user is looking when a save is refused (the form is long). */}
+      {amountError && <p role="alert">{amountError}</p>}
       {error && (
         <p role="alert">
           {/* Multi-line messages (stale-balance conflict) show one fact or choice per line. */}

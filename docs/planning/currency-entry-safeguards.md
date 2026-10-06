@@ -43,3 +43,8 @@ This conservative source scan includes number/decimal fields and existing curren
 - [ ] `src/modules/securityDeposits/DepositTransactionForm.tsx`
 - [ ] `src/modules/vendorEstimates/VendorEstimateForm.tsx`
 - [ ] `src/modules/vendors/VendorSplitRules.tsx`
+
+## October 6 local mortgage slice (not released)
+New strict helper/component added separately from legacy currencyInput.ts: audited consumers are CaptureForm, CaptureEntryDetailsForm, useCaptureForm, captureActions and VendorEstimateForm. Their current behavior is unchanged; they remain pending conversion. Mortgage details (4 fields), payment (3), escrow (1), property payoff planner and the older standalone planner now use strict validation and padding. Form submission repeats validation; optional whitespace escrow becomes null. Column limits match numeric(12,2)/numeric(10,2); loan-original/monthly-payment positive rules match stored constraints. No money stored in the planner.
+Refresh regression also preserves the edit-time optimistic concurrency baseline; a displayed conflict/partial-save explicitly updates the next retry baseline. Background refresh neither closes editing nor silently advances that baseline. Loan details uses the shared calendar-date formatter.
+No production push or database alteration. Direct API/server precision hardening and remaining monetary fields are still pending; dashboard-wide checkbox remains open.

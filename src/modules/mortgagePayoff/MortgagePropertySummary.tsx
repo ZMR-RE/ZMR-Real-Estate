@@ -1,3 +1,4 @@
+import { formatDateOnly } from '../../shared/dateFormat'
 import type { MortgageDetails } from './mortgagePayoffQueries'
 import type { EquitySnapshot } from './mortgagePayoffMath'
 import { mortgageCurrencyFormatter as currencyFormatter } from './mortgagePayoffFormat'
@@ -64,7 +65,7 @@ export function MortgagePropertySummary({
         <dt>Monthly payment (P&I)</dt>
         <dd>{currencyFormatter.format(Number(mortgageDetails.monthly_payment))}</dd>
         <dt>Loan start date</dt>
-        <dd>{mortgageDetails.loan_start_date}</dd>
+        <dd>{formatDateOnly(mortgageDetails.loan_start_date)}</dd>
         <dt>Term</dt>
         <dd>{mortgageDetails.term_years} years</dd>
       </dl>

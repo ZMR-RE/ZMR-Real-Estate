@@ -1,3 +1,5 @@
+import { CurrencyAmountInput } from '../../shared/CurrencyAmountInput'
+import { currencyAmountError, formatCurrencyAmount } from '../../shared/currencyAmount'
 import { useState, type FormEvent } from 'react'
 import { DuplicateEntryPrompt } from './DuplicateEntryPrompt'
 import { HistoryChoiceField } from './HistoryChoiceField'
@@ -38,16 +40,22 @@ export function EscrowTransactionForm({
     setHistorySelected(false)
   }
 
+  const [amountError, setAmountError] = useState<string | null>(null)
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
+    const invalid =
+      currencyAmountError(values.amount, {required:true,min:'0.01',max:'99999999.99'})
+    if (invalid) { setAmountError(invalid); return }
+    setAmountError(null)
     if (saving || duplicateMessage) return
-    const succeeded = await onSave(values, effectiveHistoryOnly(values.transaction_date, statementDate, historySelected))
+    const succeeded = await onSave({...values, amount:formatCurrencyAmount(values.amount)}, effectiveHistoryOnly(values.transaction_date, statementDate, historySelected))
     if (succeeded) { reset(); onSaved?.() }
   }
 
   return (
     <form className="escrow-transaction-form" onSubmit={handleSubmit}>
       {!onCancel && <h3>Add escrow entry</h3>}
+      {amountError && <p role="alert">{amountError}</p>}
       {error && <p role="alert">{error}</p>}
       {duplicateMessage && (
         <DuplicateEntryPrompt
@@ -87,15 +95,15 @@ export function EscrowTransactionForm({
       <label htmlFor="escrow_amount">
         Amount ($)<span className="required-marker">*</span>
       </label>
-      <input
+      <CurrencyAmountInput
         id="escrow_amount"
-        type="number"
+        max="99999999.99"
+
         min="0.01"
-        step="0.01"
-        inputMode="decimal"
+
         required
         value={values.amount}
-        onChange={(e) => setValues((prev) => ({ ...prev, amount: e.target.value }))}
+        onValueChange={(value) => setValues((prev) => ({ ...prev, amount: value }))}
       />
 
       <label htmlFor="escrow_description">Description</label>
@@ -105,7 +113,6 @@ export function EscrowTransactionForm({
         value={values.description ?? ''}
         onChange={(e) => setValues((prev) => ({ ...prev, description: e.target.value || null }))}
       />
-
 
       <HistoryChoiceField
         idPrefix="escrow"

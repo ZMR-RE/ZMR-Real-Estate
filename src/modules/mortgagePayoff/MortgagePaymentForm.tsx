@@ -1,3 +1,5 @@
+import { CurrencyAmountInput } from '../../shared/CurrencyAmountInput'
+import { currencyAmountError, formatCurrencyAmount } from '../../shared/currencyAmount'
 import { useState, type FormEvent } from 'react'
 import { DuplicateEntryPrompt } from './DuplicateEntryPrompt'
 import { HistoryChoiceField } from './HistoryChoiceField'
@@ -38,16 +40,24 @@ export function MortgagePaymentForm({
     setHistorySelected(false)
   }
 
+  const [amountError, setAmountError] = useState<string | null>(null)
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
+    const invalid =
+      currencyAmountError(values.amount, {required:true,min:'0.01',max:'99999999.99'}) ||
+      currencyAmountError(values.principal_amount, {required:true,min:'0',max:'99999999.99'}) ||
+      currencyAmountError(values.interest_amount, {required:true,min:'0',max:'99999999.99'})
+    if (invalid) { setAmountError(invalid); return }
+    setAmountError(null)
     if (saving || duplicateMessage) return
-    const succeeded = await onSave(values, effectiveHistoryOnly(values.payment_date, statementDate, historySelected))
+    const succeeded = await onSave({...values, amount:formatCurrencyAmount(values.amount), principal_amount:formatCurrencyAmount(values.principal_amount), interest_amount:formatCurrencyAmount(values.interest_amount)}, effectiveHistoryOnly(values.payment_date, statementDate, historySelected))
     if (succeeded) { reset(); onSaved?.() }
   }
 
   return (
     <form className="mortgage-payment-form" onSubmit={handleSubmit}>
       {!onCancel && <h3>Add payment</h3>}
+      {amountError && <p role="alert">{amountError}</p>}
       {error && <p role="alert">{error}</p>}
       {duplicateMessage && (
         <DuplicateEntryPrompt
@@ -75,45 +85,44 @@ export function MortgagePaymentForm({
       <label htmlFor="payment_amount">
         Total amount ($)<span className="required-marker">*</span>
       </label>
-      <input
+      <CurrencyAmountInput
         id="payment_amount"
-        type="number"
+        max="99999999.99"
+
         min="0.01"
-        step="0.01"
-        inputMode="decimal"
+
         required
         value={values.amount}
-        onChange={(e) => setValues((prev) => ({ ...prev, amount: e.target.value }))}
+        onValueChange={(value) => setValues((prev) => ({ ...prev, amount: value }))}
       />
 
       <label htmlFor="principal_amount">
         Principal ($)<span className="required-marker">*</span>
       </label>
-      <input
+      <CurrencyAmountInput
         id="principal_amount"
-        type="number"
+        max="99999999.99"
+
         min="0"
-        step="0.01"
-        inputMode="decimal"
+
         required
         value={values.principal_amount}
-        onChange={(e) => setValues((prev) => ({ ...prev, principal_amount: e.target.value }))}
+        onValueChange={(value) => setValues((prev) => ({ ...prev, principal_amount: value }))}
       />
 
       <label htmlFor="interest_amount">
         Interest ($)<span className="required-marker">*</span>
       </label>
-      <input
+      <CurrencyAmountInput
         id="interest_amount"
-        type="number"
+        max="99999999.99"
+
         min="0"
-        step="0.01"
-        inputMode="decimal"
+
         required
         value={values.interest_amount}
-        onChange={(e) => setValues((prev) => ({ ...prev, interest_amount: e.target.value }))}
+        onValueChange={(value) => setValues((prev) => ({ ...prev, interest_amount: value }))}
       />
-
 
       <HistoryChoiceField
         idPrefix="payment"

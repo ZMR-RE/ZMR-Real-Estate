@@ -1,4 +1,6 @@
-import type { FormEvent } from 'react'
+import { CurrencyAmountInput } from '../../shared/CurrencyAmountInput'
+import { currencyAmountError } from '../../shared/currencyAmount'
+import { useState, type FormEvent } from 'react'
 import type { ExtraPaymentMode } from './mortgagePayoffMath'
 
 interface MortgagePayoffScenarioFormProps {
@@ -18,8 +20,13 @@ export function MortgagePayoffScenarioForm({
   error,
   onCalculate,
 }: MortgagePayoffScenarioFormProps) {
+  const [amountError, setAmountError] = useState<string | null>(null)
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
+    const invalid =
+      currencyAmountError(extraAmount, {required:true,min:'0',max:'9999999999.99'})
+    if (invalid) { setAmountError(invalid); return }
+    setAmountError(null)
     onCalculate()
   }
 
@@ -30,14 +37,14 @@ export function MortgagePayoffScenarioForm({
       <label htmlFor="extra_amount">
         Extra payment ($)<span className="required-marker">*</span>
       </label>
-      <input
+      <CurrencyAmountInput
         id="extra_amount"
-        type="number"
+        max="9999999999.99"
+
         min="0"
-        step="0.01"
-        inputMode="decimal"
+
         value={extraAmount}
-        onChange={(e) => onExtraAmountChange(e.target.value)}
+        onValueChange={(value) => onExtraAmountChange(value)}
         required
       />
 
@@ -64,6 +71,7 @@ export function MortgagePayoffScenarioForm({
         </label>
       </div>
 
+      {amountError && <p role="alert">{amountError}</p>}
       {error && <p role="alert">{error}</p>}
 
       <button type="submit">Calculate</button>

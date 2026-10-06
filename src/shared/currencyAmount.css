@@ -1,0 +1,4 @@
+.currency-amount-error {
+  display: block;
+  margin-bottom: var(--space-3);
+}
