@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react'
+import { useId, useState, type FormEvent } from 'react'
 import { PickListSelect } from '../../shared/pickLists/PickListSelect'
 import type { AddDocumentLinkInput } from './useDocumentLinks'
 
 interface DocumentLinkFormProps {
+  kind?: 'file' | 'link'
   saving: boolean
   onSave: (input: AddDocumentLinkInput) => void
   onCancel: () => void
@@ -10,8 +11,9 @@ interface DocumentLinkFormProps {
 
 type EntryMode = 'file' | 'link' | 'drive'
 
-export function DocumentLinkForm({ saving, onSave, onCancel }: DocumentLinkFormProps) {
-  const [mode, setMode] = useState<EntryMode>('file')
+export function DocumentLinkForm({ kind, saving, onSave, onCancel }: DocumentLinkFormProps) {
+  const id = useId()
+  const [mode, setMode] = useState<EntryMode>(kind==='link'?'link':'file')
   const [category, setCategory] = useState('')
   const [label, setLabel] = useState('')
   const [file, setFile] = useState<File | null>(null)
@@ -30,23 +32,24 @@ export function DocumentLinkForm({ saving, onSave, onCancel }: DocumentLinkFormP
 
   return (
     <form onSubmit={handleSubmit}>
-      <div role="group" aria-label="Entry type">
-        <button type="button" aria-pressed={mode === 'file'} onClick={() => setMode('file')}>
+      <fieldset disabled={saving}>
+      {kind!=='file' && <div role="group" aria-label="Entry type">
+        {!kind && <button type="button" aria-pressed={mode === 'file'} onClick={() => setMode('file')}>
           Upload a file
-        </button>
+        </button>}
         <button type="button" aria-pressed={mode === 'link'} onClick={() => setMode('link')}>
           Paste a link
         </button>
         <button type="button" aria-pressed={mode === 'drive'} onClick={() => setMode('drive')}>
           Google Drive folder
         </button>
-      </div>
+      </div>}
 
-      <label htmlFor="document_link_category">
+      <label htmlFor={`${id}-category`}>
         Category<span className="required-marker">*</span>
       </label>
       <PickListSelect
-        id="document_link_category"
+        id={`${id}-category`}
         listName="document_type"
         title="Document types"
         value={category}
@@ -55,9 +58,9 @@ export function DocumentLinkForm({ saving, onSave, onCancel }: DocumentLinkFormP
         placeholder="Select a category"
       />
 
-      <label htmlFor="document_link_label">Label</label>
+      <label htmlFor={`${id}-label`}>Label</label>
       <input
-        id="document_link_label"
+        id={`${id}-label`}
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         placeholder="e.g. Roof warranty"
@@ -65,23 +68,23 @@ export function DocumentLinkForm({ saving, onSave, onCancel }: DocumentLinkFormP
 
       {mode === 'file' ? (
         <>
-          <label htmlFor="document_link_file">
+          <label htmlFor={`${id}-file`}>
             File<span className="required-marker">*</span>
           </label>
           <input
-            id="document_link_file"
+            id={`${id}-file`}
             type="file"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
         </>
       ) : (
         <>
-          <label htmlFor="document_link_url">
+          <label htmlFor={`${id}-url`}>
             {mode === 'drive' ? 'Google Drive folder URL' : 'Link URL'}
             <span className="required-marker">*</span>
           </label>
           <input
-            id="document_link_url"
+            id={`${id}-url`}
             type="url"
             required
             value={linkUrl}
@@ -91,12 +94,15 @@ export function DocumentLinkForm({ saving, onSave, onCancel }: DocumentLinkFormP
         </>
       )}
 
+      <div className="document-library-actions">
       <button type="submit" disabled={saving || !category}>
         {saving ? 'Saving…' : 'Save'}
       </button>
       <button type="button" onClick={onCancel} disabled={saving}>
         Cancel
       </button>
+      </div>
+      </fieldset>
     </form>
   )
 }

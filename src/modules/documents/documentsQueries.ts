@@ -21,13 +21,17 @@ export interface DocumentRecord {
 const DOCUMENT_COLUMNS = 'id, property_id, transaction_id, category, label, link_url, link_type, storage_path, file_size, uploaded_at'
 
 export async function listDocuments(accountId: string, propertyId: string) {
-  return supabase
-    .from('documents')
-    .select(DOCUMENT_COLUMNS)
-    .eq('account_id', accountId)
-    .eq('property_id', propertyId)
-    .order('uploaded_at', { ascending: false })
-    .returns<DocumentRecord[]>()
+  const rows: DocumentRecord[] = []
+  // Explicit pages avoid silently hiding files beyond the API row limit.
+  for (let offset = 0; ; offset += 100) {
+    const { data, error } = await supabase.from('documents').select(DOCUMENT_COLUMNS)
+      .eq('account_id', accountId).eq('property_id', propertyId)
+      .order('uploaded_at', { ascending: false }).order('id', { ascending: true })
+      .range(offset, offset + 99).returns<DocumentRecord[]>()
+    if (error) return { data: null, error }
+    rows.push(...(data ?? []))
+    if (!data || data.length < 100) return { data: rows, error: null }
+  }
 }
 
 // Roadmap 9.6 — documents attached directly to a financial transaction

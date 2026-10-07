@@ -1,0 +1,17 @@
+.document-library>summary{display:flex;align-items:center;gap:var(--space-2)}
+.document-library-header{margin-left:auto;display:flex;align-items:center;gap:var(--space-2)}
+.document-library-filters{display:grid;grid-template-columns:minmax(170px,2fr) minmax(130px,1fr) 90px auto;gap:var(--space-3);align-items:end;margin:var(--space-3) 0}
+.document-library-filters label{margin:0}.document-library-filters input,.document-library-filters select{margin:4px 0 0;width:100%;min-width:0}
+.document-library-actions{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap}
+.document-library-pagination{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);flex-wrap:wrap;margin:var(--space-3) 0;font-size:var(--text-sm)}
+.document-library table{display:table;width:100%;table-layout:fixed}.document-library td,.document-library th{white-space:normal;overflow-wrap:anywhere}.document-library th:first-child{width:34%}.document-library form{margin-bottom:var(--space-4)}
+@media(max-width:1050px){.document-library-filters{grid-template-columns:1fr 1fr}.document-library-filters label:first-child{grid-column:1/-1}}
+@media(max-width:760px){.document-library-header{gap:6px}.document-library-header button{font-size:12px;padding:7px 8px}.document-library-header .status-badge{font-size:10px}.document-library table,.document-library tbody,.document-library tr,.document-library td{display:block;width:100%}.document-library thead{display:none}.document-library tr{padding:12px 0;border-bottom:1px solid var(--border)}.document-library td{border:0;padding:4px 0}.document-library td[data-label]::before{content:attr(data-label) ': ';color:var(--text);font-size:var(--text-sm)}}
+
+.document-library fieldset{border:0;padding:0;margin:0;min-width:0}
+.document-library-header button,.document-library-actions button,.document-library-filters>button{margin:0;width:auto}
+.document-library>summary{padding:var(--space-3) var(--space-4)}
+.document-library-pagination .document-library-actions{flex-wrap:nowrap}
+.document-library-pagination .document-library-actions button{padding:var(--space-2);font-size:var(--text-sm)}
+.document-library-pagination .document-library-actions span{white-space:nowrap}
+.document-library .collapsible-section-body{padding:0 var(--space-4) var(--space-4)}

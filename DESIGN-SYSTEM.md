@@ -380,3 +380,10 @@ Current shared currencyInput.ts is used by Capture, but truncates extra digits; 
 
 ### Mortgage currency fields — local implementation, October 6, 2026
 `CurrencyAmountInput` and `currencyAmount.ts` provide strict decimal text entry: dollar labels supplied by each form, decimal keypad, exact cent precision, padding on blur, native submit blocking plus form-level validation. Excess precision, exponents, currency symbols and grouped numbers remain visible and invalid; nothing is rounded or truncated. Optional empty escrow stays null. Zero and minimum/maximum rules are field-specific. `.currency-amount-error` keeps the existing alert style on its own line. Loan, payment, escrow and both mortgage planners use it; rates and counts retain their existing controls. Capture/vendor consumers of the legacy helper are unchanged and remain in the rollout. No server/schema change: existing numeric columns still have their prior rounding behavior for direct API requests.
+
+
+## Property Documents library — October 7, 2026
+
+Owner-approved compact header exception: Links then Documents use independent collapsible boxes, with count and Add link / Upload documents in the header. Header actions open their box without toggling it closed. Row edits remain explicit. Forms appear only while adding or editing. Documents starts collapsed; Links starts open.
+
+`documentLibrary.css` is scoped to `.document-library`: compact token-based spacing, independent search/category or link-type filters, 25/50 pagination, wrapping desktop cells and labelled phone cards. It does not modify shared table rules. Planning text and bookkeeping explanations stay outside the product.
