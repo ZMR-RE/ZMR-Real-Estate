@@ -1,0 +1,18 @@
+{
+  "base": "565bd63fae65cf0f53c48a4905a0f3417d7d9020",
+  "branch": "codex/statement-organization",
+  "migration": "20261007100000_mortgage_statement_organization.sql",
+  "migrationSha256": "e11c8c0caee90f008669d871c56f818686d773de6c7d4751c7c6e482a1c5db62",
+  "evidence": {
+    "database-results.json": "617401655548ef14ec1475eb34911e8a8826729b65cf7bc722487e22d67c9d2d",
+    "desktop-1440.png": "1495cc4f32cf910ad1e2fc95b49987cacce0429e89be0943e14ddeb5c1e8c0dc",
+    "desktop-final.png": "62b7883de01ca87bfcbddc5d05ba934723064a738a358758f5e041698f6fa154",
+    "final-build.txt": "32e1e3cdd79c9ca4784a9bf1f01955b331634aa86646c29065dba794700af2f2",
+    "final-tests.txt": "c95d82c15929639e34051a03f8ceacbfc05c314a995349e65c714cf9ee67a30f",
+    "intermediate-900.png": "69ff9835fd9fa0b040ed20e2bd5aa0166fa7c68877e1a5f52b2508d4847001f3",
+    "phone-cards-390.png": "3274665be04d544f08e749aaba0aa362fed35e4432bcf87da4cb3745b6fbce1a",
+    "phone-edit-390.png": "e89daf18704358f95ecc2e95cffc6939b68485c7bf8d8265149f245d5b108872",
+    "scoped-lint.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "textEvidenceNormalization": "Trailing whitespace and blank final lines removed; assertions and output retained."
+}

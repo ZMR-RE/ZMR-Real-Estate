@@ -1,0 +1,12 @@
+
+> zmr-real-estate@0.0.0 test
+> vitest run
+
+
+ RUN  v4.1.11 /Users/janki/Documents/Codex/ZMR-Real-Estate/administration/documents-review-20261006/candidate
+
+
+ Test Files  53 passed | 2 skipped (55)
+      Tests  473 passed | 4 skipped (477)
+   Start at  02:41:22
+   Duration  2.62s (transform 1.60s, setup 0ms, import 3.62s, tests 3.00s, environment 3ms)

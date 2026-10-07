@@ -1,0 +1,162 @@
+[
+  {
+    "check": "same request returns same reservation",
+    "passed": true
+  },
+  {
+    "check": "new request/same PDF returns existing reservation",
+    "passed": true
+  },
+  {
+    "check": "changed request payload refused",
+    "passed": true
+  },
+  {
+    "check": "cross-property loan refused",
+    "passed": true
+  },
+  {
+    "check": "cross-account refused",
+    "passed": true
+  },
+  {
+    "check": "anonymous refused",
+    "passed": true
+  },
+  {
+    "check": "direct metadata mutation refused",
+    "passed": true
+  },
+  {
+    "check": "finalize without object refused",
+    "passed": true
+  },
+  {
+    "check": "repeat finalize returns same document",
+    "passed": true
+  },
+  {
+    "check": "one canonical document",
+    "passed": true
+  },
+  {
+    "check": "document includes exact loan link",
+    "passed": true
+  },
+  {
+    "check": "other account sees no upload",
+    "passed": true
+  },
+  {
+    "check": "linked document cannot be deleted",
+    "passed": true
+  },
+  {
+    "check": "linked identity cannot be changed",
+    "passed": true
+  },
+  {
+    "check": "canonical label can be renamed",
+    "passed": true
+  },
+  {
+    "check": "original storage deletion blocked by RLS",
+    "passed": true
+  },
+  {
+    "check": "original storage replacement blocked by RLS",
+    "passed": true
+  },
+  {
+    "check": "concurrent duplicate reservations converge",
+    "passed": true
+  },
+  {
+    "check": "each state transition audited once",
+    "passed": true
+  },
+  {
+    "check": "unrelated document deletion unchanged",
+    "passed": true
+  },
+  {
+    "check": "metadata update version increments",
+    "passed": true
+  },
+  {
+    "check": "period stored exactly",
+    "passed": true
+  },
+  {
+    "check": "null version cannot bypass conflict checks",
+    "passed": true
+  },
+  {
+    "check": "old metadata version refused",
+    "passed": true
+  },
+  {
+    "check": "canonical label updated",
+    "passed": true
+  },
+  {
+    "check": "invalid period refused",
+    "passed": true
+  },
+  {
+    "check": "reference saves without touching balances",
+    "passed": true
+  },
+  {
+    "check": "stale preference refused",
+    "passed": true
+  },
+  {
+    "check": "other-loan reference refused",
+    "passed": true
+  },
+  {
+    "check": "reference period correction requires explicit reference change",
+    "passed": true
+  },
+  {
+    "check": "other account cannot read preferences",
+    "passed": true
+  },
+  {
+    "check": "link uses original document id",
+    "passed": true
+  },
+  {
+    "check": "link creates no second document",
+    "passed": true
+  },
+  {
+    "check": "existing file path unchanged",
+    "passed": true
+  },
+  {
+    "check": "link retry returns original",
+    "passed": true
+  },
+  {
+    "check": "cross-account link refused",
+    "passed": true
+  },
+  {
+    "check": "concurrent metadata saves succeed only once",
+    "passed": true
+  },
+  {
+    "check": "preference changes audited",
+    "passed": true
+  },
+  {
+    "check": "all loan fields preserved",
+    "passed": true
+  },
+  {
+    "check": "no payment/effect writes",
+    "passed": true
+  }
+]

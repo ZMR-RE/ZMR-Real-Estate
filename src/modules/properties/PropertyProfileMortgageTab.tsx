@@ -1,3 +1,5 @@
+import { LoanStatementsSection } from '../mortgageStatements/LoanStatementsSection'
+import { LoanEditPanels } from '../mortgageStatements/LoanEditPanels'
 import { useRef, useState } from 'react'
 import { useMortgageForProperty } from '../mortgagePayoff/useMortgageForProperty'
 import { MortgageDetailsForm } from '../mortgagePayoff/MortgageDetailsForm'
@@ -25,6 +27,7 @@ export function PropertyProfileMortgageTab({ property, marketValue, onOpenDocume
   const loan = m.mortgageDetails
   const [entry, setEntry] = useState<'payment' | 'escrow' | null>(null)
   const [newLoan, setNewLoan] = useState(false)
+  const [statementSaving,setStatementSaving]=useState(false)
   const [entrySaving, setEntrySaving] = useState(false)
   const entryInFlight = useRef(false)
   // Keep the drawer locked through the post-save refresh, not just the write.
@@ -46,7 +49,7 @@ export function PropertyProfileMortgageTab({ property, marketValue, onOpenDocume
   return <div className="mortgage-workspace">
     {m.error && <p role="alert">{m.error}</p>}
     {loan ? <>
-      <header className="mortgage-heading"><div><h2>Loan summary</h2><p>{loan.lender_name || 'Lender not recorded'}</p></div><button type="button" onClick={m.startEditing}>Edit loan</button></header>
+      <CollapsibleSection title="Loan summary" defaultOpen><header className="mortgage-heading"><div><p>{loan.lender_name || 'Lender not recorded'}</p></div><button type="button" onClick={m.startEditing}>Edit loan</button></header>
       <div className="mortgage-summary-strip">
         <div><span>Recorded principal balance</span><strong>{money.format(Number(loan.current_balance))}</strong><small>{loan.principal_as_of ? `Last statement: ${readableDate(loan.principal_as_of)}` : 'Statement date not recorded'}</small></div>
         <div><span>Monthly principal &amp; interest</span><strong>{money.format(Number(loan.monthly_payment))}</strong><small>Excludes escrow</small></div>
@@ -54,7 +57,7 @@ export function PropertyProfileMortgageTab({ property, marketValue, onOpenDocume
         <div><span>Recorded escrow balance</span><strong>{loan.escrow_balance === null ? 'Not recorded' : money.format(Number(loan.escrow_balance))}</strong><small>{loan.escrow_as_of ? `Last statement: ${readableDate(loan.escrow_as_of)}` : 'Statement date not recorded'}</small></div>
       </div>
       <p className="field-hint">Recorded balances include changes entered since the statement dates; they may differ from your lender’s current figures.</p>
-      <div className="mortgage-overview-grid"><MortgageBalancePanel loan={loan} payments={m.payments}/><section className="mortgage-panel"><h2>Payment schedule</h2><strong className="mortgage-scheduled-amount">{money.format(Number(loan.monthly_payment))}<small> monthly principal &amp; interest</small></strong><p className="field-hint">Due date and automatic-payment status are not recorded here. Recording a payment does not send money to your lender.</p><button type="button" onClick={()=>{m.beginPaymentEntry();setEntry('payment')}}>Add payment</button></section></div>
+      </CollapsibleSection><div className="mortgage-overview-grid"><MortgageBalancePanel loan={loan} payments={m.payments}/><section className="mortgage-panel"><h2>Payment schedule</h2><strong className="mortgage-scheduled-amount">{money.format(Number(loan.monthly_payment))}<small> monthly principal &amp; interest</small></strong><p className="field-hint">Due date and automatic-payment status are not recorded here. Recording a payment does not send money to your lender.</p><button type="button" onClick={()=>{m.beginPaymentEntry();setEntry('payment')}}>Add payment</button></section></div>
     </> : <section className="mortgage-panel"><h2>No active loan</h2><p>Existing payment and escrow records remain available below.</p><button type="button" onClick={()=>{setNewLoan(true);m.startEditing()}}>Add loan</button></section>}
     <CollapsibleSection title="Payment history">
       <div className="mortgage-section-actions"><p className="field-hint">Recorded payments for this property, including earlier loans.</p>{loan && <button type="button" onClick={()=>{m.beginPaymentEntry();setEntry('payment')}}>Add payment</button>}</div>
@@ -69,9 +72,10 @@ export function PropertyProfileMortgageTab({ property, marketValue, onOpenDocume
       <EscrowTransactionList transactions={m.escrowTransactions.filter(p=>showVoidedEscrow || !p.voided)} onVoid={m.voidEscrowTransaction} voiding={m.loggingEscrowTransaction}/>
     </CollapsibleSection>
     {loan && <MortgagePlanner loan={loan}/>}
-    <CollapsibleSection title="Statements & documents"><p>Mortgage documents are kept in this property’s Documents tab. They may relate to any loan on the property.</p>{onOpenDocuments ? <button type="button" onClick={onOpenDocuments}>Open property documents</button> : <p className="field-hint">Open Documents from the property tabs.</p>}</CollapsibleSection>
+    <LoanStatementsSection propertyId={property.id} mortgageId={loan?.id??''} lender={loan?.lender_name||''} loanNumber={loan?.loan_number??null} onDocuments={onOpenDocuments??(()=>{})}/>
+
     {loan && <CollapsibleSection title="Loan details"><MortgagePropertySummary mortgageDetails={loan} marketValue={marketValue} equity={m.equity} onEdit={m.startEditing} onVoid={() => { setNewLoan(false); return m.voidMortgage() }} voiding={m.saving} error={m.detailsError}/></CollapsibleSection>}
-    {m.isEditing && (loan || newLoan) && <MortgageDrawer title={loan?'Edit loan':'Add loan'} busy={m.saving} onCancel={closeDetails}><MortgageDetailsForm key={loan?.id ?? 'new'} initialValues={m.formInitialValues} saving={m.saving} error={m.detailsError} canCancel onSave={m.save} onCancel={closeDetails}/></MortgageDrawer>}
+    {m.isEditing && (loan || newLoan) && <MortgageDrawer title={loan?'Edit loan':'Add loan'} busy={m.saving||statementSaving} onCancel={closeDetails}><LoanEditPanels key={`${property.id}/${loan?.id??'new'}`} onBusy={setStatementSaving} busy={m.saving||statementSaving} propertyId={property.id} mortgageId={loan?.id} onCancel={closeDetails}><MortgageDetailsForm key={loan?.id ?? 'new'} initialValues={m.formInitialValues} saving={m.saving} error={m.detailsError} canCancel onSave={m.save} onCancel={closeDetails}/></LoanEditPanels></MortgageDrawer>}
     {loan && entry==='payment' && <MortgageDrawer title="Add payment" busy={entrySaving || m.loggingPayment} onCancel={closePayment}><MortgagePaymentForm initialValues={m.paymentFormInitialValues} saving={entrySaving || m.loggingPayment} error={m.paymentError} onSave={(input, history) => runEntrySave(() => m.logPayment(input, history))} statementDate={loan.principal_as_of} duplicateMessage={m.paymentDuplicate?.message ?? null} onConfirmDuplicate={() => runEntrySave(m.confirmPaymentDuplicate)} onDismissDuplicate={m.dismissPaymentDuplicate} onCancel={closePayment} onSaved={()=>setEntry(null)}/></MortgageDrawer>}
     {loan && entry==='escrow' && <MortgageDrawer title="Add escrow entry" busy={entrySaving || m.loggingEscrowTransaction} onCancel={closeEscrow}><EscrowTransactionForm initialValues={m.escrowTransactionFormInitialValues} saving={entrySaving || m.loggingEscrowTransaction} error={m.escrowTransactionError} onSave={(input, history) => runEntrySave(() => m.logEscrowTransaction(input, history))} statementDate={loan.escrow_as_of} duplicateMessage={m.escrowDuplicate?.message ?? null} onConfirmDuplicate={() => runEntrySave(m.confirmEscrowDuplicate)} onDismissDuplicate={m.dismissEscrowDuplicate} onCancel={closeEscrow} onSaved={()=>setEntry(null)}/></MortgageDrawer>}
   </div>

@@ -1,0 +1,22 @@
+.statement-list{list-style:none;padding:0;margin:var(--space-4) 0}
+.statement-list li{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto;gap:var(--space-4);align-items:center;padding:var(--space-4) 0;border-bottom:1px solid var(--border)}
+.statement-list p{margin:var(--space-2) 0;overflow-wrap:anywhere}
+.statement-list small,.statement-upload-form legend{overflow-wrap:anywhere}
+.statement-actions{display:flex;gap:var(--space-2);align-items:center;flex-wrap:wrap}
+.statement-upload-form fieldset{min-width:0;border:1px solid var(--border);border-radius:var(--radius-sm);margin:var(--space-4) 0;padding:var(--space-3)}
+.statement-upload-form{max-width:640px}
+@media(max-width:760px){.statement-list li{grid-template-columns:minmax(0,1fr)}.statement-list button{min-height:44px}}
+.statement-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:var(--space-2);margin:var(--space-4) 0}
+.statement-toolbar input,.statement-toolbar select{margin:0;min-width:0}
+.statement-table-wrap{container-type:inline-size}
+.statement-table{display:table;table-layout:fixed;width:100%}
+.statement-table th:first-child{width:35%}
+.statement-table td,.statement-table th{white-space:normal;overflow-wrap:anywhere}
+.statement-table .field-hint{margin-top:var(--space-1)}
+.statement-table .statement-actions button{min-height:36px}
+.statement-pager{justify-content:flex-end;margin-top:var(--space-3)}
+.statement-pager span{margin-right:auto}
+.statement-coverage{padding:var(--space-3);background:var(--surface-sunken);border-radius:var(--radius-sm);margin:var(--space-3) 0}
+.statement-coverage summary{cursor:pointer}
+@container(max-width:740px){.statement-table,.statement-table tbody,.statement-table tr,.statement-table td{display:block}.statement-table thead{display:none}.statement-table tr{padding:var(--space-3);border-bottom:1px solid var(--border)}.statement-table td{border:0;padding:var(--space-2) 0}.statement-table td::before{content:attr(data-label);display:block;font-size:var(--text-sm);color:var(--text-muted)}.statement-table .statement-actions button{min-height:44px}}
+@media(max-width:600px){.statement-toolbar{grid-template-columns:1fr 1fr}.statement-toolbar input{grid-column:1/-1}.statement-actions button{width:auto;min-height:44px}.statement-table .statement-actions{flex-wrap:wrap}}
