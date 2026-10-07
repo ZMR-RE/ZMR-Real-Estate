@@ -1,0 +1,11 @@
+import { useState } from 'react'
+import { DocumentLibrarySection } from '../../modules/documents/DocumentLibrarySection'
+import type { DocumentRecord } from '../../modules/documents/documentsQueries'
+import '../../index.css'
+const files:DocumentRecord[]=Array.from({length:61},(_,i)=>({id:`file-${i}`,property_id:'fictional',transaction_id:null,category:i%3?'Mortgage':'Insurance',label:`Example Bank •1234 — Statement — ${2026-Math.floor(i/12)}-${String(i%12+1).padStart(2,'0')}-01`,link_url:null,link_type:null,storage_path:`fictional/original-${i}.pdf`,file_size:124000,uploaded_at:new Date(Date.UTC(2026,9,6-i)).toISOString()}))
+const links:DocumentRecord[]=[{...files[0],id:'link-1',label:'Property folder',storage_path:null,link_url:'https://drive.google.com/drive/folders/fictional',link_type:'drive_folder'},{...files[1],id:'link-2',label:'Property notes',storage_path:null,link_url:'https://docs.google.com/document/d/fictional',link_type:null}]
+export function App(){
+ const [docs,setDocs]=useState([...files,...links]),[fail,setFail]=useState(false),[notice,setNotice]=useState('')
+ async function wait(){await new Promise(r=>setTimeout(r,800));if(fail){setFail(false);throw Error('Connection interrupted. Your entries are kept; try again.')}}
+ return <main style={{maxWidth:1200,margin:'auto',padding:16}}><p>Local application check · fictional data · no service connection</p><h1>100 Example Street</h1><p>Documents</p><button onClick={()=>setFail(true)}>Simulate next save failure</button><button onClick={()=>setDocs([])}>Check empty account</button>{notice&&<p role="status">{notice}</p>}{(['links','files'] as const).map(kind=><DocumentLibrarySection key={kind} kind={kind} documents={docs} onView={()=>setNotice('View requested for the original file. No file is connected in this preview.')} onAdd={async input=>{await wait();setDocs(d=>[{...files[0],id:crypto.randomUUID(),category:input.category,label:input.label,storage_path:input.file?input.file.name:null,link_url:input.linkUrl,link_type:input.linkType,uploaded_at:new Date().toISOString()},...d])}} onEdit={async(doc,label,url)=>{await wait();setDocs(d=>d.map(row=>row.id===doc.id?{...row,label,link_url:row.link_url?url:null}:row))}}/>)}</main>
+}
