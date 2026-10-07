@@ -17,4 +17,3 @@ export async function updateDocumentMetadata(accountId:string,propertyId:string,
  if(data?.length!==1)throw Error('This item changed or is no longer available. Your entries are kept. Cancel and reopen Edit to see the current details.')
  return data[0]
 }
-
