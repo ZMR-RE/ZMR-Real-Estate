@@ -37,6 +37,7 @@ export function usePropertyProfile(propertyId: string, initialTab: ProfileTab = 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<ProfileTab>(initialTab)
+  const [documentRefreshError, setDocumentRefreshError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   // Batch I5 — stale-edit protection. `conflict` holds the newer server row
   // when a save was refused because another editor saved first; the
@@ -93,6 +94,22 @@ export function usePropertyProfile(propertyId: string, initialTab: ProfileTab = 
       setLatestMarketValue(latestMarketValueRes.data ?? null)
     }
   }, [accountId, propertyId])
+
+  // Mortgage uploads and metadata edits share canonical Documents rows, but
+  // have their own state. Refresh on every Documents entry, including its tab
+  // and the Mortgage shortcut, instead of showing the parent's old snapshot.
+  useEffect(() => {
+    if (tab !== 'documents' || !accountId) return
+    let active = true
+    listDocuments(accountId, propertyId).then(({ data, error: documentError }) => {
+      if (!active) return
+      if (documentError) setDocumentRefreshError(documentError.message)
+      else if (data) { setDocumentRefreshError(null); setDocuments(data) }
+    }).catch(() => {
+      if (active) setDocumentRefreshError('Unable to refresh documents. Reopen the Documents tab to try again.')
+    })
+    return () => { active = false }
+  }, [accountId, propertyId, tab])
 
   const viewDocument = async (path: string) => {
     const { data, error: urlError } = await getDocumentSignedUrl(path)
@@ -160,7 +177,7 @@ export function usePropertyProfile(propertyId: string, initialTab: ProfileTab = 
     latestMarketValue,
     viewDocument,
     loading,
-    error,
+    error: tab === 'documents' ? documentRefreshError ?? error : error,
     tab,
     setTab,
     saving,

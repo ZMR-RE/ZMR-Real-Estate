@@ -4,7 +4,7 @@ repo=pathlib.Path(__file__).resolve().parents[3]
 root=next(p for p in repo.parents if p.name=='ZMR-Real-Estate')
 work=pathlib.Path(tempfile.mkdtemp(prefix='statement-db-',dir=root/'administration/mortgage-reconciliation-contract'))
 pg=pathlib.Path('/opt/homebrew/opt/postgresql@17/bin'); port='55489'
-base=[str(pg/'psql'),'-X','-q','-t','-A','-h','127.0.0.1','-p',port,'-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1']
+base=[str(pg/'psql'),'-X','-q','-t','-A','-h','127.0.0.1','-p',port,'-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1','-v','VERBOSITY=verbose']
 env={k:v for k,v in os.environ.items() if not k.startswith('PG')}
 env.update({'LANG':'C','LC_ALL':'C'})
 results=[]
@@ -73,12 +73,15 @@ try:
  check('period stored exactly',changed['period_start'],'2026-09-01')
  check('null version cannot bypass conflict checks',sql(auth+edit('null',old_label='Reviewed'),False).returncode!=0,True)
  check('old metadata version refused',sql(auth+edit(),False).returncode!=0,True)
+ check('stale version returns non-retryable HTTP conflict','PT409' in sql(auth+edit(),False).stderr,True)
+ check('stale label returns non-retryable HTTP conflict','PT409' in sql(auth+edit(2,old_label='Wrong old label'),False).stderr,True)
  check('canonical label updated',sql(f"select label from documents where id='{doc}'"),'Reviewed')
  check('invalid period refused',sql(auth+edit(2,old_label='Reviewed',start="'2026-10-01'"),False).returncode!=0,True)
  def prefs(rev=0,ref=doc,mode='full'):
   return f"select to_jsonb(save_mortgage_statement_preferences('{a}','{p}','{l}','{ref}','{mode}',{rev}))"
  check('reference saves without touching balances',json.loads(sql(auth+prefs()))['history_mode'],'full')
  check('stale preference refused',sql(auth+prefs(),False).returncode!=0,True)
+ check('stale settings return non-retryable HTTP conflict','PT409' in sql(auth+prefs(),False).stderr,True)
  check('other-loan reference refused',sql(auth+prefs(1,uid()),False).returncode!=0,True)
  check('reference period correction requires explicit reference change',sql(auth+f"select update_mortgage_statement('{a}','{p}','{l}','{doc}',2,'Reviewed','Reviewed','2026-09-05','2026-09-01','2026-09-30','statement','{l}')",False).returncode!=0,True)
  check('other account cannot read preferences',sql(f"set role authenticated;set request.jwt.claim.sub='{v}';select count(*) from mortgage_statement_preferences"),'0')
