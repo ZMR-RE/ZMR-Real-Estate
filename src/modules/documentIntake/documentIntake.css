@@ -1,0 +1,16 @@
+.document-intake-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 40%); gap: 1rem; align-items: start; }
+.document-intake-split > * { min-width: 0; }
+.document-intake-table { width: 100%; }
+.document-intake-table td:first-child { white-space: normal; overflow-wrap: anywhere; }
+.document-intake-table td:last-child { white-space: normal; }
+.document-intake-review fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.document-intake-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.document-intake-fields > * { min-width: 0; }
+.document-intake-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.document-intake-summary > div { min-width: 0; overflow-wrap: anywhere; }
+.document-intake-summary dd { margin-inline-start: 0; white-space: pre-wrap; }
+.document-intake-wide { grid-column: 1 / -1; }
+.document-intake-fields input, .document-intake-fields select, .document-intake-fields textarea { box-sizing: border-box; max-width: 100%; width: 100%; min-width: 0; }
+.document-intake-review .form-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+@media (max-width: 900px) { .document-intake-split { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 400px) { .document-intake-fields { grid-template-columns: minmax(0, 1fr); } }

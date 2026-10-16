@@ -10,6 +10,7 @@ import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, CATEGORY_LABELS } from '../finan
 
 interface CaptureFormProps {
   onCaptured?: () => void
+  onDocumentSelected?: () => void
 }
 
 const ENTRY_TYPES: { value: EntryType; label: string }[] = [
@@ -31,7 +32,7 @@ const ENTRY_TYPES: { value: EntryType; label: string }[] = [
 // here: Receipt gets vendor/amount/category, Visit gets an optional "who
 // was met with", Communication gets contact name/method/subject. All
 // optional, same as every other field beyond type/property/date.
-export function CaptureForm({ onCaptured }: CaptureFormProps) {
+export function CaptureForm({ onCaptured, onDocumentSelected }: CaptureFormProps) {
   const {
     propertyOptions,
     propertiesLoading,
@@ -198,6 +199,7 @@ export function CaptureForm({ onCaptured }: CaptureFormProps) {
         Type<span className="required-marker">*</span>
       </label>
       <div className="type-selector" role="group" aria-labelledby="type_label">
+        {onDocumentSelected && !entryType && <button type="button" onClick={onDocumentSelected}>Document</button>}
         {ENTRY_TYPES.map((type) => (
           <button
             key={type.value}

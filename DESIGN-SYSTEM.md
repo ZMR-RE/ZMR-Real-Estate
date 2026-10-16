@@ -1,5 +1,10 @@
 # ZMR Real Estate — Design System
 
+Document intake uses compact table rows and `.document-intake-split` for its
+selected review panel (right on wide screens, below on narrow screens). Styling
+is module-local; it does not change other tables. File labels wrap, and the
+existing `.table-scroll` contains any remaining horizontal table overflow.
+
 Documents the design tokens and component patterns as they actually
 exist in `src/index.css` today, post the navy/white visual-direction
 pass (approved mockup direction, replacing the earlier warm clay/neutral

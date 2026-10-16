@@ -11,6 +11,7 @@ export interface SearchableSelectOption {
 }
 
 interface SearchableSelectProps {
+  inputId?: string
   options: SearchableSelectOption[]
   value: string | null
   onChange: (id: string) => void
@@ -44,6 +45,7 @@ export function SearchableSelect({
   onAddNewSecondary,
   addNewSecondaryLabel = '+ Add new',
   onOpen,
+  inputId,
 }: SearchableSelectProps) {
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -54,6 +56,7 @@ export function SearchableSelect({
   return (
     <div className="searchable-select">
       <input
+        id={inputId}
         type="text"
         placeholder={placeholder}
         value={isOpen ? query : (selected?.label ?? '')}

@@ -68,5 +68,5 @@ export function usePickListOptions(listName: PickListName) {
     await refresh()
   }
 
-  return { options, activeOptions, loading, error, saving, add, archive, restore }
+  return { options, activeOptions, loading, error, saving, add, archive, restore, refresh }
 }

@@ -3083,3 +3083,8 @@ These stable amendment IDs do not renumber existing roadmap items. Future bookke
 - [ ] Apply the currency-entry safeguard consistently to all monetary inputs. Rule recorded only; no claim of full implementation. Shared helper and per-file inventory/checklist: docs/planning/currency-entry-safeguards.md. Start with Mortgage in a separately checked UI delta, then remaining modules. Preserve field-specific signs/ranges, reject invalid precision, show two decimals on blur and never shift the dollar value. Percentage/count fields excluded. Existing saved records unchanged.
 
 October 6 currency rollout progress: mortgage-only strict decimal inputs and shared reusable component implemented locally; regression, date and visual evidence in administration/mortgage-fixes-20261006. Hosted delta/release and remaining modules pending; the dashboard-wide item stays unchecked.
+
+
+## Owner-approved Document intake — October 16, 2026
+
+- [ ] File-only Document quick capture, optional details and review before canonical property filing. Local implementation and tests complete; scoped Practice migration/test and release remain pending. See docs/planning/document-intake/LOCAL-CANDIDATE.md. No accounting posting or receipt-path change.

@@ -4,19 +4,15 @@ import { useVendors } from '../vendors/useVendors'
 import { CaptureForm } from './CaptureForm'
 import { CaptureHistoryList } from './CaptureHistoryList'
 import { useCaptureHistory } from './useCaptureHistory'
+import { DocumentIntakePanel } from '../documentIntake/DocumentIntakePanel'
 
 type InboxTab = 'capture' | 'history'
 
-const TABS: { key: InboxTab; label: string }[] = [
-  { key: 'capture', label: 'Capture' },
-  { key: 'history', label: 'History' },
-]
-
-// Roadmap 1.5/1.14 — "Quick capture", split into Capture/History tabs so
-// the entry form and the logged-entries table each get the full screen
-// instead of a long vertical scroll to reach either one.
+// History-first intake: the Add action opens existing capture types or Document.
+// Receipt validation and accounting behavior remain in the existing form/hook.
 export function CaptureInbox() {
-  const [tab, setTab] = useState<InboxTab>('capture')
+  const [tab, setTab] = useState<InboxTab>('history')
+  const [documentCapture, setDocumentCapture] = useState(false)
   const { accountId } = useAuth()
   const { vendorOptions, addVendor, refreshVendorOptions } = useVendors(accountId)
   const {
@@ -39,17 +35,10 @@ export function CaptureInbox() {
 
   return (
     <div>
-      <h1>Quick capture</h1>
+      <div className="page-header-row"><h1>Quick capture</h1><button type="button" onClick={() => {setDocumentCapture(false);setTab(tab === 'capture' ? 'history' : 'capture')}}>{tab === 'capture' ? 'Back to history' : '+ Add'}</button></div>
 
-      <div className="tab-bar" role="tablist">
-        {TABS.map((t) => (
-          <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}>
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'capture' && <CaptureForm onCaptured={refresh} />}
+      {tab === 'capture' && (documentCapture ? <DocumentIntakePanel key={accountId} capture onCancel={() => setDocumentCapture(false)} onCaptured={() => {setDocumentCapture(false);setTab('history')}}/> : <CaptureForm onCaptured={refresh} onDocumentSelected={() => setDocumentCapture(true)} />)}
+      {tab === 'history' && <DocumentIntakePanel key={accountId} />}
 
       {tab === 'history' && (
         <CaptureHistoryList

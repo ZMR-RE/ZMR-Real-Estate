@@ -3,6 +3,7 @@ import { ManageOptionsPanel } from '../../shared/pickLists/ManageOptionsPanel'
 import { ActionQueueBoard } from '../actionQueue/ActionQueueBoard'
 import { useReconciliationQueue } from './useReconciliationQueue'
 import { ReconciliationList } from './ReconciliationList'
+import { DocumentIntakePanel } from '../documentIntake/DocumentIntakePanel'
 
 // This page is what the "Action Queue" nav item (roadmap 10.1) has
 // pointed to since before roadmap 10.2's unified data model existed —
@@ -73,6 +74,7 @@ export function ReconciliationQueue() {
       )}
 
       {error && <p role="alert">{error}</p>}
+      <DocumentIntakePanel key={accountId} propertyId={propertyFilter} pendingOnly />
 
       {loading ? (
         <p>Loading…</p>

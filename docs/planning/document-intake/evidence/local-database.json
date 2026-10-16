@@ -1,0 +1,178 @@
+[
+  {
+    "check": "file only reservation accepted",
+    "passed": true
+  },
+  {
+    "check": "no destination guessed",
+    "passed": true
+  },
+  {
+    "check": "retry reservation is stable",
+    "passed": true
+  },
+  {
+    "check": "changed retry refused",
+    "passed": true
+  },
+  {
+    "check": "account isolation RPC",
+    "passed": true
+  },
+  {
+    "check": "account isolation read",
+    "passed": true
+  },
+  {
+    "check": "anonymous refused",
+    "passed": true
+  },
+  {
+    "check": "direct writes refused",
+    "passed": true
+  },
+  {
+    "check": "private validator refused",
+    "passed": true
+  },
+  {
+    "check": "other property refused",
+    "passed": true
+  },
+  {
+    "check": "other vendor refused",
+    "passed": true
+  },
+  {
+    "check": "foreign unit refused",
+    "passed": true
+  },
+  {
+    "check": "unrecognized category refused",
+    "passed": true
+  },
+  {
+    "check": "unknown accounting field refused",
+    "passed": true
+  },
+  {
+    "check": "invalid date refused",
+    "passed": true
+  },
+  {
+    "check": "cannot finish missing bytes",
+    "passed": true
+  },
+  {
+    "check": "cannot finish wrong size",
+    "passed": true
+  },
+  {
+    "check": "capture complete",
+    "passed": true
+  },
+  {
+    "check": "capture creates no document prematurely",
+    "passed": true
+  },
+  {
+    "check": "finish retries harmless",
+    "passed": true
+  },
+  {
+    "check": "filing needs destination",
+    "passed": true
+  },
+  {
+    "check": "null revision refused",
+    "passed": true
+  },
+  {
+    "check": "stale revision refused",
+    "passed": true
+  },
+  {
+    "check": "parallel filing creates one document",
+    "passed": true
+  },
+  {
+    "check": "one canonical document",
+    "passed": true
+  },
+  {
+    "check": "path unchanged",
+    "passed": true
+  },
+  {
+    "check": "no accounting or action writes",
+    "passed": true
+  },
+  {
+    "check": "one event per state",
+    "passed": true
+  },
+  {
+    "check": "different retry destination refused",
+    "passed": true
+  },
+  {
+    "check": "canonical deletion refused",
+    "passed": true
+  },
+  {
+    "check": "canonical move refused",
+    "passed": true
+  },
+  {
+    "check": "canonical rename preserved",
+    "passed": true
+  },
+  {
+    "check": "original not deleted",
+    "passed": true
+  },
+  {
+    "check": "original not replaced",
+    "passed": true
+  },
+  {
+    "check": "unreserved upload refused",
+    "passed": true
+  },
+  {
+    "check": "other account cannot read canonical file",
+    "passed": true
+  },
+  {
+    "check": "two draft edits cannot overwrite each other",
+    "passed": true
+  },
+  {
+    "check": "saved draft remains pending",
+    "passed": true
+  },
+  {
+    "check": "saved draft creates no document",
+    "passed": true
+  },
+  {
+    "check": "responsibility retained",
+    "passed": true
+  },
+  {
+    "check": "due date retained",
+    "passed": true
+  },
+  {
+    "check": "legacy rename unaffected",
+    "passed": true
+  },
+  {
+    "check": "legacy delete behavior unaffected",
+    "passed": true
+  },
+  {
+    "check": "forged audit writes refused",
+    "passed": true
+  }
+]
