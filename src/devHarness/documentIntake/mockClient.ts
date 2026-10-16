@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import type { StoredIntake } from '../../modules/documentIntake/documentIntakeQueries'
 const rows=new Map<string,StoredIntake>(),files=new Map<string,Blob>()
 export const scenario={failFinish:false}
-export const supabase=createClient('http://127.0.0.1:9','fictional-only',{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:async(input,init)=>{
+export const supabase=createClient('http://127.0.0.1:5314','fictional-only',{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:async(input,init)=>{
  const url=new URL(String(input)),method=init?.method??'GET',path=url.pathname
  const body=typeof init?.body==='string'?JSON.parse(init.body):{}
  const error=(message:string)=>Response.json({message,code:'PT409'},{status:409})
@@ -24,6 +24,7 @@ export const supabase=createClient('http://127.0.0.1:9','fictional-only',{auth:{
   if(body.p_file){row.status='filed';row.document_id=crypto.randomUUID();row.documents={label:row.details.title||row.filename,category:row.details.category!,property_id:row.details.propertyId,unit_id:row.details.unitId}}
   return Response.json(row)
  }
+ if(path.includes('/storage/v1/object/sign/'))return Response.json({signedURL:'/../../src/devHarness/documentIntake/ZMR-TEST-DOC.png?token=fictional'})
  if(path.includes('/storage/')){
   const key=decodeURIComponent(path.slice(path.indexOf('/documents/')+11))
   if(method==='POST'){

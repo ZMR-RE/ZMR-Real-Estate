@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext'
 import { createDocumentIntake, type IntakeDetails, type IntakeRecord } from './documentIntake'
-import { documentIntakeRepository, openIntakeDocument, reviewDocument } from './documentIntakeQueries'
+import { documentIntakeRepository, prepareIntakeDownload, reviewDocument } from './documentIntakeQueries'
 
 const service=createDocumentIntake(documentIntakeRepository)
 export function useDocumentIntake() {
  const {accountId}=useAuth()
  const activeAccount=useRef(accountId)
  useEffect(()=>{activeAccount.current=accountId;return()=>{activeAccount.current=null}},[accountId])
+ const [download,setDownload]=useState<{url:string;filename:string;accountId:string}|null>(null)
+ useEffect(()=>{if(!download)return;const timer=setTimeout(()=>setDownload(null),55000);return()=>clearTimeout(timer)},[download])
  const lock=useRef(false)
  const [rows,setRows]=useState<IntakeRecord[]>([]),[error,setError]=useState(''),[busy,setBusy]=useState(false),[loading,setLoading]=useState(true)
  const refresh=useCallback(async()=>{
@@ -33,9 +35,11 @@ export function useDocumentIntake() {
   const result=await run(account=>reviewDocument(account,row,details,file));if(result){accept(result);await refresh()}return result
  }
  async function view(row:IntakeRecord){
-  const blob=await run(account=>openIntakeDocument(account,row.id));if(!blob)return
-  const url=URL.createObjectURL(blob),link=document.createElement('a')
-  link.href=url;link.download=row.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000)
+  const ready=await run(account=>prepareIntakeDownload(account,row.id));if(!ready)return
+  setDownload(ready)
+  const link=document.createElement('a')
+  link.href=ready.url;link.download=ready.filename;document.body.appendChild(link)
+  try{link.click()}finally{link.remove()}
  }
- return {accountId,rows,error,busy,loading,refresh,capture,review,view}
+ return {accountId,rows,error,busy,loading,download:download?.accountId===accountId?download:null,refresh,capture,review,view}
 }

@@ -1,4 +1,4 @@
-.document-intake-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 40%); gap: 1rem; align-items: start; }
+.document-intake-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 40%); gap: 1rem; align-items: start; }
 .document-intake-split > * { min-width: 0; }
 .document-intake-table { width: 100%; }
 .document-intake-table td:first-child { white-space: normal; overflow-wrap: anywhere; }
@@ -14,3 +14,28 @@
 .document-intake-review .form-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 @media (max-width: 900px) { .document-intake-split { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 400px) { .document-intake-fields { grid-template-columns: minmax(0, 1fr); } }
+
+.document-intake-panel { container-type: inline-size; }
+.document-intake-panel .page-header-row { align-items: center; margin-bottom: .75rem; }
+.document-intake-panel .page-header-row h2 { margin: 0; }
+.document-intake-filters { display: grid; grid-template-columns: minmax(0, 1fr) 160px 80px; gap: .75rem; margin-bottom: .75rem; }
+.document-intake-filters label { min-width: 0; margin: 0; }
+.document-intake-filters input, .document-intake-filters select { box-sizing: border-box; width: 100%; min-width: 0; margin-bottom: 0; }
+.document-intake-actions, .document-intake-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.document-intake-pagination { margin-top: .75rem; }
+.document-intake-pagination span { margin-right: auto; }
+.document-intake-panel button { width: auto; margin: 0; }
+.document-intake-review h3, .document-intake-review > p { overflow-wrap: anywhere; }
+@container (max-width: 1050px) {
+ .document-intake-split { grid-template-columns: minmax(0, 1fr); }
+}
+@container (max-width: 600px) {
+ .document-intake-filters { grid-template-columns: minmax(0, 1fr) 80px; }
+ .document-intake-filters label:first-child { grid-column: 1 / -1; }
+ .document-intake-table, .document-intake-table tbody { display: block; width: 100%; }
+ .document-intake-table thead { display: none; }
+ .document-intake-table tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; padding: .75rem 0; border-bottom: 1px solid var(--border); gap: .5rem; }
+ .document-intake-table td { display: block; border: 0; padding: 0; white-space: normal; }
+ .document-intake-table td:last-child { grid-column: 1 / -1; }
+ .document-intake-pagination span { flex-basis: 100%; }
+}

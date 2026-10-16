@@ -80,3 +80,13 @@ export async function openIntakeDocument(accountId: string, id: string) {
  const row = scoped(data as StoredIntake, accountId)
  return verifyFile(row, row.digest)
 }
+
+export async function prepareIntakeDownload(accountId: string, id: string) {
+ const {data,error}=await supabase.from('document_intakes').select('*').eq('account_id',accountId).eq('id',id).single()
+ if(error)throw Error(error.message)
+ const row=scoped(data as StoredIntake,accountId)
+ await verifyFile(row,row.digest)
+ const result=await supabase.storage.from('documents').createSignedUrl(row.storage_path,60,{download:row.filename})
+ if(result.error)throw Error(result.error.message)
+ return {url:result.data.signedUrl,filename:row.filename,accountId}
+}

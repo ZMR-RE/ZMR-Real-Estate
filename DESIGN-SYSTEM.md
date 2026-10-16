@@ -3,7 +3,11 @@
 Document intake uses compact table rows and `.document-intake-split` for its
 selected review panel (right on wide screens, below on narrow screens). Styling
 is module-local; it does not change other tables. File labels wrap, and the
-existing `.table-scroll` contains any remaining horizontal table overflow.
+list uses compact rows below 600px of available width, with actions wrapping
+beneath the title and status. Filters share a row on desktop; phone search spans
+the row above Status and Show. Review stacks below the list when the panel has
+1050px or less available. Buttons retain phone touch targets without stretching
+every action across the page.
 
 Documents the design tokens and component patterns as they actually
 exist in `src/index.css` today, post the navy/white visual-direction
