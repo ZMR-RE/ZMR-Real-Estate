@@ -28,8 +28,12 @@ foreign-key references with server account checks, not copied contact profiles.
 - Frontend service/gateway tests: 18 pass. Actual Supabase client using simulated fetch:
   non-overwriting upload, actual downloaded-byte hash verification, failure/retry,
   scope mismatch, >100-row pagination, canonical naming and no financial calls.
-- Whole working-directory suite: 519 passed, 4 skipped (includes separate uncommitted
-  mortgage/recurrent-task work). Exact isolated candidate count to be recorded separately.
+- Exact candidate `db2ba163627c5d0cb1d4a031446735febf915496`: clean source archive,
+  494 passed, 4 skipped; TypeScript and configured production build passed. Dependencies
+  reused from the local candidate installation. Logs are retained under administration/
+  document-intake-verify-db2ba16. The broader working-directory suite had 519 passing
+  tests, including 25 from separate uncommitted mortgage/recurrent-task work; those
+  additional tests are not counted as candidate evidence.
 - TypeScript build-mode check passes. New-module lint clean. Configured production build
   contains reserve_document_intake and app code (dummy non-secret configuration; not
   evidence of byte equality with production).
