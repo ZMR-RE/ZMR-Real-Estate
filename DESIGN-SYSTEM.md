@@ -399,3 +399,6 @@ Owner-approved compact header exception: Links then Documents use independent co
 
 ### Mortgage statement organization (local candidate)
 `src/modules/mortgageStatements/mortgageStatements.css` uses existing tokens. The statement table fills its box; at a container width of 740px or less each row becomes a labelled card and its table header is hidden. Other tables are unchanged. The search/status/year controls wrap on phones. Pager and action buttons wrap with 44px phone targets. Metadata editing and uploads appear only after an explicit action. Loan summary reuses `CollapsibleSection`; statement preferences live inside Edit loan.
+
+### Mortgage reconciliation review integration — local candidate October 17
+The existing statement section opens a review panel on explicit request. No new navigation item. `.reconciliation-workspace` places the verified original PDF beside the allocation form, stacking at 850px of container width. `.reconciliation-source-entry` uses two money columns, full-width dates/descriptions, existing spacing/color tokens and native money safeguards. Activity and review-history lists retain five-row pagination. Completed source corrections explicitly explain that later period outcomes return to review; original PDFs and audit history are retained. Local harness banners never appear in the signed-in component.

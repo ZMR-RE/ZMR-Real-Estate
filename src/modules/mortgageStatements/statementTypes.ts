@@ -12,7 +12,7 @@ export interface StatementDocument extends StatementScope {
   revision?: number
   uploadedAt: string
   // Uploading alone never asserts successful reconciliation.
-  loanStatus: 'needs_review'
+  loanStatus: 'needs_review'|'reconciled'|'needs_recheck'
   booksStatus: 'not_reconciled'
 }
 export interface StatementUpload {

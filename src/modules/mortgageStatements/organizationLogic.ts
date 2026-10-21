@@ -11,7 +11,7 @@ export function needsDetails(d:StatementDocument){return !d.statementDate||!d.pe
 export function filterStatements(docs:StatementDocument[],search:string,status:string,year:string){
  const q=search.trim().toLowerCase()
  return docs.filter(d=>(!q||`${d.displayName} ${d.originalFilename} ${d.statementDate??''}`.toLowerCase().includes(q))&&
- (year==='all'||d.statementDate?.startsWith(year))&&(status==='all'||(status==='needs')===needsDetails(d)))
+ (year==='all'||d.statementDate?.startsWith(year))&&(status==='all'||status==='needs'&&needsDetails(d)||status==='ready'&&!needsDetails(d)&&d.loanStatus==='needs_review'||status==='reconciled'&&d.loanStatus==='reconciled'||status==='recheck'&&d.loanStatus==='needs_recheck'))
 }
 // Only between supplied, confirmed periods. Never assumes monthly cadence,
 // loan inception, missing leading/trailing history, or a zero difference.

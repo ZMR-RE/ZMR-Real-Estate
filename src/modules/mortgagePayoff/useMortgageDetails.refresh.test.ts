@@ -13,25 +13,25 @@ vi.mock('./mortgageDetailsSave',()=>({saveMortgageDetails:h.save}))
 import { useMortgageDetails } from './useMortgageDetails'
 import type { MortgageDetails } from './mortgagePayoffQueries'
 const loan={id:'loan',current_balance:'100',principal_version:1} as MortgageDetails
-function render(){h.cursor=0;return useMortgageDetails('property',null)}
+function RenderMortgageHook(){h.cursor=0;return useMortgageDetails('property',null)}
 beforeEach(()=>{h.slots=[];h.get.mockReset();h.save.mockReset()})
 it('late refresh cannot close an edit or silently advance its save version',async()=>{
- h.get.mockResolvedValueOnce({data:loan,error:null});await render().refresh()
+ h.get.mockResolvedValueOnce({data:loan,error:null});await RenderMortgageHook().refresh()
  let complete!:(value:unknown)=>void;h.get.mockReturnValueOnce(new Promise(r=>{complete=r}))
- const loading=render().refresh();render().startEditing()
+ const loading=RenderMortgageHook().refresh();RenderMortgageHook().startEditing()
  complete({data:{...loan,current_balance:'90',principal_version:2},error:null});await loading
- expect(render().isEditing).toBe(true)
- h.save.mockResolvedValue({ok:false,error:'refused'});await render().save({...loan,lender_name:'Kept in form'})
- expect(h.save.mock.calls[0][1]).toEqual(loan);expect(render().isEditing).toBe(true)
+ expect(RenderMortgageHook().isEditing).toBe(true)
+ h.save.mockResolvedValue({ok:false,error:'refused'});await RenderMortgageHook().save({...loan,lender_name:'Kept in form'})
+ expect(h.save.mock.calls[0][1]).toEqual(loan);expect(RenderMortgageHook().isEditing).toBe(true)
 })
 it('explicit Cancel stays closed after a pending refresh',async()=>{
- h.get.mockResolvedValue({data:loan,error:null});await render().refresh();render().startEditing()
- const pending=render().refresh();render().cancelEditing();await pending;expect(render().isEditing).toBe(false)
+ h.get.mockResolvedValue({data:loan,error:null});await RenderMortgageHook().refresh();RenderMortgageHook().startEditing()
+ const pending=RenderMortgageHook().refresh();RenderMortgageHook().cancelEditing();await pending;expect(RenderMortgageHook().isEditing).toBe(false)
 })
 it('a displayed conflict supplies the next deliberate retry baseline; success closes',async()=>{
- h.get.mockResolvedValue({data:loan,error:null});await render().refresh();render().startEditing()
+ h.get.mockResolvedValue({data:loan,error:null});await RenderMortgageHook().refresh();RenderMortgageHook().startEditing()
  const latest={...loan,principal_version:2};h.save.mockResolvedValueOnce({ok:false,details:latest,error:'compare figures'}).mockResolvedValueOnce({ok:true,details:latest,error:null})
- await render().save(loan);expect(render().isEditing).toBe(true);await render().save(loan)
- expect(h.save.mock.calls[1][1]).toEqual(latest);expect(render().isEditing).toBe(false)
+ await RenderMortgageHook().save(loan);expect(RenderMortgageHook().isEditing).toBe(true);await RenderMortgageHook().save(loan)
+ expect(h.save.mock.calls[1][1]).toEqual(latest);expect(RenderMortgageHook().isEditing).toBe(false)
 })
-it('no-loan load still allows creation',async()=>{h.get.mockResolvedValue({data:null,error:null});await render().refresh();expect(render().isEditing).toBe(true)})
+it('no-loan load still allows creation',async()=>{h.get.mockResolvedValue({data:null,error:null});await RenderMortgageHook().refresh();expect(RenderMortgageHook().isEditing).toBe(true)})

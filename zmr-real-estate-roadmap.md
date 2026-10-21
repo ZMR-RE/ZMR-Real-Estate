@@ -3088,3 +3088,7 @@ October 6 currency rollout progress: mortgage-only strict decimal inputs and sha
 ## Owner-approved Document intake — October 16, 2026
 
 - [ ] File-only Document quick capture, optional details and review before canonical property filing. Local implementation and tests complete; scoped Practice migration/test and release remain pending. See docs/planning/document-intake/LOCAL-CANDIDATE.md. No accounting posting or receipt-path change.
+
+
+## Mortgage statement review release candidate - October 21, 2026
+- [ ] Canonical statement review, audited source corrections and period comparison. Final Practice coverage passed; release pending separate owner approval. Review allocations do not post payments or Financials. Candidate excludes recurring task activation and actual-loan data corrections.
