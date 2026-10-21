@@ -1,0 +1,7 @@
+import type { SourceActivity, ExistingPayment, StatementBalance, BalanceReference } from '../../modules/mortgageReconciliation/reconciliationTypes'
+export const scope={accountId:'fictional-account',propertyId:'fictional-property',mortgageId:'fictional-loan'}
+const make=(n:number,date:string,principal:string,interest:string,total:string,escrow='0.00',kind:SourceActivity['kind']='payment'):SourceActivity=>({...scope,sourceId:`${String(n).repeat(64)}:1`,digest:String(n).repeat(64),documentId:`statement-${n}`,line:1,statementDate:date,postedDate:date,kind,principal,interest,total,escrow})
+export const activity=[make(1,'2026-03-01','200.00','180.00','380.00'),make(2,'2026-04-01','200.00','180.00','380.00'),make(3,'2026-05-01','200.00','180.00','380.00'),make(4,'2026-06-01','200.00','180.00','380.00'),make(5,'2026-07-01','200.00','180.00','380.00'),make(6,'2026-08-01','-200.00','0.00','0.00','0.00','reversal'),make(7,'2026-09-01','200.00','180.00','405.00','25.00')]
+export const existing:ExistingPayment[]=[{...scope,id:'fictional-existing-payment',postedDate:'2026-07-01',principal:'200.00',interest:'180.00',escrow:'0.00',total:'380.00',voided:false}]
+export const statements:StatementBalance[]=activity.map((row,index)=>({...scope,documentId:row.documentId,date:row.statementDate,principal:['50000.00','49800.00','49600.00','49400.00','49200.00','49400.00','49200.00'][index],escrow:index===6?'25.00':'0.00'}))
+export const reference:BalanceReference={date:'2026-09-01',principal:'49200.00',escrow:'25.00',revision:1}
