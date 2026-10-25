@@ -3092,3 +3092,7 @@ October 6 currency rollout progress: mortgage-only strict decimal inputs and sha
 
 ## Mortgage statement review release candidate - October 21, 2026
 - [ ] Canonical statement review, audited source corrections and period comparison. Final Practice coverage passed; release pending separate owner approval. Review allocations do not post payments or Financials. Candidate excludes recurring task activation and actual-loan data corrections.
+
+
+## Owner-approved reconciliation display cleanup — October 25, 2026
+- [ ] Group repeated attention notices without changing blockers, paginate statement detail names and sort statement selectors newest first. Local implementation: 541 tests pass, four skipped, configured build passes. Browser error source and integrated visual verification remain open. No release approval or production change for this cleanup.

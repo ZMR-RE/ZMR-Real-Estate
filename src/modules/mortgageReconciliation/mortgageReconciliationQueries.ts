@@ -4,7 +4,7 @@ import { supabase } from '../../shared/supabaseClient'
 import { mortgageStatementStore } from '../mortgageStatements/statementQueries'
 import type { StatementDocument } from '../mortgageStatements/statementTypes'
 import type { LoanScope,ExistingPayment,StatementBalance } from './reconciliationTypes'
-import type { ReviewCommand,ReviewSource,ReviewWorkspace,ReviewState } from './workflowTypes'
+import type { ReviewCommand,ReviewSource,ReviewWorkspace,ReviewState,ReviewIssue } from './workflowTypes'
 import type { PreparedStatement,ReviewStore } from './reviewStore'
 interface Snapshot extends StatementBalance {documentRevision:number;digest:string;activity:ReviewSource[]}
 interface StoredReview {revision:number;statements:Record<string,Snapshot>;reviews:ReviewState['reviews'];completed:ReviewState['completed']}
@@ -29,7 +29,7 @@ export function createMortgageReviewStore(scope:LoanScope):ReviewStore & {catalo
    for(const p of data??[])existing.push({...scope,id:p.id,mortgageId:p.mortgage_id,postedDate:p.payment_date,total:String(p.amount),principal:String(p.principal_amount),interest:String(p.interest_amount),escrow:'0.00',fees:'0.00',voided:p.voided})
    if(!data||data.length<100)break
   }
-  const issues=docs.filter(d=>d.documentKind==='statement'&&(!prepared[d.id]||prepared[d.id].date!==d.statementDate||prepared[d.id].digest!==d.digest)).map(d=>({id:d.id,message:`${d.displayName}: statement details need review.`,locked:true}))
+  const issues:ReviewIssue[]=docs.filter(d=>d.documentKind==='statement'&&(!prepared[d.id]||prepared[d.id].date!==d.statementDate||prepared[d.id].digest!==d.digest)).map(d=>({id:d.id,message:`${d.displayName}: statement details need review.`,locked:true,category:'statement_details' as const}))
   for(let offset=0;;offset+=100){
    const {data,error}=await supabase.from('mortgage_balance_review_causes').select('id,balance_kind').eq('account_id',scope.accountId).eq('property_id',scope.propertyId).eq('review_mortgage_id',scope.mortgageId).is('resolved_at',null).order('id').range(offset,offset+99)
    if(error)throw error

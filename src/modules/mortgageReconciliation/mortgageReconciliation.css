@@ -25,3 +25,10 @@
 .mortgage-reconciliation .reconciliation-source-entry fieldset{min-width:0;margin:var(--space-3) 0;padding:var(--space-3);border:1px solid var(--border);border-radius:var(--radius-md)}
 .mortgage-reconciliation .reconciliation-source-entry .reconciliation-entry-wide{grid-column:1/-1}
 .mortgage-reconciliation .reconciliation-source-entry>button{width:auto;justify-self:start}
+
+.review-attention-groups{display:grid;gap:var(--space-3)}
+.review-attention-summary{display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-3)}
+.review-attention-summary>span:first-child{min-width:0;overflow-wrap:anywhere}
+.review-attention-details{margin-top:var(--space-2)}
+.review-attention-details summary{cursor:pointer}
+.review-attention-details li{overflow-wrap:anywhere;margin-bottom:var(--space-2)}

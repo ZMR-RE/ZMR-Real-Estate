@@ -1,6 +1,6 @@
 import type { Allocation, BalanceReference, ExistingPayment, LoanScope, SourceActivity, StatementBalance } from './reconciliationTypes'
 export interface ReviewSource extends SourceActivity { description: string; page?: number }
-export interface ReviewIssue { id: string; message: string; locked: boolean; resolution?: string }
+export interface ReviewIssue { id: string; message: string; locked: boolean; category?: 'statement_details'; resolution?: string }
 export interface LoanDataset {
   id: string; title: string; scope: LoanScope; reference: BalanceReference | null
   activity: ReviewSource[]; statements: StatementBalance[]; existing: ExistingPayment[]; issues: ReviewIssue[]
